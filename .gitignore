@@ -55,10 +55,8 @@ pnpm-debug.log*
 static/uploads/
 
 # SQLite / local DB files (if used)
-*.sqlite
-*.sqlite3
-*.db
-blog.db
+
+
 
 # Optional: local auth/admin scripts output
 *.pid
