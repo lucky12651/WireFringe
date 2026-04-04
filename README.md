@@ -2,11 +2,7 @@
 
 This project serves your existing HTML UI and loads blog posts from a local SQLite database (`blog.db`).
 
-## 1) Put your WordPress XML in the right place
 
-Copy your export file next to `index.html`:
-
-- `C:\Users\lucky\Documents\blog\coffeenblog.WordPress.2026-03-02.xml`
 
 ## 2) Install dependencies
 
