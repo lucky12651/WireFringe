@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coffee n Blog – Admin Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/admin.css" />
+  <script src="/static/admin_post.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header admin-header">
+      <div class="header-inner">
+        <a class="brand" href="/admin" aria-label="Back to admin">
+          <div class="brand-mark">
+            <div class="brand-mark-inner">CnB</div>
+          </div>
+          <div class="brand-text">
+            <h1>Editor</h1>
+            <span id="editorMode">New post</span>
+          </div>
+        </a>
+
+        <div class="admin-topbar">
+          <div class="admin-me" id="meLine"></div>
+          <button class="pill-btn" id="logoutBtn" type="button">
+            <span class="dot" style="background: var(--accent)"></span>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-editor-shell">
+      <section class="side-card admin-editor-card">
+        <form id="editorForm" class="admin-form">
+          <input type="hidden" id="postId" />
+
+          <label>
+            <span class="label">Title</span>
+            <input class="input" id="postTitle" required />
+          </label>
+
+          <div class="row">
+            <label class="grow">
+              <span class="label">Category</span>
+              <select class="input" id="postBucket">
+                <option>Tech</option>
+                <option>AI &amp; Future Tech</option>
+                <option>Business &amp; Markets</option>
+                <option>Personal Finance</option>
+              </select>
+            </label>
+
+            <label class="grow">
+              <span class="label">Read minutes</span>
+              <input class="input" id="postReadMinutes" type="number" min="1" placeholder="3" />
+            </label>
+          </div>
+
+          <label>
+            <span class="label">OpenGraph Image URL (optional)</span>
+            <input class="input" id="postOgImg" placeholder="https://..." />
+          </label>
+
+          <label>
+            <span class="label">Excerpt (optional)</span>
+            <textarea class="input textarea" id="postExcerpt" placeholder="If empty, excerpt is auto-generated"></textarea>
+          </label>
+
+          <div class="admin-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
+            <button class="pill-btn" type="button" data-cmd="bold"><span class="dot"></span>B</button>
+            <button class="pill-btn" type="button" data-cmd="italic"><span class="dot"></span>I</button>
+            <button class="pill-btn" type="button" data-cmd="underline"><span class="dot"></span>U</button>
+            <button class="pill-btn" type="button" data-cmd="strikeThrough"><span class="dot"></span>S</button>
+
+            <div class="toolbar-spacer"></div>
+
+            <button class="pill-btn" type="button" data-block="h2"><span class="dot"></span>H2</button>
+            <button class="pill-btn" type="button" data-block="h3"><span class="dot"></span>H3</button>
+            <button class="pill-btn" type="button" data-cmd="insertUnorderedList"><span class="dot"></span>• List</button>
+            <button class="pill-btn" type="button" data-cmd="insertOrderedList"><span class="dot"></span>1. List</button>
+            <button class="pill-btn" type="button" data-block="blockquote"><span class="dot"></span>Quote</button>
+            <button class="pill-btn" type="button" data-block="pre"><span class="dot"></span>Code</button>
+
+            <div class="toolbar-spacer"></div>
+
+            <button class="pill-btn" type="button" id="linkBtn"><span class="dot"></span>Link</button>
+            <button class="pill-btn" type="button" id="unlinkBtn"><span class="dot"></span>Unlink</button>
+
+            <button class="pill-btn" type="button" id="imageUrlBtn"><span class="dot"></span>Image URL</button>
+            <button class="pill-btn" type="button" id="uploadImageBtn"><span class="dot"></span>Upload</button>
+            <input id="imageFileInput" type="file" accept="image/*" style="display:none" />
+          </div>
+
+          <div id="editor" class="admin-editor" contenteditable="true" spellcheck="true" aria-label="Post content"></div>
+
+          <div class="row">
+            <button class="hero-cta" type="submit" id="saveBtn">Save</button>
+            <button class="pill-btn" type="button" id="deleteBtn" style="display:none">
+              <span class="dot" style="background: var(--danger)"></span>
+              Delete
+            </button>
+            <a class="pill-btn" id="viewBtn" href="/" style="display:none">
+              <span class="dot" style="background: var(--accent)"></span>
+              View
+            </a>
+            <div class="hint" id="hint"></div>
+          </div>
+        </form>
+      </section>
+
+      <section class="side-card admin-editor-help">
+        <div class="side-header">
+          <h3>Tips</h3>
+          <span>WordPress-like</span>
+        </div>
+        <div class="admin-help-text">
+          <p>Use the toolbar for bold, headings, lists, links, and images.</p>
+          <p>Paste content from anywhere — formatting will be kept as HTML.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>Admin editor for Coffee n Blog.</div>
+      <div><a href="/">Go to site</a></div>
+    </footer>
+  </div>
+</body>
+</html>
