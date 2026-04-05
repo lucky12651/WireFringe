@@ -73,7 +73,39 @@ img {
   display: none;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 900px) and (max-width: 1639px) {
+  .ad-rails {
+    display: block;
+    max-width: 1240px;
+    margin: 18px auto 0;
+    padding: 0 18px;
+  }
+
+  .ad-rail {
+    position: static;
+    width: 100%;
+    z-index: auto;
+  }
+
+  .ad-rail-right {
+    display: none;
+  }
+
+  .ad-rail-card {
+    border-radius: 14px;
+    border: 1px solid var(--border-subtle);
+    background: var(--glass);
+    padding: 10px;
+  }
+
+  .ad-rail-card ins.adsbygoogle {
+    display: block;
+    width: 100%;
+    min-height: 90px;
+  }
+}
+
+@media (min-width: 1640px) {
   :root {
     --shell-max: 1240px;
     --ad-rail-width: 180px;
