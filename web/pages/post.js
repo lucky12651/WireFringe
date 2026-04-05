@@ -4,6 +4,26 @@ import { useEffect, useMemo, useState } from 'react';
 
 const THEME_KEY = 'cnb_theme';
 
+function slugifyTitle(title) {
+  const s = String(title || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  return s.slice(0, 90) || 'post';
+}
+
+function postUrl(post) {
+  const id = post?.id;
+  if (!id) return '/';
+  const slug = slugifyTitle(post?.title);
+  return `/post/${encodeURIComponent(slug)}?id=${encodeURIComponent(id)}`;
+}
+
 function applyTheme(theme) {
   const t = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = t;
@@ -133,9 +153,10 @@ export default function PostPage() {
     })();
   }, []);
 
-  function openPost(postId) {
+  function openPost(p) {
+    const postId = p?.id;
     if (!postId) return;
-    window.location.href = `/post?id=${encodeURIComponent(postId)}`;
+    window.location.href = postUrl(p);
   }
 
   const sidebarPosts = useMemo(() => {
@@ -258,11 +279,11 @@ export default function PostPage() {
                       <div
                         key={p.id}
                         className="post-latest-item"
-                        onClick={() => openPost(p.id)}
+                        onClick={() => openPost(p)}
                         role="link"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') openPost(p.id);
+                          if (e.key === 'Enter') openPost(p);
                         }}
                       >
                         <div className="post-latest-thumb">
@@ -296,11 +317,11 @@ export default function PostPage() {
                     <article
                       key={p.id}
                       className="post-bottom-card"
-                      onClick={() => openPost(p.id)}
+                      onClick={() => openPost(p)}
                       role="link"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') openPost(p.id);
+                        if (e.key === 'Enter') openPost(p);
                       }}
                     >
                       <div className="post-bottom-thumb">

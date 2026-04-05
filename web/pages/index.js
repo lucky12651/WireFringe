@@ -49,6 +49,26 @@ function toggleTheme() {
 
 const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
 
+function slugifyTitle(title) {
+  const s = String(title || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  return s.slice(0, 90) || 'post';
+}
+
+function postUrl(post) {
+  const id = post?.id;
+  if (!id) return '/';
+  const slug = slugifyTitle(post?.title);
+  return `/post/${encodeURIComponent(slug)}?id=${encodeURIComponent(id)}`;
+}
+
 async function fetchJsonWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
   let lastErr = null;
   const transientStatuses = new Set([502, 503, 504]);
@@ -159,9 +179,10 @@ export default function HomePage() {
   const centerFeed = rest.slice(12, 18);
   const moreFeed = rest.slice(18, 30);
 
-  function openPost(postId) {
-    if (!postId) return;
-    window.location.href = `/post?id=${encodeURIComponent(postId)}`;
+  function openPost(post) {
+    const id = post?.id;
+    if (!id) return;
+    window.location.href = postUrl(post);
   }
 
   return (
@@ -248,11 +269,11 @@ export default function HomePage() {
                     <div
                       key={p.id}
                       className="mini-item with-thumb"
-                      onClick={() => openPost(p.id)}
+                      onClick={() => openPost(p)}
                       role="link"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') openPost(p.id);
+                        if (e.key === 'Enter') openPost(p);
                       }}
                     >
                       <div className="mini-thumb" aria-hidden="true">
@@ -285,11 +306,11 @@ export default function HomePage() {
               <article
                 className="feature-square"
                 id="featureSquare"
-                onClick={() => openPost(hero.id)}
+                onClick={() => openPost(hero)}
                 role="link"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') openPost(hero.id);
+                  if (e.key === 'Enter') openPost(hero);
                 }}
               >
                 <div className="feature-media">
@@ -332,11 +353,11 @@ export default function HomePage() {
                   <article
                     key={post.id}
                     className="center-card"
-                    onClick={() => openPost(post.id)}
+                    onClick={() => openPost(post)}
                     role="link"
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') openPost(post.id);
+                      if (e.key === 'Enter') openPost(post);
                     }}
                   >
                     <div className="center-thumb" aria-hidden="true">
@@ -378,11 +399,11 @@ export default function HomePage() {
                     <article
                       key={post.id}
                       className="more-card"
-                      onClick={() => openPost(post.id)}
+                      onClick={() => openPost(post)}
                       role="link"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') openPost(post.id);
+                        if (e.key === 'Enter') openPost(post);
                       }}
                     >
                       <div className="more-thumb">
@@ -420,11 +441,11 @@ export default function HomePage() {
                     <div
                       key={p.id}
                       className="mini-item with-thumb"
-                      onClick={() => openPost(p.id)}
+                      onClick={() => openPost(p)}
                       role="link"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') openPost(p.id);
+                        if (e.key === 'Enter') openPost(p);
                       }}
                     >
                       <div className="mini-thumb" aria-hidden="true">

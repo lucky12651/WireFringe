@@ -29,6 +29,19 @@ async function api(path, options = {}) {
 
 const BUCKETS = ['Tech', 'AI & Future Tech', 'Business & Markets', 'Personal Finance'];
 
+function slugifyTitle(title) {
+  const s = String(title || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  return s.slice(0, 90) || 'post';
+}
+
 export default function AdminPostPage() {
   const router = useRouter();
   const editorRef = useRef(null);
@@ -46,7 +59,9 @@ export default function AdminPostPage() {
   const [excerpt, setExcerpt] = useState('');
 
   const modeLabel = postId ? 'Edit post' : 'New post';
-  const viewHref = postId ? `/post?id=${encodeURIComponent(postId)}` : '/';
+  const viewHref = postId
+    ? `/post/${encodeURIComponent(slugifyTitle(title))}?id=${encodeURIComponent(postId)}`
+    : '/';
 
   const queryId = useMemo(() => {
     if (!router.isReady) return '';
