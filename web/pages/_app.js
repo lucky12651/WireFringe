@@ -2,8 +2,15 @@ import '../styles/styles.css';
 import '../styles/admin.css';
 
 import Head from 'next/head';
+import { useEffect } from 'react';
+
+import { initTheme } from '../lib/theme';
 
 export default function App({ Component, pageProps }) {
+  useEffect(() => {
+    initTheme({ defaultTheme: 'dark' });
+  }, []);
+
   return (
     <>
       <Head>

@@ -55,3 +55,10 @@ class PostUpsert(BaseModel):
     creator: str | None = None
     ogImg: str | None = None
     readMinutes: int | None = None
+
+
+class MediaFileOut(BaseModel):
+    name: str
+    url: str
+    size: int
+    modifiedAt: datetime

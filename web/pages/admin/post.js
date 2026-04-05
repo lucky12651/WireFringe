@@ -266,7 +266,7 @@ export default function AdminPostPage() {
         <title>Coffee n Blog – Admin Editor</title>
       </Head>
 
-      <div className="page-shell">
+      <div className="page-shell page-shell-admin">
         <header className="site-header admin-header">
           <div className="header-inner">
             <Link className="brand" href="/admin" aria-label="Back to admin">
