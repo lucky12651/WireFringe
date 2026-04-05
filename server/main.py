@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import unicodedata
@@ -19,6 +20,7 @@ from .models import Post, User
 from .schemas import (
     ImportResult,
     LoginRequest,
+    MediaFileOut,
     MeOut,
     PostOut,
     PostUpsert,
@@ -303,6 +305,34 @@ async def admin_upload_image(
     dest.write_bytes(data)
 
     return {"url": f"/static/uploads/{name}"}
+
+
+@app.get("/api/admin/media", response_model=list[MediaFileOut])
+def admin_list_media(request: Request, db: Session = Depends(get_db)) -> list[MediaFileOut]:
+    _require_user(request, db)
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+    items: list[MediaFileOut] = []
+    for p in UPLOADS_DIR.glob("*"):
+        if not p.is_file():
+            continue
+        name = p.name
+        if name.startswith("."):
+            continue
+
+        st = p.stat()
+        modified = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc)
+        items.append(
+            MediaFileOut(
+                name=name,
+                url=f"/static/uploads/{name}",
+                size=int(st.st_size),
+                modifiedAt=modified,
+            )
+        )
+
+    items.sort(key=lambda x: x.modifiedAt, reverse=True)
+    return items
 
 
 @app.post("/api/admin/posts", response_model=PostOut)

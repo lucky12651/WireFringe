@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-const THEME_KEY = 'cnb_theme';
+import { getTheme, initTheme, toggleTheme } from '../lib/theme';
 
 function slugifyTitle(title) {
   const s = String(title || '')
@@ -22,34 +22,6 @@ function postUrl(post) {
   if (!id) return '/';
   const slug = slugifyTitle(post?.title);
   return `/post/${encodeURIComponent(slug)}`;
-}
-
-function applyTheme(theme) {
-  const t = theme === 'light' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = t;
-}
-
-function initTheme() {
-  let saved = null;
-  try {
-    saved = localStorage.getItem(THEME_KEY);
-  } catch {
-    saved = null;
-  }
-  applyTheme(saved || 'dark');
-  return document.documentElement.dataset.theme || 'dark';
-}
-
-function toggleTheme() {
-  const current = document.documentElement.dataset.theme || 'dark';
-  const next = current === 'light' ? 'dark' : 'light';
-  try {
-    localStorage.setItem(THEME_KEY, next);
-  } catch {
-    // ignore
-  }
-  applyTheme(next);
-  return next;
 }
 
 function formatDate(date) {
@@ -126,7 +98,8 @@ export default function PostPage() {
   useEffect(() => {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
-    const t = initTheme();
+    initTheme({ defaultTheme: 'dark' });
+    const t = getTheme();
     setThemeLabel(t === 'light' ? 'Dark' : 'Light');
   }, []);
 

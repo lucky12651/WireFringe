@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 
-const THEME_KEY = 'cnb_theme';
+import { getTheme, initTheme, toggleTheme } from '../lib/theme';
 
 function stripHtml(html) {
   if (!html) return '';
@@ -18,33 +18,6 @@ function formatDate(date) {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-function applyTheme(theme) {
-  const t = theme === 'light' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = t;
-}
-
-function initTheme() {
-  let saved = null;
-  try {
-    saved = localStorage.getItem(THEME_KEY);
-  } catch {
-    saved = null;
-  }
-  applyTheme(saved || 'dark');
-}
-
-function toggleTheme() {
-  const current = document.documentElement.dataset.theme || 'dark';
-  const next = current === 'light' ? 'dark' : 'light';
-  try {
-    localStorage.setItem(THEME_KEY, next);
-  } catch {
-    // ignore
-  }
-  applyTheme(next);
-  return next;
 }
 
 const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
@@ -126,8 +99,8 @@ export default function HomePage() {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-    initTheme();
-    const t = document.documentElement.dataset.theme || 'dark';
+    initTheme({ defaultTheme: 'dark' });
+    const t = getTheme();
     setThemeLabel(t === 'light' ? 'Dark' : 'Light');
 
     const onKey = (e) => {
