@@ -17,7 +17,12 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/your-project
+            cd /var/www/coffeenblog
+
+            echo "📥 Pulling latest code"
+            git fetch origin
+            git reset --hard origin/main
+
             git pull origin main
 
             # Backend
