@@ -21,7 +21,7 @@ function postUrl(post) {
   const id = post?.id;
   if (!id) return '/';
   const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}?id=${encodeURIComponent(id)}`;
+  return `/post/${encodeURIComponent(slug)}`;
 }
 
 function applyTheme(theme) {
@@ -90,6 +90,17 @@ export default function PostPage() {
   const [latest, setLatest] = useState([]);
   const [latestError, setLatestError] = useState('');
 
+  const slugFromPath = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const m = String(window.location.pathname || '').match(/^\/post\/([^/?#]+)/);
+    if (!m) return '';
+    try {
+      return decodeURIComponent(m[1] || '');
+    } catch {
+      return m[1] || '';
+    }
+  }, []);
+
   const id = useMemo(() => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search || '').get('id') || '';
@@ -103,16 +114,20 @@ export default function PostPage() {
   }, []);
 
   useEffect(() => {
-    if (!id) {
-      setError('Invalid post URL.');
-      return;
-    }
-
     (async () => {
       try {
-        const res = await fetchWithRetry(`/api/post?id=${encodeURIComponent(id)}`, {
-          headers: { Accept: 'application/json' },
-        });
+        const url = slugFromPath
+          ? `/api/post/by-slug?slug=${encodeURIComponent(slugFromPath)}`
+          : id
+            ? `/api/post?id=${encodeURIComponent(id)}`
+            : '';
+
+        if (!url) {
+          setError('Invalid post URL.');
+          return;
+        }
+
+        const res = await fetchWithRetry(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) throw new Error(`Failed to load post: ${res.status} ${res.statusText}`);
         const data = await res.json();
         setPost({
@@ -128,7 +143,21 @@ export default function PostPage() {
         setError('Could not load this post. Go back and try another.');
       }
     })();
-  }, [id]);
+  }, [id, slugFromPath]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!post?.title) return;
+
+    const cleanPath = `/post/${encodeURIComponent(slugifyTitle(post.title))}`;
+    const currentPath = String(window.location.pathname || '');
+    const hasQuery = String(window.location.search || '') !== '';
+
+    if (currentPath !== cleanPath || hasQuery) {
+      const hash = String(window.location.hash || '');
+      window.history.replaceState(null, '', `${cleanPath}${hash}`);
+    }
+  }, [post]);
 
   useEffect(() => {
     (async () => {
@@ -160,14 +189,14 @@ export default function PostPage() {
   }
 
   const sidebarPosts = useMemo(() => {
-    const currentId = id || '';
-    return (latest || []).filter((p) => String(p?.id || '') !== String(currentId)).slice(0, 8);
-  }, [latest, id]);
+    const currentId = String(post?.id || id || '');
+    return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 8);
+  }, [latest, id, post]);
 
   const bottomPosts = useMemo(() => {
-    const currentId = id || '';
-    return (latest || []).filter((p) => String(p?.id || '') !== String(currentId)).slice(0, 5);
-  }, [latest, id]);
+    const currentId = String(post?.id || id || '');
+    return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 5);
+  }, [latest, id, post]);
 
   return (
     <>

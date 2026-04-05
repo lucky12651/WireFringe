@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
+import unicodedata
 import uuid
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
@@ -62,6 +64,18 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def _slugify_title(title: str) -> str:
+    s = str(title or "")
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.lower().strip().replace("&", " and ")
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    s = re.sub(r"^-+|-+$", "", s)
+    s = re.sub(r"-+", "-", s)
+    s = (s[:90] or "post")
+    return s
 
 
 @app.get("/")
@@ -164,6 +178,41 @@ def get_post_by_query(id: str, db: Session = Depends(get_db)) -> PostOut:
         readMinutes=post.read_minutes,
         ogImg=post.og_img,
         date=post.published_at,
+    )
+
+
+@app.get("/api/post/by-slug", response_model=PostOut)
+def get_post_by_slug(slug: str, db: Session = Depends(get_db)) -> PostOut:
+    slug = (slug or "").strip().lower()
+    if not slug:
+        raise HTTPException(status_code=400, detail="Missing slug")
+
+    posts = (
+        db.execute(select(Post).order_by(Post.published_at.desc().nullslast(), Post.id.desc()))
+        .scalars()
+        .all()
+    )
+
+    match = None
+    for p in posts:
+        if _slugify_title(p.title) == slug:
+            match = p
+            break
+
+    if match is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    return PostOut(
+        id=match.id,
+        title=match.title,
+        link=match.link,
+        creator=match.creator,
+        content=match.content,
+        excerpt=match.excerpt,
+        bucket=match.bucket,
+        readMinutes=match.read_minutes,
+        ogImg=match.og_img,
+        date=match.published_at,
     )
 
 

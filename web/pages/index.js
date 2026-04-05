@@ -66,7 +66,7 @@ function postUrl(post) {
   const id = post?.id;
   if (!id) return '/';
   const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}?id=${encodeURIComponent(id)}`;
+  return `/post/${encodeURIComponent(slug)}`;
 }
 
 async function fetchJsonWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
