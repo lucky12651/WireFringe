@@ -5,7 +5,6 @@ import uuid
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select
@@ -49,21 +48,12 @@ app.add_middleware(
 )
 
 STATIC_DIR = PROJECT_ROOT / "static"
-INDEX_FILE = PROJECT_ROOT / "index.html"
-ADMIN_FILE = PROJECT_ROOT / "admin.html"
-POST_FILE = PROJECT_ROOT / "post.html"
-ADMIN_POST_FILE = PROJECT_ROOT / "admin_post.html"
 DEFAULT_WP_XML = PROJECT_ROOT / "coffeenblog.WordPress.2026-03-02.xml"
 
 UPLOADS_DIR = STATIC_DIR / "uploads"
 
-NEXT_OUT_DIR = PROJECT_ROOT / "web" / "out"
-
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-if (NEXT_OUT_DIR / "_next").exists():
-    app.mount("/_next", StaticFiles(directory=str(NEXT_OUT_DIR / "_next")), name="next")
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -75,37 +65,27 @@ def get_db() -> Generator[Session, None, None]:
 
 
 @app.get("/")
-def serve_index() -> FileResponse:
-    next_index = NEXT_OUT_DIR / "index.html"
-    if next_index.exists():
-        return FileResponse(str(next_index))
-    if not INDEX_FILE.exists():
-        raise HTTPException(status_code=404, detail="index.html not found")
-    return FileResponse(str(INDEX_FILE))
+def root() -> dict:
+    return {
+        "ok": True,
+        "service": "Coffee n Blog API",
+        "ui": "http://127.0.0.1:3000",
+    }
 
 
 @app.get("/admin")
-def serve_admin() -> FileResponse:
-    if not ADMIN_FILE.exists():
-        raise HTTPException(status_code=404, detail="admin.html not found")
-    return FileResponse(str(ADMIN_FILE))
+def admin_ui_disabled() -> None:
+    raise HTTPException(status_code=404, detail="UI is served by Next.js (http://127.0.0.1:3000)")
 
 
 @app.get("/admin/post")
-def serve_admin_post() -> FileResponse:
-    if not ADMIN_POST_FILE.exists():
-        raise HTTPException(status_code=404, detail="admin_post.html not found")
-    return FileResponse(str(ADMIN_POST_FILE))
+def admin_post_ui_disabled() -> None:
+    raise HTTPException(status_code=404, detail="UI is served by Next.js (http://127.0.0.1:3000)")
 
 
 @app.get("/post")
-def serve_post() -> FileResponse:
-    next_post = NEXT_OUT_DIR / "post" / "index.html"
-    if next_post.exists():
-        return FileResponse(str(next_post))
-    if not POST_FILE.exists():
-        raise HTTPException(status_code=404, detail="post.html not found")
-    return FileResponse(str(POST_FILE))
+def post_ui_disabled() -> None:
+    raise HTTPException(status_code=404, detail="UI is served by Next.js (http://127.0.0.1:3000)")
 
 
 @app.get("/api/health")

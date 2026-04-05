@@ -26,29 +26,68 @@ function applyTheme(theme) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY);
+  let saved = null;
+  try {
+    saved = localStorage.getItem(THEME_KEY);
+  } catch {
+    saved = null;
+  }
   applyTheme(saved || 'dark');
 }
 
 function toggleTheme() {
   const current = document.documentElement.dataset.theme || 'dark';
   const next = current === 'light' ? 'dark' : 'light';
-  localStorage.setItem(THEME_KEY, next);
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    // ignore
+  }
   applyTheme(next);
   return next;
 }
 
 const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
 
+async function fetchJsonWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
+  let lastErr = null;
+  const transientStatuses = new Set([502, 503, 504]);
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+
+      if (!res.ok) {
+        if (transientStatuses.has(res.status) && attempt < retries - 1) {
+          const delay = baseDelayMs * Math.pow(2, attempt);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        throw new Error(`Failed to load posts: ${res.status} ${res.statusText}`);
+      }
+
+      return await res.json();
+    } catch (err) {
+      lastErr = err;
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  throw lastErr;
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [themeLabel, setThemeLabel] = useState('Light');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    document.getElementById('year').textContent = String(new Date().getFullYear());
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
     initTheme();
     const t = document.documentElement.dataset.theme || 'dark';
@@ -68,9 +107,11 @@ export default function HomePage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/posts', { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(`Failed to load posts: ${res.status} ${res.statusText}`);
-        const data = await res.json();
+        const data = await fetchJsonWithRetry(
+          '/api/posts',
+          { headers: { Accept: 'application/json' } },
+          { retries: 6, baseDelayMs: 250 }
+        );
 
         setPosts(
           data.map((p) => ({
@@ -80,7 +121,12 @@ export default function HomePage() {
         );
       } catch (err) {
         console.error(err);
-        setError('Could not load posts from the backend. Start the FastAPI server and refresh.');
+        setError(
+          'Could not load posts from the backend. Make sure FastAPI is running on :8000, then refresh.\n' +
+            String(err?.message || err)
+        );
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
@@ -236,6 +282,8 @@ export default function HomePage() {
 
             {error ? (
               <div className="empty-state">{error}</div>
+            ) : loading ? (
+              <div className="empty-state">Loading posts…</div>
             ) : feed.length ? (
               <div id="postsContainer" className="feed-list">
                 {feed.map((post) => (

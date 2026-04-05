@@ -10,7 +10,12 @@ function applyTheme(theme) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY);
+  let saved = null;
+  try {
+    saved = localStorage.getItem(THEME_KEY);
+  } catch {
+    saved = null;
+  }
   applyTheme(saved || 'dark');
   return document.documentElement.dataset.theme || 'dark';
 }
@@ -18,7 +23,11 @@ function initTheme() {
 function toggleTheme() {
   const current = document.documentElement.dataset.theme || 'dark';
   const next = current === 'light' ? 'dark' : 'light';
-  localStorage.setItem(THEME_KEY, next);
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    // ignore
+  }
   applyTheme(next);
   return next;
 }
@@ -40,6 +49,20 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+async function fetchWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
+  let lastErr = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastErr = err;
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
 export default function PostPage() {
   const [themeLabel, setThemeLabel] = useState('Light');
   const [post, setPost] = useState(null);
@@ -51,7 +74,8 @@ export default function PostPage() {
   }, []);
 
   useEffect(() => {
-    document.getElementById('year').textContent = String(new Date().getFullYear());
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
     const t = initTheme();
     setThemeLabel(t === 'light' ? 'Dark' : 'Light');
   }, []);
@@ -64,7 +88,7 @@ export default function PostPage() {
 
     (async () => {
       try {
-        const res = await fetch(`/api/post?id=${encodeURIComponent(id)}`, {
+        const res = await fetchWithRetry(`/api/post?id=${encodeURIComponent(id)}`, {
           headers: { Accept: 'application/json' },
         });
         if (!res.ok) throw new Error(`Failed to load post: ${res.status} ${res.statusText}`);
