@@ -339,13 +339,23 @@ export default function HomePage() {
                       if (e.key === 'Enter') openPost(post.id);
                     }}
                   >
-                    <div className="center-card-meta">
-                      <span className="tag">{post.bucket}</span>
-                      <span className="dot"></span>
-                      <span>{formatDate(post.date) || ''}</span>
+                    <div className="center-thumb" aria-hidden="true">
+                      {post.ogImg && post.ogImg.startsWith('http') ? (
+                        <img src={post.ogImg} alt="" loading="lazy" />
+                      ) : (
+                        <div className="center-thumb-fallback">{post.bucket || 'News'}</div>
+                      )}
                     </div>
-                    <h3 className="center-card-title">{post.title}</h3>
-                    <p className="center-card-excerpt">{post.excerpt}</p>
+
+                    <div className="center-body">
+                      <div className="center-card-meta">
+                        <span className="tag">{post.bucket}</span>
+                        <span className="dot"></span>
+                        <span>{formatDate(post.date) || ''}</span>
+                      </div>
+                      <h3 className="center-card-title">{post.title}</h3>
+                      <p className="center-card-excerpt">{post.excerpt}</p>
+                    </div>
                   </article>
                 ))}
               </div>
