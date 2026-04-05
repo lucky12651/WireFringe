@@ -151,9 +151,13 @@ export default function HomePage() {
     return list;
   }, [posts, activeCategory, searchQuery]);
 
-  const hero = filtered[0] || posts[0] || null;
-  const feed = (filtered.length ? filtered : posts).slice(1);
-  const trending = (filtered.length ? filtered : posts).slice(0, 5);
+  const listBase = filtered.length ? filtered : posts;
+  const hero = listBase[0] || null;
+  const rest = hero ? listBase.slice(1) : [];
+  const leftRail = rest.slice(0, 6);
+  const rightRail = rest.slice(6, 12);
+  const centerFeed = rest.slice(12, 18);
+  const moreFeed = rest.slice(18, 30);
 
   function openPost(postId) {
     if (!postId) return;
@@ -229,54 +233,92 @@ export default function HomePage() {
       </header>
 
       <div className="page-shell">
-        <main>
-          <section>
-            {hero ? (
-              <article className="hero-card" id="heroCard" onClick={() => openPost(hero.id)}>
-                <div className="hero-gradient-orbit"></div>
-                <div className="hero-overlay"></div>
+        <main className="home-layout">
+          <aside className="left-rail" aria-label="Left sidebar headlines">
+            <section className="side-card">
+              <div className="side-header">
+                <h3>Headlines</h3>
+                <span>{leftRail.length} stories</span>
+              </div>
+              {loading ? (
+                <div className="empty-state">Loading…</div>
+              ) : leftRail.length ? (
+                <div className="mini-list">
+                  {leftRail.map((p) => (
+                    <div
+                      key={p.id}
+                      className="mini-item with-thumb"
+                      onClick={() => openPost(p.id)}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') openPost(p.id);
+                      }}
+                    >
+                      <div className="mini-thumb" aria-hidden="true">
+                        {p.ogImg && p.ogImg.startsWith('http') ? (
+                          <img src={p.ogImg} alt="" loading="lazy" />
+                        ) : (
+                          <div className="mini-thumb-fallback">{p.bucket || 'News'}</div>
+                        )}
+                      </div>
 
-                <div className="hero-meta">
-                  <div className="category-pill">
-                    <span className="category-dot"></span>
-                    <span id="heroCategory">{hero.bucket}</span>
-                  </div>
-                  <div className="hero-meta-right">
-                    <span id="heroDate">{formatDate(hero.date)}</span>
-                    <span className="read-time" id="heroReadTime">
-                      {(hero.readMinutes || 3) + ' min read'}
-                    </span>
-                  </div>
+                      <div className="mini-body">
+                        <span className="title">{p.title}</span>
+                        <div className="meta">
+                          {p.bucket} • {formatDate(p.date) || ''}
+                        </div>
+                      </div>
+
+                      <span className="meta mini-right">{(p.readMinutes || 3) + 'm'}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">No posts yet.</div>
+              )}
+            </section>
+          </aside>
+
+          <section className="center-rail" aria-label="Main news content">
+            {hero ? (
+              <article
+                className="feature-square"
+                id="featureSquare"
+                onClick={() => openPost(hero.id)}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') openPost(hero.id);
+                }}
+              >
+                <div className="feature-media">
+                  {hero.ogImg && hero.ogImg.startsWith('http') ? (
+                    <img src={hero.ogImg} alt={hero.title} />
+                  ) : (
+                    <div className="feature-media-fallback">
+                      <div className="feature-orbit"></div>
+                      <div className="feature-fallback-text">No photo in export</div>
+                    </div>
+                  )}
                 </div>
 
-                <h2 className="hero-title" id="heroTitle">
-                  {hero.title}
-                </h2>
-                <p className="hero-excerpt" id="heroExcerpt">
-                  {hero.excerpt}
-                </p>
-
-                <div className="hero-footer-row">
-                  <div className="hero-author" id="heroAuthor">
-                    {'By ' + (hero.creator || 'Coffee n Blog editorial')}
+                <div className="feature-content">
+                  <div className="feature-meta">
+                    <span className="feature-pill">{hero.bucket || 'News'}</span>
+                    <span className="feature-sep">•</span>
+                    <span>{formatDate(hero.date) || ''}</span>
+                    <span className="feature-sep">•</span>
+                    <span>{(hero.readMinutes || 3) + ' min read'}</span>
                   </div>
-                  <button
-                    className="hero-cta"
-                    id="heroReadBtn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openPost(hero.id);
-                    }}
-                  >
-                    Read story <span>↗</span>
-                  </button>
+                  <h2 className="feature-title">{hero.title}</h2>
+                  <p className="feature-excerpt">{hero.excerpt}</p>
                 </div>
               </article>
             ) : null}
 
             <div className="section-title-row">
-              <h2>Latest from Coffee n Blog</h2>
+              <h2>Latest News</h2>
               <div className="accent-line"></div>
             </div>
 
@@ -284,12 +326,12 @@ export default function HomePage() {
               <div className="empty-state">{error}</div>
             ) : loading ? (
               <div className="empty-state">Loading posts…</div>
-            ) : feed.length ? (
-              <div id="postsContainer" className="feed-list">
-                {feed.map((post) => (
+            ) : listBase.length ? (
+              <div className="center-feed" id="centerFeed">
+                {(centerFeed.length ? centerFeed : rest.slice(0, 8)).map((post) => (
                   <article
                     key={post.id}
-                    className="post-card"
+                    className="center-card"
                     onClick={() => openPost(post.id)}
                     role="link"
                     tabIndex={0}
@@ -297,36 +339,13 @@ export default function HomePage() {
                       if (e.key === 'Enter') openPost(post.id);
                     }}
                   >
-                    <div className="post-headline">
-                      <div className="post-meta-top">
-                        <span className="tag">{post.bucket}</span>
-                        <span className="dot"></span>
-                        <span>{formatDate(post.date) || ''}</span>
-                      </div>
-                      <h3 className="post-title">{post.title}</h3>
-                      <p className="post-excerpt">{post.excerpt}</p>
-                      <div className="post-footer-row">
-                        <small>{'By ' + (post.creator || 'Coffee n Blog')}</small>
-                        <span className="read-chip">{(post.readMinutes || 3) + ' min read'}</span>
-                      </div>
+                    <div className="center-card-meta">
+                      <span className="tag">{post.bucket}</span>
+                      <span className="dot"></span>
+                      <span>{formatDate(post.date) || ''}</span>
                     </div>
-
-                    <div className="post-thumb">
-                      {post.ogImg && post.ogImg.startsWith('http') ? (
-                        <>
-                          <img src={post.ogImg} alt={post.title} />
-                          <div className="thumb-label">
-                            <span className="bullet"></span>
-                            {post.bucket}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="no-thumb">
-                          {post.bucket} insight<br />
-                          <span>Image not included in export</span>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="center-card-title">{post.title}</h3>
+                    <p className="center-card-excerpt">{post.excerpt}</p>
                   </article>
                 ))}
               </div>
@@ -336,80 +355,90 @@ export default function HomePage() {
                 <span>Try clearing search or switching the category tab.</span>
               </div>
             )}
+
+            {moreFeed.length ? (
+              <>
+                <div className="section-title-row">
+                  <h2>More Latest</h2>
+                  <div className="accent-line"></div>
+                </div>
+
+                <div className="more-grid" id="moreGrid">
+                  {moreFeed.map((post) => (
+                    <article
+                      key={post.id}
+                      className="more-card"
+                      onClick={() => openPost(post.id)}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') openPost(post.id);
+                      }}
+                    >
+                      <div className="more-thumb">
+                        {post.ogImg && post.ogImg.startsWith('http') ? (
+                          <img src={post.ogImg} alt={post.title} loading="lazy" />
+                        ) : (
+                          <div className="no-thumb">{post.bucket}</div>
+                        )}
+                      </div>
+                      <div className="more-body">
+                        <div className="more-meta">
+                          {post.bucket} • {formatDate(post.date) || ''}
+                        </div>
+                        <div className="more-title">{post.title}</div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : null}
           </section>
 
-          <aside>
+          <aside className="right-rail" aria-label="Right sidebar headlines">
             <section className="side-card">
               <div className="side-header">
-                <h3>Trending Headlines</h3>
-                <span id="trendingCount">{trending.length} stories</span>
+                <h3>More Headlines</h3>
+                <span>{rightRail.length} stories</span>
               </div>
-              <div id="trendingList" className="mini-list">
-                {trending.map((p) => (
-                  <div key={p.id} className="mini-item" onClick={() => openPost(p.id)}>
-                    <div>
-                      <span className="title">{p.title}</span>
-                      <div className="meta">
-                        {p.bucket} • {formatDate(p.date) || ''}
+
+              {loading ? (
+                <div className="empty-state">Loading…</div>
+              ) : rightRail.length ? (
+                <div className="mini-list">
+                  {rightRail.map((p) => (
+                    <div
+                      key={p.id}
+                      className="mini-item with-thumb"
+                      onClick={() => openPost(p.id)}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') openPost(p.id);
+                      }}
+                    >
+                      <div className="mini-thumb" aria-hidden="true">
+                        {p.ogImg && p.ogImg.startsWith('http') ? (
+                          <img src={p.ogImg} alt="" loading="lazy" />
+                        ) : (
+                          <div className="mini-thumb-fallback">{p.bucket || 'News'}</div>
+                        )}
                       </div>
+
+                      <div className="mini-body">
+                        <span className="title">{p.title}</span>
+                        <div className="meta">
+                          {p.bucket} • {formatDate(p.date) || ''}
+                        </div>
+                      </div>
+
+                      <span className="meta mini-right">{(p.readMinutes || 3) + 'm'}</span>
                     </div>
-                    <span className="meta">{(p.readMinutes || 3) + 'm'}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="badge-chip">
-                <span>★</span> Curated from your WordPress export
-              </div>
-            </section>
-
-            <section className="side-card">
-              <div className="side-header">
-                <h3>Quick Filters</h3>
-                <span>AI • Crypto • SaaS</span>
-              </div>
-              <div className="mini-list">
-                <div
-                  className="mini-item quick-filter"
-                  onClick={() => {
-                    setSearchQuery('AI');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div>
-                    <span className="title">AI & agents</span>
-                    <div className="meta">Search posts about AI, agents, copilots</div>
-                  </div>
-                  <span className="meta">⌘ AI</span>
+                  ))}
                 </div>
-
-                <div
-                  className="mini-item quick-filter"
-                  onClick={() => {
-                    setSearchQuery('Bitcoin');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div>
-                    <span className="title">Crypto & markets</span>
-                    <div className="meta">Tax rules, Bitcoin, macro moves</div>
-                  </div>
-                  <span className="meta">⌘ ₿</span>
-                </div>
-
-                <div
-                  className="mini-item quick-filter"
-                  onClick={() => {
-                    setSearchQuery('marketing automation');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <div>
-                    <span className="title">Growth & marketing</span>
-                    <div className="meta">Automation, email, revenue tools</div>
-                  </div>
-                  <span className="meta">⌘ M</span>
-                </div>
-              </div>
+              ) : (
+                <div className="empty-state">No posts yet.</div>
+              )}
             </section>
           </aside>
         </main>

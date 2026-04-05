@@ -67,6 +67,8 @@ export default function PostPage() {
   const [themeLabel, setThemeLabel] = useState('Light');
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
+  const [latest, setLatest] = useState([]);
+  const [latestError, setLatestError] = useState('');
 
   const id = useMemo(() => {
     if (typeof window === 'undefined') return '';
@@ -107,6 +109,44 @@ export default function PostPage() {
       }
     })();
   }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      setLatestError('');
+      try {
+        const res = await fetchWithRetry('/api/posts', {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`Failed to load posts: ${res.status} ${res.statusText}`);
+        const data = await res.json();
+        setLatest(
+          (data || []).map((p) => ({
+            ...p,
+            date: p.date ? new Date(p.date) : null,
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+        setLatest([]);
+        setLatestError('Could not load latest posts.');
+      }
+    })();
+  }, []);
+
+  function openPost(postId) {
+    if (!postId) return;
+    window.location.href = `/post?id=${encodeURIComponent(postId)}`;
+  }
+
+  const sidebarPosts = useMemo(() => {
+    const currentId = id || '';
+    return (latest || []).filter((p) => String(p?.id || '') !== String(currentId)).slice(0, 8);
+  }, [latest, id]);
+
+  const bottomPosts = useMemo(() => {
+    const currentId = id || '';
+    return (latest || []).filter((p) => String(p?.id || '') !== String(currentId)).slice(0, 5);
+  }, [latest, id]);
 
   return (
     <>
@@ -150,7 +190,7 @@ export default function PostPage() {
       </header>
 
       <div className="page-shell">
-        <main>
+        <main className="post-main-layout">
           <section className="post-page" id="postPage">
             <div className="post-page-head">
               <Link className="pill-btn" href="/">
@@ -159,35 +199,128 @@ export default function PostPage() {
               <div className="accent-line"></div>
             </div>
 
-            {error ? (
-              <div className="empty-state" id="postError">
-                {error}
+            <div className="post-layout">
+              <div className="post-main">
+                {error ? (
+                  <div className="empty-state" id="postError">
+                    {error}
+                  </div>
+                ) : post ? (
+                  <article className="post-page-card" aria-live="polite">
+                    <div className="post-page-meta" id="postMeta">
+                      {[
+                        formatDate(post.date),
+                        post.creator ? `By ${post.creator}` : '',
+                        post.bucket || '',
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </div>
+                    <h2 className="post-page-title" id="postTitle">
+                      {post.title}
+                    </h2>
+
+                    <div className="post-hero" aria-label="Post image">
+                      {post.ogImg && String(post.ogImg).startsWith('http') ? (
+                        <img src={post.ogImg} alt={post.title || 'Post image'} loading="eager" />
+                      ) : (
+                        <div className="post-hero-fallback">
+                          <div className="post-hero-orbit"></div>
+                          <div className="post-hero-fallback-text">No image in export</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div
+                      className="post-page-content"
+                      id="postContent"
+                      dangerouslySetInnerHTML={{
+                        __html: post.content || `<p>${stripHtml(post.excerpt || '')}</p>`,
+                      }}
+                    ></div>
+                  </article>
+                ) : (
+                  <div className="empty-state">Loading…</div>
+                )}
               </div>
-            ) : post ? (
-              <article className="post-page-card" aria-live="polite">
-                <div className="post-page-meta" id="postMeta">
-                  {[
-                    formatDate(post.date),
-                    post.creator ? `By ${post.creator}` : '',
-                    post.bucket || '',
-                  ]
-                    .filter(Boolean)
-                    .join(' • ')}
+
+              <aside className="post-side" aria-label="Latest headlines">
+                <section className="side-card post-side-card">
+                  <div className="side-header">
+                    <h3>Latest Headlines</h3>
+                    <span>{sidebarPosts.length} stories</span>
+                  </div>
+
+                  {latestError ? <div className="post-side-hint">{latestError}</div> : null}
+
+                  <div className="post-latest-list">
+                    {sidebarPosts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="post-latest-item"
+                        onClick={() => openPost(p.id)}
+                        role="link"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') openPost(p.id);
+                        }}
+                      >
+                        <div className="post-latest-thumb">
+                          {p.ogImg && p.ogImg.startsWith('http') ? (
+                            <img src={p.ogImg} alt={p.title} loading="lazy" />
+                          ) : (
+                            <div className="post-latest-thumb-fallback">{p.bucket || 'News'}</div>
+                          )}
+                        </div>
+                        <div className="post-latest-body">
+                          <div className="post-latest-title">{p.title}</div>
+                          <div className="post-latest-meta">
+                            {p.bucket} • {formatDate(p.date) || ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </aside>
+            </div>
+
+            {bottomPosts.length ? (
+              <div className="post-bottom" aria-label="More latest posts">
+                <div className="section-title-row">
+                  <h2>Latest Posts</h2>
+                  <div className="accent-line"></div>
                 </div>
-                <h2 className="post-page-title" id="postTitle">
-                  {post.title}
-                </h2>
-                <div
-                  className="post-page-content"
-                  id="postContent"
-                  dangerouslySetInnerHTML={{
-                    __html: post.content || `<p>${stripHtml(post.excerpt || '')}</p>`,
-                  }}
-                ></div>
-              </article>
-            ) : (
-              <div className="empty-state">Loading…</div>
-            )}
+                <div className="post-bottom-grid">
+                  {bottomPosts.map((p) => (
+                    <article
+                      key={p.id}
+                      className="post-bottom-card"
+                      onClick={() => openPost(p.id)}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') openPost(p.id);
+                      }}
+                    >
+                      <div className="post-bottom-thumb">
+                        {p.ogImg && p.ogImg.startsWith('http') ? (
+                          <img src={p.ogImg} alt={p.title} loading="lazy" />
+                        ) : (
+                          <div className="post-bottom-thumb-fallback">{p.bucket || 'News'}</div>
+                        )}
+                      </div>
+                      <div className="post-bottom-body">
+                        <div className="post-bottom-meta">
+                          {p.bucket} • {formatDate(p.date) || ''}
+                        </div>
+                        <div className="post-bottom-title">{p.title}</div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
         </main>
 
