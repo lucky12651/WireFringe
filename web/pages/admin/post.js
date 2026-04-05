@@ -60,7 +60,7 @@ export default function AdminPostPage() {
 
   const modeLabel = postId ? 'Edit post' : 'New post';
   const viewHref = postId
-    ? `/post/${encodeURIComponent(slugifyTitle(title))}?id=${encodeURIComponent(postId)}`
+    ? `/post/${encodeURIComponent(slugifyTitle(title))}`
     : '/';
 
   const queryId = useMemo(() => {
