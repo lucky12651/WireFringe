@@ -1,8 +1,18 @@
 # Coffee n Blog (FastAPI + SQLite)
 
-This project serves your existing HTML UI and loads blog posts from a local SQLite database (`blog.db`).
+This project uses Next.js (React) for the UI and FastAPI + SQLite for the backend.
 
+## Project layout (read this first)
 
+- `server/` — FastAPI backend (SQLite + admin API + image uploads)
+- `web/` — Next.js frontend (React). Use `npm run dev` (development) or `npm run build` + `npm run start` (production).
+- `static/` — Backend-served uploads (`uploads/`)
+
+## 1) Put your WordPress XML in the right place
+
+Copy your export file into the project root (next to `server/`):
+
+- `C:\Users\lucky\Documents\blog\coffeenblog.WordPress.2026-03-02.xml`
 
 ## 2) Install dependencies
 
@@ -51,8 +61,6 @@ That means you can delete `coffeenblog.WordPress.2026-03-02.xml` and the site wi
 
 ## Next.js frontend (public site)
 
-The public UI can be built/exported using Next.js and then served by the same FastAPI server.
-
 ### Two-server mode (requested)
 
 Run Next.js and FastAPI as two different servers:
@@ -73,7 +81,10 @@ npm run dev
 
 Open:
 - Public site: http://127.0.0.1:3000/
-- Admin (stays on backend): http://127.0.0.1:8000/admin
+- Admin: http://127.0.0.1:3000/admin
+
+FastAPI is backend-only (API + `/static/*` for CSS/uploads):
+- http://127.0.0.1:8000/api/health
 
 The Next.js dev server proxies these paths to FastAPI (see `web/next.config.js`):
 - `/api/*` → `http://127.0.0.1:8000/api/*`
@@ -86,7 +97,7 @@ $env:BACKEND_URL = "http://127.0.0.1:8001"
 npm run dev
 ```
 
-### Build + export (one-time / when UI changes)
+### Build
 
 From the project root:
 
@@ -94,22 +105,12 @@ From the project root:
 cd .\web
 npm install
 npm run build
-cd ..
 ```
-
-This creates `web\out\...`.
-
-### Serving
-
-- If `web\out\index.html` exists, FastAPI serves it at `/`.
-- If `web\out\post\index.html` exists, FastAPI serves it at `/post`.
-- Next static assets are served from `web\out\_next` via `/_next`.
-- Admin stays as-is: `/admin` and `/admin/post` are still FastAPI-served HTML.
 
 ## Admin panel
 
 Open:
-- http://127.0.0.1:8000/admin
+- http://127.0.0.1:3000/admin
 
 ### Create the first admin user (one-time)
 
