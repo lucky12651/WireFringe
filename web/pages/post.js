@@ -378,7 +378,7 @@ export default function PostPage() {
           <div>
             © <span id="year"></span> Coffee n Blog. All rights reserved.
           </div>
-          <div>Static front-end built with HTML, CSS & JS.</div>
+          <div></div>
         </footer>
       </div>
     </>
