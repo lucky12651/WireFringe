@@ -67,6 +67,51 @@ img {
   padding: 22px 18px 40px;
 }
 
+/* ADS (wide screens only) */
+
+.ad-rails {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --shell-max: 1240px;
+    --ad-rail-width: 180px;
+    --ad-rail-gap: 18px;
+  }
+
+  .ad-rails {
+    display: block;
+  }
+
+  .ad-rail {
+    position: fixed;
+    top: 104px;
+    width: var(--ad-rail-width);
+    z-index: 5;
+  }
+
+  .ad-rail-left {
+    left: calc((100vw - var(--shell-max)) / 2 - var(--ad-rail-width) - var(--ad-rail-gap));
+  }
+
+  .ad-rail-right {
+    right: calc((100vw - var(--shell-max)) / 2 - var(--ad-rail-width) - var(--ad-rail-gap));
+  }
+
+  .ad-rail-card {
+    border-radius: 14px;
+    border: 1px solid var(--border-subtle);
+    background: var(--glass);
+    padding: 10px;
+  }
+
+  .ad-rail-card ins.adsbygoogle {
+    display: block;
+    width: 100%;
+  }
+}
+
 header.site-header {
   position: sticky;
   top: 0;

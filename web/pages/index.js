@@ -106,6 +106,23 @@ export default function HomePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const adEls = document.querySelectorAll('ins.adsbygoogle');
+      adEls.forEach((el) => {
+        if (el.getAttribute('data-adsbygoogle-status') === 'done') return;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch {
+          // ignore
+        }
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
@@ -190,6 +207,33 @@ export default function HomePage() {
       <Head>
         <title>Coffee n Blog – Latest News, Tech, Business & Trending</title>
       </Head>
+
+      <div className="ad-rails" aria-hidden="false">
+        <aside className="ad-rail ad-rail-left" aria-label="Advertisement">
+          <div className="ad-rail-card">
+            <ins
+              className="adsbygoogle"
+              style={{ display: 'block' }}
+              data-ad-client="ca-pub-9036526646235532"
+              data-ad-slot="4810585579"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </div>
+        </aside>
+        <aside className="ad-rail ad-rail-right" aria-label="Advertisement">
+          <div className="ad-rail-card">
+            <ins
+              className="adsbygoogle"
+              style={{ display: 'block' }}
+              data-ad-client="ca-pub-9036526646235532"
+              data-ad-slot="4810585579"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </div>
+        </aside>
+      </div>
 
       <header className="site-header">
         <div className="header-inner">
