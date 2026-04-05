@@ -118,7 +118,7 @@ img {
 
   .ad-rail {
     position: fixed;
-    top: 104px;
+    top: 140px;
     width: var(--ad-rail-width);
     z-index: 5;
   }
@@ -157,6 +157,13 @@ header.site-header {
   );
   padding-bottom: 10px;
   margin: -22px -18px 0;
+}
+
+@media (min-width: 1640px) {
+  header.site-header {
+    max-width: var(--shell-max);
+    margin: -22px auto 0;
+  }
 }
 
 .header-inner {
