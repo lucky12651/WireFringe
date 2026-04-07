@@ -47,6 +47,10 @@ html[data-theme="light"] {
   --tag-border: rgba(var(--accent-rgb), 0.3);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
