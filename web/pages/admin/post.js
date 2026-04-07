@@ -364,68 +364,144 @@ export default function AdminPostPage() {
                   type="button"
                   data-cmd="bold"
                   onClick={() => exec('bold')}
+                  aria-label="Bold"
+                  title="Bold"
                 >
-                  <span className="dot"></span>B
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    B
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-cmd="italic"
                   onClick={() => exec('italic')}
+                  aria-label="Italic"
+                  title="Italic"
                 >
-                  <span className="dot"></span>I
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    I
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-cmd="underline"
                   onClick={() => exec('underline')}
+                  aria-label="Underline"
+                  title="Underline"
                 >
-                  <span className="dot"></span>U
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    U
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-cmd="strikeThrough"
                   onClick={() => exec('strikeThrough')}
+                  aria-label="Strikethrough"
+                  title="Strikethrough"
                 >
-                  <span className="dot"></span>S
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    S
+                  </span>
                 </button>
 
                 <div className="toolbar-spacer"></div>
 
-                <button className="pill-btn" type="button" data-block="h2" onClick={() => formatBlock('h2')}>
-                  <span className="dot"></span>H2
+                <button
+                  className="pill-btn"
+                  type="button"
+                  data-block="h2"
+                  onClick={() => formatBlock('h2')}
+                  aria-label="Heading 2"
+                  title="Heading 2"
+                >
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    H2
+                  </span>
                 </button>
-                <button className="pill-btn" type="button" data-block="h3" onClick={() => formatBlock('h3')}>
-                  <span className="dot"></span>H3
+                <button
+                  className="pill-btn"
+                  type="button"
+                  data-block="h3"
+                  onClick={() => formatBlock('h3')}
+                  aria-label="Heading 3"
+                  title="Heading 3"
+                >
+                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                    H3
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-cmd="insertUnorderedList"
                   onClick={() => exec('insertUnorderedList')}
+                  aria-label="Bulleted list"
+                  title="Bulleted list"
                 >
-                  <span className="dot"></span>• List
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="5" cy="6" r="1" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="5" cy="12" r="1" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="5" cy="18" r="1" stroke="currentColor" strokeWidth="2" />
+                      <path d="M9 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M9 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M9 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-cmd="insertOrderedList"
                   onClick={() => exec('insertOrderedList')}
+                  aria-label="Numbered list"
+                  title="Numbered list"
                 >
-                  <span className="dot"></span>1. List
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="2" height="2" rx="0.4" fill="currentColor" />
+                      <rect x="4" y="11" width="2" height="2" rx="0.4" fill="currentColor" />
+                      <rect x="4" y="17" width="2" height="2" rx="0.4" fill="currentColor" />
+                      <path d="M9 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M9 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M9 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   data-block="blockquote"
                   onClick={() => formatBlock('blockquote')}
+                  aria-label="Quote"
+                  title="Quote"
                 >
-                  <span className="dot"></span>Quote
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 17H11V11H7V7H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M13 17H17V11H13V7H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                 </button>
-                <button className="pill-btn" type="button" data-block="pre" onClick={() => formatBlock('pre')}>
-                  <span className="dot"></span>Code
+                <button
+                  className="pill-btn"
+                  type="button"
+                  data-block="pre"
+                  onClick={() => formatBlock('pre')}
+                  aria-label="Code block"
+                  title="Code block"
+                >
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8 9L4 12L8 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M16 9L20 12L16 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 8L10 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 </button>
 
                 <div className="toolbar-spacer"></div>
@@ -439,11 +515,55 @@ export default function AdminPostPage() {
                     if (!url) return;
                     exec('createLink', url);
                   }}
+                  aria-label="Insert link"
+                  title="Insert link"
                 >
-                  <span className="dot"></span>Link
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </button>
-                <button className="pill-btn" type="button" id="unlinkBtn" onClick={() => exec('unlink')}>
-                  <span className="dot"></span>Unlink
+                <button
+                  className="pill-btn"
+                  type="button"
+                  id="unlinkBtn"
+                  onClick={() => exec('unlink')}
+                  aria-label="Remove link"
+                  title="Remove link"
+                >
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path d="M4 4L20 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 </button>
 
                 <button
@@ -455,16 +575,32 @@ export default function AdminPostPage() {
                     if (!url) return;
                     exec('insertImage', url);
                   }}
+                  aria-label="Insert image from URL"
+                  title="Insert image from URL"
                 >
-                  <span className="dot"></span>Image URL
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="9" cy="11" r="1.5" fill="currentColor" />
+                      <path d="M20 16L15 11L7 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                 </button>
                 <button
                   className="pill-btn"
                   type="button"
                   id="uploadImageBtn"
                   onClick={() => fileInputRef.current?.click()}
+                  aria-label="Upload image"
+                  title="Upload image"
                 >
-                  <span className="dot"></span>Upload
+                  <span className="tb-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M7 9L12 4L17 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M12 4V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 </button>
                 <input
                   ref={fileInputRef}

@@ -157,11 +157,20 @@ export default function AdminPage() {
       if (!counts.has(k)) continue;
       counts.set(k, (counts.get(k) || 0) + 1);
     }
-    return keys.map((k) => ({
-      key: k,
-      label: k.split('-')[1],
-      count: counts.get(k) || 0,
-    }));
+    return keys.map((k) => {
+      const [yStr, mStr] = String(k).split('-');
+      const year = Number(yStr);
+      const monthIndex = Number(mStr) - 1;
+      const label = Number.isFinite(year) && monthIndex >= 0 && monthIndex <= 11
+        ? new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' })
+        : String(k);
+
+      return {
+        key: k,
+        label,
+        count: counts.get(k) || 0,
+      };
+    });
   }, [posts]);
 
   const postGrowth30 = useMemo(() => {
@@ -663,50 +672,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </section>
-
-                  <section className="side-card admin-mini-table" aria-label="Latest posts">
-                    <div className="side-header">
-                      <h3>Latest Posts</h3>
-                      <span>{latestPosts.length}</span>
-                    </div>
-
-                    <div className="admin-table">
-                      <div className="admin-table-head">
-                        <div>Title</div>
-                        <div>Status</div>
-                        <div>Date</div>
-                        <div></div>
-                      </div>
-
-                      {latestPosts.length ? (
-                        latestPosts.map((p) => (
-                          <div key={p.id} className="admin-table-row">
-                            <div className="title">{p.title}</div>
-                            <div>
-                              <span className={`status ${p.date ? 'published' : 'draft'}`}>
-                                {p.date ? 'Published' : 'Draft'}
-                              </span>
-                            </div>
-                            <div className="meta">{formatDateShort(p.date)}</div>
-                            <div className="actions">
-                              <button
-                                type="button"
-                                className="pill-btn"
-                                onClick={() => {
-                                  window.location.href = `/admin/post?id=${encodeURIComponent(p.id)}`;
-                                }}
-                              >
-                                <span className="dot" style={{ background: 'var(--accent)' }}></span>
-                                Edit
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="empty-state">No posts yet.</div>
-                      )}
-                    </div>
-                  </section>
                 </div>
 
                 <section className="admin-dashboard-grid" aria-label="Dashboard panels">
@@ -729,7 +694,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Post Growth */}
-                  <div className="side-card admin-chart-card dashboard-item-right-span">
+                  <div className="side-card admin-chart-card dashboard-item-center-top">
                     <div className="admin-card-head">
                       <div>
                         <div className="h">Post Growth</div>
@@ -761,7 +726,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Posts by Member */}
-                  <div className="side-card dashboard-item-center-top" aria-label="Posts by member">
+                  <div className="side-card dashboard-item-right-span" aria-label="Posts by member">
                     <div className="side-header">
                       <h3>Posts by Member</h3>
                       <span>{memberStats.length} members</span>
@@ -794,28 +759,48 @@ export default function AdminPage() {
                   </div>
                 </section>
 
-                <section className="side-card" aria-label="Posts by member">
+                <section className="side-card admin-mini-table" aria-label="Latest posts">
                   <div className="side-header">
-                    <h3>Posts by Member</h3>
-                    <span>{memberStats.length} members</span>
+                    <h3>Latest Posts</h3>
+                    <span>{latestPosts.length}</span>
                   </div>
 
-                  {memberStats.length ? (
-                    <div className="admin-member-grid">
-                      {memberStats.map((m) => (
-                        <div key={m.username} className="admin-member-card">
-                          <div className="admin-member-top">
-                            <div className="admin-member-name">{m.username}</div>
-                            {m.role ? <div className="admin-member-role">{m.role}</div> : null}
-                          </div>
-                          <div className="admin-member-count">{m.count}</div>
-                          <div className="admin-member-sub">posts</div>
-                        </div>
-                      ))}
+                  <div className="admin-table">
+                    <div className="admin-table-head">
+                      <div>Title</div>
+                      <div>Status</div>
+                      <div>Date</div>
+                      <div></div>
                     </div>
-                  ) : (
-                    <div className="empty-state">No stats yet.</div>
-                  )}
+
+                    {latestPosts.length ? (
+                      latestPosts.map((p) => (
+                        <div key={p.id} className="admin-table-row">
+                          <div className="title">{p.title}</div>
+                          <div>
+                            <span className={`status ${p.date ? 'published' : 'draft'}`}>
+                              {p.date ? 'Published' : 'Draft'}
+                            </span>
+                          </div>
+                          <div className="meta">{formatDateShort(p.date)}</div>
+                          <div className="actions">
+                            <button
+                              type="button"
+                              className="pill-btn"
+                              onClick={() => {
+                                window.location.href = `/admin/post?id=${encodeURIComponent(p.id)}`;
+                              }}
+                            >
+                              <span className="dot" style={{ background: 'var(--accent)' }}></span>
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="empty-state">No posts yet.</div>
+                    )}
+                  </div>
                 </section>
               </>
             ) : activeView === 'posts' ? (
@@ -830,7 +815,7 @@ export default function AdminPage() {
                     <span className="dot" style={{ background: '#4cd4ff' }}></span>
                     Write new post
                   </Link>
-                  <div className="admin-posts-card" aria-label="All posts">
+                  <div className="side-card admin-posts-card" aria-label="All posts">
                     <div className="admin-posts-scroll">
                       <div className="admin-table-head admin-posts-table-head">
                         <div>Title</div>
