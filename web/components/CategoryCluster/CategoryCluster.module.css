@@ -1,6 +1,9 @@
 .cluster {
-  padding: var(--space-xl) 0;
-  border-top: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
+  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-xl);
 }
 
 .header {
@@ -70,6 +73,10 @@
 
 .card:hover {
   opacity: 0.8;
+}
+
+.card:hover .cardTitle {
+  text-decoration: underline;
 }
 
 .cardContent {

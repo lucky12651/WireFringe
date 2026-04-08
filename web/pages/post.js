@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout/Layout';
+import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
 
 function slugifyTitle(title) {
@@ -267,6 +268,9 @@ export default function PostPage() {
                     </div>
                   </section>
                 )}
+
+                {/* Comment System */}
+                <CommentSection postId={post.id} />
               </div>
 
               {/* Sidebar */}
