@@ -1,0 +1,168 @@
+.cluster {
+  padding: var(--space-xl) 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.titleLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.titleLink:hover .title {
+  text-decoration: underline;
+}
+
+.moreLink {
+  font-size: 14px;
+  color: var(--brand-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.moreLink:hover {
+  text-decoration: underline;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--space-xl);
+  row-gap: var(--space-xs);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+/* Unified Compact Card Design (Matching Screenshot) */
+.card {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-light);
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.card:hover {
+  opacity: 0.8;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardMetaTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: 4px;
+}
+
+.sourceIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sourceIcon img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+}
+
+.sourceName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.cardTitle {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMetaBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.timeInfo {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.newsIcon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  color: var(--text-secondary);
+}
+
+.cardMedia {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 500px) {
+  .cardMedia {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+.cardMedia img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

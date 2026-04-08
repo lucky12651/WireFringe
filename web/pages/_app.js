@@ -1,14 +1,15 @@
-import '../styles/styles.css';
+import { useEffect } from 'react';
+import '../styles/variables.css';
 import '../styles/admin.css';
 
 import Head from 'next/head';
-import { useEffect } from 'react';
-
-import { initTheme } from '../lib/theme';
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
+    // Basic view tracking
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin')) {
+      fetch('/api/views/increment', { method: 'POST' }).catch(() => {});
+    }
   }, []);
 
   return (
