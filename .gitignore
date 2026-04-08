@@ -52,7 +52,6 @@ pnpm-debug.log*
 
 # --- Project-specific ---
 # User uploads (generated content)
-static/uploads/
 
 # SQLite / local DB files (if used)
 
