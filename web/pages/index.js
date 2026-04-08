@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout/Layout';
 import HeroSection from '../components/HeroSection/HeroSection';
@@ -164,7 +165,7 @@ export default function HomePage() {
     const grouped = {};
     
     categories.forEach(cat => {
-      grouped[cat] = filteredPosts.filter(p => p.bucket === cat).slice(0, 5);
+      grouped[cat] = filteredPosts.filter(p => p.bucket === cat).slice(0, 6);
     });
     
     return grouped;
@@ -188,7 +189,7 @@ export default function HomePage() {
 
       {/* Error state */}
       {error && (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', padding: '10px', color: 'var(--text-secondary)' }}>
           {error}
         </div>
       )}
