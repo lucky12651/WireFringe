@@ -800,7 +800,7 @@ export default function AdminPage() {
                   </button>
                 ) : null}
                 <Link className="pill-btn" href="/" aria-label="Go to site">
-                  <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                  <span className="dot" style={{ background: 'var(--accent)' }}></span>
                   Site
                 </Link>
               </div>
@@ -908,7 +908,7 @@ export default function AdminPage() {
                         <div className="hint">Top liked comments</div>
                       </div>
                       <div className="pill-btn" aria-hidden="true">
-                        <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                        <span className="dot" style={{ background: 'var(--accent)' }}></span>
                         Last 15 days
                       </div>
                     </div>
@@ -942,7 +942,7 @@ export default function AdminPage() {
                         <div className="hint">Last 6 months</div>
                       </div>
                       <div className="pill-btn" aria-hidden="true">
-                        <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                        <span className="dot" style={{ background: 'var(--accent)' }}></span>
                         6 months
                       </div>
                     </div>
@@ -1053,7 +1053,7 @@ export default function AdminPage() {
                     {postsCount}
                   </span>
                   <Link className="pill-btn" href="/admin/post" id="writePostBtn">
-                    <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                    <span className="dot" style={{ background: 'var(--accent)' }}></span>
                     Write new post
                   </Link>
                   <div className="side-card admin-posts-card" aria-label="All posts">
@@ -1156,7 +1156,7 @@ export default function AdminPage() {
                       onChange={(e) => onMediaUpload(e.target.files?.[0] || null)}
                     />
                     <button className="pill-btn" type="button" onClick={() => refreshMedia()}>
-                      <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                      <span className="dot" style={{ background: 'var(--accent)' }}></span>
                       Refresh
                     </button>
                     <div className="hint">{mediaHint}</div>
@@ -1210,7 +1210,7 @@ export default function AdminPage() {
 
                   <div className="row">
                     <button className="pill-btn" type="button" onClick={() => refreshAdminComments()}>
-                      <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                      <span className="dot" style={{ background: 'var(--accent)' }}></span>
                       Refresh
                     </button>
                     <div className="hint">{adminCommentsHint}</div>
