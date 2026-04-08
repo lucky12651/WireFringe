@@ -1,0 +1,119 @@
+/* ========================================
+   CnB Global Variables (Google News Theme)
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+:root {
+  /* Colors - Clean & Editorial Palette (Google News) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fc;
+  --bg-hover: #f0f1f5;
+  --border-dim: #dadce0;
+  --border-light: #e8eaed;
+  
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --text-tertiary: #80868b;
+  
+  --brand-primary: #1a73e8;
+  --brand-hover: #1557b0;
+  --brand-accent: #ea4335;
+  
+  /* Layout & Spacing */
+  --max-width: 1200px;
+  --ad-rail-width: 160px;
+  --header-height: 128px;
+  
+  --space-unit: 8px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif; /* Google Sans equivalent */
+  --font-body: 'Inter', sans-serif; /* Google Sans Text equivalent */
+  --font-sans: var(--font-body);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 100px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.1);
+  --shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.15);
+}
+
+/* Dark mode overrides - Strictly matching Google News Screenshot */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0e0e0e; /* Pure Google dark bg */
+    --bg-secondary: #212121; /* Darker secondary */
+    --bg-hover: #3c4043;
+    --border-dim: #3c4043;
+    --border-light: #212121;
+    
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a6;
+    --text-tertiary: #80868b;
+  }
+}
+
+/* ========================================
+   Base Resets
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Utility: Hidden but Accessible (SEO) */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

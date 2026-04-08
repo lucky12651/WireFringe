@@ -1,0 +1,28 @@
+.adRail {
+  display: none;
+  position: fixed;
+  top: 160px;
+  width: var(--ad-rail-width);
+  z-index: 10;
+}
+
+.adRailLeft {
+  left: calc((100vw - var(--max-width)) / 2 - var(--ad-rail-width) - 24px);
+}
+
+.adRailRight {
+  right: calc((100vw - var(--max-width)) / 2 - var(--ad-rail-width) - 24px);
+}
+
+.adSlot {
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 1400px) {
+  .adRail {
+    display: block;
+  }
+}
