@@ -38,6 +38,15 @@ function formatDateShort(date) {
   return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
 }
 
+function initialsFromName(name) {
+  const s = String(name || '').trim();
+  if (!s) return '?';
+  const parts = s.split(/\s+/g).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return (parts[0].slice(0, 1) + parts[parts.length - 1].slice(0, 1)).toUpperCase();
+}
+
 function monthKey(d) {
   const dt = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(dt.getTime?.())) return '';
@@ -87,6 +96,21 @@ export default function AdminPage() {
   const [media, setMedia] = useState([]);
   const [mediaHint, setMediaHint] = useState('');
 
+  const [adminComments, setAdminComments] = useState([]);
+  const [adminCommentsHint, setAdminCommentsHint] = useState('');
+
+  const [trendingComments, setTrendingComments] = useState([]);
+  const [trendingHint, setTrendingHint] = useState('');
+
+  const [settingsDisplayName, setSettingsDisplayName] = useState('');
+  const [settingsHint, setSettingsHint] = useState('');
+  const [settingsPhotoHint, setSettingsPhotoHint] = useState('');
+
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwHint, setPwHint] = useState('');
+
   const canManageUsers = me?.role === 'admin';
 
   const postsCount = useMemo(() => String(posts.length), [posts]);
@@ -123,24 +147,54 @@ export default function AdminPage() {
   }, [posts]);
 
   const memberStats = useMemo(() => {
-    if (canManageUsers && Array.isArray(users) && users.length) {
-      const list = users
-        .map((u) => ({
-          username: u.username,
-          role: u.role,
-          count: creatorCounts.get(u.username) || 0,
-        }))
-        .sort((a, b) => b.count - a.count || a.username.localeCompare(b.username));
-
-      return list;
+    const roleByUsername = new Map();
+    if (canManageUsers && Array.isArray(users)) {
+      for (const u of users) {
+        if (!u?.username) continue;
+        roleByUsername.set(u.username, u.role || '');
+      }
     }
 
-    const list = [...creatorCounts.entries()]
-      .map(([username, count]) => ({ username, role: '', count }))
-      .sort((a, b) => b.count - a.count || a.username.localeCompare(b.username));
+    const list = [...creatorCounts.entries()].map(([username, count]) => ({
+      username,
+      role: roleByUsername.get(username) || '',
+      count,
+    }));
 
+    // For admins, also show users with zero posts.
+    if (canManageUsers && Array.isArray(users)) {
+      for (const u of users) {
+        if (!u?.username) continue;
+        if (creatorCounts.has(u.username)) continue;
+        list.push({ username: u.username, role: u.role || '', count: 0 });
+      }
+    }
+
+    list.sort((a, b) => b.count - a.count || a.username.localeCompare(b.username));
     return list;
   }, [canManageUsers, users, creatorCounts]);
+
+  const postsForPostsTab = useMemo(() => {
+    const base = (posts || []).map((p, idx) => ({
+      ...p,
+      _idx: idx,
+      dateObj: p?.date ? new Date(p.date) : null,
+    }));
+
+    base.sort((a, b) => {
+      const aDraft = !a.dateObj;
+      const bDraft = !b.dateObj;
+      if (aDraft !== bDraft) return aDraft ? -1 : 1; // drafts first
+
+      if (aDraft && bDraft) return b._idx - a._idx; // newest-ish draft first
+
+      const ta = a.dateObj ? a.dateObj.getTime() : -Infinity;
+      const tb = b.dateObj ? b.dateObj.getTime() : -Infinity;
+      return tb - ta;
+    });
+
+    return base;
+  }, [posts]);
 
   const postsByMonth = useMemo(() => {
     const now = new Date();
@@ -267,6 +321,51 @@ export default function AdminPage() {
     setUsers(out || []);
   }
 
+  async function refreshAdminComments() {
+    try {
+      setAdminCommentsHint('');
+      const out = await api('/api/admin/comments', { method: 'GET' });
+      setAdminComments(out || []);
+    } catch (err) {
+      console.error(err);
+      setAdminComments([]);
+      setAdminCommentsHint(String(err?.message || err));
+    }
+  }
+
+  async function refreshTrendingComments() {
+    try {
+      setTrendingHint('');
+      const out = await api('/api/admin/comments/trending?days=15&limit=8', { method: 'GET' });
+      setTrendingComments(out || []);
+    } catch (err) {
+      console.error(err);
+      setTrendingComments([]);
+      setTrendingHint(String(err?.message || err));
+    }
+  }
+
+  async function onDeleteComment(commentId) {
+    if (!commentId) return;
+    if (me?.role !== 'admin') return;
+
+    const ok = confirm('Delete this comment? This cannot be undone.');
+    if (!ok) return;
+
+    try {
+      setAdminCommentsHint('');
+      await api(`/api/admin/comments/${encodeURIComponent(String(commentId))}`, { method: 'DELETE' });
+      setAdminCommentsHint('Deleted.');
+      await refreshAdminComments();
+      await refreshTrendingComments();
+    } catch (err) {
+      console.error(err);
+      const msg = String(err?.message || err);
+      setAdminCommentsHint(msg);
+      alert(msg);
+    }
+  }
+
   useEffect(() => {
     (async () => {
       initTheme({ defaultTheme: 'dark' });
@@ -277,6 +376,7 @@ export default function AdminPage() {
       resetPostForm();
       await refreshPosts();
       await refreshMedia();
+      await refreshTrendingComments();
       if (user.role === 'admin') {
         await api('/api/admin/users', { method: 'GET' })
           .then((out) => setUsers(out || []))
@@ -285,6 +385,29 @@ export default function AdminPage() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!me) return;
+    if (activeView === 'dashboard') {
+      refreshTrendingComments();
+    }
+    if (activeView === 'comments') {
+      refreshAdminComments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView, me]);
+
+  useEffect(() => {
+    if (!me) return;
+    if (activeView !== 'settings') return;
+    setSettingsDisplayName(me.displayName || '');
+    setSettingsHint('');
+    setSettingsPhotoHint('');
+    setPwCurrent('');
+    setPwNew('');
+    setPwConfirm('');
+    setPwHint('');
+  }, [activeView, me]);
 
   async function onLoginSubmit(e) {
     e.preventDefault();
@@ -303,6 +426,7 @@ export default function AdminPage() {
       resetPostForm();
       await refreshPosts();
       await refreshMedia();
+      await refreshTrendingComments();
       setActiveView('dashboard');
       if (out?.role === 'admin') {
         const u = await api('/api/admin/users', { method: 'GET' });
@@ -357,6 +481,92 @@ export default function AdminPage() {
       await refreshMedia();
     } catch (err) {
       setMediaHint(String(err?.message || err));
+    }
+  }
+
+  async function onSettingsPhotoUpload(file) {
+    if (!file) return;
+    setSettingsPhotoHint('');
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+
+      const res = await fetch('/api/admin/profile/photo', {
+        method: 'POST',
+        credentials: 'include',
+        body: fd,
+      });
+
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`;
+        try {
+          const data = await res.json();
+          if (data && data.detail) detail = data.detail;
+        } catch {
+          // ignore
+        }
+        throw new Error(detail);
+      }
+
+      const out = await res.json();
+      setMe(out);
+      setSettingsPhotoHint('Profile photo updated.');
+    } catch (err) {
+      setSettingsPhotoHint(String(err?.message || err));
+    }
+  }
+
+  async function onSettingsSaveProfile(e) {
+    e.preventDefault();
+    setSettingsHint('');
+
+    try {
+      const out = await api('/api/admin/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          displayName: settingsDisplayName,
+        }),
+      });
+      setMe(out);
+      setSettingsHint('Saved.');
+    } catch (err) {
+      setSettingsHint(String(err?.message || err));
+    }
+  }
+
+  async function onSettingsChangePassword(e) {
+    e.preventDefault();
+    setPwHint('');
+
+    if (!pwCurrent) {
+      setPwHint('Current password is required.');
+      return;
+    }
+    if (!pwNew || pwNew.length < 8) {
+      setPwHint('New password must be at least 8 characters.');
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwHint('New passwords do not match.');
+      return;
+    }
+
+    try {
+      await api('/api/admin/profile/password', {
+        method: 'PUT',
+        body: JSON.stringify({
+          currentPassword: pwCurrent,
+          newPassword: pwNew,
+        }),
+      });
+
+      setPwCurrent('');
+      setPwNew('');
+      setPwConfirm('');
+      setPwHint('Password updated.');
+    } catch (err) {
+      setPwHint(String(err?.message || err));
     }
   }
 
@@ -453,6 +663,19 @@ export default function AdminPage() {
     }
   }
 
+  async function onPublishPost(id) {
+    if (!id) return;
+    try {
+      await api(`/api/admin/posts/${encodeURIComponent(id)}/publish`, { method: 'POST' });
+      await refreshPosts();
+    } catch (err) {
+      console.error(err);
+      const msg = String(err?.message || err);
+      setPostsHint(msg);
+      alert(msg);
+    }
+  }
+
   return (
     <>
       <Head>
@@ -518,16 +741,18 @@ export default function AdminPage() {
                 <div className="admin-nav-sep" aria-hidden="true"></div>
                 <div className="admin-nav-label">System</div>
 
-                <button
-                  type="button"
-                  className={`admin-nav-item ${activeView === 'users' ? 'active' : ''}`}
-                  onClick={() => setActiveView('users')}
-                  disabled={!isAuthed || !canManageUsers}
-                  aria-disabled={!isAuthed || !canManageUsers}
-                  title={!canManageUsers ? 'Admins only' : ''}
-                >
-                  Users
-                </button>
+                {me?.role === 'author' ? null : (
+                  <button
+                    type="button"
+                    className={`admin-nav-item ${activeView === 'users' ? 'active' : ''}`}
+                    onClick={() => setActiveView('users')}
+                    disabled={!isAuthed || !canManageUsers}
+                    aria-disabled={!isAuthed || !canManageUsers}
+                    title={!canManageUsers ? 'Admins only' : ''}
+                  >
+                    Users
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`admin-nav-item ${activeView === 'settings' ? 'active' : ''}`}
@@ -680,7 +905,7 @@ export default function AdminPage() {
                     <div className="admin-card-head">
                       <div>
                         <div className="h">Comments Trend</div>
-                        <div className="hint">Not configured</div>
+                        <div className="hint">Top liked comments</div>
                       </div>
                       <div className="pill-btn" aria-hidden="true">
                         <span className="dot" style={{ background: '#4cd4ff' }}></span>
@@ -688,9 +913,25 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="admin-chart-empty">
-                      Comments feature is not implemented in the backend yet.
-                    </div>
+                    {trendingHint ? <div className="admin-chart-empty">{trendingHint}</div> : null}
+
+                    {!trendingHint && Array.isArray(trendingComments) && trendingComments.length ? (
+                      <div className="admin-trend-list" aria-label="Trending comments">
+                        {trendingComments.map((c) => (
+                          <div key={c.id} className="admin-trend-item">
+                            <div className="admin-trend-top">
+                              <div className="admin-trend-post">{c.postTitle || c.postId}</div>
+                              <div className="admin-trend-likes">Likes: {c.likes || 0}</div>
+                            </div>
+                            <div className="admin-trend-body">
+                              <span className="admin-trend-name">{c.name || 'Anonymous'}:</span> {c.commentPreview || ''}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : !trendingHint ? (
+                      <div className="admin-chart-empty">No comments yet.</div>
+                    ) : null}
                   </div>
 
                   {/* Post Growth */}
@@ -825,8 +1066,8 @@ export default function AdminPage() {
                         <div></div>
                       </div>
 
-                      {sortedPosts.length ? (
-                        sortedPosts.map((p) => (
+                      {postsForPostsTab.length ? (
+                        postsForPostsTab.map((p) => (
                           <div key={p.id} className="admin-table-row admin-posts-table-row">
                             <div className="title">{p.title}</div>
                             <div className="meta author">{String(p.creator || '').trim() || 'Unknown'}</div>
@@ -837,6 +1078,17 @@ export default function AdminPage() {
                             </div>
                             <div className="meta">{formatDateShort(p.date)}</div>
                             <div className="actions">
+                              {!p.date && me?.role !== 'author' ? (
+                                <button
+                                  type="button"
+                                  className="pill-btn"
+                                  onClick={() => onPublishPost(p.id)}
+                                  title="Publish this draft"
+                                >
+                                  <span className="dot" style={{ background: 'var(--accent)' }}></span>
+                                  Publish
+                                </button>
+                              ) : null}
                               <button
                                 type="button"
                                 className="pill-btn"
@@ -949,7 +1201,67 @@ export default function AdminPage() {
                   <h2>Comments</h2>
                   <div className="accent-line"></div>
                 </div>
-                <div className="empty-state">Comments are not implemented in the backend yet.</div>
+
+                <section className="side-card" aria-label="All comments">
+                  <div className="side-header">
+                    <h3>All Comments</h3>
+                    <span>{Array.isArray(adminComments) ? adminComments.length : 0}</span>
+                  </div>
+
+                  <div className="row">
+                    <button className="pill-btn" type="button" onClick={() => refreshAdminComments()}>
+                      <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                      Refresh
+                    </button>
+                    <div className="hint">{adminCommentsHint}</div>
+                  </div>
+
+                  <div className="admin-table" aria-label="Comments table">
+                    <div className="admin-table-head">
+                      <div>Comment</div>
+                      <div>Post</div>
+                      <div>Votes</div>
+                      <div>Date</div>
+                    </div>
+
+                    {Array.isArray(adminComments) && adminComments.length ? (
+                      adminComments.map((c) => (
+                        <div key={c.id} className="admin-table-row">
+                          <div className="title">
+                            <div style={{ fontWeight: 700 }}>{c.name || 'Anonymous'}</div>
+                            <div className="meta" style={{ marginTop: 2 }}>
+                              {c.email || ''}
+                            </div>
+                            <div className="meta" style={{ marginTop: 6 }}>
+                              {String(c.comment || '').slice(0, 160)}
+                              {String(c.comment || '').length > 160 ? '…' : ''}
+                            </div>
+                            {me?.role === 'admin' ? (
+                              <div style={{ marginTop: 10 }}>
+                                <button
+                                  type="button"
+                                  className="pill-btn"
+                                  onClick={() => onDeleteComment(c.id)}
+                                  title="Delete this comment"
+                                >
+                                  <span className="dot" style={{ background: 'var(--danger)' }}></span>
+                                  Delete
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="meta">{c.postTitle || c.postId}</div>
+                          <div className="meta">
+                            {c.likes || 0} like / {c.dislikes || 0} dislike
+                          </div>
+                          <div className="meta">{formatDateShort(c.createdAt)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="empty-state">No comments yet.</div>
+                    )}
+                  </div>
+                </section>
               </>
             ) : activeView === 'settings' ? (
               <>
@@ -957,7 +1269,111 @@ export default function AdminPage() {
                   <h2>Settings</h2>
                   <div className="accent-line"></div>
                 </div>
-                <div className="empty-state">Settings UI is not implemented yet.</div>
+
+                <section className="side-card" aria-label="Profile settings">
+                  <div className="side-header">
+                    <h3>Profile</h3>
+                    <span>Shown on posts</span>
+                  </div>
+
+                  <div className="admin-settings-profile">
+                    <div className="admin-settings-avatar" aria-label="Profile photo">
+                      {me?.avatarUrl ? (
+                        <img src={me.avatarUrl} alt="Profile" loading="lazy" />
+                      ) : (
+                        <div className="admin-settings-avatar-fallback">
+                          {initialsFromName(settingsDisplayName.trim() || me?.displayName || me?.username)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="admin-settings-profile-body">
+                      <div className="hint">Profile photo</div>
+                      <input
+                        className="input"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => onSettingsPhotoUpload(e.target.files?.[0] || null)}
+                      />
+                      {settingsPhotoHint ? <div className="hint">{settingsPhotoHint}</div> : null}
+                    </div>
+                  </div>
+
+                  <form className="admin-form" onSubmit={onSettingsSaveProfile}>
+                    <label>
+                      <span className="label">Display name</span>
+                      <input
+                        className="input"
+                        value={settingsDisplayName}
+                        placeholder={me?.username || ''}
+                        onChange={(e) => setSettingsDisplayName(e.target.value)}
+                      />
+                      <div className="hint">
+                        Shown as:{' '}
+                        <strong>{settingsDisplayName.trim() || me?.username}</strong>
+                      </div>
+                    </label>
+
+                    <label>
+                      <span className="label">Username (login)</span>
+                      <input className="input" value={me?.username || ''} readOnly />
+                    </label>
+
+                    <div className="row">
+                      <button className="hero-cta" type="submit">
+                        Save profile
+                      </button>
+                      <div className="hint">{settingsHint}</div>
+                    </div>
+                  </form>
+                </section>
+
+                <section className="side-card" aria-label="Password settings">
+                  <div className="side-header">
+                    <h3>Password</h3>
+                    <span>Update your password</span>
+                  </div>
+
+                  <form className="admin-form" onSubmit={onSettingsChangePassword}>
+                    <label>
+                      <span className="label">Current password</span>
+                      <input
+                        className="input"
+                        type="password"
+                        autoComplete="current-password"
+                        value={pwCurrent}
+                        onChange={(e) => setPwCurrent(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      <span className="label">New password</span>
+                      <input
+                        className="input"
+                        type="password"
+                        autoComplete="new-password"
+                        value={pwNew}
+                        onChange={(e) => setPwNew(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      <span className="label">Confirm new password</span>
+                      <input
+                        className="input"
+                        type="password"
+                        autoComplete="new-password"
+                        value={pwConfirm}
+                        onChange={(e) => setPwConfirm(e.target.value)}
+                      />
+                    </label>
+
+                    <div className="row">
+                      <button className="hero-cta" type="submit">
+                        Change password
+                      </button>
+                      <div className="hint">{pwHint}</div>
+                    </div>
+                  </form>
+                </section>
               </>
             ) : (
               <>
@@ -1004,6 +1420,7 @@ export default function AdminPage() {
                           onChange={(e) => setNewRole(e.target.value)}
                         >
                           <option value="editor">editor</option>
+                          <option value="author">author</option>
                           <option value="admin">admin</option>
                         </select>
                       </label>

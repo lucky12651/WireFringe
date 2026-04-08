@@ -126,3 +126,4 @@ Then log in at `/admin`.
 
 - `admin`: can manage posts + users
 - `editor`: can manage posts only
+- `author`: can manage only their own posts (and see comments/trends for their posts)

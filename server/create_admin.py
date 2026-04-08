@@ -10,10 +10,10 @@ from .models import User
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Create an admin/editor user")
+    parser = argparse.ArgumentParser(description="Create an admin/editor/author user")
     parser.add_argument("--username", required=True)
     parser.add_argument("--password", required=True)
-    parser.add_argument("--role", default="admin", choices=["admin", "editor"])
+    parser.add_argument("--role", default="admin", choices=["admin", "editor", "author"])
     args = parser.parse_args()
 
     # Ensure tables exist

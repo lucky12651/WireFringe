@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -10,6 +11,8 @@ class PostOut(BaseModel):
     title: str
     link: str | None = None
     creator: str | None = None
+    creatorName: str | None = None
+    creatorAvatarUrl: str | None = None
     content: str
     excerpt: str
 
@@ -33,6 +36,8 @@ class MeOut(BaseModel):
     id: int
     username: str
     role: str
+    displayName: str | None = None
+    avatarUrl: str | None = None
 
 
 class UserOut(BaseModel):
@@ -45,6 +50,15 @@ class UserCreate(BaseModel):
     username: str
     password: str
     role: str = "editor"
+
+
+class ProfileUpdateRequest(BaseModel):
+    displayName: str | None = None
+
+
+class PasswordChangeRequest(BaseModel):
+    currentPassword: str
+    newPassword: str
 
 
 class PostUpsert(BaseModel):
@@ -62,3 +76,46 @@ class MediaFileOut(BaseModel):
     url: str
     size: int
     modifiedAt: datetime
+
+
+class CommentOut(BaseModel):
+    id: int
+    postId: str
+    name: str
+    comment: str
+    likes: int
+    dislikes: int
+    myVote: Literal["like", "dislike"] | None = None
+    createdAt: datetime
+
+
+class CommentCreateRequest(BaseModel):
+    name: str
+    email: str
+    comment: str
+
+
+class CommentVoteRequest(BaseModel):
+    direction: Literal["like", "dislike"]
+
+
+class AdminCommentOut(BaseModel):
+    id: int
+    postId: str
+    postTitle: str | None = None
+    name: str
+    email: str
+    comment: str
+    likes: int
+    dislikes: int
+    createdAt: datetime
+
+
+class CommentTrendOut(BaseModel):
+    id: int
+    postId: str
+    postTitle: str | None = None
+    name: str
+    commentPreview: str
+    likes: int
+    createdAt: datetime
