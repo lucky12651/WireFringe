@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { initTheme } from '../../lib/theme';
+
 async function api(path, options = {}) {
   const res = await fetch(path, {
     credentials: 'include',
@@ -226,6 +228,7 @@ export default function AdminPostPage() {
 
   useEffect(() => {
     (async () => {
+      initTheme({ defaultTheme: 'dark' });
       const ok = await refreshMe();
       if (!ok) {
         router.replace('/admin');
