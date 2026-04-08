@@ -41,6 +41,15 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+function initialsFromName(name) {
+  const s = String(name || '').trim();
+  if (!s) return '?';
+  const parts = s.split(/\s+/g).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return (parts[0].slice(0, 1) + parts[parts.length - 1].slice(0, 1)).toUpperCase();
+}
+
 async function fetchWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
   let lastErr = null;
   for (let attempt = 0; attempt < retries; attempt++) {
@@ -61,6 +70,27 @@ export default function PostPage() {
   const [error, setError] = useState('');
   const [latest, setLatest] = useState([]);
   const [latestError, setLatestError] = useState('');
+
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState('');
+
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [commentName, setCommentName] = useState('');
+  const [commentEmail, setCommentEmail] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [commentHint, setCommentHint] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+
+  const [voteAnim, setVoteAnim] = useState(null);
+
+  function triggerVoteAnim(commentId, direction) {
+    const nonce = `${Date.now()}-${Math.random()}`;
+    setVoteAnim({ commentId, direction, nonce });
+    window.setTimeout(() => {
+      setVoteAnim((cur) => (cur && cur.nonce === nonce ? null : cur));
+    }, 260);
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -134,6 +164,123 @@ export default function PostPage() {
       }
     })();
   }, [id, slugFromPath]);
+
+  async function refreshComments(postId) {
+    if (!postId) return;
+    setCommentsLoading(true);
+    setCommentsError('');
+    try {
+      const res = await fetchWithRetry(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Failed to load comments: ${res.status} ${res.statusText}`);
+      const data = await res.json();
+      setComments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setComments([]);
+      setCommentsError('Could not load comments.');
+    } finally {
+      setCommentsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!post?.id) return;
+    refreshComments(post.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id]);
+
+  async function onSubmitComment(e) {
+    e.preventDefault();
+    if (!post?.id) return;
+
+    setCommentHint('');
+    const name = commentName.trim();
+    const email = commentEmail.trim();
+    const body = commentText.trim();
+
+    if (!name) {
+      setCommentHint('Name is required.');
+      return;
+    }
+    if (!email) {
+      setCommentHint('Email is required.');
+      return;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      setCommentHint('Email looks invalid.');
+      return;
+    }
+    if (!body) {
+      setCommentHint('Comment is required.');
+      return;
+    }
+
+    setCommentSubmitting(true);
+    try {
+      const res = await fetch(`/api/posts/${encodeURIComponent(post.id)}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ name, email, comment: body }),
+      });
+
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`;
+        try {
+          const data = await res.json();
+          if (data && data.detail) detail = data.detail;
+        } catch {
+          // ignore
+        }
+        throw new Error(detail);
+      }
+
+      setCommentText('');
+      setCommentHint('Comment posted.');
+      await refreshComments(post.id);
+      setShowCommentForm(false);
+    } catch (err) {
+      console.error(err);
+      setCommentHint(String(err?.message || err));
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }
+
+  async function voteComment(commentId, direction) {
+    if (!commentId) return;
+    try {
+      const res = await fetch(`/api/comments/${encodeURIComponent(String(commentId))}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ direction }),
+      });
+
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`;
+        try {
+          const data = await res.json();
+          if (data && data.detail) detail = data.detail;
+        } catch {
+          // ignore
+        }
+        throw new Error(detail);
+      }
+
+      const updated = await res.json();
+      setComments((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      triggerVoteAnim(updated.id, direction);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -275,13 +422,27 @@ export default function PostPage() {
                 ) : post ? (
                   <article className="post-page-card" aria-live="polite">
                     <div className="post-page-meta" id="postMeta">
-                      {[
-                        formatDate(post.date),
-                        post.creator ? `By ${post.creator}` : '',
-                        post.bucket || '',
-                      ]
-                        .filter(Boolean)
-                        .join(' • ')}
+                      {[formatDate(post.date), post.bucket || ''].filter(Boolean).join(' • ')}
+                    </div>
+
+                    <div className="post-author-line" aria-label="Author">
+                      <div className="post-author-avatar">
+                        {post.creatorAvatarUrl ? (
+                          <img
+                            src={post.creatorAvatarUrl}
+                            alt={post.creatorName || post.creator || 'Author'}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="post-author-avatar-fallback">
+                            {initialsFromName(post.creatorName || post.creator)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="post-author-name">
+                        By <span className="post-author-name-strong">{post.creatorName || post.creator || 'Unknown'}</span>
+                      </div>
                     </div>
                     <h2 className="post-page-title" id="postTitle">
                       {post.title}
@@ -351,6 +512,152 @@ export default function PostPage() {
                 </section>
               </aside>
             </div>
+
+            <section className="side-card post-comments-card" aria-label="Comments">
+              <div className="side-header">
+                <h3>Comments</h3>
+                <span>{Array.isArray(comments) ? comments.length : 0}</span>
+              </div>
+
+              <div className="post-comments-actions">
+                <button
+                  className="pill-btn"
+                  type="button"
+                  onClick={() => {
+                    setCommentHint('');
+                    setShowCommentForm((v) => !v);
+                  }}
+                  disabled={!post?.id}
+                >
+                  <span className="dot" style={{ background: 'var(--accent)' }}></span>
+                  Comment
+                </button>
+
+                <button
+                  className="pill-btn"
+                  type="button"
+                  onClick={() => refreshComments(post?.id)}
+                  disabled={!post?.id || commentsLoading}
+                >
+                  <span className="dot" style={{ background: '#4cd4ff' }}></span>
+                  Refresh
+                </button>
+
+                {commentsError ? <div className="hint">{commentsError}</div> : null}
+              </div>
+
+              {showCommentForm ? (
+                <form className="post-comment-form" onSubmit={onSubmitComment}>
+                  <div className="post-comment-grid">
+                    <label>
+                      <span className="label">Name</span>
+                      <input
+                        className="input"
+                        value={commentName}
+                        onChange={(e) => setCommentName(e.target.value)}
+                        placeholder="Your name"
+                      />
+                    </label>
+
+                    <label>
+                      <span className="label">Email</span>
+                      <input
+                        className="input"
+                        type="email"
+                        value={commentEmail}
+                        onChange={(e) => setCommentEmail(e.target.value)}
+                        placeholder="you@example.com"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    <span className="label">Comment</span>
+                    <textarea
+                      className="input textarea"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Write your comment…"
+                    ></textarea>
+                  </label>
+
+                  <div className="row">
+                    <button className="hero-cta" type="submit" disabled={commentSubmitting}>
+                      {commentSubmitting ? 'Posting…' : 'Post comment'}
+                    </button>
+                    <div className="hint">{commentHint}</div>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="post-comment-list" aria-label="Comment list">
+                {commentsLoading ? (
+                  <div className="empty-state">Loading…</div>
+                ) : Array.isArray(comments) && comments.length ? (
+                  comments.map((c) => (
+                    <article key={c.id} className="post-comment-item">
+                      <div className="post-comment-meta">
+                        <div className="post-comment-name">{c.name || 'Anonymous'}</div>
+                        <div className="post-comment-date">
+                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                        </div>
+                      </div>
+                      <div className="post-comment-body">{c.comment || ''}</div>
+                      <div className="post-comment-actions">
+                        <button
+                          type="button"
+                          className={`pill-btn vote-btn like ${c?.myVote === 'like' ? 'voted' : ''} ${
+                            voteAnim?.commentId === c.id && voteAnim?.direction === 'like' ? 'pop' : ''
+                          }`}
+                          onClick={() => voteComment(c.id, 'like')}
+                          aria-pressed={c?.myVote === 'like'}
+                        >
+                          <span className="vote-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              <path
+                                d="M7 10L12 5L17 10"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                          <span>Like</span>
+                          <span className="vote-count">{c.likes || 0}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`pill-btn vote-btn dislike ${c?.myVote === 'dislike' ? 'voted' : ''} ${
+                            voteAnim?.commentId === c.id && voteAnim?.direction === 'dislike' ? 'pop' : ''
+                          }`}
+                          onClick={() => voteComment(c.id, 'dislike')}
+                          aria-pressed={c?.myVote === 'dislike'}
+                        >
+                          <span className="vote-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              <path
+                                d="M7 14L12 19L17 14"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                          <span>Dislike</span>
+                          <span className="vote-count">{c.dislikes || 0}</span>
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="empty-state">No comments yet. Be the first to comment.</div>
+                )}
+              </div>
+            </section>
 
             {bottomPosts.length ? (
               <div className="post-bottom" aria-label="More latest posts">
