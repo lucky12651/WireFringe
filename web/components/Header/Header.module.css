@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   right: 0;
-  background: #1f1f1f;
+  background: var(--bg-primary);
   z-index: 100;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -94,9 +94,9 @@
   height: 48px;
   padding: 0 52px;
   border: none;
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: #fff;
+  border-radius: 24px;
+  background: var(--bg-secondary/90);
+  color: #000000;
   font-size: 16px;
   transition: all 0.2s ease;
   outline: none;
@@ -107,12 +107,12 @@
   position: absolute;
   right: 44px;
   padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.327);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   font-size: 10px;
   font-weight: 500;
-  color: #9aa0a6;
+  color: #ffffff;
   font-family: var(--font-body);
   pointer-events: none;
   transition: opacity 0.2s ease;

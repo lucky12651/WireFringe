@@ -99,14 +99,25 @@ export default function HeroSection({ posts = [], loading }) {
               </Link>
             ))}
           </div>
+
+          <Link href="/?category=all" className={styles.moreHeadlines}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="9" y1="21" x2="9" y2="9" />
+            </svg>
+            See more headlines and perspectives
+          </Link>
         </section>
 
         {/* Sidebar (Right Column) - Picks For You */}
         <aside className={styles.sidebar}>
-          <div className={styles.sectionHeader} style={{ color: 'var(--text-primary)', cursor: 'default' }}>
+          <div className={styles.sectionHeader} style={{ color: 'var(--text-primary)', cursor: 'default', justifyContent: 'space-between', width: '100%' }}>
             Picks for you
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.6, width: 14, height: 14 }}>
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6, width: 20, height: 20 }}>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
 

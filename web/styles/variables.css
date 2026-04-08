@@ -18,6 +18,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   --bg-primary: #ffffff;
   --bg-secondary: #f6f8fc;
   --bg-hover: #f0f1f5;
+  --bg-tertiary: #f1f3f4; /* Added for card backgrounds in light mode */
   --border-dim: #dadce0;
   --border-light: #e8eaed;
   
@@ -48,6 +49,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px; /* Added for larger containers */
   --radius-pill: 100px;
   
   /* Shadows */
@@ -58,8 +60,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 /* Dark mode overrides - Strictly matching Google News Screenshot */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #0e0e0e; /* Pure Google dark bg */
-    --bg-secondary: #212121; /* Darker secondary */
+    --bg-primary: #131314; /* Deepest background */
+    --bg-secondary: #292a2d; /* Layout background */
+    --bg-tertiary: #1f1f1f; /* Card/Section background (Tertiary Black) */
     --bg-hover: #3c4043;
     --border-dim: #3c4043;
     --border-light: #212121;
