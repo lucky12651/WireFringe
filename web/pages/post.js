@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout/Layout';
 import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
@@ -21,7 +22,7 @@ function postUrl(post) {
   const id = post?.id;
   if (!id) return '/';
   const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}?id=${id}`;
+  return `/post/${encodeURIComponent(slug)}`;
 }
 
 function formatDate(date) {
@@ -72,6 +73,7 @@ async function fetchWithRetry(
 }
 
 export default function PostPage() {
+  const router = useRouter();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
   const [latest, setLatest] = useState([]);
@@ -94,30 +96,43 @@ export default function PostPage() {
   }, []);
 
   const slugFromPath = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const m = String(window.location.pathname || '').match(/^\/post\/([^/?#]+)/);
+    if (!router.isReady) return '';
+    const path = String(router.asPath || '').split('?')[0] || '';
+    const m = path.match(/^\/post\/([^/?#]+)/);
     if (!m) return '';
     try {
       return decodeURIComponent(m[1] || '');
     } catch {
       return m[1] || '';
     }
-  }, []);
+  }, [router.asPath, router.isReady]);
 
   const id = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search || '').get('id') || '';
-  }, []);
+    if (!router.isReady) return '';
+
+    const q = router.query?.id;
+    if (typeof q === 'string') return q;
+    if (Array.isArray(q)) return q[0] || '';
+
+    // Fallback (older links / manual parsing)
+    const queryStr = String(router.asPath || '').split('?')[1] || '';
+    return new URLSearchParams(queryStr).get('id') || '';
+  }, [router.asPath, router.isReady, router.query?.id]);
 
   const isPreview = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search || '').get('preview') === 'true';
-  }, []);
+    if (!router.isReady) return false;
+    const q = router.query?.preview;
+    if (q === 'true') return true;
+    const queryStr = String(router.asPath || '').split('?')[1] || '';
+    return new URLSearchParams(queryStr).get('preview') === 'true';
+  }, [router.asPath, router.isReady, router.query?.preview]);
 
   // Fetch post
   useEffect(() => {
     (async () => {
       try {
+        if (!router.isReady) return;
+
         if (isPreview) {
           const data = localStorage.getItem('gn_preview_data');
           if (data) {
@@ -154,10 +169,10 @@ export default function PostPage() {
         console.error(err);
         setError('Could not load this post. Please try again later.');
       } finally {
-        setLoading(false);
+        if (router.isReady) setLoading(false);
       }
     })();
-  }, [id, slugFromPath]);
+  }, [id, isPreview, router.isReady, slugFromPath]);
 
   // Clean URL and metadata management
   useEffect(() => {

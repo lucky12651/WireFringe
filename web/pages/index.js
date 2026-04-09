@@ -24,6 +24,22 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+async function fetchOkWithTimeout(url, { timeoutMs = 1500 } = {}) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchJsonWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
   let lastErr = null;
   const transientStatuses = new Set([502, 503, 504]);
@@ -117,6 +133,13 @@ export default function HomePage() {
   useEffect(() => {
     (async () => {
       try {
+        const apiOk = await fetchOkWithTimeout('/api/health', { timeoutMs: 1500 });
+        if (!apiOk) {
+          throw new Error(
+            'Backend API not reachable. Start FastAPI on port 8000 (see README) or set BACKEND_URL for the Next.js dev server.'
+          );
+        }
+
         const data = await fetchJsonWithRetry(
           '/api/posts',
           { headers: { Accept: 'application/json' } },
@@ -131,7 +154,8 @@ export default function HomePage() {
         );
       } catch (err) {
         console.error(err);
-        setError('Could not load posts. Please try again later.');
+        const msg = String(err?.message || err || '').trim();
+        setError(msg || 'Could not load posts. Please try again later.');
       } finally {
         setLoading(false);
       }

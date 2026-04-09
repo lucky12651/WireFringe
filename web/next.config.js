@@ -13,7 +13,7 @@ const nextConfig = {
   // - FastAPI on :8000 (API + /static uploads/CSS)
   // Proxy API + static assets to FastAPI to keep same-origin cookies working.
   async rewrites() {
-    const backend = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+    const backend = process.env.BACKEND_URL || 'http://127.0.0.1:8003';
     return [
       {
         source: '/api/:path*',
