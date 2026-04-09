@@ -6,7 +6,7 @@ const nextConfig = {
   // Allow opening the dev server via http://127.0.0.1:3000 (not just localhost)
   // without Next.js blocking dev resources/HMR.
   // Add your LAN IP here if you open the dev server from another device.
-  allowedDevOrigins: ['127.0.0.1', 'localhost', '10.5.0.2'],
+  allowedDevOrigins: ['127.0.0.1', 'localhost', '10.5.0.2', '80.225.223.80'],
 
   // Two-server setup:
   // - Next.js on :3000 (UI)
