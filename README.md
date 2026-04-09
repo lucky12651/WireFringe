@@ -25,18 +25,18 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/coffeenblog
 ## 3) Start the backend
 
 ```powershell
-python -m uvicorn server.main:app --reload --port 8000
+python -m uvicorn server.main:app --reload --port 8003
 ```
 
 Troubleshooting:
 
 - If the Next.js homepage shows `TypeError: Failed to fetch`, it usually means the FastAPI backend is not reachable from the Next.js dev server.
-	- Confirm FastAPI is running on `http://127.0.0.1:8000`.
+	- Confirm FastAPI is running on `http://127.0.0.1:8003`.
 	- If your backend is on a different host/port, set `BACKEND_URL` before `npm run dev`:
 		- PowerShell: `$env:BACKEND_URL = "http://127.0.0.1:8001"`
 
 Open:
-- http://127.0.0.1:8000/
+- http://127.0.0.1:8003/
 
 ## Reading a post
 
@@ -56,7 +56,7 @@ Run Next.js and FastAPI as two different servers:
 Terminal 1 (backend):
 
 ```powershell
-python -m uvicorn server.main:app --reload --port 8000
+python -m uvicorn server.main:app --reload --port 8003
 ```
 
 Terminal 2 (frontend):
@@ -72,16 +72,16 @@ Open:
 - Admin: http://127.0.0.1:3000/admin
 
 FastAPI is backend-only (API + `/static/*` for CSS/uploads):
-- http://127.0.0.1:8000/api/health
+- http://127.0.0.1:8003/api/health
 
 The Next.js dev server proxies these paths to FastAPI (see `web/next.config.js`):
-- `/api/*` → `http://127.0.0.1:8000/api/*`
-- `/static/*` → `http://127.0.0.1:8000/static/*`
+- `/api/*` → `http://127.0.0.1:8003/api/*`
+- `/static/*` → `http://127.0.0.1:8003/static/*`
 
 If your backend runs on a different port, set:
 
 ```powershell
-$env:BACKEND_URL = "http://127.0.0.1:8001"
+$env:BACKEND_URL = "http://127.0.0.1:8003"
 npm run dev
 ```
 
