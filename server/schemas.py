@@ -108,7 +108,12 @@ class AdminCommentOut(BaseModel):
     comment: str
     likes: int
     dislikes: int
+    approved: bool
     createdAt: datetime
+
+
+class PendingCountOut(BaseModel):
+    count: int
 
 
 class CommentTrendOut(BaseModel):

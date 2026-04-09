@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 from typing import Generator
 
@@ -27,6 +27,7 @@ from .schemas import (
     LoginRequest,
     MediaFileOut,
     MeOut,
+    PendingCountOut,
     PasswordChangeRequest,
     PostOut,
     PostUpsert,
@@ -94,6 +95,25 @@ def _ensure_user_profile_columns() -> None:
             conn.exec_driver_sql("ALTER TABLE users ADD COLUMN display_name VARCHAR")
         if "avatar_url" not in existing:
             conn.exec_driver_sql("ALTER TABLE users ADD COLUMN avatar_url VARCHAR")
+
+
+def _ensure_comment_moderation_columns() -> None:
+    """Best-effort, migration-less schema upgrade for SQLite comments moderation."""
+
+    with engine.begin() as conn:
+        rows = conn.exec_driver_sql("PRAGMA table_info(comments)").fetchall()
+        if not rows:
+            return
+
+        existing = {str(r[1]) for r in rows}  # (cid, name, type, notnull, dflt_value, pk)
+
+        if "approved" not in existing:
+            # Default new comments to pending (0). Immediately after adding the column,
+            # mark existing rows as approved so we don't hide legacy comments.
+            conn.exec_driver_sql(
+                "ALTER TABLE comments ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"
+            )
+            conn.exec_driver_sql("UPDATE comments SET approved = 1")
 
 
 def _me_out(user: User) -> MeOut:
@@ -264,6 +284,11 @@ def _require_admin(user: User) -> None:
         raise HTTPException(status_code=403, detail="Admin required")
 
 
+def _require_staff(user: User) -> None:
+    if user.role not in {"admin", "editor"}:
+        raise HTTPException(status_code=403, detail="Admin/editor required")
+
+
 @app.get("/api/posts", response_model=list[PostOut])
 def list_posts(db: Session = Depends(get_db)) -> list[PostOut]:
     posts = db.execute(select(Post).order_by(Post.published_at.desc().nullslast())).scalars().all()
@@ -320,6 +345,7 @@ def list_comments(post_id: str, request: Request, db: Session = Depends(get_db))
         db.execute(
             select(Comment)
             .where(Comment.post_id == post_id)
+            .where(Comment.approved.is_(True))
             .order_by(Comment.likes.desc(), Comment.created_at.desc(), Comment.id.desc())
         )
         .scalars()
@@ -380,6 +406,7 @@ def create_comment(post_id: str, payload: CommentCreateRequest, db: Session = De
         body=body,
         likes=0,
         dislikes=0,
+        approved=False,
     )
     db.add(c)
     db.commit()
@@ -396,6 +423,10 @@ def vote_comment(
 ) -> CommentOut:
     c = db.get(Comment, int(comment_id))
     if c is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Pending/unapproved comments are not visible publicly.
+    if not bool(getattr(c, "approved", False)):
         raise HTTPException(status_code=404, detail="Comment not found")
 
     visitor_id = _get_or_create_visitor_id(request)
@@ -590,10 +621,64 @@ def admin_list_comments(request: Request, db: Session = Depends(get_db)) -> list
                 comment=c.body,
                 likes=c.likes,
                 dislikes=c.dislikes,
+                approved=bool(getattr(c, "approved", True)),
                 createdAt=c.created_at,
             )
         )
     return out
+
+
+@app.get("/api/admin/comments/pending-count", response_model=PendingCountOut)
+def admin_pending_comment_count(request: Request, db: Session = Depends(get_db)) -> PendingCountOut:
+    user = _require_user(request, db)
+
+    if user.role == "author":
+        count = db.execute(
+            select(func.count(Comment.id))
+            .select_from(Comment)
+            .join(Post, Post.id == Comment.post_id)
+            .where(Comment.approved.is_(False))
+            .where(Post.creator == user.username)
+        ).scalar_one()
+    else:
+        _require_staff(user)
+        count = db.execute(select(func.count(Comment.id)).where(Comment.approved.is_(False))).scalar_one()
+
+    return PendingCountOut(count=int(count or 0))
+
+
+@app.post("/api/admin/comments/{comment_id}/approve")
+def admin_approve_comment(comment_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    user = _require_user(request, db)
+    _require_staff(user)
+
+    c = db.get(Comment, int(comment_id))
+    if c is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if not bool(getattr(c, "approved", False)):
+        c.approved = True
+        db.commit()
+
+    return {"ok": True}
+
+
+@app.delete("/api/admin/comments/{comment_id}/disapprove")
+def admin_disapprove_comment(comment_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    user = _require_user(request, db)
+    _require_staff(user)
+
+    c = db.get(Comment, int(comment_id))
+    if c is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if bool(getattr(c, "approved", False)):
+        raise HTTPException(status_code=400, detail="Comment is already approved")
+
+    db.execute(delete(CommentVote).where(CommentVote.comment_id == int(comment_id)))
+    db.delete(c)
+    db.commit()
+    return {"ok": True}
 
 
 @app.get("/api/admin/comments/trending", response_model=list[CommentTrendOut])
@@ -880,6 +965,7 @@ def on_startup() -> None:
 
     Base.metadata.create_all(bind=engine)
     _ensure_user_profile_columns()
+    _ensure_comment_moderation_columns()
 
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
