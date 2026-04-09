@@ -28,6 +28,13 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/coffeenblog
 python -m uvicorn server.main:app --reload --port 8000
 ```
 
+Troubleshooting:
+
+- If the Next.js homepage shows `TypeError: Failed to fetch`, it usually means the FastAPI backend is not reachable from the Next.js dev server.
+	- Confirm FastAPI is running on `http://127.0.0.1:8000`.
+	- If your backend is on a different host/port, set `BACKEND_URL` before `npm run dev`:
+		- PowerShell: `$env:BACKEND_URL = "http://127.0.0.1:8001"`
+
 Open:
 - http://127.0.0.1:8000/
 
