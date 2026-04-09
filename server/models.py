@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -60,6 +60,9 @@ class Comment(Base):
 
     likes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     dislikes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Moderation: pending comments are not shown publicly until approved.
+    approved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 

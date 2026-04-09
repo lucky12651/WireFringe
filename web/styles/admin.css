@@ -242,12 +242,13 @@ html[data-theme="light"] {
 
 .page-shell.page-shell-admin {
   max-width: 1720px;
+  --admin-shell-top: 22px;
 }
 
 /* NEW ADMIN SHELL (sidebar layout) */
 
 .admin-shell {
-  margin-top: 22px;
+  margin-top: var(--admin-shell-top, 22px);
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 24px;
@@ -269,7 +270,9 @@ html[data-theme="light"] {
 
 .admin-sidebar {
   position: sticky;
-  top: 18px;
+  /* Keep the sidebar aligned and stable across admin tabs/content changes. */
+  top: calc(var(--space-lg) + var(--admin-shell-top, 22px));
+  min-height: calc(100vh - (var(--space-lg) + var(--admin-shell-top, 22px)) - var(--space-xl));
   border-radius: 18px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-primary);
@@ -277,15 +280,11 @@ html[data-theme="light"] {
   overflow: hidden;
 }
 
-@media (min-width: 1300px) {
-  .admin-sidebar {
-    top: 76px;
-  }
-}
-
 @media (max-width: 980px) {
   .admin-sidebar {
     position: static;
+    top: auto;
+    min-height: auto;
   }
 }
 
@@ -345,6 +344,11 @@ html[data-theme="light"] .admin-nav-item {
   color: var(--on-accent);
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.35);
+}
+
+/* In light mode, the accent can be bright (e.g. neon) and white text may wash out. */
+html[data-theme="light"] .admin-nav-item.active {
+  color: var(--text-primary);
 }
 
 .admin-nav-item:disabled,
@@ -435,12 +439,36 @@ html[data-theme="light"] .admin-theme-toggle {
   max-height: min(560px, calc(100vh - 320px));
   overflow: auto;
   padding: 14px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 .admin-title-row .admin-posts-scroll::-webkit-scrollbar {
-  display: none;
+  width: 10px;
+}
+
+.admin-title-row .admin-posts-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-title-row .admin-posts-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-title-row .admin-posts-scroll.show-scrollbar {
+  scrollbar-color: rgba(var(--accent-rgb), 0.35) transparent;
+}
+
+.admin-title-row .admin-posts-scroll.show-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.35);
+}
+
+.admin-title-row .admin-posts-scroll.show-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.5);
 }
 
 .admin-table-head.admin-posts-table-head,
@@ -847,6 +875,50 @@ html[data-theme="light"] .admin-chart-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Dashboard: keep the Comments Trend card the same size as the Post Growth card,
+   and scroll the list instead of growing the card. */
+.dashboard-item-left-top.admin-chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-item-left-top .admin-trend-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* Reserve gutter, but keep scrollbar invisible until scrolling. */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.dashboard-item-left-top .admin-trend-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dashboard-item-left-top .admin-trend-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-item-left-top .admin-trend-list::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dashboard-item-left-top .admin-trend-list.show-scrollbar {
+  scrollbar-color: rgba(var(--accent-rgb), 0.35) transparent;
+}
+
+.dashboard-item-left-top .admin-trend-list.show-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.35);
+}
+
+.dashboard-item-left-top .admin-trend-list.show-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.5);
 }
 
 .admin-trend-item {

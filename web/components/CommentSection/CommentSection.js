@@ -36,6 +36,7 @@ export default function CommentSection({ postId }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const fetchComments = async () => {
     try {
@@ -60,6 +61,7 @@ export default function CommentSection({ postId }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setSubmitting(true);
 
     try {
@@ -77,6 +79,7 @@ export default function CommentSection({ postId }) {
       setName('');
       setEmail('');
       setComment('');
+      setNotice('Thanks! Your comment was submitted and is pending approval.');
       await fetchComments();
     } catch (err) {
       setError(err.message);
@@ -141,6 +144,7 @@ export default function CommentSection({ postId }) {
           maxLength={5000}
         />
         {error && <p className={styles.error}>{error}</p>}
+        {notice && <p className={styles.notice}>{notice}</p>}
         <button 
           className={styles.submitBtn} 
           type="submit" 

@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getTheme, initTheme, setTheme } from '../lib/theme';
 
@@ -71,6 +71,15 @@ export default function AdminPage() {
   const [activeView, setActiveView] = useState('dashboard');
   const [themeMode, setThemeMode] = useState('dark');
 
+  const postGrowthCardRef = useRef(null);
+  const [trendCardHeight, setTrendCardHeight] = useState(null);
+
+  const trendListRef = useRef(null);
+  const trendScrollHideTimerRef = useRef(null);
+
+  const postsScrollRef = useRef(null);
+  const postsScrollHideTimerRef = useRef(null);
+
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginHint, setLoginHint] = useState('');
@@ -98,6 +107,7 @@ export default function AdminPage() {
 
   const [adminComments, setAdminComments] = useState([]);
   const [adminCommentsHint, setAdminCommentsHint] = useState('');
+  const [pendingCommentsCount, setPendingCommentsCount] = useState(0);
 
   const [trendingComments, setTrendingComments] = useState([]);
   const [trendingHint, setTrendingHint] = useState('');
@@ -112,6 +122,8 @@ export default function AdminPage() {
   const [pwHint, setPwHint] = useState('');
 
   const canManageUsers = me?.role === 'admin';
+  const canModerateComments = me?.role === 'admin' || me?.role === 'editor';
+  const canViewPendingCommentsCount = Boolean(me);
 
   const postsCount = useMemo(() => String(posts.length), [posts]);
 
@@ -326,10 +338,30 @@ export default function AdminPage() {
       setAdminCommentsHint('');
       const out = await api('/api/admin/comments', { method: 'GET' });
       setAdminComments(out || []);
+      if (Array.isArray(out)) {
+        setPendingCommentsCount(out.filter((c) => !c?.approved).length);
+      }
     } catch (err) {
       console.error(err);
       setAdminComments([]);
       setAdminCommentsHint(String(err?.message || err));
+    }
+  }
+
+  async function refreshPendingCommentsCount(userOverride = null) {
+    const role = userOverride?.role || me?.role || '';
+    const canFetch = role === 'admin' || role === 'editor' || role === 'author';
+    if (!canFetch) {
+      setPendingCommentsCount(0);
+      return;
+    }
+
+    try {
+      const out = await api('/api/admin/comments/pending-count', { method: 'GET' });
+      setPendingCommentsCount(Number(out?.count || 0));
+    } catch (err) {
+      console.error(err);
+      setPendingCommentsCount(0);
     }
   }
 
@@ -366,6 +398,47 @@ export default function AdminPage() {
     }
   }
 
+  async function onApproveComment(commentId) {
+    if (!commentId) return;
+    if (!canModerateComments) return;
+
+    try {
+      setAdminCommentsHint('');
+      await api(`/api/admin/comments/${encodeURIComponent(String(commentId))}/approve`, { method: 'POST' });
+      setAdminCommentsHint('Approved.');
+      await refreshAdminComments();
+      await refreshPendingCommentsCount();
+      await refreshTrendingComments();
+    } catch (err) {
+      console.error(err);
+      const msg = String(err?.message || err);
+      setAdminCommentsHint(msg);
+      alert(msg);
+    }
+  }
+
+  async function onDisapproveComment(commentId) {
+    if (!commentId) return;
+    if (!canModerateComments) return;
+
+    const ok = confirm('Disapprove this comment? This will delete it.');
+    if (!ok) return;
+
+    try {
+      setAdminCommentsHint('');
+      await api(`/api/admin/comments/${encodeURIComponent(String(commentId))}/disapprove`, { method: 'DELETE' });
+      setAdminCommentsHint('Disapproved (deleted).');
+      await refreshAdminComments();
+      await refreshPendingCommentsCount();
+      await refreshTrendingComments();
+    } catch (err) {
+      console.error(err);
+      const msg = String(err?.message || err);
+      setAdminCommentsHint(msg);
+      alert(msg);
+    }
+  }
+
   useEffect(() => {
     (async () => {
       initTheme({ defaultTheme: 'dark' });
@@ -377,6 +450,7 @@ export default function AdminPage() {
       await refreshPosts();
       await refreshMedia();
       await refreshTrendingComments();
+      await refreshPendingCommentsCount(user);
       if (user.role === 'admin') {
         await api('/api/admin/users', { method: 'GET' })
           .then((out) => setUsers(out || []))
@@ -390,12 +464,98 @@ export default function AdminPage() {
     if (!me) return;
     if (activeView === 'dashboard') {
       refreshTrendingComments();
+      refreshPendingCommentsCount();
     }
     if (activeView === 'comments') {
       refreshAdminComments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, me]);
+
+  useEffect(() => {
+    if (!me) return;
+    if (activeView !== 'dashboard') return;
+
+    const el = postGrowthCardRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      const h = Math.round(rect.height);
+      if (!h) return;
+      setTrendCardHeight((prev) => (prev === h ? prev : h));
+    };
+
+    update();
+
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => update());
+      ro.observe(el);
+    }
+
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      if (ro) ro.disconnect();
+    };
+  }, [activeView, me?.id]);
+
+  useEffect(() => {
+    if (!me) return;
+    if (activeView !== 'dashboard') return;
+
+    const el = trendListRef.current;
+    if (!el) return;
+
+    const showTemporarily = () => {
+      el.classList.add('show-scrollbar');
+      if (trendScrollHideTimerRef.current) {
+        window.clearTimeout(trendScrollHideTimerRef.current);
+      }
+      trendScrollHideTimerRef.current = window.setTimeout(() => {
+        el.classList.remove('show-scrollbar');
+      }, 800);
+    };
+
+    el.addEventListener('scroll', showTemporarily, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', showTemporarily);
+      el.classList.remove('show-scrollbar');
+      if (trendScrollHideTimerRef.current) {
+        window.clearTimeout(trendScrollHideTimerRef.current);
+        trendScrollHideTimerRef.current = null;
+      }
+    };
+  }, [activeView, me?.id, trendingHint, Array.isArray(trendingComments) ? trendingComments.length : 0]);
+
+  useEffect(() => {
+    if (!me) return;
+    if (activeView !== 'posts') return;
+
+    const el = postsScrollRef.current;
+    if (!el) return;
+
+    const showTemporarily = () => {
+      el.classList.add('show-scrollbar');
+      if (postsScrollHideTimerRef.current) {
+        window.clearTimeout(postsScrollHideTimerRef.current);
+      }
+      postsScrollHideTimerRef.current = window.setTimeout(() => {
+        el.classList.remove('show-scrollbar');
+      }, 800);
+    };
+
+    el.addEventListener('scroll', showTemporarily, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', showTemporarily);
+      el.classList.remove('show-scrollbar');
+      if (postsScrollHideTimerRef.current) {
+        window.clearTimeout(postsScrollHideTimerRef.current);
+        postsScrollHideTimerRef.current = null;
+      }
+    };
+  }, [activeView, me?.id, posts?.length]);
 
   useEffect(() => {
     if (!me) return;
@@ -447,6 +607,7 @@ export default function AdminPage() {
       setPosts([]);
       setUsers([]);
       setMedia([]);
+      setPendingCommentsCount(0);
       resetPostForm();
       setActiveView('dashboard');
     }
@@ -892,8 +1053,8 @@ export default function AdminPage() {
                           <div className="t">Pending Comments</div>
                           <div className="admin-metric-icon" aria-hidden="true"></div>
                         </div>
-                        <div className="n">0</div>
-                        <div className="sub">Comments not enabled</div>
+                        <div className="n">{canViewPendingCommentsCount ? pendingCommentsCount : 0}</div>
+                        <div className="sub">Awaiting approval</div>
                       </div>
                     </div>
                   </section>
@@ -901,7 +1062,10 @@ export default function AdminPage() {
 
                 <section className="admin-dashboard-grid" aria-label="Dashboard panels">
                   {/* Comments Trend - Left */}
-                  <div className="side-card admin-chart-card dashboard-item-left-top">
+                  <div
+                    className="side-card admin-chart-card dashboard-item-left-top"
+                    style={trendCardHeight ? { height: trendCardHeight } : undefined}
+                  >
                     <div className="admin-card-head">
                       <div>
                         <div className="h">Comments Trend</div>
@@ -916,7 +1080,7 @@ export default function AdminPage() {
                     {trendingHint ? <div className="admin-chart-empty">{trendingHint}</div> : null}
 
                     {!trendingHint && Array.isArray(trendingComments) && trendingComments.length ? (
-                      <div className="admin-trend-list" aria-label="Trending comments">
+                      <div className="admin-trend-list" aria-label="Trending comments" ref={trendListRef}>
                         {trendingComments.map((c) => (
                           <div key={c.id} className="admin-trend-item">
                             <div className="admin-trend-top">
@@ -935,7 +1099,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Post Growth */}
-                  <div className="side-card admin-chart-card dashboard-item-center-top">
+                  <div className="side-card admin-chart-card dashboard-item-center-top" ref={postGrowthCardRef}>
                     <div className="admin-card-head">
                       <div>
                         <div className="h">Post Growth</div>
@@ -1057,7 +1221,7 @@ export default function AdminPage() {
                     Write new post
                   </Link>
                   <div className="side-card admin-posts-card" aria-label="All posts">
-                    <div className="admin-posts-scroll">
+                    <div className="admin-posts-scroll" ref={postsScrollRef}>
                       <div className="admin-table-head admin-posts-table-head">
                         <div>Title</div>
                         <div>Author</div>
@@ -1228,7 +1392,12 @@ export default function AdminPage() {
                       adminComments.map((c) => (
                         <div key={c.id} className="admin-table-row">
                           <div className="title">
-                            <div style={{ fontWeight: 700 }}>{c.name || 'Anonymous'}</div>
+                            <div style={{ fontWeight: 700 }}>
+                              {c.name || 'Anonymous'}{' '}
+                              <span className={`status ${c.approved ? 'published' : 'draft'}`}>
+                                {c.approved ? 'Approved' : 'Pending'}
+                              </span>
+                            </div>
                             <div className="meta" style={{ marginTop: 2 }}>
                               {c.email || ''}
                             </div>
@@ -1236,7 +1405,28 @@ export default function AdminPage() {
                               {String(c.comment || '').slice(0, 160)}
                               {String(c.comment || '').length > 160 ? '…' : ''}
                             </div>
-                            {me?.role === 'admin' ? (
+                            {!c.approved && canModerateComments ? (
+                              <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  className="pill-btn"
+                                  onClick={() => onApproveComment(c.id)}
+                                  title="Approve this comment"
+                                >
+                                  <span className="dot" style={{ background: 'var(--accent)' }}></span>
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  className="pill-btn"
+                                  onClick={() => onDisapproveComment(c.id)}
+                                  title="Disapprove (delete) this comment"
+                                >
+                                  <span className="dot" style={{ background: 'var(--danger)' }}></span>
+                                  Disapprove
+                                </button>
+                              </div>
+                            ) : me?.role === 'admin' ? (
                               <div style={{ marginTop: 10 }}>
                                 <button
                                   type="button"
