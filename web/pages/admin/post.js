@@ -4,45 +4,10 @@ import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { initTheme } from '../../lib/theme';
-
-async function api(path, options = {}) {
-  const res = await fetch(path, {
-    credentials: 'include',
-    headers: {
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
-
-  if (!res.ok) {
-    let detail = `${res.status} ${res.statusText}`;
-    try {
-      const data = await res.json();
-      if (data && data.detail) detail = data.detail;
-    } catch (_) {}
-    throw new Error(detail);
-  }
-
-  if (res.status === 204) return null;
-  const text = await res.text();
-  if (!text) return null;
-  return JSON.parse(text);
-}
-
-const BUCKETS = ['Tech', 'AI & Future Tech', 'Business & Markets', 'Personal Finance'];
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
+import { api, postsApi, mediaApi } from '../../lib/api';
+import { slugifyTitle } from '../../lib/utils';
+import { useCategories } from '../../hooks/useCategories';
+import { PillButton } from '../../components/admin/shared';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -55,7 +20,8 @@ export default function AdminPostPage() {
 
   const [postId, setPostId] = useState('');
   const [title, setTitle] = useState('');
-  const [bucket, setBucket] = useState('Tech');
+  const { categoryNames, refreshCategories } = useCategories();
+  const [bucket, setBucket] = useState('');
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -145,25 +111,7 @@ export default function AdminPostPage() {
   }
 
   async function uploadImage(file) {
-    const fd = new FormData();
-    fd.append('file', file);
-
-    const res = await fetch('/api/admin/upload-image', {
-      method: 'POST',
-      credentials: 'include',
-      body: fd,
-    });
-
-    if (!res.ok) {
-      let detail = `${res.status} ${res.statusText}`;
-      try {
-        const data = await res.json();
-        if (data && data.detail) detail = data.detail;
-      } catch (_) {}
-      throw new Error(detail);
-    }
-
-    return await res.json();
+    return await mediaApi.upload(file);
   }
 
   async function onSave(e) {
@@ -178,12 +126,7 @@ export default function AdminPostPage() {
 
     try {
       if (!postId) {
-        const created = await api('/api/admin/posts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
+        const created = await postsApi.create(payload);
         setHint('Saved.');
         await router.replace({ pathname: '/admin/post', query: { id: created.id } }, undefined, {
           shallow: true,
@@ -229,6 +172,7 @@ export default function AdminPostPage() {
   useEffect(() => {
     (async () => {
       initTheme({ defaultTheme: 'dark' });
+      await refreshCategories();
       const ok = await refreshMe();
       if (!ok) {
         router.replace('/admin');
@@ -237,6 +181,13 @@ export default function AdminPostPage() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Set default bucket once categories are loaded
+  useEffect(() => {
+    if (categoryNames.length && !bucket) {
+      setBucket(categoryNames[0]);
+    }
+  }, [categoryNames, bucket]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -319,7 +270,7 @@ export default function AdminPostPage() {
                     value={bucket}
                     onChange={(e) => setBucket(e.target.value)}
                   >
-                    {BUCKETS.map((b) => (
+                    {categoryNames.map((b) => (
                       <option key={b}>{b}</option>
                     ))}
                   </select>

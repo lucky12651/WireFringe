@@ -120,3 +120,19 @@ class CommentTrendOut(BaseModel):
     commentPreview: str
     likes: int
     createdAt: datetime
+
+
+class CategoryOut(BaseModel):
+    id: int
+    name: str
+    createdAt: datetime
+
+
+class CategoryCreate(BaseModel):
+    name: str
+
+
+class CategoryWithCountOut(BaseModel):
+    id: int
+    name: str
+    count: int
