@@ -27,6 +27,9 @@ if parsed.get_backend_name() != "postgresql":
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
+    # Fail fast if the host is unreachable; otherwise uvicorn --reload can appear to
+    # "hang" during startup while trying to connect.
+    connect_args={"connect_timeout": int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))},
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
