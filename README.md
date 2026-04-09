@@ -1,23 +1,25 @@
-# Coffee n Blog (FastAPI + SQLite)
+# Coffee n Blog (FastAPI + PostgreSQL)
 
-This project uses Next.js (React) for the UI and FastAPI + SQLite for the backend.
+This project uses Next.js (React) for the UI and FastAPI + PostgreSQL for the backend.
 
 ## Project layout (read this first)
 
-- `server/` — FastAPI backend (SQLite + admin API + image uploads)
+- `server/` — FastAPI backend (PostgreSQL + admin API + image uploads)
 - `web/` — Next.js frontend (React). Use `npm run dev` (development) or `npm run build` + `npm run start` (production).
 - `static/` — Backend-served uploads (`uploads/`)
 
-## 1) Put your WordPress XML in the right place
-
-Copy your export file into the project root (next to `server/`):
-
-- `C:\Users\lucky\Documents\blog\coffeenblog.WordPress.2026-03-02.xml`
-
-## 2) Install dependencies
+## 1) Install dependencies
 
 ```powershell
 pip install -r requirements.txt
+```
+
+## 2) Configure the database (required)
+
+Put your PostgreSQL connection string in `server/.env`:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/coffeenblog
 ```
 
 ## 3) Start the backend
@@ -29,35 +31,14 @@ python -m uvicorn server.main:app --reload --port 8000
 Open:
 - http://127.0.0.1:8000/
 
-## 4) Import XML into SQLite (one-time)
-
-If the database is empty and the XML exists, the server will auto-import on startup.
-
-If you want to force an import (or you started the server before adding the XML), run:
-
-```powershell
-Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/import/wordpress
-```
-
-Then confirm posts exist:
-
-```powershell
-(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/api/posts).Content
-```
-
-## 5) After import: you can delete the XML
-
-Once posts are in `blog.db`, the website reads from SQLite via `GET /api/posts`.
-That means you can delete `coffeenblog.WordPress.2026-03-02.xml` and the site will still work.
-
 ## Reading a post
 
 - The homepage links open posts on a dedicated page: `/post?id=...`
-- The post page loads content from SQLite via `GET /api/post?id=...`
+- The post page loads content via `GET /api/post?id=...`
 
 ## Notes
 
-- Images: if the XML references external image URLs (Yoast OpenGraph), the UI will still use those URLs. Images are not downloaded into the DB in this version.
+- Images: if posts reference external image URLs (e.g. OpenGraph), the UI will still use those URLs. Images are not downloaded into the DB in this version.
 
 ## Next.js frontend (public site)
 

@@ -23,10 +23,6 @@ class PostOut(BaseModel):
     date: datetime | None = None
 
 
-class ImportResult(BaseModel):
-    imported: int
-
-
 class LoginRequest(BaseModel):
     username: str
     password: str
