@@ -42,6 +42,20 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+function getInitials(name) {
+  const cleaned = String(name || '').trim();
+  if (!cleaned) return '';
+
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  const first = parts[0]?.[0] || '';
+  const last = parts[parts.length - 1]?.[0] || '';
+  return `${first}${last}`.toUpperCase();
+}
+
 async function fetchWithRetry(
   url,
   options,
@@ -79,6 +93,7 @@ export default function PostPage() {
   const [latest, setLatest] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   // Fetch user
   useEffect(() => {
@@ -220,6 +235,20 @@ export default function PostPage() {
     return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 4);
   }, [latest, id, post]);
 
+  const authorName = useMemo(() => {
+    const name = String(post?.creatorName || post?.creator || '').trim();
+    return name || '';
+  }, [post]);
+
+  const authorAvatarUrl = useMemo(() => {
+    const url = String(post?.creatorAvatarUrl || '').trim();
+    return url || '';
+  }, [post]);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [authorAvatarUrl]);
+
   return (
     <Layout 
       title={post?.title ? `${post.title} – Coffee n Blog` : undefined}
@@ -256,6 +285,30 @@ export default function PostPage() {
                 )}
               </div>
               <h1 className={styles.title}>{post.title}</h1>
+
+              {authorName && (
+                <div className={styles.authorRow}>
+                  <div className={styles.authorAvatar}>
+                    {authorAvatarUrl && !avatarFailed ? (
+                      <img
+                        src={authorAvatarUrl}
+                        alt={`Profile photo of ${authorName}`}
+                        loading="lazy"
+                        onError={() => setAvatarFailed(true)}
+                      />
+                    ) : (
+                      <div className={styles.authorAvatarFallback} aria-hidden="true">
+                        {getInitials(authorName) || '—'}
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.authorMeta}>
+                    <span className={styles.authorLabel}>By</span>
+                    <span className={styles.authorName}>{authorName}</span>
+                  </div>
+                </div>
+              )}
+
               {post.excerpt && (
                 <p className={styles.excerpt}>{post.excerpt}</p>
               )}
