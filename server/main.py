@@ -16,9 +16,12 @@ from typing import Generator
 
 from .db import PROJECT_ROOT, SessionLocal, engine
 from .auth import authenticate, hash_password, verify_password
-from .models import Comment, CommentVote, Post, User
+from .models import Category, Comment, CommentVote, Post, User
 from .schemas import (
     AdminCommentOut,
+    CategoryCreate,
+    CategoryOut,
+    CategoryWithCountOut,
     CommentCreateRequest,
     CommentOut,
     CommentTrendOut,
@@ -939,6 +942,78 @@ def admin_delete_user(user_id: int, request: Request, db: Session = Depends(get_
     return {"ok": True}
 
 
+@app.get("/api/categories", response_model=list[CategoryOut])
+def list_categories(db: Session = Depends(get_db)) -> list[CategoryOut]:
+    cats = db.execute(select(Category).order_by(Category.name.asc())).scalars().all()
+    return [CategoryOut(id=c.id, name=c.name, createdAt=c.created_at) for c in cats]
+
+
+@app.get("/api/categories/with-counts", response_model=list[CategoryWithCountOut])
+def list_categories_with_counts(db: Session = Depends(get_db)) -> list[CategoryWithCountOut]:
+    cats = db.execute(select(Category).order_by(Category.name.asc())).scalars().all()
+    cat_ids = {c.name: c.id for c in cats}
+
+    counts = db.execute(
+        select(Post.bucket, func.count(Post.id)).group_by(Post.bucket)
+    ).all()
+    count_by_name: dict[str, int] = {bucket: int(cnt or 0) for bucket, cnt in counts if bucket}
+
+    out: list[CategoryWithCountOut] = []
+    for c in cats:
+        out.append(CategoryWithCountOut(id=c.id, name=c.name, count=count_by_name.get(c.name, 0)))
+    return sorted(out, key=lambda x: (-x.count, x.name))
+
+
+@app.post("/api/admin/categories", response_model=CategoryOut)
+def admin_create_category(
+    payload: CategoryCreate, request: Request, db: Session = Depends(get_db)
+) -> CategoryOut:
+    user = _require_user(request, db)
+    _require_admin(user)
+
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+    if len(name) > 100:
+        raise HTTPException(status_code=400, detail="Category name too long (max 100 chars)")
+
+    existing = db.execute(select(Category).where(Category.name == name)).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Category already exists")
+
+    cat = Category(name=name)
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return CategoryOut(id=cat.id, name=cat.name, createdAt=cat.created_at)
+
+
+@app.delete("/api/admin/categories/{category_id}")
+def admin_delete_category(category_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    user = _require_user(request, db)
+    _require_admin(user)
+
+    cat = db.get(Category, int(category_id))
+    if cat is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    db.delete(cat)
+    db.commit()
+    return {"ok": True}
+
+
+def _seed_default_categories(db: Session) -> None:
+    """Seed default categories if none exist."""
+    existing = db.execute(select(Category)).scalars().all()
+    if existing:
+        return
+
+    defaults = ["Tech", "AI & Future Tech", "Business & Markets", "Personal Finance"]
+    for name in defaults:
+        db.add(Category(name=name))
+    db.commit()
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     from .db import Base
@@ -946,5 +1021,9 @@ def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_user_profile_columns()
     _ensure_comment_moderation_columns()
+
+    # Seed default categories
+    with SessionLocal() as db:
+        _seed_default_categories(db)
 
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
