@@ -34,7 +34,7 @@ function postUrl(post) {
   const id = post?.id;
   if (!id) return '/';
   const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}?id=${id}`;
+  return `/post/${encodeURIComponent(slug)}`;
 }
 
 function NewsIcon() {
