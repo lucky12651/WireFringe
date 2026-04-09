@@ -41,17 +41,33 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
-async function fetchWithRetry(url, options, { retries = 6, baseDelayMs = 250 } = {}) {
+async function fetchWithRetry(
+  url,
+  options,
+  { retries = 6, baseDelayMs = 250, retryStatuses = [500, 502, 503, 504] } = {}
+) {
+  const retryable = new Set(retryStatuses);
   let lastErr = null;
+
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      return await fetch(url, options);
+      const res = await fetch(url, options);
+
+      // Next dev proxy failures often surface as a transient 500.
+      if (!res.ok && retryable.has(res.status) && attempt < retries - 1) {
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      return res;
     } catch (err) {
       lastErr = err;
       const delay = baseDelayMs * Math.pow(2, attempt);
       await new Promise((r) => setTimeout(r, delay));
     }
   }
+
   throw lastErr;
 }
 
