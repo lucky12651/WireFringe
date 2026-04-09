@@ -1,0 +1,388 @@
+/* Sidebar Styles - Matching LoginPage Design */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  min-height: 100vh;
+  border-radius: 20px;
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  font-family:var(--font-body)}
+
+/* Header Section */
+.header {
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brandMark {
+  width: 48px;
+  height: 48px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.brandSubtitle {
+  font-size: 13px;
+  color: #666;
+  font-weight: 400;
+}
+
+/* Navigation */
+.nav {
+  flex: 1;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 12px 4px;
+}
+
+.navDivider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 16px 12px;
+}
+
+/* Navigation Items */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.navItem:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.navItem.active {
+  background: #1a1a1a;
+  color: white;
+}
+
+.navItem.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.navLabel {
+  flex: 1;
+}
+
+.navBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #dc3545;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* Footer Section */
+.footer {
+  padding: 20px 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  background: #1a1a1a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: 12px;
+  color: #999;
+  text-transform: capitalize;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #1a1a1a;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: #1a1a1a;
+    border-right-color: #333;
+  }
+
+  .header {
+    border-bottom-color: #333;
+  }
+
+  .brandMark {
+    background: white;
+    color: #1a1a1a;
+  }
+
+  .brandTitle {
+    color: white;
+  }
+
+  .brandSubtitle {
+    color: #999;
+  }
+
+  .navDivider {
+    background: #333;
+  }
+
+  .navItem {
+    color: #999;
+  }
+
+  .navItem:hover:not(:disabled) {
+    background: #2a2a2a;
+    color: white;
+  }
+
+  .navItem.active {
+    background: white;
+    color: #1a1a1a;
+  }
+
+  .footer {
+    border-top-color: #333;
+  }
+
+  .userInfo {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+
+  .userAvatar {
+    background: white;
+    color: #1a1a1a;
+  }
+
+  .userName {
+    color: white;
+  }
+
+  .actionButton {
+    background: #2a2a2a;
+    border-color: #333;
+    color: #999;
+  }
+
+  .actionButton:hover {
+    background: #333;
+    border-color: #444;
+    color: white;
+  }
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .navSection {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sectionLabel {
+    width: 100%;
+  }
+
+  .navDivider {
+    display: none;
+  }
+
+  .navItem {
+    width: auto;
+    padding: 10px 16px;
+  }
+
+  .navLabel {
+    display: none;
+  }
+
+  .footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .userInfo {
+    flex: 1;
+  }
+
+  .actions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 20px 16px 16px;
+  }
+
+  .brandSubtitle {
+    display: none;
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+
+  .userInfo {
+    width: 100%;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actionButtons {
+    width: 100%;
+  }
+}

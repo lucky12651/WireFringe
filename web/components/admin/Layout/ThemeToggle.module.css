@@ -1,0 +1,56 @@
+/* Theme Toggle - Matching LoginPage Design */
+
+.themeToggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.themeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.themeBtn:hover {
+  color: #666;
+}
+
+.themeBtn.active {
+  background: white;
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .themeToggle {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+
+  .themeBtn {
+    color: #666;
+  }
+
+  .themeBtn:hover {
+    color: #999;
+  }
+
+  .themeBtn.active {
+    background: #333;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
