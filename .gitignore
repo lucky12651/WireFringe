@@ -53,9 +53,5 @@ pnpm-debug.log*
 # --- Project-specific ---
 # User uploads (generated content)
 
-# SQLite / local DB files (if used)
-
-
-
 # Optional: local auth/admin scripts output
 *.pid

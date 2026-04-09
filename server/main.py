@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, inspect, select, text
 from sqlalchemy.orm import Session
 from typing import Generator
 
@@ -23,7 +23,6 @@ from .schemas import (
     CommentOut,
     CommentTrendOut,
     CommentVoteRequest,
-    ImportResult,
     LoginRequest,
     MediaFileOut,
     MeOut,
@@ -35,7 +34,6 @@ from .schemas import (
     UserCreate,
     UserOut,
 )
-from .wordpress_import import import_wordpress_export
 
 app = FastAPI(title="Coffee n Blog API")
 
@@ -60,7 +58,6 @@ app.add_middleware(
 )
 
 STATIC_DIR = PROJECT_ROOT / "static"
-DEFAULT_WP_XML = PROJECT_ROOT / "coffeenblog.WordPress.2026-03-02.xml"
 
 UPLOADS_DIR = STATIC_DIR / "uploads"
 
@@ -77,43 +74,38 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def _ensure_user_profile_columns() -> None:
-    """Best-effort, migration-less schema upgrade for SQLite.
-
-    This project uses `Base.metadata.create_all`, which won't add new columns
-    to an existing table. We keep things simple by ALTER TABLE ADD COLUMN when
-    needed.
-    """
+    """Best-effort, migration-less schema upgrade for user profile fields."""
 
     with engine.begin() as conn:
-        rows = conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()
-        if not rows:
+        inspector = inspect(conn)
+        if "users" not in inspector.get_table_names():
             return
 
-        existing = {str(r[1]) for r in rows}  # (cid, name, type, notnull, dflt_value, pk)
+        existing = {c["name"] for c in inspector.get_columns("users")}
 
         if "display_name" not in existing:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN display_name VARCHAR")
+            conn.execute(text("ALTER TABLE users ADD COLUMN display_name VARCHAR"))
         if "avatar_url" not in existing:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN avatar_url VARCHAR")
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR"))
 
 
 def _ensure_comment_moderation_columns() -> None:
-    """Best-effort, migration-less schema upgrade for SQLite comments moderation."""
+    """Best-effort, migration-less schema upgrade for comment moderation."""
 
     with engine.begin() as conn:
-        rows = conn.exec_driver_sql("PRAGMA table_info(comments)").fetchall()
-        if not rows:
+        inspector = inspect(conn)
+        if "comments" not in inspector.get_table_names():
             return
 
-        existing = {str(r[1]) for r in rows}  # (cid, name, type, notnull, dflt_value, pk)
+        existing = {c["name"] for c in inspector.get_columns("comments")}
 
         if "approved" not in existing:
-            # Default new comments to pending (0). Immediately after adding the column,
+            # Default new comments to pending (FALSE). Immediately after adding the column,
             # mark existing rows as approved so we don't hide legacy comments.
-            conn.exec_driver_sql(
-                "ALTER TABLE comments ADD COLUMN approved INTEGER NOT NULL DEFAULT 0"
+            conn.execute(
+                text("ALTER TABLE comments ADD COLUMN approved BOOLEAN NOT NULL DEFAULT FALSE")
             )
-            conn.exec_driver_sql("UPDATE comments SET approved = 1")
+            conn.execute(text("UPDATE comments SET approved = TRUE"))
 
 
 def _me_out(user: User) -> MeOut:
@@ -947,18 +939,6 @@ def admin_delete_user(user_id: int, request: Request, db: Session = Depends(get_
     return {"ok": True}
 
 
-@app.post("/api/import/wordpress", response_model=ImportResult)
-def import_from_wordpress(db: Session = Depends(get_db)) -> ImportResult:
-    if not DEFAULT_WP_XML.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"WordPress export XML not found at {DEFAULT_WP_XML.name}",
-        )
-
-    imported = import_wordpress_export(db, DEFAULT_WP_XML)
-    return ImportResult(imported=imported)
-
-
 @app.on_event("startup")
 def on_startup() -> None:
     from .db import Base
@@ -968,12 +948,3 @@ def on_startup() -> None:
     _ensure_comment_moderation_columns()
 
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-    # If DB is empty and the export XML is present, import once automatically.
-    db = SessionLocal()
-    try:
-        has_any = db.execute(select(Post.id).limit(1)).first() is not None
-        if not has_any and DEFAULT_WP_XML.exists():
-            import_wordpress_export(db, DEFAULT_WP_XML)
-    finally:
-        db.close()
