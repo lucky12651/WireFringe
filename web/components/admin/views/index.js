@@ -1,0 +1,7 @@
+export { DashboardView } from './DashboardView';
+export { PostsView } from './PostsView';
+export { CategoriesView } from './CategoriesView';
+export { MediaView } from './MediaView';
+export { CommentsView } from './CommentsView';
+export { UsersView } from './UsersView';
+export { SettingsView } from './SettingsView';
