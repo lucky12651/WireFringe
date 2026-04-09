@@ -26,6 +26,7 @@ jobs:
             git pull origin main
 
             # Backend
+            source venv/bin/activate
             pip install -r server/requirements.txt
 
             # Frontend
