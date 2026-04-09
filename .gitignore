@@ -23,8 +23,8 @@ ENV/
 .env/
 
 # Local environment / secrets
-.env.*
-*.env
+
+
 *.key
 *.pem
 
