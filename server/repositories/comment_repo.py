@@ -140,3 +140,15 @@ class CommentRepository(BaseRepository[Comment]):
             Comment.likes.desc(), Comment.created_at.desc(), Comment.id.desc()
         ).limit(limit)
         return list(self.db.execute(stmt).all())
+
+    def delete_by_post(self, post_id: str) -> int:
+        """Delete all comments for a post, including their votes. Returns count deleted."""
+        # First delete all votes for comments on this post
+        comment_ids_stmt = select(Comment.id).where(Comment.post_id == post_id)
+        self.db.execute(
+            delete(CommentVote).where(CommentVote.comment_id.in_(comment_ids_stmt))
+        )
+        # Then delete the comments
+        result = self.db.execute(delete(Comment).where(Comment.post_id == post_id))
+        self.db.commit()
+        return result.rowcount

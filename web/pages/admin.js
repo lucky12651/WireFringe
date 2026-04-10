@@ -119,7 +119,12 @@ export default function AdminPage() {
             posts={posts.sortedPosts}
             postsCount={posts.postsCount}
             onPublish={posts.publishPost}
+            onDelete={posts.deletePost}
             me={me}
+            page={posts.page}
+            onPageChange={posts.setPage}
+            limit={posts.limit}
+            isLoading={posts.isLoading}
           />
         );
 

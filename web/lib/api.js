@@ -98,14 +98,14 @@ export const postsApi = {
       body: JSON.stringify(payload),
     }),
   update: (id, payload) =>
-    api(`/api/admin/posts/${encodeURIComponent(id)}`, {
+    api(`/api/admin/post?id=${encodeURIComponent(id)}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),
   delete: (id) =>
-    api(`/api/admin/posts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    api(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
   publish: (id) =>
-    api(`/api/admin/posts/${encodeURIComponent(id)}/publish`, { method: 'POST' }),
+    api(`/api/admin/post/publish?id=${encodeURIComponent(id)}`, { method: 'POST' }),
 };
 
 // Categories API

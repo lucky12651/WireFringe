@@ -46,3 +46,25 @@ class PostRepository(BaseRepository[Post]):
             .scalars()
             .all()
         )
+
+    def list_paginated(self, offset: int = 0, limit: int = 20, creator: str | None = None) -> list[Post]:
+        """List posts with pagination."""
+        query = select(Post).order_by(
+            Post.published_at.desc().nullslast(), Post.id.desc()
+        )
+        if creator:
+            query = query.where(Post.creator == creator)
+        
+        return (
+            self.db.execute(query.offset(offset).limit(limit))
+            .scalars()
+            .all()
+        )
+
+    def count(self, creator: str | None = None) -> int:
+        """Get total count of posts."""
+        from sqlalchemy import func
+        query = select(func.count(Post.id))
+        if creator:
+            query = query.where(Post.creator == creator)
+        return self.db.execute(query).scalar() or 0
