@@ -1,9 +1,8 @@
 // Sidebar Footer Component - User info and actions
 
 import React from 'react';
-import Link from 'next/link';
-import { ThemeToggle } from './ThemeToggle';
 import { Icons } from './icons';
+import { ActionButton } from '../shared';
 import styles from './Sidebar.module.css';
 
 export function SidebarFooter({ me, onLogout }) {
@@ -25,23 +24,21 @@ export function SidebarFooter({ me, onLogout }) {
       )}
 
       <div className={styles.actions}>
-        {/* <ThemeToggle /> */}
-
         <div className={styles.actionButtons}>
           {me && (
-            <button
-              type="button"
-              className={styles.actionButton}
+            <ActionButton
+              icon={LogoutIcon}
               onClick={onLogout}
             >
-              <LogoutIcon />
               Logout
-            </button>
+            </ActionButton>
           )}
-          <Link href="/" className={styles.actionButton}>
-            <SiteIcon />
+          <ActionButton
+            href="/"
+            icon={SiteIcon}
+          >
             View Site
-          </Link>
+          </ActionButton>
         </div>
       </div>
     </div>

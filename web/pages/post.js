@@ -234,7 +234,7 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
   }, [authorAvatarUrl]);
 
   return (
-    <Layout 
+    <Layout
       title={post?.title ? `${post.title} – Coffee n Blog` : undefined}
       description={post?.excerpt || undefined}
       headerProps={{ user, activeCategory: post?.bucket || 'All' }}

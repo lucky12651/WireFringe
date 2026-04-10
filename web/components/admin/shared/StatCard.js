@@ -5,7 +5,7 @@ export function StatCard({ title, value, subtitle, trend }) {
     <div className="admin-metric">
       <div className="admin-metric-top">
         <div className="t">{title}</div>
-        <div className="admin-metric-icon" aria-hidden="true"></div>
+
       </div>
       <div className="n">{value}</div>
       <div className="sub">
