@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from api.posts import router as posts_router
-from api.comments import router as comments_router
-from api.users import router as users_router
-from api.categories import router as categories_router
-from api.media import router as media_router
-from api.admin import router as admin_router
+from .posts import router as posts_router
+from .comments import router as comments_router
+from .users import router as users_router
+from .categories import router as categories_router
+from .media import router as media_router
+from .admin import router as admin_router
 
 api_router = APIRouter()
 

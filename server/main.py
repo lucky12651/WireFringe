@@ -5,10 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from api import api_router
-from config import settings
-from db import Base, SessionLocal, engine
-from services import CategoryService
+from .api import api_router
+from .config import settings
+from .db import Base, SessionLocal, engine
+from .services import CategoryService
 
 
 def create_app() -> FastAPI:

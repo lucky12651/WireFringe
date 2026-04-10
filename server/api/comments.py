@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from dependencies import get_db, require_staff, require_user
-from schemas import (
+from ..dependencies import get_db, require_staff, require_user
+from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
     CommentOut,
@@ -12,7 +12,7 @@ from schemas import (
     CommentVoteRequest,
     PendingCountOut,
 )
-from services import CommentService, PostService
+from ..services import CommentService, PostService
 
 router = APIRouter()
 
@@ -82,7 +82,7 @@ def admin_pending_comment_count(
 ) -> PendingCountOut:
     """Get count of pending comments."""
     user = require_user(request, db)
-    from dependencies import require_staff
+    from ..dependencies import require_staff
 
     if user.role == "author":
         return service.get_pending_count(user.username)
@@ -140,7 +140,7 @@ def admin_delete_comment(
     service: CommentService = Depends(get_comment_service),
 ) -> dict:
     """Delete any comment (admin only)."""
-    from dependencies import require_admin
+    from ..dependencies import require_admin
 
     user = require_user(request, db)
     require_admin(user)

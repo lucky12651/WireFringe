@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from dependencies import get_db, require_admin, require_user
-from schemas import CategoryCreate, CategoryOut, CategoryWithCountOut
-from services import CategoryService
+from ..dependencies import get_db, require_admin, require_user
+from ..schemas import CategoryCreate, CategoryOut, CategoryWithCountOut
+from ..services import CategoryService
 
 router = APIRouter()
 

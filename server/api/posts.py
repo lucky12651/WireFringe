@@ -3,10 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from dependencies import get_current_user, get_db, require_user
-from models import User
-from schemas import PaginatedPostsOut, PostOut, PostUpsert
-from services import PostService
+from ..dependencies import get_current_user, get_db, require_user
+from ..models import User
+from ..schemas import PaginatedPostsOut, PostOut, PostUpsert
+from ..services import PostService
 
 router = APIRouter()
 

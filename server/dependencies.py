@@ -5,8 +5,8 @@ from typing import Generator
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
-from db import SessionLocal
-from models import User
+from .db import SessionLocal
+from .models import User
 
 
 def get_db() -> Generator[Session, None, None]:

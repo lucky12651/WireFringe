@@ -8,9 +8,9 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Post, User
-from repositories import CommentRepository, PostRepository, UserRepository
-from schemas import PostOut, PostUpsert
+from ..models import Post, User
+from ..repositories import CommentRepository, PostRepository, UserRepository
+from ..schemas import PostOut, PostUpsert
 
 
 class PostService:

@@ -5,8 +5,8 @@ from datetime import datetime
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from models import Comment, CommentVote, Post
-from repositories.base import BaseRepository
+from ..models import Comment, CommentVote, Post
+from .base import BaseRepository
 
 
 class CommentRepository(BaseRepository[Comment]):

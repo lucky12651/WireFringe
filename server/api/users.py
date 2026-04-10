@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from dependencies import get_db, require_admin, require_user
-from schemas import LoginRequest, MeOut, PasswordChangeRequest, ProfileUpdateRequest, UserCreate, UserOut
-from services import UserService
+from ..dependencies import get_db, require_admin, require_user
+from ..schemas import LoginRequest, MeOut, PasswordChangeRequest, ProfileUpdateRequest, UserCreate, UserOut
+from ..services import UserService
 
 router = APIRouter()
 

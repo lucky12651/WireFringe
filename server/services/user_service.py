@@ -3,10 +3,10 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from auth import authenticate, hash_password, verify_password
-from models import User
-from repositories import UserRepository
-from schemas import MeOut, UserCreate, UserOut
+from ..auth import authenticate, hash_password, verify_password
+from ..models import User
+from ..repositories import UserRepository
+from ..schemas import MeOut, UserCreate, UserOut
 
 
 class UserService:
