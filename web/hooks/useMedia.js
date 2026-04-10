@@ -44,9 +44,10 @@ export function useMedia() {
       isLoading,
       error,
       refreshMedia,
+      setMedia,
       uploadMedia,
       setError,
     }),
-    [media, mediaCount, isLoading, error, refreshMedia, uploadMedia]
+    [media, mediaCount, isLoading, error, refreshMedia, setMedia, uploadMedia]
   );
 }

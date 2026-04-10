@@ -48,7 +48,7 @@ export default function Header({
   useEffect(() => {
     const timer = setTimeout(() => {
       onSearchChange?.(localSearch);
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [localSearch, onSearchChange]);
 

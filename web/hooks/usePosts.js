@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { postsApi } from '../lib/api';
+import useSWR, { mutate } from 'swr';
+import { postsApi, fetcher } from '../lib/api';
 import {
   calculatePostsByMonth,
   calculatePostGrowth,
@@ -8,81 +9,79 @@ import {
 import { LATEST_POSTS_LIMIT } from '../lib/constants';
 
 export function usePosts() {
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { data: postsData, error: fetchError, isValidating } = useSWR('/api/admin/posts', fetcher, {
+    revalidateOnFocus: false,
+  });
 
-  const refreshPosts = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await postsApi.list();
-      setPosts(data || []);
-    } catch (err) {
-      setError(err?.message || 'Failed to fetch posts');
-      setPosts([]);
-    } finally {
-      setIsLoading(false);
-    }
+  const posts = useMemo(() => postsData || [], [postsData]);
+  const [actionError, setActionError] = useState(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const refreshPosts = useCallback(() => {
+    return mutate('/api/admin/posts');
+  }, []);
+
+  const setPosts = useCallback((data) => {
+    return mutate('/api/admin/posts', data, false);
   }, []);
 
   const createPost = useCallback(async (payload) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsActionLoading(true);
+      setActionError(null);
       const created = await postsApi.create(payload);
       await refreshPosts();
       return { success: true, post: created };
     } catch (err) {
-      setError(err?.message || 'Failed to create post');
+      setActionError(err?.message || 'Failed to create post');
       return { success: false, error: err?.message };
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   }, [refreshPosts]);
 
   const updatePost = useCallback(async (id, payload) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsActionLoading(true);
+      setActionError(null);
       const updated = await postsApi.update(id, payload);
       await refreshPosts();
       return { success: true, post: updated };
     } catch (err) {
-      setError(err?.message || 'Failed to update post');
+      setActionError(err?.message || 'Failed to update post');
       return { success: false, error: err?.message };
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   }, [refreshPosts]);
 
   const deletePost = useCallback(async (id) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsActionLoading(true);
+      setActionError(null);
       await postsApi.delete(id);
       await refreshPosts();
       return { success: true };
     } catch (err) {
-      setError(err?.message || 'Failed to delete post');
+      setActionError(err?.message || 'Failed to delete post');
       return { success: false, error: err?.message };
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   }, [refreshPosts]);
 
   const publishPost = useCallback(async (id) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsActionLoading(true);
+      setActionError(null);
       await postsApi.publish(id);
       await refreshPosts();
       return { success: true };
     } catch (err) {
-      setError(err?.message || 'Failed to publish post');
+      setActionError(err?.message || 'Failed to publish post');
       return { success: false, error: err?.message };
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false);
     }
   }, [refreshPosts]);
 
@@ -112,6 +111,9 @@ export function usePosts() {
     return calculatePostGrowth(posts, 30);
   }, [posts]);
 
+  const isLoading = isValidating && !postsData;
+  const error = fetchError || actionError;
+
   return useMemo(
     () => ({
       posts,
@@ -121,13 +123,15 @@ export function usePosts() {
       postsByMonth,
       postGrowth30,
       isLoading,
+      isActionLoading,
       error,
       refreshPosts,
+      setPosts,
       createPost,
       updatePost,
       deletePost,
       publishPost,
-      setError,
+      setError: setActionError,
     }),
     [
       posts,
@@ -137,8 +141,10 @@ export function usePosts() {
       postsByMonth,
       postGrowth30,
       isLoading,
+      isActionLoading,
       error,
       refreshPosts,
+      setPosts,
       createPost,
       updatePost,
       deletePost,

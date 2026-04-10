@@ -4,7 +4,7 @@
   display: flex;
   min-height: 100vh;
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:var(--font-body);
 }
 
 /* Left Side - Image Section */
@@ -93,24 +93,7 @@
   opacity: 0.9;
 }
 
-.dots {
-  display: flex;
-  gap: 8px;
-}
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.dotActive {
-  width: 24px;
-  height: 8px;
-  border-radius: 4px;
-  background: white;
-}
 
 /* Right Side - Form Section */
 .formSection {
@@ -119,15 +102,15 @@
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .formContainer {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 40px 60px;
   max-width: 520px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -154,7 +137,6 @@
 }
 
 .formWrapper {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -334,13 +316,17 @@
 
   .imageSection {
     width: 100%;
-    min-height: 300px;
-    max-height: 40vh;
+    flex: 0 0 30%;
+    height: 30vh;
+    min-height: auto;
+    max-height: none;
   }
 
   .formSection {
     width: 100%;
+    flex: 1;
     min-height: auto;
+    max-height: none;
   }
 
   .formContainer {
