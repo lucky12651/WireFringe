@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from dependencies import get_current_user, get_db, require_user
 from models import User
-from schemas import PostOut, PostUpsert
+from schemas import PaginatedPostsOut, PostOut, PostUpsert
 from services import PostService
 
 router = APIRouter()
@@ -51,17 +51,25 @@ def get_post_by_slug(
 # Admin post endpoints
 
 
-@router.get("/admin/posts", response_model=list[PostOut])
+@router.get("/admin/posts", response_model=PaginatedPostsOut)
 def admin_list_posts(
     request: Request,
+    offset: int = 0,
+    limit: int | None = 20,
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
-) -> list[PostOut]:
+) -> PaginatedPostsOut:
     """List posts for admin (filtered by role)."""
     user = require_user(request, db)
-    if user.role == "author":
-        return service.list_posts_by_creator(user.username)
-    return service.list_posts()
+    creator = user.username if user.role == "author" else None
+    
+    if limit is None or limit <= 0:
+        # Fetch all posts if limit is not provided
+        posts = service.list_posts_by_creator(creator) if creator else service.list_posts()
+        return PaginatedPostsOut(posts=posts, total=len(posts))
+        
+    posts, total = service.list_posts_paginated(offset, limit, creator)
+    return PaginatedPostsOut(posts=posts, total=total)
 
 
 @router.get("/admin/post", response_model=PostOut)
@@ -129,6 +137,18 @@ def admin_publish_post(
     """Publish a post."""
     user = require_user(request, db)
     return service.publish_post(post_id, user)
+
+
+@router.post("/admin/post/publish", response_model=PostOut)
+def admin_publish_post_query(
+    id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> PostOut:
+    """Publish a post (query param version)."""
+    user = require_user(request, db)
+    return service.publish_post(id, user)
 
 
 @router.delete("/admin/posts/{post_id}")

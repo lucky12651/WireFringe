@@ -13,6 +13,7 @@ import styles from './ActionButton.module.css';
  * @param {Function} [props.onClick] - Click handler for button type
  * @param {string} [props.type="button"] - Button type (e.g., "submit", "button")
  * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.variant] - Button variant: "default" or "danger"
  */
 export function ActionButton({ 
   icon: Icon, 
@@ -21,9 +22,11 @@ export function ActionButton({
   onClick, 
   type = 'button', 
   className = '',
+  variant = 'default',
   ...props 
 }) {
-  const combinedClassName = `${styles.actionButton} ${className}`.trim();
+  const variantClass = variant === 'danger' ? styles.danger : '';
+  const combinedClassName = `${styles.actionButton} ${variantClass} ${className}`.trim();
 
   const content = (
     <>

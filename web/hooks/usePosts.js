@@ -8,22 +8,38 @@ import {
 } from '../lib/utils';
 import { LATEST_POSTS_LIMIT } from '../lib/constants';
 
-export function usePosts() {
-  const { data: postsData, error: fetchError, isValidating } = useSWR('/api/admin/posts', fetcher, {
-    revalidateOnFocus: false,
-  });
+export function usePosts(initialLimit = 20) {
+  const [page, setPage] = useState(0);
+  const limit = initialLimit;
+  const offset = page * limit;
 
-  const posts = useMemo(() => postsData || [], [postsData]);
+  const swrKey = limit > 0 
+    ? `/api/admin/posts?offset=${offset}&limit=${limit}` 
+    : '/api/admin/posts?limit=0';
+
+  const { data: postsData, error: fetchError, isValidating } = useSWR(
+    swrKey,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  const posts = useMemo(() => postsData?.posts || [], [postsData]);
+  const postsCount = useMemo(() => postsData?.total || 0, [postsData]);
   const [actionError, setActionError] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   const refreshPosts = useCallback(() => {
-    return mutate('/api/admin/posts');
-  }, []);
+    return mutate(swrKey);
+  }, [swrKey]);
 
-  const setPosts = useCallback((data) => {
-    return mutate('/api/admin/posts', data, false);
-  }, []);
+  const setPosts = useCallback(
+    (data) => {
+      return mutate(swrKey, data, false);
+    },
+    [swrKey]
+  );
 
   const createPost = useCallback(async (payload) => {
     try {
@@ -86,8 +102,6 @@ export function usePosts() {
   }, [refreshPosts]);
 
   // Derived data
-  const postsCount = useMemo(() => posts.length, [posts]);
-
   const sortedPosts = useMemo(() => {
     return sortPostsForDisplay(posts);
   }, [posts]);
@@ -125,6 +139,9 @@ export function usePosts() {
       isLoading,
       isActionLoading,
       error,
+      page,
+      setPage,
+      limit,
       refreshPosts,
       setPosts,
       createPost,
@@ -143,6 +160,8 @@ export function usePosts() {
       isLoading,
       isActionLoading,
       error,
+      page,
+      limit,
       refreshPosts,
       setPosts,
       createPost,

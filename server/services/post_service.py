@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from models import Post, User
-from repositories import PostRepository, UserRepository
+from repositories import CommentRepository, PostRepository, UserRepository
 from schemas import PostOut, PostUpsert
 
 
@@ -19,6 +19,7 @@ class PostService:
     def __init__(self, db: Session):
         self.db = db
         self.post_repo = PostRepository(db)
+        self.comment_repo = CommentRepository(db)
         self.user_repo = UserRepository(db)
 
     @staticmethod
@@ -76,6 +77,15 @@ class PostService:
         posts = self.post_repo.get_by_creator(creator)
         author_lookup = self.user_repo.build_author_lookup()
         return [self._build_post_out(p, author_lookup) for p in posts]
+
+    def list_posts_paginated(
+        self, offset: int = 0, limit: int = 20, creator: str | None = None
+    ) -> tuple[list[PostOut], int]:
+        """List posts with pagination and return total count."""
+        posts = self.post_repo.list_paginated(offset, limit, creator)
+        total_count = self.post_repo.count(creator)
+        author_lookup = self.user_repo.build_author_lookup()
+        return [self._build_post_out(p, author_lookup) for p in posts], total_count
 
     def get_post(self, post_id: str) -> PostOut:
         """Get a single post by ID."""
@@ -159,7 +169,7 @@ class PostService:
         return self._build_post_out(updated)
 
     def delete_post(self, post_id: str, user: User) -> None:
-        """Delete a post."""
+        """Delete a post and all its associated comments."""
         post = self.post_repo.get(post_id)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -167,4 +177,8 @@ class PostService:
         if user.role == "author" and (post.creator or "").strip() != user.username:
             raise HTTPException(status_code=403, detail="Not allowed")
 
+        # Delete all comments for this post first (to avoid FK constraint violation)
+        self.comment_repo.delete_by_post(post_id)
+        
+        # Then delete the post
         self.post_repo.delete(post)

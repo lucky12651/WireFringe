@@ -23,6 +23,11 @@ class PostOut(BaseModel):
     date: datetime | None = None
 
 
+class PaginatedPostsOut(BaseModel):
+    posts: list[PostOut]
+    total: int
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
