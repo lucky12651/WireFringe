@@ -6,8 +6,8 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
-from config import settings
-from schemas import MediaFileOut
+from ..config import settings
+from ..schemas import MediaFileOut
 
 
 class MediaService:

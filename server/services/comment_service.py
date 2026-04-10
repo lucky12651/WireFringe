@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
-from models import Comment, User
-from repositories import CommentRepository, PostRepository
-from schemas import (
+from ..models import Comment, User
+from ..repositories import CommentRepository, PostRepository
+from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
     CommentOut,
@@ -28,7 +28,7 @@ class CommentService:
     @staticmethod
     def _get_or_create_visitor_id(request: Request) -> str:
         """Get existing visitor ID or create new one."""
-        from dependencies import get_existing_visitor_id
+        from ..dependencies import get_existing_visitor_id
 
         existing = get_existing_visitor_id(request)
         if existing:

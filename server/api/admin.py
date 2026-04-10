@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from dependencies import get_db, require_user
-from schemas import MeOut
-from services import MediaService, UserService
+from ..dependencies import get_db, require_user
+from ..schemas import MeOut
+from ..services import MediaService, UserService
 
 router = APIRouter()
 

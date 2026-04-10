@@ -3,8 +3,8 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import Post
-from repositories.base import BaseRepository
+from ..models import Post
+from .base import BaseRepository
 
 
 class PostRepository(BaseRepository[Post]):

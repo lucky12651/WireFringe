@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Category
-from repositories import CategoryRepository
-from schemas import CategoryOut, CategoryWithCountOut
+from ..models import Category
+from ..repositories import CategoryRepository
+from ..schemas import CategoryOut, CategoryWithCountOut
 
 
 class CategoryService:

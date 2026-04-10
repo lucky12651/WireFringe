@@ -4,9 +4,9 @@ import argparse
 
 from sqlalchemy import select
 
-from auth import hash_password
-from db import SessionLocal, engine
-from models import User
+from .auth import hash_password
+from .db import SessionLocal, engine
+from .models import User
 
 
 def main() -> None:
@@ -17,7 +17,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Ensure tables exist
-    from db import Base
+    from .db import Base
 
     Base.metadata.create_all(bind=engine)
 

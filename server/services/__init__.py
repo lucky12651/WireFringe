@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from services.post_service import PostService
-from services.comment_service import CommentService
-from services.user_service import UserService
-from services.category_service import CategoryService
-from services.media_service import MediaService
+from .post_service import PostService
+from .comment_service import CommentService
+from .user_service import UserService
+from .category_service import CategoryService
+from .media_service import MediaService
 
 __all__ = [
     "PostService",
