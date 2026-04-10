@@ -7,7 +7,6 @@ import { initTheme } from '../../lib/theme';
 import { api, postsApi, mediaApi } from '../../lib/api';
 import { slugifyTitle } from '../../lib/utils';
 import { useCategories } from '../../hooks/useCategories';
-import { PillButton } from '../../components/admin/shared';
 
 export default function AdminPostPage() {
   const router = useRouter();

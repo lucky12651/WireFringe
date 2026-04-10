@@ -1,0 +1,39 @@
+import React from 'react';
+import { StatCard } from '../../shared/StatCard';
+
+export default function StatsSection({
+  postsCount,
+  categoriesCount,
+  mediaCount,
+  pendingCommentsCount,
+  canViewPendingCommentsCount,
+  postGrowthDelta,
+}) {
+  return (
+    <section className="admin-stats" aria-label="Stats">
+      <div className="admin-stat-row">
+        <StatCard
+          title="Total Posts"
+          value={postsCount}
+          subtitle="Last 30 days"
+          trend={postGrowthDelta}
+        />
+        <StatCard
+          title="Total Categories"
+          value={categoriesCount}
+          subtitle="Buckets used in posts"
+        />
+        <StatCard
+          title="Total Media Files"
+          value={mediaCount}
+          subtitle="Uploads in /static/uploads"
+        />
+        <StatCard
+          title="Pending Comments"
+          value={canViewPendingCommentsCount ? pendingCommentsCount : 0}
+          subtitle="Awaiting approval"
+        />
+      </div>
+    </section>
+  );
+}
