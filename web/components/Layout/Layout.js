@@ -32,21 +32,7 @@ export default function Layout({
           </div>
         </main>
         
-        <footer className={styles.footer}>
-          <div className={styles.container}>
-            <div className={styles.footerContent}>
-              <span>© {new Date().getFullYear()} Coffee n Blog</span>
-              <span aria-hidden="true">•</span>
-              <span>Latest News</span>
-              <span aria-hidden="true">•</span>
-              <span>Tech</span>
-              <span aria-hidden="true">•</span>
-              <span>Business</span>
-              <span aria-hidden="true">•</span>
-              <span>Finance</span>
-            </div>
-          </div>
-        </footer>
+        
       </div>
     </>
   );

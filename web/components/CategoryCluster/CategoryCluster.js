@@ -95,8 +95,8 @@ function slugifyCategory(cat) {
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-export default function CategoryCluster({ title, posts = [], loading }) {
-  if (loading || !posts.length) return null;
+export default function CategoryCluster({ title, posts = [] }) {
+  if (!posts.length) return null;
 
   // Render 6 posts in 2 columns (3 per column)
   const gridPosts = posts.slice(0, 6);

@@ -3,11 +3,19 @@
  * DRY: Centralized fetch logic used across all admin components
  */
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export async function api(path, options = {}) {
-  const res = await fetch(path, {
+  // Use absolute URL if on server and not a full URL
+  const url = (typeof window === 'undefined' && !path.startsWith('http'))
+    ? `${process.env.INTERNAL_API_URL || 'http://localhost:8003'}${path}`
+    : path;
+
+  const res = await fetch(url, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       ...(options.headers || {}),
     },
     ...options,
@@ -25,8 +33,16 @@ export async function api(path, options = {}) {
   if (res.status === 204) return null;
   const text = await res.text();
   if (!text) return null;
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('Failed to parse JSON:', text);
+    throw err;
+  }
 }
+
+// Fetcher for SWR
+export const fetcher = (url) => api(url);
 
 export async function uploadFile(path, file) {
   const fd = new FormData();

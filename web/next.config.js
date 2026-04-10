@@ -10,7 +10,7 @@ const nextConfig = {
 
   // Two-server setup:
   // - Next.js on :3000 (UI)
-  // - FastAPI on :8000 (API + /static uploads/CSS)
+  // - FastAPI on :8003 (API + /static uploads/CSS)
   // Proxy API + static assets to FastAPI to keep same-origin cookies working.
   async rewrites() {
     const backend = process.env.BACKEND_URL || 'http://127.0.0.1:8003';

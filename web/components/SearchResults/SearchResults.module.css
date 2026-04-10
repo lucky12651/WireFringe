@@ -1,0 +1,149 @@
+.searchResults {
+  padding: 40px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 15px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.card {
+  text-decoration: none;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-color: var(--brand-primary);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.imageWrapper {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.imageWrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .imageWrapper img {
+  transform: scale(1.05);
+}
+
+.body {
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.category {
+  color: var(--brand-primary);
+}
+
+.dot {
+  margin: 0 8px;
+  color: var(--text-muted);
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.excerpt {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.noResults {
+  text-align: center;
+  padding: 80px 0;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 2px dashed var(--border-subtle);
+}
+
+.noResults h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.noResults p {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .title {
+    font-size: 22px;
+  }
+}

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout/Layout';
 import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
+import { fetcher, api } from '../lib/api';
+import Loader from '../components/Loader/Loader';
 
 function slugifyTitle(title) {
   const s = String(title || '')
@@ -56,44 +59,125 @@ function getInitials(name) {
   return `${first}${last}`.toUpperCase();
 }
 
-async function fetchWithRetry(
-  url,
-  options,
-  { retries = 6, baseDelayMs = 250, retryStatuses = [500, 502, 503, 504] } = {}
-) {
-  const retryable = new Set(retryStatuses);
-  let lastErr = null;
+export async function getServerSideProps(context) {
+  const { query, req, asPath } = context;
+  const isPreview = query.preview === 'true';
 
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      const res = await fetch(url, options);
-
-      // Next dev proxy failures often surface as a transient 500.
-      if (!res.ok && retryable.has(res.status) && attempt < retries - 1) {
-        const delay = baseDelayMs * Math.pow(2, attempt);
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-
-      return res;
-    } catch (err) {
-      lastErr = err;
-      const delay = baseDelayMs * Math.pow(2, attempt);
-      await new Promise((r) => setTimeout(r, delay));
-    }
+  if (isPreview) {
+    return { props: { initialPost: null, initialLatest: [], isPreview: true } };
   }
 
-  throw lastErr;
+  const slugMatch = asPath.match(/^\/post\/([^/?#]+)/);
+  const slug = slugMatch ? decodeURIComponent(slugMatch[1]) : null;
+  const id = query.id;
+
+  try {
+    const postUrl = slug
+      ? `/api/post/by-slug?slug=${encodeURIComponent(slug)}`
+      : id
+        ? `/api/post?id=${encodeURIComponent(id)}`
+        : null;
+
+    const [postData, latestData] = await Promise.all([
+      postUrl ? api(postUrl) : Promise.resolve(null),
+      api('/api/posts'),
+    ]);
+
+    return {
+      props: {
+        initialPost: postData,
+        initialLatest: latestData || [],
+        isPreview: false,
+      },
+    };
+  } catch (err) {
+    console.error('Error in getServerSideProps:', err);
+    return {
+      props: {
+        initialPost: null,
+        initialLatest: [],
+        isPreview: false,
+        error: 'Could not load this post. Please try again later.',
+      },
+    };
+  }
 }
 
-export default function PostPage() {
+export default function PostPage({ initialPost, initialLatest, isPreview: initialIsPreview, error: initialError }) {
   const router = useRouter();
-  const [post, setPost] = useState(null);
-  const [error, setError] = useState('');
-  const [latest, setLatest] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
+
+  const slugFromPath = useMemo(() => {
+    if (!router.isReady) return '';
+    const path = String(router.asPath || '').split('?')[0] || '';
+    const m = path.match(/^\/post\/([^/?#]+)/);
+    if (!m) return '';
+    try {
+      return decodeURIComponent(m[1] || '');
+    } catch {
+      return m[1] || '';
+    }
+  }, [router.asPath, router.isReady]);
+
+  const id = useMemo(() => {
+    if (!router.isReady) return '';
+    const q = router.query?.id;
+    if (typeof q === 'string') return q;
+    return new URLSearchParams(String(router.asPath || '').split('?')[1] || '').get('id') || '';
+  }, [router.asPath, router.isReady, router.query?.id]);
+
+  const isPreview = useMemo(() => {
+    if (!router.isReady) return initialIsPreview;
+    return router.query?.preview === 'true' || new URLSearchParams(String(router.asPath || '').split('?')[1] || '').get('preview') === 'true';
+  }, [router.asPath, router.isReady, router.query?.preview, initialIsPreview]);
+
+  const postUrlKey = useMemo(() => {
+    if (isPreview) return null;
+    if (slugFromPath) return `/api/post/by-slug?slug=${encodeURIComponent(slugFromPath)}`;
+    if (id) return `/api/post?id=${encodeURIComponent(id)}`;
+    return null;
+  }, [slugFromPath, id, isPreview]);
+
+  const { data: postData, error: postError } = useSWR(postUrlKey, fetcher, {
+    fallbackData: initialPost,
+    revalidateOnFocus: false,
+  });
+
+  const { data: latestData } = useSWR('/api/posts', fetcher, {
+    fallbackData: initialLatest,
+    revalidateOnFocus: false,
+  });
+
+  const [previewPost, setPreviewPost] = useState(null);
+
+  useEffect(() => {
+    if (isPreview && typeof window !== 'undefined') {
+      const data = localStorage.getItem('gn_preview_data');
+      if (data) {
+        setPreviewPost(JSON.parse(data));
+      }
+    }
+  }, [isPreview]);
+
+  const post = useMemo(() => {
+    const raw = isPreview ? previewPost : postData;
+    if (!raw) return null;
+    return {
+      ...raw,
+      date: raw.date ? new Date(raw.date) : null,
+    };
+  }, [isPreview, previewPost, postData]);
+
+  const latest = useMemo(() => {
+    return (latestData || []).map((p) => ({
+      ...p,
+      date: p.date ? new Date(p.date) : null,
+    }));
+  }, [latestData]);
+
+  const loading = !post && !postError && !initialError;
+  const error = initialError || (postError ? 'Could not load this post. Please try again later.' : '');
 
   // Fetch user
   useEffect(() => {
@@ -110,89 +194,10 @@ export default function PostPage() {
     })();
   }, []);
 
-  const slugFromPath = useMemo(() => {
-    if (!router.isReady) return '';
-    const path = String(router.asPath || '').split('?')[0] || '';
-    const m = path.match(/^\/post\/([^/?#]+)/);
-    if (!m) return '';
-    try {
-      return decodeURIComponent(m[1] || '');
-    } catch {
-      return m[1] || '';
-    }
-  }, [router.asPath, router.isReady]);
-
-  const id = useMemo(() => {
-    if (!router.isReady) return '';
-
-    const q = router.query?.id;
-    if (typeof q === 'string') return q;
-    if (Array.isArray(q)) return q[0] || '';
-
-    // Fallback (older links / manual parsing)
-    const queryStr = String(router.asPath || '').split('?')[1] || '';
-    return new URLSearchParams(queryStr).get('id') || '';
-  }, [router.asPath, router.isReady, router.query?.id]);
-
-  const isPreview = useMemo(() => {
-    if (!router.isReady) return false;
-    const q = router.query?.preview;
-    if (q === 'true') return true;
-    const queryStr = String(router.asPath || '').split('?')[1] || '';
-    return new URLSearchParams(queryStr).get('preview') === 'true';
-  }, [router.asPath, router.isReady, router.query?.preview]);
-
-  // Fetch post
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!router.isReady) return;
-
-        if (isPreview) {
-          const data = localStorage.getItem('gn_preview_data');
-          if (data) {
-            const parsed = JSON.parse(data);
-            setPost({
-              ...parsed,
-              date: parsed.date ? new Date(parsed.date) : new Date(),
-            });
-            setLoading(false);
-            return;
-          }
-        }
-
-        const url = slugFromPath
-          ? `/api/post/by-slug?slug=${encodeURIComponent(slugFromPath)}`
-          : id
-            ? `/api/post?id=${encodeURIComponent(id)}`
-            : '';
-
-        if (!url) {
-          setError('Invalid post URL.');
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetchWithRetry(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(`Failed to load post: ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        setPost({
-          ...data,
-          date: data.date ? new Date(data.date) : null,
-        });
-      } catch (err) {
-        console.error(err);
-        setError('Could not load this post. Please try again later.');
-      } finally {
-        if (router.isReady) setLoading(false);
-      }
-    })();
-  }, [id, isPreview, router.isReady, slugFromPath]);
-
   // Clean URL and metadata management
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!post?.title) return;
+    if (!post?.title || isPreview) return;
 
     const cleanPath = `/post/${encodeURIComponent(slugifyTitle(post.title))}`;
     const currentPath = String(window.location.pathname || '');
@@ -202,28 +207,7 @@ export default function PostPage() {
       const hash = String(window.location.hash || '');
       window.history.replaceState(null, '', `${cleanPath}${hash}`);
     }
-  }, [post]);
-
-  // Fetch latest posts for sidebar
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetchWithRetry('/api/posts', {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`Failed to load posts: ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        setLatest(
-          (data || []).map((p) => ({
-            ...p,
-            date: p.date ? new Date(p.date) : null,
-          }))
-        );
-      } catch (err) {
-        console.error(err);
-      }
-    })();
-  }, []);
+  }, [post, isPreview]);
 
   const sidebarPosts = useMemo(() => {
     const currentId = String(post?.id || id || '');
@@ -257,10 +241,8 @@ export default function PostPage() {
     >
       <div className={styles.postPage}>
         {loading ? (
-          <div className={styles.loading}>
-            <div className={styles.skeletonTitle} />
-            <div className={styles.skeletonImage} />
-            {Array(5).fill(0).map((_, i) => <div key={i} className={styles.skeletonText} />)}
+          <div style={{ height: '70vh', display: 'flex', alignItems: 'center', width: '100%' }}>
+            <Loader />
           </div>
         ) : error ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
