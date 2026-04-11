@@ -9,54 +9,10 @@ import {
   TableCell,
 } from '../shared/Table';
 import { EmptyState } from '../shared/EmptyState';
+import { DeleteConfirmModal, SuccessToast } from '../shared';
 import Loader from '../../Loader/Loader';
 import { formatDateShort } from '../../../lib/utils';
 import { PlusIcon, EditIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon } from '../Layout/icons';
-
-function DeleteConfirmModal({ post, onConfirm, onCancel, isDeleting }) {
-  if (!post) return null;
-  
-  return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Delete Post</h3>
-        </div>
-        <div className="modal-body">
-          <p>Are you sure you want to delete this post?</p>
-          <p className="modal-post-title">"{post.title}"</p>
-          <p className="modal-warning">This action cannot be undone.</p>
-        </div>
-        <div className="modal-actions">
-          <ActionButton onClick={onCancel} disabled={isDeleting}>
-            Cancel
-          </ActionButton>
-          <ActionButton
-            onClick={onConfirm}
-            variant="danger"
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </ActionButton>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SuccessToast({ message, onDismiss }) {
-  useEffect(() => {
-    const timer = setTimeout(onDismiss, 3000);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-  
-  return (
-    <div className="toast toast-success">
-      <span className="toast-icon">✓</span>
-      <span className="toast-message">{message}</span>
-    </div>
-  );
-}
 
 export function PostsView({ posts, postsCount, onPublish, onDelete, me, page, onPageChange, limit, isLoading }) {
   const postsScrollRef = useRef(null);
@@ -235,7 +191,9 @@ export function PostsView({ posts, postsCount, onPublish, onDelete, me, page, on
       </div>
 
       <DeleteConfirmModal
-        post={postToDelete}
+        item={postToDelete}
+        title="Delete Post"
+        itemName={postToDelete?.title}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDeleting={isDeleting}
