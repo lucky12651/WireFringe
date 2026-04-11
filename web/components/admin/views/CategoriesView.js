@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PillButton } from '../shared/PillButton';
 import { EmptyState } from '../shared/EmptyState';
+import { DeleteConfirmModal, SuccessToast } from '../shared';
 
 export function CategoriesView({
   categoriesWithCounts,
@@ -10,6 +11,13 @@ export function CategoriesView({
 }) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [hint, setHint] = useState('');
+
+  // Delete confirmation state
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Success toast state
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,12 +38,30 @@ export function CategoriesView({
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Delete category "${name}"?`)) return;
-    const result = await onDelete(id);
-    if (!result.success) {
-      setHint(result.error);
+  const handleDeleteClick = (category) => {
+    setCategoryToDelete(category);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    const deletedName = categoryToDelete.name;
+    setIsDeleting(true);
+    try {
+      const result = await onDelete(categoryToDelete.id);
+      if (result.success) {
+        setCategoryToDelete(null);
+        setSuccessMessage(`"${deletedName}" has been deleted successfully.`);
+      } else {
+        setHint(result.error);
+        setCategoryToDelete(null);
+      }
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setCategoryToDelete(null);
   };
 
   return (
@@ -84,7 +110,7 @@ export function CategoriesView({
                 {canManageUsers && (
                   <button
                     className="pill-btn danger"
-                    onClick={() => handleDelete(c.id, c.name)}
+                    onClick={() => handleDeleteClick(c)}
                     title="Delete category"
                   >
                     <span className="dot" style={{ background: 'var(--danger)' }}></span>
@@ -100,6 +126,22 @@ export function CategoriesView({
 
         {!categoriesWithCounts.length && <EmptyState>No categories yet.</EmptyState>}
       </section>
+
+      <DeleteConfirmModal
+        item={categoryToDelete}
+        title="Delete Category"
+        itemName={categoryToDelete?.name}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isDeleting={isDeleting}
+      />
+
+      {successMessage && (
+        <SuccessToast
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
     </>
   );
 }
