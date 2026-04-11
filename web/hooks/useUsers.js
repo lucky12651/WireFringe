@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { usersApi } from '../lib/api';
 import { calculateCreatorCounts, calculateMemberStats } from '../lib/utils';
 
-export function useUsers(posts = []) {
+export function useUsers(posts = [], creatorCountsOverride = null) {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -53,8 +53,11 @@ export function useUsers(posts = []) {
 
   // Derived stats
   const creatorCounts = useMemo(() => {
+    if (creatorCountsOverride instanceof Map) {
+      return creatorCountsOverride;
+    }
     return calculateCreatorCounts(posts);
-  }, [posts]);
+  }, [posts, creatorCountsOverride]);
 
   const memberStats = useMemo(() => {
     const canManageUsers = true; // Admin context

@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
 import { initTheme } from '../lib/theme';
+import { fetcher } from '../lib/api';
+import { pctChange } from '../lib/utils';
 import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia } from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
 import { LoginPage } from '../components/admin/Login';
@@ -22,9 +25,67 @@ export default function AdminPage() {
   const categories = useCategories();
   const comments = useComments();
   const media = useMedia();
-  const users = useUsers(posts.posts);
-
   const { me, isAuthed, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
+
+  // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
+  const shouldLoadDashboardStats = isAuthed && activeView === 'dashboard';
+  const { data: postsByMemberCounts } = useSWR(
+    shouldLoadDashboardStats ? '/api/admin/stats/posts-by-member' : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: postGrowthCounts } = useSWR(
+    shouldLoadDashboardStats ? '/api/admin/stats/post-growth?days=30' : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: postsByMonthCounts } = useSWR(
+    shouldLoadDashboardStats ? '/api/admin/stats/posts-by-month?months=6' : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const dashboardPostGrowth30 = useMemo(() => {
+    const current = Number(postGrowthCounts?.current);
+    const prev = Number(postGrowthCounts?.prev);
+    if (!Number.isFinite(current) || !Number.isFinite(prev)) return null;
+    return { current, prev, delta: pctChange(current, prev) };
+  }, [postGrowthCounts]);
+
+  const dashboardPostsByMonth = useMemo(() => {
+    if (!Array.isArray(postsByMonthCounts)) return null;
+    return postsByMonthCounts.map((m) => {
+      const key = String(m?.key || '').trim();
+      const rawCount = Number(m?.count || 0);
+      const count = Number.isFinite(rawCount) ? rawCount : 0;
+
+      const [yStr, mStr] = String(key).split('-');
+      const year = Number(yStr);
+      const monthIndex = Number(mStr) - 1;
+      const label =
+        Number.isFinite(year) && monthIndex >= 0 && monthIndex <= 11
+          ? new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' })
+          : key;
+
+      return { key, label, count };
+    });
+  }, [postsByMonthCounts]);
+
+  const creatorCountsOverride = useMemo(() => {
+    if (!Array.isArray(postsByMemberCounts)) return null;
+    const map = new Map();
+    for (const row of postsByMemberCounts) {
+      const username = String(row?.username || '').trim();
+      if (!username) continue;
+      const count = Number(row?.count || 0);
+      map.set(username, Number.isFinite(count) ? count : 0);
+    }
+    return map;
+  }, [postsByMemberCounts]);
+
+  const users = useUsers(posts.posts, creatorCountsOverride);
 
   // Initialize theme and auth on mount
   useEffect(() => {
@@ -103,8 +164,8 @@ export default function AdminPage() {
             mediaCount={media.mediaCount}
             pendingCommentsCount={comments.pendingCount}
             canViewPendingCommentsCount={canViewPendingCommentsCount}
-            postGrowth30={posts.postGrowth30}
-            postsByMonth={posts.postsByMonth}
+            postGrowth30={dashboardPostGrowth30 || posts.postGrowth30}
+            postsByMonth={dashboardPostsByMonth || posts.postsByMonth}
             trendingComments={comments.trendingComments}
             trendingHint={comments.error}
             memberStats={users.memberStats}
