@@ -5,7 +5,14 @@ from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, get_db, require_user
 from ..models import User
-from ..schemas import PaginatedPostsOut, PostOut, PostUpsert
+from ..schemas import (
+    CreatorCountOut,
+    MonthCountOut,
+    PaginatedPostsOut,
+    PostGrowthCountsOut,
+    PostOut,
+    PostUpsert,
+)
 from ..services import PostService
 
 router = APIRouter()
@@ -70,6 +77,49 @@ def admin_list_posts(
         
     posts, total = service.list_posts_paginated(offset, limit, creator)
     return PaginatedPostsOut(posts=posts, total=total)
+
+
+@router.get("/admin/stats/posts-by-member", response_model=list[CreatorCountOut])
+def admin_posts_by_member_stats(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> list[CreatorCountOut]:
+    """Dashboard helper: count posts grouped by creator.
+
+    Uses DB aggregation so results are correct regardless of admin post pagination.
+    """
+    user = require_user(request, db)
+    creator = user.username if user.role == "author" else None
+    return service.count_posts_by_creator(creator)
+
+
+@router.get("/admin/stats/post-growth", response_model=PostGrowthCountsOut)
+def admin_post_growth_stats(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+    days: int = 30,
+) -> PostGrowthCountsOut:
+    """Dashboard helper: post growth (last N days vs previous N days)."""
+    user = require_user(request, db)
+    creator = user.username if user.role == "author" else None
+    days = max(1, min(int(days or 30), 365))
+    return service.get_post_growth_counts(days, creator)
+
+
+@router.get("/admin/stats/posts-by-month", response_model=list[MonthCountOut])
+def admin_posts_by_month_stats(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+    months: int = 6,
+) -> list[MonthCountOut]:
+    """Dashboard helper: posts per month for the last N months."""
+    user = require_user(request, db)
+    creator = user.username if user.role == "author" else None
+    months = max(1, min(int(months or 6), 24))
+    return service.get_posts_by_month_counts(months, creator)
 
 
 @router.get("/admin/post", response_model=PostOut)

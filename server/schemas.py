@@ -28,6 +28,21 @@ class PaginatedPostsOut(BaseModel):
     total: int
 
 
+class CreatorCountOut(BaseModel):
+    username: str
+    count: int
+
+
+class PostGrowthCountsOut(BaseModel):
+    current: int
+    prev: int
+
+
+class MonthCountOut(BaseModel):
+    key: str
+    count: int
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str

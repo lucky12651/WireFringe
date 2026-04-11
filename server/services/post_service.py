@@ -3,14 +3,14 @@ from __future__ import annotations
 import re
 import unicodedata
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from ..models import Post, User
 from ..repositories import CommentRepository, PostRepository, UserRepository
-from ..schemas import PostOut, PostUpsert
+from ..schemas import CreatorCountOut, MonthCountOut, PostGrowthCountsOut, PostOut, PostUpsert
 
 
 class PostService:
@@ -86,6 +86,54 @@ class PostService:
         total_count = self.post_repo.count(creator)
         author_lookup = self.user_repo.build_author_lookup()
         return [self._build_post_out(p, author_lookup) for p in posts], total_count
+
+    def count_posts_by_creator(self, creator: str | None = None) -> list[CreatorCountOut]:
+        """Return post counts grouped by creator username."""
+        rows = self.post_repo.count_by_creator(creator)
+        return [CreatorCountOut(username=username, count=count) for username, count in rows]
+
+    def get_post_growth_counts(
+        self, days: int = 30, creator: str | None = None
+    ) -> PostGrowthCountsOut:
+        """Count published posts in the last N days vs previous N days."""
+        days = max(1, min(int(days or 30), 365))
+        now = datetime.utcnow()
+        start_current = now - timedelta(days=days)
+        start_prev = now - timedelta(days=2 * days)
+
+        current = self.post_repo.count_published_since(start_current, creator)
+        prev = self.post_repo.count_published_between(start_prev, start_current, creator)
+        return PostGrowthCountsOut(current=current, prev=prev)
+
+    def get_posts_by_month_counts(
+        self, months: int = 6, creator: str | None = None
+    ) -> list[MonthCountOut]:
+        """Count published posts per month for the last N months (inclusive)."""
+        months = max(1, min(int(months or 6), 24))
+
+        now = datetime.utcnow()
+        keys: list[str] = []
+        for i in range(months - 1, -1, -1):
+            year = now.year
+            month = now.month - i
+            while month <= 0:
+                month += 12
+                year -= 1
+            keys.append(f"{year:04d}-{month:02d}")
+
+        # Range filter (best effort) to keep the aggregation tight.
+        y0, m0 = keys[0].split("-")
+        since = datetime(int(y0), int(m0), 1)
+        y1 = now.year
+        m1 = now.month + 1
+        if m1 == 13:
+            m1 = 1
+            y1 += 1
+        until = datetime(int(y1), int(m1), 1)
+
+        rows = self.post_repo.count_published_by_month(since, until, creator)
+        count_by_key = {k: int(c) for k, c in rows}
+        return [MonthCountOut(key=k, count=int(count_by_key.get(k, 0))) for k in keys]
 
     def get_post(self, post_id: str) -> PostOut:
         """Get a single post by ID."""
