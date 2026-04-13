@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PillButton } from '../shared/PillButton';
+import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort } from '../../../lib/utils';
 
@@ -40,7 +40,7 @@ export function MediaView({ media, mediaCount, onUpload, onRefresh }) {
             accept="image/*"
             onChange={handleFileChange}
           />
-          <PillButton onClick={onRefresh}>Refresh</PillButton>
+          <ActionButton onClick={onRefresh}>Refresh</ActionButton>
           <div className="hint">{hint}</div>
         </div>
       </section>

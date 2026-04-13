@@ -16,6 +16,13 @@
   transition: all 0.2s ease;
 }
 
+.sm {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 12px;
+  gap: 6px;
+}
+
 .actionButton:hover {
   background: #f5f5f5;
   border-color: #ccc;

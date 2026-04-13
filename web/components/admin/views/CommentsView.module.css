@@ -1,0 +1,29 @@
+.commentHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.commentName {
+  font-weight: 700;
+}
+
+.commentMeta {
+  margin-top: 2px;
+}
+
+.commentText {
+  margin-top: 6px;
+}
+
+.actionsCell {
+  text-align: right;
+}
+
+.actionsWrap {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}

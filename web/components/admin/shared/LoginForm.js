@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PillButton } from './PillButton';
+import { ActionButton } from './ActionButton';
 
 export function LoginForm({ onLogin, error }) {
   const [username, setUsername] = useState('');
@@ -54,7 +54,7 @@ export function LoginForm({ onLogin, error }) {
         </label>
 
         <div className="row">
-          <PillButton type="submit">Sign in</PillButton>
+          <ActionButton type="submit">Sign in</ActionButton>
           <div className="hint">{localError || error}</div>
         </div>
       </form>
