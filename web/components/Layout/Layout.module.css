@@ -27,6 +27,17 @@
   padding-bottom: var(--space-xl);
 }
 
+.inlineAd {
+  margin: var(--space-lg) 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--border-light);
