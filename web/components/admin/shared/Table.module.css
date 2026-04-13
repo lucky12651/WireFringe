@@ -1,9 +1,10 @@
 .tableWrapper {
   width: 100%;
   overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .table {
@@ -14,21 +15,21 @@
 }
 
 .tableHeader {
-  background: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .tableHead {
   padding: 12px 16px;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.05em;
 }
 
 .tableRow {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   transition: background 0.2s ease;
 }
 
@@ -36,41 +37,19 @@
   border-bottom: none;
 }
 
+.tableBody .tableRow:nth-child(even) {
+  background: rgba(
+    var(--accent-rgb, var(--brand-primary-rgb, 26, 115, 232)),
+    0.03
+  );
+}
+
 .tableRow:hover {
-  background: #f9f9f9;
+  background: var(--bg-hover);
 }
 
 .tableCell {
   padding: 16px;
-  color: #1a1a1a;
+  color: var(--text-primary);
   vertical-align: middle;
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .tableWrapper {
-    background: #1a1a1a;
-    border-color: #333;
-  }
-
-  .tableHeader {
-    background: #252525;
-    border-bottom-color: #333;
-  }
-
-  .tableHead {
-    color: #999;
-  }
-
-  .tableRow {
-    border-bottom-color: #2a2a2a;
-  }
-
-  .tableRow:hover {
-    background: #252525;
-  }
-
-  .tableCell {
-    color: #eee;
-  }
 }

@@ -60,6 +60,7 @@ class UserOut(BaseModel):
     id: int
     username: str
     role: str
+    avatarUrl: str | None = None
 
 
 class UserCreate(BaseModel):

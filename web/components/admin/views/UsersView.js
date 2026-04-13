@@ -2,12 +2,29 @@ import React, { useState } from 'react';
 import { ROLES } from '../../../lib/constants';
 import { PillButton } from '../shared/PillButton';
 import { EmptyState } from '../shared/EmptyState';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shared/Table';
+import styles from './UsersView.module.css';
+import { Icons } from '../Layout/icons';
 
 export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('editor');
   const [hint, setHint] = useState('');
+  const [failedAvatars, setFailedAvatars] = useState(() => new Set());
+
+  const usersCount = Array.isArray(users) ? users.length : 0;
+
+  const UserAvatarIcon = Icons.users;
+
+  const markAvatarFailed = (userId) => {
+    setFailedAvatars((prev) => {
+      if (prev.has(userId)) return prev;
+      const next = new Set(prev);
+      next.add(userId);
+      return next;
+    });
+  };
 
   if (!canManageUsers) {
     return (
@@ -59,6 +76,7 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
       <div className="admin-title-row">
         <h2>Users</h2>
         <div className="accent-line"></div>
+        <span className="admin-title-count">{usersCount}</span>
       </div>
 
       <section className="side-card">
@@ -107,26 +125,80 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
             <div className="hint">{hint}</div>
           </div>
         </form>
+      </section>
 
-        <div className="mini-list">
-          {users.map((u) => (
-            <div key={u.id} className="mini-item">
-              <div className="role">
-                <span className="title">{u.username}</span>
-                <span className="tag">{u.role}</span>
-              </div>
-              <PillButton
-                variant="danger"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(u.id, u.username);
-                }}
-              >
-                Delete
-              </PillButton>
-            </div>
-          ))}
+      <section className="side-card" aria-label="All users">
+        <div className="side-header">
+          <h3>All Users</h3>
+          <span>{usersCount} total</span>
         </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead scope="col">Profile</TableHead>
+              <TableHead scope="col">Username</TableHead>
+              <TableHead scope="col">Role</TableHead>
+              <TableHead scope="col" className={styles.actionsHead}>
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {usersCount ? (
+              users.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className={styles.avatarWrap}>
+                      {String(u?.avatarUrl || '').trim() && !failedAvatars.has(u.id) ? (
+                        <img
+                          className={styles.avatar}
+                          src={u.avatarUrl}
+                          alt={`Profile photo of ${u.username}`}
+                          loading="lazy"
+                          onError={() => markAvatarFailed(u.id)}
+                        />
+                      ) : (
+                        <div className={styles.avatarFallback} aria-hidden="true">
+                          <span className={styles.avatarIcon}>
+                            <UserAvatarIcon />
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={styles.username}>{u.username}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={styles.roleTag}>{u.role}</span>
+                  </TableCell>
+                  <TableCell className={styles.actionsCell}>
+                    <div className={styles.actions}>
+                      <PillButton
+                        variant="danger"
+                        title={`Delete user ${u.username}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(u.id, u.username);
+                        }}
+                      >
+                        Delete
+                      </PillButton>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4}>
+                  <EmptyState>No users yet.</EmptyState>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </section>
     </>
   );

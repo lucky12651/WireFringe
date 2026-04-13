@@ -30,7 +30,12 @@ class UserService:
     @staticmethod
     def _build_user_out(user: User) -> UserOut:
         """Convert User model to UserOut schema."""
-        return UserOut(id=user.id, username=user.username, role=user.role)
+        return UserOut(
+            id=user.id,
+            username=user.username,
+            role=user.role,
+            avatarUrl=(user.avatar_url or None),
+        )
 
     def authenticate_user(self, username: str, password: str) -> MeOut | None:
         """Authenticate a user with credentials."""

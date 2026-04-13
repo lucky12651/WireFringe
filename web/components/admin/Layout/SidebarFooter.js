@@ -1,6 +1,6 @@
 // Sidebar Footer Component - User info and actions
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Icons } from './icons';
 import { ActionButton } from '../shared';
 import styles from './Sidebar.module.css';
@@ -8,13 +8,30 @@ import styles from './Sidebar.module.css';
 export function SidebarFooter({ me, onLogout }) {
   const LogoutIcon = Icons.logout;
   const SiteIcon = Icons.site;
+  const UserIcon = Icons.users;
+  const [avatarFailed, setAvatarFailed] = useState(false);
+
+  const avatarUrl = String(me?.avatarUrl || '').trim();
+  const shouldShowPhoto = Boolean(avatarUrl) && !avatarFailed;
 
   return (
     <div className={styles.footer}>
       {me && (
         <div className={styles.userInfo}>
           <div className={styles.userAvatar}>
-            {me.username?.charAt(0).toUpperCase() || '?'}
+            {shouldShowPhoto ? (
+              <img
+                className={styles.userAvatarImg}
+                src={avatarUrl}
+                alt={`Profile photo of ${me.username}`}
+                loading="lazy"
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : (
+              <span className={styles.userAvatarIcon} aria-hidden="true">
+                <UserIcon />
+              </span>
+            )}
           </div>
           <div className={styles.userDetails}>
             <span className={styles.userName}>{me.username}</span>
