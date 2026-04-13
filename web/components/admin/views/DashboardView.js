@@ -24,6 +24,7 @@ export function DashboardView({
 }) {
   const postGrowthCardRef = useRef(null);
   const [trendCardHeight, setTrendCardHeight] = useState(null);
+  const isAuthor = me?.role === 'author';
 
   // Sync trend card height with post growth card
   useEffect(() => {
@@ -81,9 +82,11 @@ export function DashboardView({
           />
         </div>
 
-        <PostsByMember
-          memberStats={memberStats}
-        />
+        {!isAuthor && (
+          <PostsByMember
+            memberStats={memberStats}
+          />
+        )}
       </section>
 
       <LatestPosts

@@ -82,6 +82,9 @@ export function PostsView({ posts, postsCount, onPublish, onDelete, me, page, on
         <h2>Posts</h2>
         <div className="accent-line"></div>
         <span className="admin-title-count">{postsCount}</span>
+        <ActionButton icon={PlusIcon} href="/admin/post" size="sm">
+          New Post
+        </ActionButton>
       
       </div>
       
