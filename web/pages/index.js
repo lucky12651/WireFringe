@@ -99,24 +99,6 @@ export default function HomePage({ initialPosts }) {
     })();
   }, []);
 
-  // Initialize Google Ads
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const adEls = document.querySelectorAll('ins.adsbygoogle');
-      adEls.forEach((el) => {
-        if (el.getAttribute('data-adsbygoogle-status') === 'done') return;
-        try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch {
-          // ignore
-        }
-      });
-    } catch {
-      // ignore
-    }
-  }, []);
-
   const loading = !postsData && !postsError;
   const error = postsError ? 'Could not load posts. Please try again later.' : '';
 

@@ -28,6 +28,16 @@ export default function Layout({
         
         <main className={styles.main}>
           <div className={styles.container}>
+            <div className={styles.inlineAd} aria-label="Advertisement">
+              <ins
+                className="adsbygoogle"
+                style={{ display: 'block' }}
+                data-ad-client="ca-pub-9036526646235532"
+                data-ad-slot="4810585579"
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+              />
+            </div>
             {children}
           </div>
         </main>
