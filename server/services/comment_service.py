@@ -54,6 +54,8 @@ class CommentService:
         """List approved comments for a post."""
         comments = self.comment_repo.get_by_post(post_id, approved_only=True)
 
+        from ..dependencies import get_existing_visitor_id
+
         visitor_id = get_existing_visitor_id(request)
         vote_by_comment_id: dict[int, str] = {}
         if visitor_id and comments:

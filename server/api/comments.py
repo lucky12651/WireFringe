@@ -28,7 +28,7 @@ def get_post_service(db: Session = Depends(get_db)) -> PostService:
 # Public comment endpoints
 
 
-@router.get("/posts/{post_id}/comments", response_model=list[CommentOut])
+@router.get("/posts/{post_id:path}/comments", response_model=list[CommentOut])
 def list_comments(
     post_id: str,
     request: Request,
@@ -38,7 +38,7 @@ def list_comments(
     return service.list_comments(post_id, request)
 
 
-@router.post("/posts/{post_id}/comments", response_model=CommentOut)
+@router.post("/posts/{post_id:path}/comments", response_model=CommentOut)
 def create_comment(
     post_id: str,
     payload: CommentCreateRequest,
