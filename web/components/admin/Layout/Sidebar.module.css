@@ -248,62 +248,122 @@
 }
 
 /* Dark Mode Support */
+/* Explicit theme support (admin theme toggle sets html[data-theme]) */
+:global(html[data-theme="dark"]) .sidebar {
+  background: #1a1a1a;
+  border-right-color: #333;
+}
+
+:global(html[data-theme="dark"]) .header {
+  border-bottom-color: #333;
+}
+
+:global(html[data-theme="dark"]) .brandMark {
+  background: white;
+  color: #1a1a1a;
+}
+
+:global(html[data-theme="dark"]) .brandTitle {
+  color: white;
+}
+
+:global(html[data-theme="dark"]) .brandSubtitle {
+  color: #999;
+}
+
+:global(html[data-theme="dark"]) .navDivider {
+  background: #333;
+}
+
+:global(html[data-theme="dark"]) .navItem {
+  color: #999;
+}
+
+:global(html[data-theme="dark"]) .navItem:hover:not(:disabled) {
+  background: #2a2a2a;
+  color: white;
+}
+
+:global(html[data-theme="dark"]) .navItem.active {
+  background: white;
+  color: #1a1a1a;
+}
+
+:global(html[data-theme="dark"]) .footer {
+  border-top-color: #333;
+}
+
+:global(html[data-theme="dark"]) .userInfo {
+  background: #2a2a2a;
+  border-color: #333;
+}
+
+:global(html[data-theme="dark"]) .userAvatar {
+  background: white;
+  color: #1a1a1a;
+}
+
+:global(html[data-theme="dark"]) .userName {
+  color: white;
+}
+
+/* Fallback for users without the explicit theme toggle */
 @media (prefers-color-scheme: dark) {
-  .sidebar {
+  :global(html:not([data-theme])) .sidebar {
     background: #1a1a1a;
     border-right-color: #333;
   }
 
-  .header {
+  :global(html:not([data-theme])) .header {
     border-bottom-color: #333;
   }
 
-  .brandMark {
+  :global(html:not([data-theme])) .brandMark {
     background: white;
     color: #1a1a1a;
   }
 
-  .brandTitle {
+  :global(html:not([data-theme])) .brandTitle {
     color: white;
   }
 
-  .brandSubtitle {
+  :global(html:not([data-theme])) .brandSubtitle {
     color: #999;
   }
 
-  .navDivider {
+  :global(html:not([data-theme])) .navDivider {
     background: #333;
   }
 
-  .navItem {
+  :global(html:not([data-theme])) .navItem {
     color: #999;
   }
 
-  .navItem:hover:not(:disabled) {
+  :global(html:not([data-theme])) .navItem:hover:not(:disabled) {
     background: #2a2a2a;
     color: white;
   }
 
-  .navItem.active {
+  :global(html:not([data-theme])) .navItem.active {
     background: white;
     color: #1a1a1a;
   }
 
-  .footer {
+  :global(html:not([data-theme])) .footer {
     border-top-color: #333;
   }
 
-  .userInfo {
+  :global(html:not([data-theme])) .userInfo {
     background: #2a2a2a;
     border-color: #333;
   }
 
-  .userAvatar {
+  :global(html:not([data-theme])) .userAvatar {
     background: white;
     color: #1a1a1a;
   }
 
-  .userName {
+  :global(html:not([data-theme])) .userName {
     color: white;
   }
 }
@@ -315,6 +375,10 @@
     min-height: auto;
     border-right: none;
     border-bottom: 1px solid #e0e0e0;
+  }
+
+  :global(html[data-theme="dark"]) .sidebar {
+    border-bottom-color: #333;
   }
 
   .nav {
