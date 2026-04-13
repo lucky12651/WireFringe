@@ -44,32 +44,64 @@
 }
 
 /* Dark Mode Support */
+/* Explicit theme support (admin theme toggle sets html[data-theme]) */
+:global(html[data-theme="dark"]) .actionButton {
+  background: #2a2a2a;
+  border-color: #333;
+  color: #999;
+}
+
+:global(html[data-theme="dark"]) .actionButton:hover {
+  background: #333;
+  border-color: #444;
+  color: white;
+}
+
+:global(html[data-theme="dark"]) .actionButton:disabled {
+  background: #252525;
+  border-color: #333;
+  color: #555;
+}
+
+:global(html[data-theme="dark"]) .danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+:global(html[data-theme="dark"]) .danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+/* Fallback for users without the explicit theme toggle */
 @media (prefers-color-scheme: dark) {
-  .actionButton {
+  :global(html:not([data-theme])) .actionButton {
     background: #2a2a2a;
     border-color: #333;
     color: #999;
   }
 
-  .actionButton:hover {
+  :global(html:not([data-theme])) .actionButton:hover {
     background: #333;
     border-color: #444;
     color: white;
   }
 
-  .actionButton:disabled {
+  :global(html:not([data-theme])) .actionButton:disabled {
     background: #252525;
     border-color: #333;
     color: #555;
   }
 
-  .danger {
+  :global(html:not([data-theme])) .danger {
     border-color: rgba(239, 68, 68, 0.3);
     color: #f87171;
     background: rgba(239, 68, 68, 0.15);
   }
 
-  .danger:hover {
+  :global(html:not([data-theme])) .danger:hover {
     background: rgba(239, 68, 68, 0.25);
     border-color: rgba(239, 68, 68, 0.5);
     color: #ef4444;
