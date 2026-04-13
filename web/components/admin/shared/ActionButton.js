@@ -14,6 +14,7 @@ import styles from './ActionButton.module.css';
  * @param {string} [props.type="button"] - Button type (e.g., "submit", "button")
  * @param {string} [props.className] - Additional CSS classes
  * @param {string} [props.variant] - Button variant: "default" or "danger"
+ * @param {string} [props.size] - Button size: "md" or "sm"
  */
 export function ActionButton({ 
   icon: Icon, 
@@ -23,10 +24,12 @@ export function ActionButton({
   type = 'button', 
   className = '',
   variant = 'default',
+  size = 'md',
   ...props 
 }) {
   const variantClass = variant === 'danger' ? styles.danger : '';
-  const combinedClassName = `${styles.actionButton} ${variantClass} ${className}`.trim();
+  const sizeClass = size === 'sm' ? styles.sm : '';
+  const combinedClassName = `${styles.actionButton} ${variantClass} ${sizeClass} ${className}`.trim();
 
   const content = (
     <>

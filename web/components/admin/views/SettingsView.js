@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PillButton } from '../shared/PillButton';
+import { ActionButton } from '../shared/ActionButton';
 import { initialsFromName } from '../../../lib/utils';
 import { MIN_PASSWORD_LENGTH } from '../../../lib/constants';
 
@@ -140,7 +140,7 @@ export function SettingsView({
           </label>
 
           <div className="row">
-            <PillButton type="submit">Save profile</PillButton>
+            <ActionButton type="submit">Save profile</ActionButton>
             <div className="hint">{profileHint}</div>
           </div>
         </form>
@@ -186,7 +186,7 @@ export function SettingsView({
           </label>
 
           <div className="row">
-            <PillButton type="submit">Change password</PillButton>
+            <ActionButton type="submit">Change password</ActionButton>
             <div className="hint">{passwordHint}</div>
           </div>
         </form>

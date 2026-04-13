@@ -1253,6 +1253,12 @@ html[data-theme="light"] .admin-table-row {
   background: #36d399;
 }
 
+.status.approved {
+  border-color: rgba(54, 211, 153, 0.4);
+  color: #36d399;
+  background: rgba(54, 211, 153, 0.12);
+}
+
 .status.draft {
   border-color: rgba(255, 176, 66, 0.4);
   color: #ffb042;

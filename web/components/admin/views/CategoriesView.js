@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { PillButton } from '../shared/PillButton';
+import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
+import { PlusIcon, TrashIcon } from '../Layout/icons';
 
 export function CategoriesView({
   categoriesWithCounts,
@@ -89,7 +90,7 @@ export function CategoriesView({
               />
             </label>
             <div className="row">
-              <PillButton type="submit">Add category</PillButton>
+              <ActionButton icon={PlusIcon} type="submit">Add category</ActionButton>
               <div className="hint">{hint}</div>
             </div>
           </form>
@@ -108,14 +109,15 @@ export function CategoriesView({
               <div className="admin-member-top">
                 <div className="admin-member-name">{c.name}</div>
                 {canManageUsers && (
-                  <button
-                    className="pill-btn danger"
+                  <ActionButton
+                    icon={TrashIcon}
                     onClick={() => handleDeleteClick(c)}
                     title="Delete category"
+                    variant="danger"
+                    size="sm"
                   >
-                    <span className="dot" style={{ background: 'var(--danger)' }}></span>
                     Delete
-                  </button>
+                  </ActionButton>
                 )}
               </div>
               <div className="admin-member-count">{c.count}</div>

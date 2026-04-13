@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { PillButton } from '../shared/PillButton';
+import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort, truncateText } from '../../../lib/utils';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../shared/Table';
+import { CheckIcon, TrashIcon } from '../Layout/icons';
+import styles from './CommentsView.module.css';
 
 export function CommentsView({
   comments,
-  onRefresh,
   onApprove,
   onDisapprove,
   onDelete,
@@ -13,11 +22,6 @@ export function CommentsView({
   canManageUsers,
 }) {
   const [hint, setHint] = useState('');
-
-  const handleRefresh = async () => {
-    setHint('');
-    await onRefresh();
-  };
 
   const handleApprove = async (id) => {
     setHint('');
@@ -52,72 +56,90 @@ export function CommentsView({
           <span>{Array.isArray(comments) ? comments.length : 0}</span>
         </div>
 
-        <div className="row">
-          <PillButton onClick={handleRefresh}>Refresh</PillButton>
-          <div className="hint">{hint}</div>
-        </div>
+        {hint ? <div className="hint">{hint}</div> : null}
 
-        <div className="admin-table" aria-label="Comments table">
-          <div className="admin-table-head">
-            <div>Comment</div>
-            <div>Post</div>
-            <div>Votes</div>
-            <div>Date</div>
-          </div>
+        {Array.isArray(comments) && comments.length ? (
+          <Table aria-label="Comments table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Comment</TableHead>
+                <TableHead>Post</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Votes</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          {Array.isArray(comments) && comments.length ? (
-            comments.map((c) => (
-              <div key={c.id} className="admin-table-row">
-                <div className="title">
-                  <div style={{ fontWeight: 700 }}>
-                    {c.name || 'Anonymous'}{' '}
-                    <span className={`status ${c.approved ? 'published' : 'draft'}`}>
-                      {c.approved ? 'Approved' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="meta" style={{ marginTop: 2 }}>
-                    {c.email || ''}
-                  </div>
-                  <div className="meta" style={{ marginTop: 6 }}>
-                    {truncateText(c.comment, 160)}
-                  </div>
-                  {!c.approved && canModerateComments && (
-                    <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                      <PillButton onClick={() => handleApprove(c.id)} title="Approve this comment">
-                        Approve
-                      </PillButton>
-                      <PillButton
-                        variant="danger"
-                        onClick={() => handleDisapprove(c.id)}
-                        title="Disapprove (delete) this comment"
-                      >
-                        Disapprove
-                      </PillButton>
-                    </div>
-                  )}
-                  {c.approved && canManageUsers && (
-                    <div style={{ marginTop: 10 }}>
-                      <PillButton
-                        variant="danger"
-                        onClick={() => handleDelete(c.id)}
-                        title="Delete this comment"
-                      >
-                        Delete
-                      </PillButton>
-                    </div>
-                  )}
-                </div>
-                <div className="meta">{c.postTitle || c.postId}</div>
-                <div className="meta">
-                  {c.likes || 0} like / {c.dislikes || 0} dislike
-                </div>
-                <div className="meta">{formatDateShort(c.createdAt)}</div>
-              </div>
-            ))
-          ) : (
-            <EmptyState>No comments yet.</EmptyState>
-          )}
-        </div>
+            <TableBody>
+              {comments.map((c) => {
+                const canApprove = !c.approved && canModerateComments;
+                const canDelete = c.approved && canManageUsers;
+
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <div className={styles.commentHeader}>
+                        <span className={styles.commentName}>{c.name || 'Anonymous'}</span>
+                      </div>
+                      {c.email ? <div className={`meta ${styles.commentMeta}`}>{c.email}</div> : null}
+                      <div className={`meta ${styles.commentText}`}>{truncateText(c.comment, 160)}</div>
+                    </TableCell>
+                    <TableCell className="meta">{c.postTitle || c.postId}</TableCell>
+                    <TableCell>
+                      <span className={`status ${c.approved ? 'approved' : 'draft'}`}>
+                        {c.approved ? 'Approved' : 'Pending'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="meta">
+                      {c.likes || 0} like / {c.dislikes || 0} dislike
+                    </TableCell>
+                    <TableCell className="meta">{formatDateShort(c.createdAt)}</TableCell>
+                    <TableCell className={styles.actionsCell}>
+                      <div className={styles.actionsWrap}>
+                        {canApprove ? (
+                          <>
+                            <ActionButton
+                              size="sm"
+                              icon={CheckIcon}
+                              onClick={() => handleApprove(c.id)}
+                              title="Approve this comment"
+                            >
+                              Approve
+                            </ActionButton>
+                            <ActionButton
+                              size="sm"
+                              icon={TrashIcon}
+                              variant="danger"
+                              onClick={() => handleDisapprove(c.id)}
+                              title="Disapprove (delete) this comment"
+                            >
+                              Disapprove
+                            </ActionButton>
+                          </>
+                        ) : null}
+
+                        {canDelete ? (
+                          <ActionButton
+                            size="sm"
+                            icon={TrashIcon}
+                            variant="danger"
+                            onClick={() => handleDelete(c.id)}
+                            title="Delete this comment"
+                          >
+                            Delete
+                          </ActionButton>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <EmptyState>No comments yet.</EmptyState>
+        )}
       </section>
     </>
   );

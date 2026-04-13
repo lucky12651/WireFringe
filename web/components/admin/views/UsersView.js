@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { ROLES } from '../../../lib/constants';
-import { PillButton } from '../shared/PillButton';
+import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shared/Table';
 import styles from './UsersView.module.css';
-import { Icons } from '../Layout/icons';
+import { Icons, PlusIcon, TrashIcon } from '../Layout/icons';
 
 export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
   const [newUsername, setNewUsername] = useState('');
@@ -121,7 +121,7 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
           </label>
 
           <div className="row">
-            <PillButton type="submit">Add user</PillButton>
+            <ActionButton icon={PlusIcon} type="submit">Add user</ActionButton>
             <div className="hint">{hint}</div>
           </div>
         </form>
@@ -176,8 +176,10 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
                   </TableCell>
                   <TableCell className={styles.actionsCell}>
                     <div className={styles.actions}>
-                      <PillButton
+                      <ActionButton
+                        icon={TrashIcon}
                         variant="danger"
+                        size="sm"
                         title={`Delete user ${u.username}`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -185,7 +187,7 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
                         }}
                       >
                         Delete
-                      </PillButton>
+                      </ActionButton>
                     </div>
                   </TableCell>
                 </TableRow>
