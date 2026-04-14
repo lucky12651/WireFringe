@@ -281,18 +281,20 @@ export default function HomePage({ initialPosts }) {
             </div>
           )}
 
+          {/* Horizontal banner ad (homepage only) */}
+          {filteredPosts?.length > 0 && (
+            <div className={styles.horizontalAd} aria-label="Advertisement">
+              <AdsenseAd
+                slot="4810585579"
+                format="auto"
+                fullWidthResponsive={true}
+                style={{ height: 90 }}
+              />
+            </div>
+          )}
+
           {/* Hero Section: 3-column layout */}
           <HeroSection posts={heroPosts} />
-
-          {/* Horizontal banner ad (homepage only) */}
-          <div className={styles.horizontalAd} aria-label="Advertisement">
-            <AdsenseAd
-              slot="4810585579"
-              format="auto"
-              fullWidthResponsive={true}
-              style={{ minHeight: 90 }}
-            />
-          </div>
 
           {/* News-style secondary grid: latest feed + right rail */}
           {!error && latestPosts.length > 0 && (

@@ -7,6 +7,7 @@ import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
 import Loader from '../components/Loader/Loader';
+import AdsenseAd from '../components/AdsenseAd/AdsenseAd';
 
 function slugifyTitle(title) {
   const s = String(title || '')
@@ -238,6 +239,7 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
       title={post?.title ? `${post.title} – Coffee n Blog` : undefined}
       description={post?.excerpt || undefined}
       headerProps={{ user, activeCategory: post?.bucket || 'All' }}
+      showInlineAd={false}
     >
       <div className={styles.postPage}>
         {loading ? (
@@ -255,6 +257,15 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
           <article className={styles.post}>
             {/* Post Header */}
             <header className={styles.header}>
+              <div className={styles.horizontalAd} aria-label="Advertisement">
+                <AdsenseAd
+                  slot="4810585579"
+                  format="auto"
+                  fullWidthResponsive={true}
+                  style={{ height: 90 }}
+                />
+              </div>
+
               <div className={styles.meta}>
                 <span className={styles.category}>{post.bucket || 'News'}</span>
                 <span aria-hidden="true">•</span>
