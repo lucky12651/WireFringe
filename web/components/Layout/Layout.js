@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Header from '../Header/Header';
 import AdRails from '../AdRails/AdRails';
+import AdsenseAd from '../AdsenseAd/AdsenseAd';
 import styles from './Layout.module.css';
 
 export default function Layout({ 
@@ -29,14 +30,7 @@ export default function Layout({
         <main className={styles.main}>
           <div className={styles.container}>
             <div className={styles.inlineAd} aria-label="Advertisement">
-              <ins
-                className="adsbygoogle"
-                style={{ display: 'block' }}
-                data-ad-client="ca-pub-9036526646235532"
-                data-ad-slot="4810585579"
-                data-ad-format="auto"
-                data-full-width-responsive="true"
-              />
+              <AdsenseAd slot="4810585579" />
             </div>
             {children}
           </div>

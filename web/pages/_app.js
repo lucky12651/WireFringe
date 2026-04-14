@@ -6,12 +6,16 @@ import { initTheme, startAutoThemeSync } from '../lib/theme';
 
 import Head from 'next/head';
 
+const DEFAULT_ADSENSE_CLIENT = 'ca-pub-9036526646235532';
+
 export default function App({ Component, pageProps }) {
   const router = useRouter();
   const isAdminRoute =
     (typeof router.pathname === 'string' && router.pathname.startsWith('/admin')) ||
     (typeof router.asPath === 'string' && router.asPath.startsWith('/admin'));
   const [adsScriptLoaded, setAdsScriptLoaded] = useState(false);
+
+  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || DEFAULT_ADSENSE_CLIENT;
 
   useEffect(() => {
     // Apply the theme immediately on first client render.
@@ -26,9 +30,20 @@ export default function App({ Component, pageProps }) {
     try {
       const adEls = document.querySelectorAll('ins.adsbygoogle');
       adEls.forEach((el) => {
-        if (el.getAttribute('data-adsbygoogle-status') === 'done') return;
+        // If AdSense has already touched this node, don't push again.
+        // data-adsbygoogle-status is usually "done" (or sometimes other values).
+        if (el.getAttribute('data-adsbygoogle-status')) return;
+        if (el.dataset.cnbPushed === 'true') return;
+
+        // Avoid the common "availableWidth=0" TagError.
+        // Only push when the element has a real, measurable size.
+        const w = el.offsetWidth || 0;
+        const h = el.offsetHeight || 0;
+        if (w < 50 || h < 50) return;
+
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
+          el.dataset.cnbPushed = 'true';
         } catch {
           // ignore
         }
@@ -67,7 +82,7 @@ export default function App({ Component, pageProps }) {
     script.id = 'adsbygoogle-script';
     script.async = true;
     script.src =
-      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9036526646235532';
+      `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(adsenseClient)}`;
     script.crossOrigin = 'anonymous';
     script.addEventListener(
       'load',
@@ -85,7 +100,7 @@ export default function App({ Component, pageProps }) {
 
     document.head.appendChild(script);
     // Intentionally do not remove the script on unmount; it should persist across navigations.
-  }, [isAdminRoute, refreshAds]);
+  }, [isAdminRoute, refreshAds, adsenseClient]);
 
   useEffect(() => {
     // Basic view tracking
@@ -113,8 +128,20 @@ export default function App({ Component, pageProps }) {
     };
 
     router.events.on('routeChangeComplete', handleRouteChange);
+
+    // If the user resizes (or rails flip from display:none to visible), try again.
+    const handleResize = () => {
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(() => refreshAds());
+      } else {
+        refreshAds();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange);
+      window.removeEventListener('resize', handleResize);
     };
   }, [router.events, isAdminRoute, adsScriptLoaded, refreshAds]);
 
