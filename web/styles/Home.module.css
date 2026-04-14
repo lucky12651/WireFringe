@@ -69,8 +69,14 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
-  padding: var(--space-lg);
+  padding: var(--space-sm);
+  min-height: calc(90px + (var(--space-sm) * 2));
   margin: 0 0 var(--space-xl);
+}
+
+.horizontalAd :global(ins.adsbygoogle) {
+  width: 100%;
+  height: 90px;
 }
 
 .secondaryGrid {
