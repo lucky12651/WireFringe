@@ -8,7 +8,8 @@ export default function Layout({
   children, 
   title = 'Coffee n Blog – Latest News, Tech, Business & Trending',
   description = 'Stay informed with the latest stories from Coffee n Blog. We cover AI, technology, markets, and more with a focus on quality and verified facts.',
-  headerProps = {}
+  headerProps = {},
+  showInlineAd = true
 }) {
   return (
     <>
@@ -29,9 +30,11 @@ export default function Layout({
         
         <main className={styles.main}>
           <div className={styles.container}>
-            <div className={styles.inlineAd} aria-label="Advertisement">
-              <AdsenseAd slot="4810585579" />
-            </div>
+            {showInlineAd && (
+              <div className={styles.inlineAd} aria-label="Advertisement">
+                <AdsenseAd slot="4810585579" />
+              </div>
+            )}
             {children}
           </div>
         </main>

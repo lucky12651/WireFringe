@@ -9,6 +9,7 @@ import { fetcher, api } from '../lib/api';
 import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
 import styles from '../styles/Home.module.css';
+import AdsenseAd from '../components/AdsenseAd/AdsenseAd';
 
 const CATEGORIES = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
 
@@ -249,6 +250,7 @@ export default function HomePage({ initialPosts }) {
         onCategoryChange: handleCategoryChange,
         user
       }}
+      showInlineAd={false}
     >
       {loading ? (
         <div style={{ height: '70vh', display: 'flex', alignItems: 'center' }}>
@@ -281,6 +283,16 @@ export default function HomePage({ initialPosts }) {
 
           {/* Hero Section: 3-column layout */}
           <HeroSection posts={heroPosts} />
+
+          {/* Horizontal banner ad (homepage only) */}
+          <div className={styles.horizontalAd} aria-label="Advertisement">
+            <AdsenseAd
+              slot="4810585579"
+              format="auto"
+              fullWidthResponsive={true}
+              style={{ minHeight: 90 }}
+            />
+          </div>
 
           {/* News-style secondary grid: latest feed + right rail */}
           {!error && latestPosts.length > 0 && (
