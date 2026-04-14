@@ -64,6 +64,15 @@
   font-weight: 600;
 }
 
+.horizontalAd {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  padding: var(--space-lg);
+  margin: 0 0 var(--space-xl);
+}
+
 .secondaryGrid {
   display: grid;
   grid-template-columns: 1fr 340px;
