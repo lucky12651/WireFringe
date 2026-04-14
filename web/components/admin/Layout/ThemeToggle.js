@@ -6,7 +6,7 @@ export function ThemeToggle() {
   const [themeMode, setThemeMode] = useState('dark');
 
   useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
+    initTheme({ defaultTheme: 'auto' });
     setThemeMode(getTheme());
   }, []);
 

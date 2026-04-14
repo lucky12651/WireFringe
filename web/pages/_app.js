@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Script from 'next/script';
 import '../styles/variables.css';
 import '../styles/admin.css';
+import { initTheme, startAutoThemeSync } from '../lib/theme';
 
 import Head from 'next/head';
 
@@ -12,6 +13,15 @@ export default function App({ Component, pageProps }) {
     (typeof router.pathname === 'string' && router.pathname.startsWith('/admin')) ||
     (typeof router.asPath === 'string' && router.asPath.startsWith('/admin'));
   const [adsScriptLoaded, setAdsScriptLoaded] = useState(false);
+
+  useEffect(() => {
+    // Apply the theme immediately on first client render.
+    initTheme({ defaultTheme: 'auto' });
+
+    // If the user has not explicitly selected a theme, auto-switch at 6am/6pm.
+    const stop = startAutoThemeSync();
+    return () => stop();
+  }, []);
 
   const refreshAds = useCallback(() => {
     try {
