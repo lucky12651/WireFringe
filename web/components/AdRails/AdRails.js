@@ -1,4 +1,5 @@
 import styles from './AdRails.module.css';
+import AdsenseAd from '../AdsenseAd/AdsenseAd';
 
 export default function AdRails() {
   return (
@@ -9,13 +10,11 @@ export default function AdRails() {
         aria-label="Side Advertisement Left"
       >
         <div className={styles.adSlot}>
-          <ins
-            className="adsbygoogle"
-            style={{ display: 'block' }}
-            data-ad-client="ca-pub-9036526646235532"
-            data-ad-slot="4810585579"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
+          <AdsenseAd
+            slot="4810585579"
+            format="auto"
+            fullWidthResponsive={false}
+            style={{ width: 160, height: 600 }}
           />
         </div>
       </aside>
@@ -26,13 +25,11 @@ export default function AdRails() {
         aria-label="Side Advertisement Right"
       >
         <div className={styles.adSlot}>
-          <ins
-            className="adsbygoogle"
-            style={{ display: 'block' }}
-            data-ad-client="ca-pub-9036526646235532"
-            data-ad-slot="4810585579"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
+          <AdsenseAd
+            slot="4810585579"
+            format="auto"
+            fullWidthResponsive={false}
+            style={{ width: 160, height: 600 }}
           />
         </div>
       </aside>
