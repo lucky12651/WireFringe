@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import Script from 'next/script';
 import '../styles/variables.css';
 import '../styles/admin.css';
 import { initTheme, startAutoThemeSync } from '../lib/theme';
@@ -40,6 +39,55 @@ export default function App({ Component, pageProps }) {
   }, []);
 
   useEffect(() => {
+    // Load AdSense without Next's <Script> so AdSense doesn't warn about data-nscript.
+    if (typeof window === 'undefined') return;
+    if (isAdminRoute) return;
+
+    const existing = document.getElementById('adsbygoogle-script');
+    if (existing) {
+      if (existing.dataset.loaded === 'true') {
+        setAdsScriptLoaded(true);
+      } else {
+        const onLoad = () => {
+          existing.dataset.loaded = 'true';
+          setAdsScriptLoaded(true);
+          if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => refreshAds());
+          } else {
+            refreshAds();
+          }
+        };
+        existing.addEventListener('load', onLoad, { once: true });
+        return () => existing.removeEventListener('load', onLoad);
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'adsbygoogle-script';
+    script.async = true;
+    script.src =
+      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9036526646235532';
+    script.crossOrigin = 'anonymous';
+    script.addEventListener(
+      'load',
+      () => {
+        script.dataset.loaded = 'true';
+        setAdsScriptLoaded(true);
+        if (typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(() => refreshAds());
+        } else {
+          refreshAds();
+        }
+      },
+      { once: true }
+    );
+
+    document.head.appendChild(script);
+    // Intentionally do not remove the script on unmount; it should persist across navigations.
+  }, [isAdminRoute, refreshAds]);
+
+  useEffect(() => {
     // Basic view tracking
     if (typeof window !== 'undefined' && !isAdminRoute) {
       fetch('/api/views/increment', { method: 'POST' }).catch(() => {});
@@ -75,26 +123,6 @@ export default function App({ Component, pageProps }) {
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-
-      {!isAdminRoute && (
-        <Script
-          id="adsbygoogle-script"
-          async
-          strategy="afterInteractive"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9036526646235532"
-          crossOrigin="anonymous"
-          onLoad={() => {
-            setAdsScriptLoaded(true);
-            if (typeof window !== 'undefined') {
-              if (typeof window.requestAnimationFrame === 'function') {
-                window.requestAnimationFrame(() => refreshAds());
-              } else {
-                refreshAds();
-              }
-            }
-          }}
-        />
-      )}
 
       <Component {...pageProps} />
     </>
