@@ -63,7 +63,7 @@
 .logoText {
   font-size: 22px;
   font-family: var(--font-heading);
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.2px;
   white-space: nowrap;
 }
@@ -284,6 +284,23 @@
   height: 3px;
   background: #8ab4f8;
   border-radius: 3px 3px 0 0;
+}
+
+/* Light mode fixes (nav text + logo visibility) */
+:global(html[data-theme="light"]) .navItem {
+  color: var(--text-primary);
+}
+
+:global(html[data-theme="light"]) .navItem:hover {
+  color: var(--text-primary);
+}
+
+:global(html[data-theme="light"]) .navItemActive {
+  color: var(--brand-primary);
+}
+
+:global(html[data-theme="light"]) .navActiveLine {
+  background: var(--brand-primary);
 }
 
 @media (max-width: 900px) {
