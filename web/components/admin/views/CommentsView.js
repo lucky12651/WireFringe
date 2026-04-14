@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
-import { formatDateShort, truncateText } from '../../../lib/utils';
+import { formatDateShort } from '../../../lib/utils';
 import {
   Table,
   TableHeader,
@@ -22,6 +22,29 @@ export function CommentsView({
   canManageUsers,
 }) {
   const [hint, setHint] = useState('');
+  const [openCommentId, setOpenCommentId] = useState(null);
+
+  useEffect(() => {
+    if (openCommentId == null) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setOpenCommentId(null);
+    };
+
+    const handleMouseDown = (e) => {
+      const root = e.target?.closest?.(
+        `[data-comment-popover-root="${CSS.escape(String(openCommentId))}"]`
+      );
+      if (!root) setOpenCommentId(null);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [openCommentId]);
 
   const handleApprove = async (id) => {
     setHint('');
@@ -41,6 +64,10 @@ export function CommentsView({
     setHint('');
     const result = await onDelete(id);
     if (!result.success) setHint(result.error);
+  };
+
+  const toggleViewComment = (id) => {
+    setOpenCommentId((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -75,17 +102,52 @@ export function CommentsView({
               {comments.map((c) => {
                 const canApprove = !c.approved && canModerateComments;
                 const canDelete = c.approved && canManageUsers;
+                const postTitleText = String(c.postTitle || c.postId || '');
+                const isPopoverOpen = openCommentId === c.id;
 
                 return (
                   <TableRow key={c.id}>
                     <TableCell>
                       <div className={styles.commentHeader}>
                         <span className={styles.commentName}>{c.name || 'Anonymous'}</span>
+                        {c.email ? (
+                          <span className={styles.commentEmail}>{c.email}</span>
+                        ) : null}
                       </div>
-                      {c.email ? <div className={`meta ${styles.commentMeta}`}>{c.email}</div> : null}
-                      <div className={`meta ${styles.commentText}`}>{truncateText(c.comment, 160)}</div>
+
+                      <div
+                        className={styles.viewRow}
+                        data-comment-popover-root={String(c.id)}
+                      >
+                        <ActionButton
+                          size="sm"
+                          onClick={() => toggleViewComment(c.id)}
+                          aria-expanded={isPopoverOpen}
+                          aria-controls={`comment-popover-${c.id}`}
+                          title={isPopoverOpen ? 'Hide comment' : 'View comment'}
+                        >
+                          {isPopoverOpen ? 'Hide' : 'View comment'}
+                        </ActionButton>
+
+                        {isPopoverOpen ? (
+                          <div
+                            id={`comment-popover-${c.id}`}
+                            className={styles.commentPopover}
+                            role="dialog"
+                            aria-label="Comment"
+                          >
+                            <div className={styles.commentPopoverText}>
+                              {c.comment || ''}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </TableCell>
-                    <TableCell className="meta">{c.postTitle || c.postId}</TableCell>
+                    <TableCell className="meta">
+                      <span className={styles.postTitle} title={postTitleText}>
+                        {postTitleText}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <span className={`status ${c.approved ? 'approved' : 'draft'}`}>
                         {c.approved ? 'Approved' : 'Pending'}
@@ -100,7 +162,6 @@ export function CommentsView({
                         {canApprove ? (
                           <>
                             <ActionButton
-                              size="sm"
                               icon={CheckIcon}
                               onClick={() => handleApprove(c.id)}
                               title="Approve this comment"
@@ -108,7 +169,6 @@ export function CommentsView({
                               Approve
                             </ActionButton>
                             <ActionButton
-                              size="sm"
                               icon={TrashIcon}
                               variant="danger"
                               onClick={() => handleDisapprove(c.id)}
@@ -121,7 +181,6 @@ export function CommentsView({
 
                         {canDelete ? (
                           <ActionButton
-                            size="sm"
                             icon={TrashIcon}
                             variant="danger"
                             onClick={() => handleDelete(c.id)}
