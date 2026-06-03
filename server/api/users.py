@@ -28,7 +28,7 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 
 @router.post("/login", response_model=TokenOut)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def login(
     payload: LoginRequest,
     request: Request,
@@ -56,7 +56,7 @@ def login(
 
 
 @router.post("/signup", response_model=TokenOut)
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")
 def signup(
     payload: UserSignup,
     request: Request,

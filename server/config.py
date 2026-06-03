@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:8003",
         "http://127.0.0.1:8003",
+        "http://10.5.0.2:3000",
+        "http://80.225.223.80:3000",
     ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]

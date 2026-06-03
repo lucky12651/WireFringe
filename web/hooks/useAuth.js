@@ -15,14 +15,22 @@ export function useAuth() {
   const isAuthor = me?.role === 'author';
 
   const refreshMe = useCallback(async () => {
+    let token = null;
     // Try to load from localStorage first for instant UI
     if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           setMe(JSON.parse(storedUser));
         } catch (_) {}
       }
+    }
+
+    // If no token, don't even try to fetch me
+    if (!token) {
+      setIsInitialLoading(false);
+      return null;
     }
 
     try {
@@ -36,11 +44,16 @@ export function useAuth() {
       return user;
     } catch (err) {
       setMe(null);
+      // Quietly handle 401/Not authenticated - it's a valid state for unauthenticated users
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
-      setError(err?.message || 'Failed to fetch user');
+      
+      // Only set error if it's NOT a "not authenticated" error
+      if (err?.message !== 'Not authenticated' && err?.message !== '401 Unauthorized') {
+        setError(err?.message || 'Failed to fetch user');
+      }
       return null;
     } finally {
       setIsLoading(false);

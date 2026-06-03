@@ -21,11 +21,15 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
       setErrors({});
       return true;
     } catch (err) {
-      const formattedErrors = {};
-      err.errors.forEach((e) => {
-        formattedErrors[e.path[0]] = e.message;
-      });
-      setErrors(formattedErrors);
+      if (err instanceof z.ZodError || (err && err.errors)) {
+        const formattedErrors = {};
+        (err.errors || []).forEach((e) => {
+          formattedErrors[e.path[0]] = e.message;
+        });
+        setErrors(formattedErrors);
+      } else {
+        setErrors({ form: 'Validation failed' });
+      }
       return false;
     }
   };
