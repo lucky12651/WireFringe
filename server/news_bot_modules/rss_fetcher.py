@@ -1,6 +1,8 @@
 import logging
 from typing import List, Dict
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone, timedelta
+from email.utils import parsedate_to_datetime
 
 import httpx
 
@@ -23,7 +25,24 @@ async def fetch_rss_items(category: str, url: str, http_client: httpx.AsyncClien
         found_elements = root.findall(".//item")
         logger.info(f"🔍 Found {len(found_elements)} raw XML items for category: {category}")
 
+        now = datetime.now(timezone.utc)
+        one_hour_ago = now - timedelta(hours=1)
+
         for item in found_elements:
+            # Check publication date - only take news under 1 hour old
+            pub_date_el = item.find("pubDate")
+            if pub_date_el is not None and pub_date_el.text:
+                try:
+                    pub_date = parsedate_to_datetime(pub_date_el.text)
+                    if pub_date < one_hour_ago:
+                        continue
+                except Exception:
+                    # If date parsing fails, we skip to be safe (strictly latest news)
+                    continue
+            else:
+                # If no pubDate is present, we skip it as we can't verify it's "latest"
+                continue
+
             title_el = item.find("title")
             link_el = item.find("link")
 

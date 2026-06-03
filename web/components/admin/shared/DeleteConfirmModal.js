@@ -1,11 +1,23 @@
 import React from 'react';
 import { ActionButton } from './ActionButton';
 
-export function DeleteConfirmModal({ item, title, itemName, onConfirm, onCancel, isDeleting }) {
-  if (!item) return null;
+export function DeleteConfirmModal({ 
+  isOpen, 
+  item, 
+  title, 
+  itemName, 
+  message,
+  onConfirm, 
+  onCancel, 
+  isDeleting 
+}) {
+  // Support both isOpen (new way) and item (old way) for visibility
+  const visible = isOpen !== undefined ? isOpen : !!item;
+  if (!visible) return null;
 
   const displayTitle = title || 'Delete Item';
-  const displayName = itemName || item?.name || item?.title || 'this item';
+  const displayName = itemName || item?.name || item?.title;
+  const displayMessage = message || 'Are you sure you want to delete this item?';
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
@@ -14,8 +26,8 @@ export function DeleteConfirmModal({ item, title, itemName, onConfirm, onCancel,
           <h3>{displayTitle}</h3>
         </div>
         <div className="modal-body">
-          <p>Are you sure you want to delete this item?</p>
-          <p className="modal-post-title">"{displayName}"</p>
+          <p>{displayMessage}</p>
+          {displayName && <p className="modal-post-title">"{displayName}"</p>}
           <p className="modal-warning">This action cannot be undone.</p>
         </div>
         <div className="modal-actions">

@@ -129,6 +129,46 @@
   gap: var(--space-sm);
 }
 
+/* Weather Widget */
+.weatherWidget {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  margin-right: 12px;
+  cursor: default;
+  user-select: none;
+}
+
+.weatherLocation {
+  font-size: 11px;
+  color: #9aa0a6;
+  line-height: 1.2;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weatherMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+
+.weatherIcon {
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.weatherTemp {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
 .profileBtn {
   width: 32px;
   height: 32px;

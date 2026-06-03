@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -46,6 +47,18 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
 def get_pending_from_queue(db: Session) -> List[NewsQueue]:
     """Get all pending items from database news_queue."""
     return db.query(NewsQueue).filter(NewsQueue.status == "pending").all()
+
+
+def cleanup_old_queue_items(db: Session, hours: int = 24) -> int:
+    """Delete items from news_queue that are older than specified hours."""
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    # Filter out items older than threshold. 
+    # Note: we use >= if we want to keep them, but here we want to delete them.
+    deleted = db.query(NewsQueue).filter(NewsQueue.created_at < threshold).delete()
+    db.commit()
+    if deleted > 0:
+        logger.info(f"🧹 Cleaned up {deleted} old items from the news queue (> {hours}h old).")
+    return deleted
 
 
 def update_queue_status(db: Session, link: str, status: str) -> None:

@@ -14,7 +14,7 @@ from .db import SessionLocal
 from .models import Post, NewsQueue
 from .news_bot_modules.constants import FEEDS
 from .news_bot_modules.rss_fetcher import fetch_rss_items
-from .news_bot_modules.queue_ops import save_to_queue, get_pending_from_queue, update_queue_status, is_duplicate
+from .news_bot_modules.queue_ops import save_to_queue, get_pending_from_queue, update_queue_status, is_duplicate, cleanup_old_queue_items
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
 
@@ -43,6 +43,12 @@ class NewsBot:
             await self.http_client.post(revalidate_url, json={"secret": settings.revalidate_secret}, timeout=5.0)
         except Exception as e:
             logger.error(f"Error triggering UI frontend route revalidation: {e}")
+
+    async def fetch_rss_items(self, category: str, url: str) -> list:
+        return await fetch_rss_items(category, url, self.http_client)
+
+    def save_to_queue(self, db, items: list):
+        return save_to_queue(db, items)
 
     async def process_item(self, db, item: NewsQueue) -> bool:
         """Process a single RSS item from the queue."""
@@ -104,13 +110,16 @@ class NewsBot:
 
         db = SessionLocal()
         try:
+            # Step 0: Cleanup old queue items (> 24h)
+            cleanup_old_queue_items(db, hours=24)
+
             all_items = []
             for category, url in FEEDS.items():
-                items = await fetch_rss_items(category, url, self.http_client)
+                items = await self.fetch_rss_items(category, url)
                 all_items.extend(items[:5])
 
             logger.info("Syncing discovered items into the staging database queue...")
-            save_to_queue(db, all_items)
+            self.save_to_queue(db, all_items)
 
             pending = get_pending_from_queue(db)
             if pending:

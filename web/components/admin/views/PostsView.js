@@ -285,9 +285,33 @@ export function PostsView({
           </>
         ) : (
           <div className="v2-table-wrapper">
+            {selectedQueueLinks.size > 0 && (
+              <div className="bulk-actions-bar">
+                <span>{selectedQueueLinks.size} items selected</span>
+                <div className="bulk-btns">
+                  <button 
+                    className="approve-btn-v2" 
+                    onClick={handleBulkProcessClick}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Processing...' : 'Process Selected'}
+                  </button>
+                  <button className="delete-btn-v2" onClick={handleBulkDeleteClick}>
+                    Remove Selected
+                  </button>
+                </div>
+              </div>
+            )}
             <table className="v2-table">
               <thead>
                 <tr>
+                  <th style={{ width: '40px' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
+                      onChange={toggleSelectAllQueue}
+                    />
+                  </th>
                   <th>Queue Item</th>
                   <th>Source</th>
                   <th className="text-right">Actions</th>
@@ -295,7 +319,14 @@ export function PostsView({
               </thead>
               <tbody>
                 {queue.map((q) => (
-                  <tr key={q.link}>
+                  <tr key={q.link} className={selectedQueueLinks.has(q.link) ? 'row-selected' : ''}>
+                    <td>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedQueueLinks.has(q.link)}
+                        onChange={() => toggleSelectQueueItem(q.link)}
+                      />
+                    </td>
                     <td>
                       <div className="queue-title-v2">{q.title}</div>
                     </td>
@@ -304,8 +335,13 @@ export function PostsView({
                     </td>
                     <td className="text-right">
                       <div className="action-group-v2">
-                        <button className="approve-btn-v2" onClick={() => onProcessQueue(q.link)} title="Process">
-                          <CheckIcon size={16} />
+                        <button 
+                          className="approve-btn-v2" 
+                          onClick={() => handleProcessQueueItem(q.link)} 
+                          title="Process"
+                          disabled={isProcessing || processingLinks.has(q.link)}
+                        >
+                          {processingLinks.has(q.link) ? <RefreshIcon size={16} className="spin" /> : <CheckIcon size={16} />}
                         </button>
                         <button className="delete-btn-v2" onClick={() => { setQueueItemToDelete(q); }} title="Remove">
                           <TrashIcon size={16} />
@@ -321,9 +357,13 @@ export function PostsView({
       </div>
 
       <DeleteConfirmModal
-        isOpen={!!postToDelete || !!queueItemToDelete}
+        isOpen={!!postToDelete || !!queueItemToDelete || bulkQueueDelete}
         title="Confirm Deletion"
-        message={`Are you sure you want to remove "${postToDelete?.title || queueItemToDelete?.title}"?`}
+        message={
+          bulkQueueDelete 
+            ? `Are you sure you want to remove ${selectedQueueLinks.size} selected items from the queue?`
+            : `Are you sure you want to remove "${postToDelete?.title || queueItemToDelete?.title}"?`
+        }
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDeleting={isDeleting}

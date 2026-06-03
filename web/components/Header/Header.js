@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import WeatherWidget from './WeatherWidget';
 import styles from './Header.module.css';
 
 const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
@@ -135,6 +136,7 @@ export default function Header({
             {/* Right: Actions */}
             <div className={styles.rightSection}>
               <div className={styles.actions}>
+                <WeatherWidget />
                 {user ? (
                   <div className={styles.profileWrapper} ref={dropdownRef}>
                     <button
