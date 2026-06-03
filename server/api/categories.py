@@ -14,7 +14,7 @@ def get_category_service(db: Session = Depends(get_db)) -> CategoryService:
     return CategoryService(db)
 
 
-@router.get("", response_model=list[CategoryOut])
+@router.get("", response_model=list[CategoryOut], tags=["public"])
 def list_categories(
     service: CategoryService = Depends(get_category_service),
 ) -> list[CategoryOut]:
@@ -22,7 +22,7 @@ def list_categories(
     return service.list_categories()
 
 
-@router.get("/with-counts", response_model=list[CategoryWithCountOut])
+@router.get("/with-counts", response_model=list[CategoryWithCountOut], tags=["public"])
 def list_categories_with_counts(
     service: CategoryService = Depends(get_category_service),
 ) -> list[CategoryWithCountOut]:
@@ -30,7 +30,7 @@ def list_categories_with_counts(
     return service.list_categories_with_counts()
 
 
-@router.post("/admin/categories", response_model=CategoryOut)
+@router.post("", response_model=CategoryOut)
 def admin_create_category(
     payload: CategoryCreate,
     request: Request,
@@ -43,7 +43,7 @@ def admin_create_category(
     return service.create_category(payload.name)
 
 
-@router.delete("/admin/categories/{category_id}")
+@router.delete("/{category_id}")
 def admin_delete_category(
     category_id: int,
     request: Request,

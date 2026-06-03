@@ -21,6 +21,7 @@ api_router.include_router(views_router, prefix="/views", tags=["views"])
 # Admin routes
 api_router.include_router(users_router, prefix="/admin", tags=["admin-users"])
 api_router.include_router(media_router, prefix="/admin", tags=["admin-media"])
+api_router.include_router(categories_router, prefix="/admin/categories", tags=["admin-categories"])
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 
 __all__ = ["api_router"]
