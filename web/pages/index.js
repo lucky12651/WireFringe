@@ -282,7 +282,7 @@ export default function HomePage({ initialPosts }) {
           )}
 
           {/* Horizontal banner ad (homepage only) */}
-          {filteredPosts?.length > 0 && (
+          {/* {filteredPosts?.length > 0 && (
             <div className={styles.horizontalAd} aria-label="Advertisement">
               <AdsenseAd
                 slot="4810585579"
@@ -291,7 +291,7 @@ export default function HomePage({ initialPosts }) {
                 style={{ height: 90 }}
               />
             </div>
-          )}
+          )} */}
 
           {/* Hero Section: 3-column layout */}
           <HeroSection posts={heroPosts} />

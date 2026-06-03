@@ -24,6 +24,7 @@ export default function AdminPostPage() {
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
   const modeLabel = postId ? 'Edit post' : 'New post';
   const viewHref = postId
@@ -249,72 +250,10 @@ export default function AdminPostPage() {
           </div>
         </header>
 
-        <main className="admin-editor-shell">
-          <section className="side-card admin-editor-card">
+        <main className="admin-editor-shell" style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+          <section className="side-card admin-editor-card" style={{ flex: 1, minWidth: 0 }}>
             <form id="editorForm" className="admin-form" onSubmit={onSave}>
               <input type="hidden" id="postId" value={postId} readOnly />
-
-              <label>
-                <span className="label">Title</span>
-                <input
-                  className="input"
-                  id="postTitle"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </label>
-
-              <div className="row">
-                <label className="grow">
-                  <span className="label">Category</span>
-                  <select
-                    className="input"
-                    id="postBucket"
-                    value={bucket}
-                    onChange={(e) => setBucket(e.target.value)}
-                  >
-                    {categoryNames.map((b) => (
-                      <option key={b}>{b}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="grow">
-                  <span className="label">Read minutes</span>
-                  <input
-                    className="input"
-                    id="postReadMinutes"
-                    type="number"
-                    min="1"
-                    placeholder="3"
-                    value={readMinutes}
-                    onChange={(e) => setReadMinutes(e.target.value)}
-                  />
-                </label>
-              </div>
-
-              <label>
-                <span className="label">OpenGraph Image URL (optional)</span>
-                <input
-                  className="input"
-                  id="postOgImg"
-                  placeholder="https://..."
-                  value={ogImg}
-                  onChange={(e) => setOgImg(e.target.value)}
-                />
-              </label>
-
-              <label>
-                <span className="label">Excerpt (optional)</span>
-                <textarea
-                  className="input textarea"
-                  id="postExcerpt"
-                  placeholder="If empty, excerpt is auto-generated"
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                ></textarea>
-              </label>
 
               <div className="admin-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
                 <button
@@ -616,24 +555,131 @@ export default function AdminPostPage() {
             </form>
           </section>
 
-          <section className="side-card admin-editor-help">
-            <div className="side-header">
-              <h3>Tips</h3>
-              <span>WordPress-like</span>
+          {/* Right Sidebar - Metadata Panel */}
+          <aside
+            className="side-card admin-sidebar"
+            style={{
+              width: sidebarExpanded ? '280px' : '44px',
+              flexShrink: 0,
+              transition: 'width 0.25s ease',
+              overflow: 'hidden',
+              borderRadius: '12px',
+              padding: 0,
+            }}
+          >
+            <div
+              className="admin-sidebar-header"
+              onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: sidebarExpanded ? 'space-between' : 'center',
+                padding: '0.75rem',
+                borderBottom: sidebarExpanded ? '1px solid rgba(127,127,127,0.15)' : 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {sidebarExpanded && <span className="label" style={{ margin: 0, fontSize: '0.8rem' }}>Metadata</span>}
+              <span
+                className="tb-icon"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '22px',
+                  height: '22px',
+                  transform: sidebarExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.25s ease',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
+              </span>
             </div>
-            <div className="admin-help-text">
-              <p>Use the toolbar for bold, headings, lists, links, and images.</p>
-              <p>Paste content from anywhere — formatting will be kept as HTML.</p>
-            </div>
-          </section>
+
+            {sidebarExpanded && (
+              <div
+                className="admin-sidebar-content"
+                style={{
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                {/* Title field */}
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Title</span>
+                  <input
+                    className="input"
+                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Post title..."
+                  />
+                </label>
+
+                {/* Category & Read minutes row */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                    <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Category</span>
+                    <select
+                      className="input"
+                      style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                      value={bucket}
+                      onChange={(e) => setBucket(e.target.value)}
+                    >
+                      {categoryNames.map((b) => (
+                        <option key={b}>{b}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '80px' }}>
+                    <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Read min</span>
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                      value={readMinutes}
+                      onChange={(e) => setReadMinutes(e.target.value)}
+                      placeholder="3"
+                    />
+                  </label>
+                </div>
+
+                {/* OpenGraph Image URL */}
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>OpenGraph Image URL (optional)</span>
+                  <input
+                    className="input"
+                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                    placeholder="https://..."
+                    value={ogImg}
+                    onChange={(e) => setOgImg(e.target.value)}
+                  />
+                </label>
+
+                {/* Excerpt */}
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Excerpt (optional)</span>
+                  <textarea
+                    className="input textarea"
+                    style={{ fontSize: '0.875rem', padding: '0.5rem', minHeight: '80px', resize: 'vertical' }}
+                    placeholder="If empty, excerpt is auto-generated"
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                  ></textarea>
+                </label>
+              </div>
+            )}
+          </aside>
         </main>
 
-        <footer>
-          <div>Admin editor for Coffee n Blog.</div>
-          <div>
-            <Link href="/">Go to site</Link>
-          </div>
-        </footer>
+   
       </div>
     </>
   );
