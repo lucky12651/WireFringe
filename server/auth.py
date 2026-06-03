@@ -5,11 +5,28 @@ import hashlib
 import hmac
 import os
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
+import jwt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .config import settings
 from .models import User
+
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def decode_access_token(token: str) -> dict | None:
+    try:
+        return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except (jwt.PyJWTError, ValueError):
+        return None
 
 
 def _b64(data: bytes) -> str:

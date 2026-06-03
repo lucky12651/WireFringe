@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     db_connect_timeout: int = int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
 
     # Session/Security
-    session_secret: str = os.environ.get("BLOG_SESSION_SECRET")
+    session_secret: str = os.environ.get("BLOG_SESSION_SECRET", "dev-secret-change-me")
+    jwt_secret: str = os.environ.get("JWT_SECRET", "dev-jwt-secret-change-me")
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
     session_cookie: str = "blog_session"
     same_site: str = "lax"
     https_only: bool = False

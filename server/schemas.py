@@ -54,6 +54,13 @@ class MeOut(BaseModel):
     role: str
     displayName: str | None = None
     avatarUrl: str | None = None
+    token: str | None = None
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str
+    user: MeOut
 
 
 class UserOut(BaseModel):
@@ -61,12 +68,19 @@ class UserOut(BaseModel):
     username: str
     role: str
     avatarUrl: str | None = None
+    displayName: str | None = None
 
 
 class UserCreate(BaseModel):
     username: str
     password: str
     role: str = "editor"
+
+
+class UserSignup(BaseModel):
+    username: str
+    password: str
+    displayName: str | None = None
 
 
 class ProfileUpdateRequest(BaseModel):

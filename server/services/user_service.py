@@ -35,17 +35,16 @@ class UserService:
             username=user.username,
             role=user.role,
             avatarUrl=(user.avatar_url or None),
+            displayName=(user.display_name or None),
         )
 
-    def authenticate_user(self, username: str, password: str) -> MeOut | None:
+    def authenticate_user(self, username: str, password: str) -> User | None:
         """Authenticate a user with credentials."""
         auth_user = authenticate(self.db, username, password)
         if auth_user is None:
             return None
         user = self.user_repo.get(auth_user.id)
-        if user is None:
-            return None
-        return self._build_me_out(user)
+        return user
 
     def get_user(self, user_id: int) -> User | None:
         """Get user by ID."""
@@ -60,12 +59,12 @@ class UserService:
         users = self.user_repo.list_ordered()
         return [self._build_user_out(u) for u in users]
 
-    def create_user(self, payload: UserCreate) -> UserOut:
+    def create_user(self, payload: UserCreate) -> User:
         """Create a new user."""
         role = payload.role.strip().lower()
-        if role not in {"admin", "editor", "author"}:
+        if role not in {"admin", "editor", "author", "user"}:
             raise HTTPException(
-                status_code=400, detail="role must be admin, editor, or author"
+                status_code=400, detail="role must be admin, editor, author, or user"
             )
 
         existing = self.user_repo.get_by_username(payload.username)
@@ -79,8 +78,7 @@ class UserService:
             password_salt=password_salt,
             role=role,
         )
-        created = self.user_repo.create(new_user)
-        return self._build_user_out(created)
+        return self.user_repo.create(new_user)
 
     def update_profile(self, user: User, display_name: str | None) -> MeOut:
         """Update user profile."""

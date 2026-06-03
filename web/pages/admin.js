@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { initTheme } from '../lib/theme';
 import { fetcher } from '../lib/api';
 import { pctChange } from '../lib/utils';
 import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia } from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
-import { LoginPage } from '../components/admin/Login';
+import { LoginPage, SignupPage } from '../components/admin/Login';
 import {
   DashboardView,
   PostsView,
@@ -17,7 +18,9 @@ import {
 } from '../components/admin/views';
 
 export default function AdminPage() {
+  const router = useRouter();
   const [activeView, setActiveView] = useState('dashboard');
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
 
   // Initialize hooks
   const auth = useAuth();
@@ -25,7 +28,7 @@ export default function AdminPage() {
   const categories = useCategories();
   const comments = useComments();
   const media = useMedia();
-  const { me, isAuthed, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
+  const { me, isAuthed, isLoading, isInitialLoading, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
 
   // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
   const shouldLoadDashboardStats = isAuthed && activeView === 'dashboard';
@@ -87,14 +90,23 @@ export default function AdminPage() {
 
   const users = useUsers(posts.posts, creatorCountsOverride);
 
+  // Restrict access for normal users
+  useEffect(() => {
+    if (isAuthed && me?.role === 'user') {
+      router.replace('/');
+    }
+  }, [isAuthed, me, router]);
+
   // Initialize theme and auth on mount
   useEffect(() => {
-    (async () => {
-      initTheme({ defaultTheme: 'dark' });
-      const user = await auth.refreshMe();
-      if (!user) return;
+    initTheme({ defaultTheme: 'dark' });
+  }, []);
 
-      // Load initial data
+  // Load initial data when user is authenticated
+  useEffect(() => {
+    if (!isAuthed || isInitialLoading) return;
+
+    (async () => {
       await Promise.all([
         posts.refreshPosts(),
         media.refreshMedia(),
@@ -103,12 +115,12 @@ export default function AdminPage() {
         categories.refreshCategoriesWithCounts(),
       ]);
 
-      if (user.role === 'admin') {
+      if (me?.role === 'admin') {
         await users.refreshUsers();
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthed, isInitialLoading]);
 
   // Refresh data when view changes
   useEffect(() => {
@@ -128,6 +140,12 @@ export default function AdminPage() {
   const handleLogin = async (username, password) => {
     const result = await auth.login(username, password);
     if (result.success) {
+      // Redirect normal users to home
+      if (result.user?.role === 'user') {
+        router.push('/');
+        return result;
+      }
+
       setActiveView('dashboard');
       // Load data after login
       await Promise.all([
@@ -136,9 +154,18 @@ export default function AdminPage() {
         comments.refreshTrendingComments(),
         categories.refreshCategoriesWithCounts(),
       ]);
-      if (result.user?.role === 'admin') {
+      if (result.user?.role === 'admin' || result.user?.role === 'editor') {
         await users.refreshUsers();
       }
+    }
+    return result;
+  };
+
+  const handleSignup = async (username, password, displayName) => {
+    const result = await auth.signup(username, password, displayName);
+    if (result.success) {
+      // Signups are always normal users, redirect to home
+      router.push('/');
     }
     return result;
   };
@@ -154,6 +181,13 @@ export default function AdminPage() {
 
   // Render the active view (only called when authenticated)
   const renderView = () => {
+    if (isInitialLoading) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div className="loader">Loading...</div>
+        </div>
+      );
+    }
     switch (activeView) {
       case 'dashboard':
         return (
@@ -254,9 +288,26 @@ export default function AdminPage() {
     }
   };
 
-  // When not authenticated, render login page without the admin layout
-  if (!isAuthed) {
-    return <LoginPage onLogin={handleLogin} error={auth.error} />;
+  // When not authenticated, redirect to login
+  if (!isAuthed && !isInitialLoading) {
+    if (typeof window !== 'undefined') {
+      router.replace('/login');
+    }
+    return null;
+  }
+
+  // Show loading state while checking auth
+  if (isInitialLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#111' }}>
+        <div className="loader"></div>
+      </div>
+    );
+  }
+
+  // Double guard: If user is authenticated but role is 'user', don't render anything while redirecting
+  if (me?.role === 'user') {
+    return null;
   }
 
   return (

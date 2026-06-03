@@ -127,6 +127,7 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
               <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
                 <option value="editor">Editor</option>
                 <option value="author">Author</option>
+                <option value="user">Normal User</option>
                 <option value="admin">Admin</option>
               </select>
             </div>

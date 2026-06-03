@@ -11,13 +11,21 @@ export async function api(path, options = {}) {
     ? `${process.env.INTERNAL_API_URL || 'http://localhost:8003'}${path}`
     : path;
 
+  // Add JWT token if available
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
@@ -73,7 +81,18 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
-  logout: () => api('/api/admin/logout', { method: 'POST' }),
+  signup: (username, password, displayName) =>
+    api('/api/admin/signup', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, displayName }),
+    }),
+  logout: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    return api('/api/admin/logout', { method: 'POST' });
+  },
   me: () => api('/api/admin/me', { method: 'GET' }),
   updateProfile: (displayName) =>
     api('/api/admin/profile', {

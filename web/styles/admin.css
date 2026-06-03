@@ -714,6 +714,7 @@ html[data-theme="light"] {
 .role-badge.admin { background: #fef2f2; color: #dc2626; }
 .role-badge.editor { background: #f0f9ff; color: #0284c7; }
 .role-badge.author { background: #f0fdf4; color: #16a34a; }
+.role-badge.user { background: #f3f4f6; color: #4b5563; }
 
 .status-dot-active {
   display: flex;

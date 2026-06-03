@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from typing import Generator
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+from .auth import decode_access_token
 from .db import SessionLocal
 from .models import User
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/admin/login", auto_error=False)
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -18,14 +22,31 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-def get_current_user(request: Request, db: Session) -> User:
-    """Get the currently authenticated user from session."""
-    user_id = request.session.get("user_id")
+def get_current_user(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str | None = Depends(oauth2_scheme)
+) -> User:
+    """Get the currently authenticated user from JWT or session."""
+    user_id = None
+    
+    # 1. Try JWT token
+    if token:
+        payload = decode_access_token(token)
+        if payload:
+            user_id = payload.get("sub")
+    
+    # 2. Fallback to session (optional, but keeps compatibility)
+    if not user_id:
+        user_id = request.session.get("user_id")
+        
     if not user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
+        
     user = db.get(User, int(user_id))
     if user is None:
-        request.session.clear()
+        if request.session:
+            request.session.clear()
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
 

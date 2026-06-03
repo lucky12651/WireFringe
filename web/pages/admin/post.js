@@ -55,10 +55,15 @@ export default function AdminPostPage() {
   async function refreshMe() {
     try {
       const out = await api('/api/admin/me', { method: 'GET' });
+      if (out && out.role === 'user') {
+        router.replace('/');
+        return false;
+      }
       setMe(out);
       return true;
     } catch (_) {
       setMe(null);
+      router.replace('/admin');
       return false;
     }
   }

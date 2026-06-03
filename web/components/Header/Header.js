@@ -7,6 +7,7 @@ import styles from './Header.module.css';
 const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
 
 function slugifyCategory(cat) {
+  if (cat === 'For You') return 'for-you';
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
@@ -83,6 +84,10 @@ export default function Header({
   const handleLogout = async () => {
     try {
       const res = await fetch('/api/admin/logout', { method: 'POST' });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
       if (res.ok) {
         window.location.href = '/';
       }
@@ -153,13 +158,21 @@ export default function Header({
 
                     {isDropdownOpen && (
                       <div className={styles.dropdownMenu}>
-                        <Link href="/admin" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
-                          Dashboard
-                        </Link>
-                        <Link href="/admin/post" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
-                          New Post
+                        <Link href="/?category=for-you" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                          Personalised News
                         </Link>
                         <div className={styles.dropdownDivider} />
+                        {user.role !== 'user' && (
+                          <>
+                            <Link href="/admin" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                              Dashboard
+                            </Link>
+                            <Link href="/admin/post" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                              New Post
+                            </Link>
+                            <div className={styles.dropdownDivider} />
+                          </>
+                        )}
                         <button className={styles.dropdownItem} onClick={handleLogout}>
                           Logout
                         </button>
@@ -167,7 +180,7 @@ export default function Header({
                     )}
                   </div>
                 ) : (
-                  <Link href="/admin" className={styles.signInBtn}>
+                  <Link href="/login" className={styles.signInBtn}>
                     Sign in
                   </Link>
                 )}
@@ -183,7 +196,7 @@ export default function Header({
         <div className={styles.container}>
           <div className={styles.navCentered}>
             <div className={styles.navScroll}>
-              {CATEGORY_TABS.map((category) => (
+              {(user ? ['For You', ...CATEGORY_TABS] : CATEGORY_TABS).map((category) => (
                 <button
                   key={category}
                   type="button"

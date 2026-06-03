@@ -3,21 +3,22 @@ import { z } from 'zod';
 import styles from './LoginPage.module.css';
 
 // Zod validation schema
-const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+const signupSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  displayName: z.string().min(1, 'Display name is required'),
 });
 
-export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
+export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [displayName, setDisplayName] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     try {
-      loginSchema.parse({ username, password });
+      signupSchema.parse({ username, password, displayName });
       setErrors({});
       return true;
     } catch (err) {
@@ -36,7 +37,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    const result = await onLogin(username.trim(), password, rememberMe);
+    const result = await onSignup(username.trim(), password, displayName.trim());
     setIsLoading(false);
 
     if (!result.success && result.error) {
@@ -49,14 +50,11 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
       {/* Left Side - Image */}
       <div className={styles.imageSection}>
         <div className={styles.imageOverlay}>
-          
-
           <div className={styles.imageContent}>
-            <h1 className={styles.headline}>Coffee n Blog</h1>
+            <h1 className={styles.headline}>Join Coffee n Blog</h1>
             <p className={styles.subheadline}>
-              Share your stories, insights, and ideas with the world in just a few clicks
+              Create an account to start sharing your stories and connecting with others
             </p>
-            
           </div>
         </div>
         <img
@@ -69,14 +67,28 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
       {/* Right Side - Form */}
       <div className={styles.formSection}>
         <div className={styles.formContainer}>
-          {/* Sign In button top right */}
-          
-
           <div className={styles.formWrapper}>
-            <h2 className={styles.welcomeTitle}>Welcome Back to Coffee n Blog!</h2>
-            <p className={styles.welcomeSubtitle}>Sign in to your account</p>
+            <h2 className={styles.welcomeTitle}>Create Your Account</h2>
+            <p className={styles.welcomeSubtitle}>Sign up for free today</p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.inputGroup}>
+                <label htmlFor="displayName" className={styles.label}>
+                  Full Name
+                </label>
+                <input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className={`${styles.input} ${errors.displayName ? styles.inputError : ''}`}
+                />
+                {errors.displayName && (
+                  <span className={styles.errorText}>{errors.displayName}</span>
+                )}
+              </div>
+
               <div className={styles.inputGroup}>
                 <label htmlFor="username" className={styles.label}>
                   Username
@@ -86,7 +98,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
+                  placeholder="Choose a username"
                   className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
                   autoComplete="username"
                 />
@@ -99,34 +111,18 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                 <label htmlFor="password" className={styles.label}>
                   Password
                 </label>
-                <div className={styles.passwordWrapper}>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-                    autoComplete="current-password"
-                  />
-                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password (min 8 characters)"
+                  className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+                  autoComplete="new-password"
+                />
                 {errors.password && (
                   <span className={styles.errorText}>{errors.password}</span>
                 )}
-              </div>
-
-              <div className={styles.optionsRow}>
-                <label className={styles.rememberMe}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className={styles.checkbox}
-                  />
-                  <span className={styles.checkmark}></span>
-                  <span className={styles.rememberText}>Remember Me</span>
-                </label>
-                
               </div>
 
               {(errors.form || serverError) && (
@@ -138,18 +134,16 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                 className={styles.loginButton}
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Login'}
+                {isLoading ? 'Creating account...' : 'Sign Up'}
               </button>
 
               <div className={styles.toggleMode}>
-                Don't have an account?{' '}
-                <span  onClick={onToggleMode} >
-                  Sign Up
+                Already have an account?{' '}
+                <span type="button" onClick={onToggleMode} >
+                  Sign In
                 </span>
               </div>
             </form>
-
-           
           </div>
         </div>
       </div>

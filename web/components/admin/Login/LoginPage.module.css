@@ -278,8 +278,27 @@
 .loginButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  box-shadow: none;
 }
+
+.toggleMode {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #111;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+
 
 /* Responsive Design */
 @media (max-width: 900px) {
