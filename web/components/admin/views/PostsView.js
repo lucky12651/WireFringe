@@ -191,270 +191,139 @@ export function PostsView({
   }, [posts.length]);
 
   return (
-    <>
-      <div className="admin-title-row">
-        <h2>Posts</h2>
-        <div className="accent-line"></div>
-        <div className="admin-subtabs">
-          <button
-            className={`subtab-btn ${activeTab === 'published' ? 'active' : ''}`}
-            onClick={() => setActiveTab('published')}
-          >
-            Published
-            <span className="subtab-count">{postsCount}</span>
-          </button>
-          <button
-            className={`subtab-btn ${activeTab === 'queue' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('queue');
-              refreshQueue?.();
-            }}
-          >
-            Queue (CSV)
-            <span className="subtab-count">{queue?.length || 0}</span>
-          </button>
-        </div>
-        
-        {activeTab === 'queue' && selectedQueueLinks.size > 0 && (
-          <div className="bulk-actions-bar">
-            <span className="selection-count">{selectedQueueLinks.size} items selected</span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-               <ActionButton 
-                icon={CheckIcon} 
-                size="sm" 
-                onClick={handleBulkProcessClick}
-                disabled={isProcessing}
-              >
-                Bulk Process
-              </ActionButton>
-              <ActionButton 
-                icon={TrashIcon} 
-                variant="danger" 
-                size="sm" 
-                onClick={handleBulkDeleteClick}
-              >
-                Bulk Delete
-              </ActionButton>
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {activeTab === 'queue' && (
-            <ActionButton 
-              icon={RefreshIcon} 
-              onClick={async () => {
-                setSuccessMessage('Fetching latest RSS feeds...');
-                const res = await onRefreshFeeds();
-                if (res.success) {
-                  setSuccessMessage('Successfully pulled latest news items.');
-                }
-              }}
-              size="sm"
-              title="Pull latest news from Google RSS feeds"
+    <div className="admin-view-container-v2">
+      <div className="section-header">
+        <div className="title-group-v2">
+          <h2 className="section-title">Articles</h2>
+          <div className="v2-tabs">
+            <button
+              className={`v2-tab-btn ${activeTab === 'published' ? 'active' : ''}`}
+              onClick={() => setActiveTab('published')}
             >
-              Rescrape Feeds
-            </ActionButton>
-          )}
-          <ActionButton icon={PlusIcon} href="/admin/post" size="sm">
-            New Post
-          </ActionButton>
+              Published <span className="tab-count-v2">{postsCount}</span>
+            </button>
+            <button
+              className={`v2-tab-btn ${activeTab === 'queue' ? 'active' : ''}`}
+              onClick={() => setActiveTab('queue')}
+            >
+              Queue <span className="tab-count-v2">{queue.length}</span>
+            </button>
+          </div>
         </div>
-
+        <div className="header-actions-v2">
+          {activeTab === 'queue' && (
+            <button className="secondary-btn-v2" onClick={onRefreshFeeds}>
+              <RefreshIcon size={16} /> Refresh Feeds
+            </button>
+          )}
+          <a href="/admin/post" className="primary-btn-v2">
+            <PlusIcon /> New Article
+          </a>
+        </div>
       </div>
 
-
-      <div className="side-card admin-posts-card" aria-label="All posts">
-
-        <div className="admin-posts-scroll" ref={postsScrollRef}>
-          {activeTab === 'published' ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <Loader />
-                    </TableCell>
-                  </TableRow>
-                ) : posts.length ? (
-                  posts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <span className={`status ${p.date ? 'published' : 'draft'}`}>
-                          {p.date ? (
-                            <span className="status-dot" title="Published"></span>
-                          ) : (
-                            'Draft'
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="title">{p.title}</TableCell>
-                      <TableCell className="meta author">
-                        {String(p.creator || '').trim() || 'Unknown'}
-                      </TableCell>
-
-                      <TableCell className="meta">{formatDateShort(p.date)}</TableCell>
-                      <TableCell className="actions">
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          {!p.date && !isAuthor && (
-                            <ActionButton
-                              icon={CheckIcon}
-                              onClick={() => onPublish(p.id)}
-                              title="Publish this draft"
-                            >
-                              Publish
-                            </ActionButton>
-                          )}
-                          <ActionButton
-                            icon={EditIcon}
-                            href={`/admin/post?id=${encodeURIComponent(p.id)}`}
-                          >
-                            Edit
-                          </ActionButton>
-                          <ActionButton
-                            icon={TrashIcon}
-                            onClick={() => handleDeleteClick(p)}
-                            title="Delete this post"
-                            variant="danger"
-                          >
-                            Delete
-                          </ActionButton>
+      <div className="admin-card-v2 posts-card-v2">
+        {activeTab === 'published' ? (
+          <>
+            <div className="v2-table-wrapper">
+              <table className="v2-table">
+                <thead>
+                  <tr>
+                    <th>Article</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th className="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {posts.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <div className="post-cell-v2">
+                          <div className="post-thumb-mini">
+                            <img src={p.ogImg || '/placeholder-post.jpg'} alt="" />
+                          </div>
+                          <div className="post-title-info">
+                            <span className="post-title-v2">{p.title}</span>
+                            <span className="post-author-v2">By {p.creatorName || 'Admin'}</span>
+                          </div>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <EmptyState>No posts yet.</EmptyState>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead style={{ width: '40px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
-                      onChange={toggleSelectAllQueue}
-                    />
-                  </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Source URL</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {queue?.length ? (
-                  queue.map((item, idx) => (
-                    <TableRow key={idx} className={selectedQueueLinks.has(item.link) ? 'row-selected' : ''}>
-                      <TableCell>
-                        <input 
-                          type="checkbox" 
-                          checked={selectedQueueLinks.has(item.link)}
-                          onChange={() => toggleSelectQueueItem(item.link)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <span className={`status ${item.status === 'pending' ? 'draft' : 'failed'}`}>
-                          {item.status === 'pending' ? 'Pending' : 'Failed'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="status draft" style={{ textTransform: 'capitalize' }}>
-                          {item.category}
-                        </span>
-                      </TableCell>
-                      <TableCell className="title">{item.title}</TableCell>
-                      <TableCell className="meta">
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: 'var(--brand-primary)', textDecoration: 'underline', fontSize: '12px' }}
-                        >
-                          View Source
-                        </a>
-                      </TableCell>
-                      <TableCell className="actions">
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <ActionButton
-                            icon={CheckIcon}
-                            onClick={() => handleProcessQueueItem(item.link)}
-                            disabled={isProcessing}
-                            title="Process and publish now"
-                          >
-                            {isProcessing ? 'Processing...' : 'Process'}
-                          </ActionButton>
-                          <ActionButton
-                            icon={TrashIcon}
-                            onClick={() => setQueueItemToDelete(item)}
-                            title="Remove from queue"
-                            variant="danger"
-                          >
-                            Delete
-                          </ActionButton>
+                      </td>
+                      <td>
+                        <span className="count-badge-v2">{p.bucket}</span>
+                      </td>
+                      <td>
+                        <span className="date-v2">{formatDateShort(p.date)}</span>
+                      </td>
+                      <td className="text-right">
+                        <div className="action-group-v2">
+                          <a href={`/admin/post?id=${encodeURIComponent(p.id)}`} className="edit-btn-v2" title="Edit">
+                            <EditIcon size={16} />
+                          </a>
+                          <button className="delete-btn-v2" onClick={() => handleDeleteClick(p)} title="Delete">
+                            <TrashIcon size={16} />
+                          </button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <EmptyState>No pending items in queue.</EmptyState>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {activeTab === 'published' && totalPages > 1 && (
-          <div className="admin-pagination">
-            <div className="pagination-info">
-              Page {page + 1} of {totalPages}
-            </div>
-            <div className="pagination-controls">
-              <ActionButton
-                icon={ChevronLeftIcon}
-                onClick={() => onPageChange(page - 1)}
-                disabled={!hasPrev}
-              >
-                Previous
-              </ActionButton>
-              <ActionButton
-                icon={ChevronRightIcon}
-                onClick={() => onPageChange(page + 1)}
-                disabled={!hasNext}
-              >
-                Next
-              </ActionButton>
-            </div>
+            {totalPages > 1 && (
+              <div className="v2-pagination">
+                <button className="page-btn-v2" disabled={!hasPrev} onClick={() => onPageChange(page - 1)}>
+                  <ChevronLeftIcon /> Prev
+                </button>
+                <span className="page-info-v2">Page {page + 1} of {totalPages}</span>
+                <button className="page-btn-v2" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>
+                  Next <ChevronRightIcon />
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="v2-table-wrapper">
+            <table className="v2-table">
+              <thead>
+                <tr>
+                  <th>Queue Item</th>
+                  <th>Source</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {queue.map((q) => (
+                  <tr key={q.link}>
+                    <td>
+                      <div className="queue-title-v2">{q.title}</div>
+                    </td>
+                    <td>
+                      <span className="source-badge-v2">{q.category}</span>
+                    </td>
+                    <td className="text-right">
+                      <div className="action-group-v2">
+                        <button className="approve-btn-v2" onClick={() => onProcessQueue(q.link)} title="Process">
+                          <CheckIcon size={16} />
+                        </button>
+                        <button className="delete-btn-v2" onClick={() => { setQueueItemToDelete(q); }} title="Remove">
+                          <TrashIcon size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
       <DeleteConfirmModal
-        item={postToDelete || queueItemToDelete || (bulkQueueDelete ? { title: 'Selected Items' } : null)}
-        title={postToDelete ? "Delete Post" : "Remove from Queue"}
-        itemName={postToDelete?.title || queueItemToDelete?.title || (bulkQueueDelete ? `${selectedQueueLinks.size} selected items` : null)}
+        isOpen={!!postToDelete || !!queueItemToDelete}
+        title="Confirm Deletion"
+        message={`Are you sure you want to remove "${postToDelete?.title || queueItemToDelete?.title}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDeleting={isDeleting}
@@ -463,9 +332,9 @@ export function PostsView({
       {successMessage && (
         <SuccessToast
           message={successMessage}
-          onDismiss={() => setSuccessMessage(null)}
+          onClose={() => setSuccessMessage(null)}
         />
       )}
-    </>
+    </div>
   );
 }

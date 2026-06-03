@@ -10,12 +10,10 @@ const NAV_ITEMS = [
   { id: 'categories', label: 'Categories', icon: 'categories' },
   { id: 'media', label: 'Media', icon: 'media' },
   { id: 'comments', label: 'Comments', icon: 'comments' },
+  { id: 'users', label: 'Users', adminOnly: true, icon: 'users' },
 ];
 
-const SYSTEM_ITEMS = [
-  { id: 'users', label: 'Users', adminOnly: true, icon: 'users' },
-  { id: 'settings', label: 'Settings', icon: 'settings' },
-];
+const SYSTEM_ITEMS = [];
 
 export function SidebarNav({
   me,

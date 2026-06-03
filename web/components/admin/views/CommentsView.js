@@ -71,135 +71,82 @@ export function CommentsView({
   };
 
   return (
-    <>
-      <div className="admin-title-row">
-        <h2>Comments</h2>
-        <div className="accent-line"></div>
+    <div className="admin-view-container-v2">
+      <div className="section-header">
+        <h2 className="section-title">Comments Moderation</h2>
+        <span className="title-count-v2">{Array.isArray(comments) ? comments.length : 0} Total</span>
       </div>
 
-      <section className="side-card" aria-label="All comments">
-        <div className="side-header">
-          <h3>All Comments</h3>
-          <span>{Array.isArray(comments) ? comments.length : 0}</span>
-        </div>
-
-        {hint ? <div className="hint">{hint}</div> : null}
-
-        {Array.isArray(comments) && comments.length ? (
-          <Table aria-label="Comments table">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Comment</TableHead>
-                <TableHead>Post</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Votes</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {comments.map((c) => {
-                const canApprove = !c.approved && canModerateComments;
-                const canDelete = c.approved && canManageUsers;
-                const postTitleText = String(c.postTitle || c.postId || '');
-                const isPopoverOpen = openCommentId === c.id;
-
-                return (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <div className={styles.commentHeader}>
-                        <span className={styles.commentName}>{c.name || 'Anonymous'}</span>
-                        {c.email ? (
-                          <span className={styles.commentEmail}>{c.email}</span>
-                        ) : null}
+      <div className="admin-card-v2">
+        {hint && <p className="form-hint-v2 error">{hint}</p>}
+        
+        <div className="v2-table-wrapper">
+          <table className="v2-table">
+            <thead>
+              <tr>
+                <th>Commenter</th>
+                <th>Message</th>
+                <th>Post</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.isArray(comments) && comments.length ? (
+                comments.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <div className="commenter-info">
+                        <span className="commenter-name">{c.name || 'Guest'}</span>
+                        <span className="comment-date">{formatDateShort(c.createdAt)}</span>
                       </div>
-
-                      <div
-                        className={styles.viewRow}
-                        data-comment-popover-root={String(c.id)}
-                      >
-                        <ActionButton
-                          size="sm"
-                          onClick={() => toggleViewComment(c.id)}
-                          aria-expanded={isPopoverOpen}
-                          aria-controls={`comment-popover-${c.id}`}
-                          title={isPopoverOpen ? 'Hide comment' : 'View comment'}
-                        >
-                          {isPopoverOpen ? 'Hide' : 'View comment'}
-                        </ActionButton>
-
-                        {isPopoverOpen ? (
-                          <div
-                            id={`comment-popover-${c.id}`}
-                            className={styles.commentPopover}
-                            role="dialog"
-                            aria-label="Comment"
-                          >
-                            <div className={styles.commentPopoverText}>
-                              {c.comment || ''}
-                            </div>
-                          </div>
-                        ) : null}
+                    </td>
+                    <td>
+                      <div className="comment-content-cell">
+                        <p className="comment-text-v2">{c.comment}</p>
                       </div>
-                    </TableCell>
-                    <TableCell className="meta">
-                      <span className={styles.postTitle} title={postTitleText}>
-                        {postTitleText}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`status ${c.approved ? 'approved' : 'draft'}`}>
+                    </td>
+                    <td>
+                      <span className="post-link-v2">{c.postTitle || 'View Post'}</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${c.approved ? 'active' : 'pending'}`}>
                         {c.approved ? 'Approved' : 'Pending'}
                       </span>
-                    </TableCell>
-                    <TableCell className="meta">
-                      {c.likes || 0} like / {c.dislikes || 0} dislike
-                    </TableCell>
-                    <TableCell className="meta">{formatDateShort(c.createdAt)}</TableCell>
-                    <TableCell className={styles.actionsCell}>
-                      <div className={styles.actionsWrap}>
-                        {canApprove ? (
-                          <>
-                            <ActionButton
-                              icon={CheckIcon}
-                              onClick={() => handleApprove(c.id)}
-                              title="Approve this comment"
-                            >
-                              Approve
-                            </ActionButton>
-                            <ActionButton
-                              icon={TrashIcon}
-                              variant="danger"
-                              onClick={() => handleDisapprove(c.id)}
-                              title="Disapprove (delete) this comment"
-                            >
-                              Disapprove
-                            </ActionButton>
-                          </>
-                        ) : null}
-
-                        {canDelete ? (
-                          <ActionButton
-                            icon={TrashIcon}
-                            variant="danger"
-                            onClick={() => handleDelete(c.id)}
-                            title="Delete this comment"
+                    </td>
+                    <td className="text-right">
+                      <div className="action-group-v2">
+                        {!c.approved && (
+                          <button
+                            className="approve-btn-v2"
+                            onClick={() => handleApprove(c.id)}
+                            title="Approve"
                           >
-                            Delete
-                          </ActionButton>
-                        ) : null}
+                            <CheckIcon size={16} />
+                          </button>
+                        )}
+                        <button
+                          className="delete-btn-v2"
+                          onClick={() => c.approved ? handleDelete(c.id) : handleDisapprove(c.id)}
+                          title="Delete"
+                        >
+                          <TrashIcon size={16} />
+                        </button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        ) : (
-          <EmptyState>No comments yet.</EmptyState>
-        )}
-      </section>
-    </>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState>No comments to moderate.</EmptyState>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

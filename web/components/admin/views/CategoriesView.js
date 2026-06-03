@@ -66,73 +66,89 @@ export function CategoriesView({
   };
 
   return (
-    <>
-      <div className="admin-title-row">
-        <h2>Categories</h2>
-        <div className="accent-line"></div>
+    <div className="admin-view-container-v2">
+      <div className="section-header">
+        <h2 className="section-title">Categories Management</h2>
+        <span className="title-count-v2">{categoriesWithCounts.length} Buckets</span>
       </div>
 
-      {canManageUsers && (
-        <section className="side-card">
-          <div className="side-header">
-            <h3>Add Category</h3>
-            <span>Create new bucket</span>
-          </div>
-
-          <form className="admin-form" onSubmit={handleSubmit}>
-            <label>
-              <span className="label">Category name</span>
-              <input
-                className="input"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="e.g., Lifestyle"
-              />
-            </label>
-            <div className="row">
-              <ActionButton icon={PlusIcon} type="submit">Add category</ActionButton>
-              <div className="hint">{hint}</div>
-            </div>
-          </form>
-        </section>
-      )}
-
-      <section className="side-card">
-        <div className="side-header">
-          <h3>Bucket Counts</h3>
-          <span>{categoriesWithCounts.length}</span>
-        </div>
-
-        <div className="admin-member-grid">
-          {categoriesWithCounts.map((c) => (
-            <div key={c.id} className="admin-member-card">
-              <div className="admin-member-top">
-                <div className="admin-member-name">{c.name}</div>
-                {canManageUsers && (
-                  <ActionButton
-                    icon={TrashIcon}
-                    onClick={() => handleDeleteClick(c)}
-                    title="Delete category"
-                    variant="danger"
-                    size="sm"
-                  >
-                    Delete
-                  </ActionButton>
-                )}
+      <div className="admin-grid-v2">
+        {/* Add Category Card */}
+        {canManageUsers && (
+          <div className="admin-card-v2 add-category-card">
+            <h3 className="card-title-v2">Create New Category</h3>
+            <form onSubmit={handleSubmit} className="v2-form">
+              <div className="form-group-v2">
+                <label>Category Name</label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="e.g., Technology"
+                />
               </div>
-              <div className="admin-member-count">{c.count}</div>
-              <div className="admin-member-sub">posts</div>
-            </div>
-          ))}
-        </div>
+              {hint && <p className="form-hint-v2">{hint}</p>}
+              <button type="submit" className="primary-btn-v2">
+                <PlusIcon /> Create Category
+              </button>
+            </form>
+          </div>
+        )}
 
-        {!categoriesWithCounts.length && <EmptyState>No categories yet.</EmptyState>}
-      </section>
+        {/* Categories List Card */}
+        <div className="admin-card-v2 categories-list-card">
+          <h3 className="card-title-v2">Existing Categories</h3>
+          <div className="v2-table-wrapper">
+            <table className="v2-table">
+              <thead>
+                <tr>
+                  <th>Category Name</th>
+                  <th>Article Count</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categoriesWithCounts.length ? (
+                  categoriesWithCounts.map((cat) => (
+                    <tr key={cat.id}>
+                      <td>
+                        <div className="category-info-cell">
+                          <span className="category-name-v2">{cat.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="count-badge-v2">{cat.count} Articles</span>
+                      </td>
+                      <td className="text-right">
+                        {canManageUsers && (
+                          <button
+                            className="delete-btn-v2"
+                            onClick={() => handleDeleteClick(cat)}
+                            title="Delete category"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>
+                      <EmptyState>No categories created yet.</EmptyState>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       <DeleteConfirmModal
-        item={categoryToDelete}
+        isOpen={!!categoryToDelete}
         title="Delete Category"
-        itemName={categoryToDelete?.name}
+        message={`Are you sure you want to delete category "${categoryToDelete?.name}"? This will NOT delete articles in this category, but they will be left without a bucket.`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDeleting={isDeleting}
@@ -141,9 +157,9 @@ export function CategoriesView({
       {successMessage && (
         <SuccessToast
           message={successMessage}
-          onDismiss={() => setSuccessMessage(null)}
+          onClose={() => setSuccessMessage(null)}
         />
       )}
-    </>
+    </div>
   );
 }

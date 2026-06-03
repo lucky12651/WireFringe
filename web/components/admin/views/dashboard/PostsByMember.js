@@ -3,27 +3,27 @@ import { EmptyState } from '../../shared/EmptyState';
 
 export default function PostsByMember({ memberStats }) {
   return (
-    <div className="side-card dashboard-item-right-span" aria-label="Posts by member">
-      <div className="side-header">
-        <h3>Posts by Member</h3>
-        <span>{memberStats.length} members</span>
-      </div>
+    <div className="admin-card-v2 dashboard-card-v2">
+      <h3 className="card-title-v2">Posts by Member</h3>
+      <p className="card-desc-v2">Contribution summary by team members.</p>
 
       {memberStats.length ? (
-        <div className="admin-member-grid">
+        <div className="v2-member-list">
           {memberStats.map((m) => (
-            <div key={m.username} className="admin-member-card">
-              <div className="admin-member-top">
-                <div className="admin-member-name">{m.username}</div>
-                {m.role ? <div className="admin-member-role">{m.role}</div> : null}
+            <div key={m.username} className="v2-member-item">
+              <div className="v2-member-info">
+                <span className="v2-member-name">{m.username}</span>
+                <span className="v2-member-role">{m.role || 'Member'}</span>
               </div>
-              <div className="admin-member-count">{m.count}</div>
-              <div className="admin-member-sub">posts</div>
+              <div className="v2-member-stats">
+                <span className="v2-member-count">{m.count}</span>
+                <span className="v2-member-unit">Posts</span>
+              </div>
             </div>
           ))}
         </div>
       ) : (
-        <EmptyState>No stats yet.</EmptyState>
+        <div className="v2-empty-state">No member statistics available.</div>
       )}
     </div>
   );

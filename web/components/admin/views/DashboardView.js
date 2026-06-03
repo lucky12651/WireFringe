@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 const StatsSection = dynamic(() => import('./dashboard/StatsSection'));
 const CommentsTrend = dynamic(() => import('./dashboard/CommentsTrend'));
 const PostGrowth = dynamic(() => import('./dashboard/PostGrowth'));
-const PostsByMember = dynamic(() => import('./dashboard/PostsByMember'));
+
 const LatestPosts = dynamic(() => import('./dashboard/LatestPosts'));
 
 export function DashboardView({
@@ -53,10 +53,8 @@ export function DashboardView({
   }, []);
 
   return (
-    <>
+    <div className="admin-dashboard-v2">
       <div className="admin-dashboard-head">
-
-
         <StatsSection
           postsCount={postsCount}
           categoriesCount={categoriesCount}
@@ -67,29 +65,23 @@ export function DashboardView({
         />
       </div>
 
-      <section className="admin-dashboard-grid" aria-label="Dashboard panels">
-        <CommentsTrend
-          trendingComments={trendingComments}
-          trendingHint={trendingHint}
-          height={trendCardHeight}
-        />
-
-        <div ref={postGrowthCardRef} className="dashboard-item-center-top">
-          <PostGrowth
-            postsByMonth={postsByMonth}
-          />
-        </div>
-
-        {!isAuthor && (
-          <PostsByMember
-            memberStats={memberStats}
-          />
-        )}
-      </section>
-
       <LatestPosts
         latestPosts={latestPosts}
       />
-    </>
+
+      {/* Secondary stats grid */}
+      <section className="admin-dashboard-grid-v2" aria-label="Dashboard panels">
+        <CommentsTrend
+          trendingComments={trendingComments}
+          trendingHint={trendingHint}
+        />
+
+        <PostGrowth
+          postsByMonth={postsByMonth}
+        />
+
+      
+      </section>
+    </div>
   );
 }
