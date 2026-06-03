@@ -88,6 +88,13 @@ class PostUpsert(BaseModel):
     readMinutes: int | None = None
 
 
+class NewsQueueItem(BaseModel):
+    title: str
+    link: str
+    category: str
+    status: str
+
+
 class MediaFileOut(BaseModel):
     name: str
     url: str

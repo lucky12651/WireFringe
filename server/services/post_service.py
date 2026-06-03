@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import os
 import re
 import unicodedata
 import uuid
@@ -8,9 +10,16 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from ..models import Post, User
+from ..models import Post, User, NewsQueue
 from ..repositories import CommentRepository, PostRepository, UserRepository
-from ..schemas import CreatorCountOut, MonthCountOut, PostGrowthCountsOut, PostOut, PostUpsert
+from ..schemas import (
+    CreatorCountOut,
+    MonthCountOut,
+    NewsQueueItem,
+    PostGrowthCountsOut,
+    PostOut,
+    PostUpsert,
+)
 
 
 class PostService:
@@ -197,6 +206,21 @@ class PostService:
             post.excerpt = (post.content or "").strip()[:180]
         else:
             post.excerpt = payload.excerpt
+        self.db.commit()
+        return self._build_post_out(post)
+
+    def get_news_queue(self) -> list[NewsQueueItem]:
+        """Get all pending or failed news from the database queue."""
+        items = self.db.query(NewsQueue).filter(NewsQueue.status.in_(["pending", "failed_scrape", "failed_gen", "db_error"])).all()
+        return [
+            NewsQueueItem(
+                title=item.title,
+                link=item.link,
+                category=item.category,
+                status=item.status,
+            )
+            for item in items
+        ]
 
         updated = self.post_repo.update(post)
         return self._build_post_out(updated)

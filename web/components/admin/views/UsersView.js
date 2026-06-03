@@ -3,6 +3,7 @@ import { ROLES } from '../../../lib/constants';
 import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shared/Table';
+import { DeleteConfirmModal, SuccessToast } from '../shared';
 import styles from './UsersView.module.css';
 import { Icons, PlusIcon, TrashIcon } from '../Layout/icons';
 
@@ -11,6 +12,9 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('editor');
   const [hint, setHint] = useState('');
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [failedAvatars, setFailedAvatars] = useState(() => new Set());
 
   const usersCount = Array.isArray(users) ? users.length : 0;
@@ -63,12 +67,29 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
     }
   };
 
-  const handleDelete = async (id, username) => {
-    if (!confirm(`Delete user ${username}?`)) return;
-    const result = await onDelete(id);
-    if (!result.success) {
-      setHint(result.error);
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    const deletedUsername = userToDelete.username;
+    setIsDeleting(true);
+    try {
+      const result = await onDelete(userToDelete.id);
+      if (result.success) {
+        setSuccessMessage(`User "${deletedUsername}" has been deleted successfully.`);
+        setUserToDelete(null);
+      } else {
+        setHint(result.error);
+      }
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setUserToDelete(null);
   };
 
   return (
@@ -183,7 +204,7 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
                         title={`Delete user ${u.username}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(u.id, u.username);
+                          handleDeleteClick(u);
                         }}
                       >
                         Delete
@@ -202,6 +223,22 @@ export function UsersView({ users, onCreate, onDelete, canManageUsers }) {
           </TableBody>
         </Table>
       </section>
+
+      <DeleteConfirmModal
+        item={userToDelete}
+        title="Delete User"
+        itemName={userToDelete?.username}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isDeleting={isDeleting}
+      />
+
+      {successMessage && (
+        <SuccessToast
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
     </>
   );
 }

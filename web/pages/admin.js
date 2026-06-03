@@ -161,7 +161,7 @@ export default function AdminPage() {
             posts={posts.posts}
             postsCount={posts.postsCount}
             categoriesCount={categories.categoriesWithCounts.length}
-            mediaCount={media.mediaCount}
+            queueCount={posts.queue.length}
             pendingCommentsCount={comments.pendingCount}
             canViewPendingCommentsCount={canViewPendingCommentsCount}
             postGrowth30={dashboardPostGrowth30 || posts.postGrowth30}
@@ -181,11 +181,18 @@ export default function AdminPage() {
             postsCount={posts.postsCount}
             onPublish={posts.publishPost}
             onDelete={posts.deletePost}
+            onProcessQueue={posts.processQueueItem}
+            onDeleteQueue={posts.deleteQueueItem}
+            onBulkDeleteQueue={posts.bulkDeleteQueueItems}
+            onBulkProcessQueue={posts.bulkProcessQueueItems}
+            onRefreshFeeds={posts.refreshQueueFeeds}
             me={me}
             page={posts.page}
             onPageChange={posts.setPage}
             limit={posts.limit}
             isLoading={posts.isLoading}
+            queue={posts.queue}
+            refreshQueue={posts.refreshQueue}
           />
         );
 

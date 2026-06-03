@@ -30,6 +30,12 @@ export function usePosts(initialLimit = 20) {
   const [actionError, setActionError] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  const { data: queueData, mutate: refreshQueue } = useSWR(
+    '/api/admin/posts/queue',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   const refreshPosts = useCallback(() => {
     return mutate(swrKey);
   }, [swrKey]);
@@ -101,6 +107,87 @@ export function usePosts(initialLimit = 20) {
     }
   }, [refreshPosts]);
 
+  const processQueueItem = useCallback(async (link) => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      const res = await postsApi.processQueueItem(link);
+      await Promise.all([refreshPosts(), refreshQueue()]);
+      
+      if (res && res.success === false) {
+        setActionError(res.message || 'Processing failed');
+        return { success: false, error: res.message };
+      }
+      
+      return { success: true };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to process queue item');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshPosts, refreshQueue]);
+
+  const deleteQueueItem = useCallback(async (link) => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      await postsApi.deleteQueueItem(link);
+      await refreshQueue();
+      return { success: true };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to delete queue item');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshQueue]);
+
+  const bulkDeleteQueueItems = useCallback(async (links) => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      await postsApi.bulkDeleteQueueItems(links);
+      await refreshQueue();
+      return { success: true };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to bulk delete queue items');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshQueue]);
+
+  const bulkProcessQueueItems = useCallback(async (links) => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      const res = await postsApi.bulkProcessQueueItems(links);
+      await Promise.all([refreshPosts(), refreshQueue()]);
+      return { success: true, results: res?.results || [] };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to bulk process queue items');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshPosts, refreshQueue]);
+
+  const refreshQueueFeeds = useCallback(async () => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      await postsApi.refreshQueueFeeds();
+      await refreshQueue();
+      return { success: true };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to refresh RSS feeds');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshQueue]);
+
   // Derived data
   const sortedPosts = useMemo(() => {
     return sortPostsForDisplay(posts);
@@ -148,7 +235,14 @@ export function usePosts(initialLimit = 20) {
       updatePost,
       deletePost,
       publishPost,
+      processQueueItem,
+      deleteQueueItem,
+      bulkDeleteQueueItems,
+      bulkProcessQueueItems,
+      refreshQueueFeeds,
       setError: setActionError,
+      queue: queueData || [],
+      refreshQueue,
     }),
     [
       posts,
@@ -168,6 +262,13 @@ export function usePosts(initialLimit = 20) {
       updatePost,
       deletePost,
       publishPost,
+      processQueueItem,
+      deleteQueueItem,
+      bulkDeleteQueueItems,
+      bulkProcessQueueItems,
+      refreshQueueFeeds,
+      queueData,
+      refreshQueue,
     ]
   );
 }

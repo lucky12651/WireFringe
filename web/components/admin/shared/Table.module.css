@@ -38,10 +38,8 @@
 }
 
 .tableBody .tableRow:nth-child(even) {
-  background: rgba(
-    var(--accent-rgb, var(--brand-primary-rgb, 26, 115, 232)),
-    0.03
-  );
+  background: rgba(var(--accent-rgb, var(--brand-primary-rgb, 26, 115, 232)),
+      0.03);
 }
 
 .tableRow:hover {

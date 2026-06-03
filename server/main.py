@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,11 +12,26 @@ from .api import api_router
 from .config import settings
 from .db import Base, SessionLocal, engine
 from .services import CategoryService
+from .news_bot import start_news_bot_loop
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle events for the FastAPI application."""
+    # Start the news bot loop in the background
+    bot_task = asyncio.create_task(start_news_bot_loop())
+    yield
+    # Shutdown logic
+    bot_task.cancel()
+    try:
+        await bot_task
+    except asyncio.CancelledError:
+        pass
 
 
 def create_app() -> FastAPI:
     """Application factory."""
-    app = FastAPI(title=settings.app_title)
+    app = FastAPI(title=settings.app_title, lifespan=lifespan)
 
     # CORS middleware
     app.add_middleware(

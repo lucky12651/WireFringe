@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     db_connect_timeout: int = int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
 
     # Session/Security
-    session_secret: str = os.environ.get("BLOG_SESSION_SECRET", "dev-secret-change-me")
+    session_secret: str = os.environ.get("BLOG_SESSION_SECRET")
     session_cookie: str = "blog_session"
     same_site: str = "lax"
     https_only: bool = False
@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     ui_url: str = "http://127.0.0.1:3000"
     backend_url: str = "http://127.0.0.1:8003"
     backend_port: int = 8003
+
+    # AI & Automation
+    ollama_api_url: str = os.environ.get("OLLAMA_API_URL", "https://api.ollama.cloud/v1")
+    ollama_api_key: str = os.environ.get("OLLAMA_API_KEY", "")
+    revalidate_secret: str = os.environ.get("REVALIDATE_SECRET", "dev-revalidate-secret")
 
     class Config:
         env_file = Path(__file__).resolve().parent / ".env"
