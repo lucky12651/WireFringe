@@ -1161,6 +1161,144 @@ html[data-theme="light"] {
   font-weight: 600;
 }
 
+/* Bulk Actions Bar V3 */
+.bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #111;
+  padding: 12px 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bulk-actions-bar span {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.bulk-btns {
+  display: flex;
+  gap: 12px;
+}
+
+.bulk-btns .approve-btn-v2,
+.bulk-btns .delete-btn-v2 {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #111;
+  width: auto;
+  padding: 0 16px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bulk-btns .approve-btn-v2:hover {
+
+  border-color: #16a34a;
+}
+
+.bulk-btns .delete-btn-v2:hover {
+
+  border-color: #ef4444;
+}
+
+/* Queue Grid V3 */
+.queue-grid-v3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.queue-card-v3 {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.queue-card-v3:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+  border-color: #e0e0e0;
+}
+
+.queue-card-v3.row-selected {
+  border-color: #333;
+  background: #fafafa;
+}
+
+.queue-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.queue-checkbox-wrapper {
+  padding-top: 2px;
+}
+
+.queue-checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.queue-content-v3 {
+  flex: 1;
+}
+
+.queue-title-v3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.queue-meta-v3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.queue-actions-v3 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f9f9f9;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Dashboard Specific V2 */
 .v2-empty-state {
   padding: 40px;

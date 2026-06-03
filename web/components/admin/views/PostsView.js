@@ -285,73 +285,78 @@ export function PostsView({
           </>
         ) : (
           <div className="v2-table-wrapper">
-            {selectedQueueLinks.size > 0 && (
-              <div className="bulk-actions-bar">
-                <span>{selectedQueueLinks.size} items selected</span>
-                <div className="bulk-btns">
-                  <button 
-                    className="approve-btn-v2" 
-                    onClick={handleBulkProcessClick}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? 'Processing...' : 'Process Selected'}
-                  </button>
-                  <button className="delete-btn-v2" onClick={handleBulkDeleteClick}>
-                    Remove Selected
-                  </button>
-                </div>
+            <div className="queue-header-v3" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
+                  onChange={toggleSelectAllQueue}
+                  id="select-all-queue"
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+               
               </div>
-            )}
-            <table className="v2-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '40px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
-                      onChange={toggleSelectAllQueue}
-                    />
-                  </th>
-                  <th>Queue Item</th>
-                  <th>Source</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {queue.map((q) => (
-                  <tr key={q.link} className={selectedQueueLinks.has(q.link) ? 'row-selected' : ''}>
-                    <td>
+              {selectedQueueLinks.size > 0 && (
+                <div className="bulk-actions-bar" style={{ margin: 0, padding: '8px 16px', borderRadius: '12px' }}>
+                  <span>{selectedQueueLinks.size} selected</span>
+                  <div className="bulk-btns">
+                    <button 
+                      className="approve-btn-v2" 
+                      onClick={handleBulkProcessClick}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? 'Processing...' : 'Process'}
+                    </button>
+                    <button className="delete-btn-v2" onClick={handleBulkDeleteClick}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="queue-grid-v3">
+              {queue.map((q) => (
+                <div 
+                  key={q.link} 
+                  className={`queue-card-v3 ${selectedQueueLinks.has(q.link) ? 'row-selected' : ''}`}
+                  onClick={() => toggleSelectQueueItem(q.link)}
+                >
+                  <div className="queue-card-header">
+                    <div className="queue-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
                       <input 
                         type="checkbox" 
                         checked={selectedQueueLinks.has(q.link)}
                         onChange={() => toggleSelectQueueItem(q.link)}
                       />
-                    </td>
-                    <td>
-                      <div className="queue-title-v2">{q.title}</div>
-                    </td>
-                    <td>
-                      <span className="source-badge-v2">{q.category}</span>
-                    </td>
-                    <td className="text-right">
-                      <div className="action-group-v2">
-                        <button 
-                          className="approve-btn-v2" 
-                          onClick={() => handleProcessQueueItem(q.link)} 
-                          title="Process"
-                          disabled={isProcessing || processingLinks.has(q.link)}
-                        >
-                          {processingLinks.has(q.link) ? <RefreshIcon size={16} className="spin" /> : <CheckIcon size={16} />}
-                        </button>
-                        <button className="delete-btn-v2" onClick={() => { setQueueItemToDelete(q); }} title="Remove">
-                          <TrashIcon size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <span className="source-badge-v2">{q.category}</span>
+                  </div>
+                  
+                  <div className="queue-content-v3">
+                    <div className="queue-title-v3" title={q.title}>{q.title}</div>
+                  </div>
+
+                  <div className="queue-actions-v3" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      className="approve-btn-v2" 
+                      onClick={() => handleProcessQueueItem(q.link)} 
+                      title="Process"
+                      disabled={isProcessing || processingLinks.has(q.link)}
+                    >
+                      {processingLinks.has(q.link) ? <RefreshIcon size={16} className="spin" /> : <CheckIcon size={16} />}
+                    </button>
+                    <button className="delete-btn-v2" onClick={() => { setQueueItemToDelete(q); }} title="Remove">
+                      <TrashIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {queue.length === 0 && (
+              <EmptyState>No items in the news queue.</EmptyState>
+            )}
           </div>
         )}
       </div>
