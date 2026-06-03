@@ -14,7 +14,7 @@ export function Sidebar({
 }) {
   return (
     <aside className={styles.sidebar} aria-label="Admin navigation">
-      <SidebarHeader isAuthed={isAuthed} />
+      <SidebarHeader isAuthed={isAuthed} me={me} />
       <SidebarNav
         me={me}
         isAuthed={isAuthed}

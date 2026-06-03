@@ -7,3 +7,8 @@ itsdangerous
 python-multipart
 pydantic-settings
 starlette
+httpx
+beautifulsoup4
+google-genai
+python-slugify
+newspaper4k

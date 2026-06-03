@@ -106,6 +106,16 @@ export const postsApi = {
     api(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
   publish: (id) =>
     api(`/api/admin/post/publish?id=${encodeURIComponent(id)}`, { method: 'POST' }),
+  processQueueItem: (link) =>
+    api(`/api/admin/posts/queue/process?link=${encodeURIComponent(link)}`, { method: 'POST' }),
+  deleteQueueItem: (link) =>
+    api(`/api/admin/posts/queue?link=${encodeURIComponent(link)}`, { method: 'DELETE' }),
+  bulkDeleteQueueItems: (links) =>
+    api(`/api/admin/posts/queue/bulk-delete`, { method: 'POST', body: JSON.stringify(links) }),
+  bulkProcessQueueItems: (links) =>
+    api(`/api/admin/posts/queue/bulk-process`, { method: 'POST', body: JSON.stringify(links) }),
+  refreshQueueFeeds: () =>
+    api(`/api/admin/posts/queue/refresh-feeds`, { method: 'POST' }),
 };
 
 // Categories API

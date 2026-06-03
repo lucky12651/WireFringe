@@ -1,18 +1,15 @@
-// Sidebar Header Component - Brand section
-
 import React from 'react';
 import styles from './Sidebar.module.css';
+import { Icons } from './icons';
 
-export function SidebarHeader({ isAuthed }) {
+export function SidebarHeader({ isAuthed, me }) {
+  const DashboardIcon = Icons.dashboard;
+
   return (
     <div className={styles.header}>
       <div className={styles.brand}>
-        <div className={styles.brandMark}>CnB</div>
-        <div className={styles.brandText}>
-          <h1 className={styles.brandTitle}>Coffee n Blog</h1>
-          <span className={styles.brandSubtitle}>
-            {isAuthed ? 'Admin Dashboard' : 'Sign in to manage'}
-          </span>
+        <div className={styles.brandMark}>
+          <DashboardIcon />
         </div>
       </div>
     </div>
