@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 
 class PostOut(BaseModel):
@@ -72,15 +72,15 @@ class UserOut(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8)
     role: str = "editor"
 
 
 class UserSignup(BaseModel):
-    username: str
-    password: str
-    displayName: str | None = None
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8)
+    displayName: str | None = Field(None, max_length=80)
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -128,9 +128,9 @@ class CommentOut(BaseModel):
 
 
 class CommentCreateRequest(BaseModel):
-    name: str
-    email: str
-    comment: str
+    name: str = Field(..., min_length=1, max_length=60)
+    email: EmailStr
+    comment: str = Field(..., min_length=1, max_length=5000)
 
 
 class CommentVoteRequest(BaseModel):

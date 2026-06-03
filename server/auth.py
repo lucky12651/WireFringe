@@ -49,7 +49,7 @@ def hash_password(password: str, salt_b64: str | None = None) -> tuple[str, str]
         "sha256",
         password.encode("utf-8"),
         salt,
-        200_000,
+        600_000,
     )
     return _b64(dk), salt_b64
 

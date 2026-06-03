@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from ..auth import create_access_token
 from ..dependencies import get_db, require_admin, require_user
@@ -18,6 +20,7 @@ from ..schemas import (
 from ..services import UserService
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
@@ -25,6 +28,7 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 
 @router.post("/login", response_model=TokenOut)
+@limiter.limit("5/minute")
 def login(
     payload: LoginRequest,
     request: Request,
@@ -52,6 +56,7 @@ def login(
 
 
 @router.post("/signup", response_model=TokenOut)
+@limiter.limit("3/minute")
 def signup(
     payload: UserSignup,
     request: Request,

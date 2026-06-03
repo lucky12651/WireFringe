@@ -13,3 +13,6 @@ google-genai
 python-slugify
 newspaper4k
 PyJWT
+bleach
+slowapi
+pydantic[email]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+import bleach
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException, Request
@@ -93,6 +94,9 @@ class CommentService:
             raise HTTPException(status_code=400, detail="Comment is required")
         if len(body) > 5000:
             raise HTTPException(status_code=400, detail="Comment too long (max 5000 chars)")
+
+        # Sanitize body to prevent XSS
+        body = bleach.clean(body, tags=[], attributes={}, strip=True)
 
         comment = Comment(
             post_id=post_id,

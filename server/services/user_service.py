@@ -67,6 +67,11 @@ class UserService:
                 status_code=400, detail="role must be admin, editor, author, or user"
             )
 
+        if len(payload.password) < 8:
+            raise HTTPException(
+                status_code=400, detail="Password must be at least 8 characters"
+            )
+
         existing = self.user_repo.get_by_username(payload.username)
         if existing is not None:
             raise HTTPException(status_code=409, detail="Username already exists")

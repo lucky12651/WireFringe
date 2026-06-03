@@ -22,12 +22,17 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
     session_cookie: str = "blog_session"
     same_site: str = "lax"
-    https_only: bool = False
+    https_only: bool = os.environ.get("HTTPS_ONLY", "false").lower() == "true"
 
     # CORS
-    cors_origins: list[str] = ["*"]
-    cors_allow_credentials: bool = False
-    cors_allow_methods: list[str] = ["*"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8003",
+        "http://127.0.0.1:8003",
+    ]
+    cors_allow_credentials: bool = True
+    cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     cors_allow_headers: list[str] = ["*"]
 
     # File Upload

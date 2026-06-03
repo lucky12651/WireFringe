@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from .api import api_router
 from .config import settings
@@ -14,10 +18,25 @@ from .db import Base, SessionLocal, engine
 from .services import CategoryService
 from .news_bot import start_news_bot_loop
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Setup Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle events for the FastAPI application."""
+    # Check for insecure default secrets
+    if settings.session_secret == "dev-secret-change-me":
+        logger.warning("SECURITY WARNING: Using default BLOG_SESSION_SECRET. Please change it in .env!")
+    if settings.jwt_secret == "dev-jwt-secret-change-me":
+        logger.warning("SECURITY WARNING: Using default JWT_SECRET. Please change it in .env!")
+    if settings.revalidate_secret == "dev-revalidate-secret":
+        logger.warning("SECURITY WARNING: Using default REVALIDATE_SECRET. Please change it in .env!")
+
     # Start the news bot loop in the background
     bot_task = asyncio.create_task(start_news_bot_loop())
     yield
@@ -32,6 +51,8 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Application factory."""
     app = FastAPI(title=settings.app_title, lifespan=lifespan)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # CORS middleware
     app.add_middleware(
