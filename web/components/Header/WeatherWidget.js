@@ -9,11 +9,11 @@ export default function WeatherWidget() {
   useEffect(() => {
     async function fetchWeather() {
       try {
-        // 1. Get location via IP (no API key needed, uses HTTPS)
-        const locRes = await fetch('https://ipapi.co/json/');
+        // 1. Get location via IP (using ipwho.is - more reliable free tier with HTTPS)
+        const locRes = await fetch('https://ipwho.is/');
         const locData = await locRes.json();
         
-        if (locData.city) {
+        if (locData.success) {
           setLocation(locData.city);
           
           // 2. Get weather via Open-Meteo (no API key needed)
