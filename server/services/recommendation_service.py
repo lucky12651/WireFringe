@@ -57,33 +57,42 @@ class RecommendationService:
                 user_vectors[uid] = {cat: 0.0 for cat in categories}
             
             if bucket in user_vectors[uid]:
-                # Temporal decay: weight = 1.0 at day 0, 0.1 at day 30
-                days_old = (datetime.utcnow() - created_at).days
+                # Temporal Decay: weight = 1.0 at 0 days, 0.1 at 30 days (10x difference)
+                # Using total_seconds for a smoother decay curve
+                seconds_old = (datetime.utcnow() - created_at).total_seconds()
+                days_old = seconds_old / 86400.0
                 decay = max(0.1, 1.0 - (days_old / 30.0))
                 
                 weight = WEIGHTS.get(itype, 1.0)
                 user_vectors[uid][bucket] += weight * decay
 
-        # Noise Cancellation: Filter out users with very low total activity
+        # Activity Thresholding (Noise Cancellation): 
+        # Ignore users with < 2.0 total weighted interaction score
         active_user_vectors = {
             uid: vec for uid, vec in user_vectors.items() 
-            if sum(vec.values()) > 2.0 # Threshold of 2.0 weighted interactions
+            if sum(vec.values()) >= 2.0 
         }
+
+        # Pre-calculate norms for Cosine Similarity
+        user_norms = {}
+        for uid, vec in active_user_vectors.items():
+            norm = sum(val**2 for val in vec.values())**0.5
+            user_norms[uid] = norm if norm > 0 else 1.0
 
         all_user_ids = [u[0] for u in self.db.query(User.id).all()]
         
         # 3. Process each user
         for user_id in all_user_ids:
             try:
-                self._calculate_for_user(user_id, active_user_vectors, categories)
+                self._calculate_for_user(user_id, active_user_vectors, user_norms, categories)
             except Exception as e:
                 logger.error(f"Failed to calculate recommendations for user {user_id}: {e}")
 
         duration = datetime.utcnow() - start_time
         logger.info(f"Recommendation update completed in {duration.total_seconds():.2f}s")
 
-    def _calculate_for_user(self, user_id: int, user_vectors: dict, categories: list):
-        """Calculate and store recommendations for a single user."""
+    def _calculate_for_user(self, user_id: int, user_vectors: dict, user_norms: dict, categories: list):
+        """Calculate and store recommendations for a single user using Cosine Similarity."""
         limit = 30 # Store top 30 recommendations
         
         if user_id not in user_vectors:
@@ -91,21 +100,28 @@ class RecommendationService:
             return
 
         target_vector = user_vectors[user_id]
+        target_norm = user_norms[user_id]
         total_own = sum(target_vector.values()) or 1
 
-        # K-Nearest Neighbors
+        # Find K-Nearest Neighbors using Cosine Similarity
         K = 5
         similarities = []
         for uid, vector in user_vectors.items():
             if uid == user_id:
                 continue
             
-            # Euclidean distance (CPU optimized: no sqrt needed for comparison, but we'll use it for weighting)
-            dist_sq = sum((target_vector[cat] - vector[cat]) ** 2 for cat in categories)
-            distance = dist_sq ** 0.5
-            similarities.append((uid, distance))
+            # Dot Product
+            dot_product = sum(target_vector[cat] * vector[cat] for cat in categories)
+            
+            # Cosine Similarity = (A . B) / (||A|| * ||B||)
+            similarity = dot_product / (target_norm * user_norms[uid])
+            
+            # Similarity is between 0 and 1 (since vectors are non-negative)
+            if similarity > 0:
+                similarities.append((uid, similarity))
 
-        neighbors = sorted(similarities, key=lambda x: x[1])[:K]
+        # Sort by similarity (higher is better)
+        neighbors = sorted(similarities, key=lambda x: x[1], reverse=True)[:K]
 
         # Aggregate category scores
         cat_scores = {}
@@ -114,10 +130,11 @@ class RecommendationService:
             cat_scores[cat] = (count / total_own) * 2.0
 
         # Neighbor interests
-        for neighbor_id, distance in neighbors:
+        for neighbor_id, similarity in neighbors:
             n_vector = user_vectors[neighbor_id]
             n_total = sum(n_vector.values()) or 1
-            weight = 1.0 / (distance + 1.0)
+            # Weight neighbor's interest directly by their similarity score
+            weight = similarity
             for cat, count in n_vector.items():
                 cat_scores[cat] = cat_scores.get(cat, 0) + (count / n_total) * weight
 
