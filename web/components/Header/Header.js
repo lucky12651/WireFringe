@@ -26,6 +26,10 @@ export default function Header({
   const dropdownRef = useRef(null);
 
   const handleCategoryClick = (category) => {
+    if (category === 'For You') {
+      router.push('/for-you');
+      return;
+    }
     if (onCategoryChange) {
       onCategoryChange(category);
     } else {
@@ -158,7 +162,7 @@ export default function Header({
 
                     {isDropdownOpen && (
                       <div className={styles.dropdownMenu}>
-                        <Link href="/?category=for-you" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                        <Link href="/for-you" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
                           Personalised News
                         </Link>
                         <div className={styles.dropdownDivider} />

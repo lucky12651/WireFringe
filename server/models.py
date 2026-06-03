@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Float
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -102,3 +102,32 @@ class NewsQueue(Base):
     category: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+
+class UserInteraction(Base):
+    __tablename__ = "user_interactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    post_id: Mapped[str] = mapped_column(String, ForeignKey("posts.id"), nullable=False, index=True)
+    
+    # "view", "like", "share", etc.
+    interaction_type: Mapped[str] = mapped_column(String, nullable=False, default="view")
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+
+class PersonalizedFeed(Base):
+    __tablename__ = "personalized_feeds"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    post_id: Mapped[str] = mapped_column(String, ForeignKey("posts.id"), nullable=False, index=True)
+    
+    score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "post_id", name="uq_user_post_recommendation"),
+    )

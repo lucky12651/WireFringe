@@ -103,13 +103,6 @@ export default function App({ Component, pageProps }) {
   }, [isAdminRoute, refreshAds, adsenseClient]);
 
   useEffect(() => {
-    // Basic view tracking
-    if (typeof window !== 'undefined' && !isAdminRoute) {
-      fetch('/api/views/increment', { method: 'POST' }).catch(() => {});
-    }
-  }, [isAdminRoute]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isAdminRoute) return;
     if (!adsScriptLoaded) return;

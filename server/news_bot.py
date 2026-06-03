@@ -17,6 +17,7 @@ from .news_bot_modules.rss_fetcher import fetch_rss_items
 from .news_bot_modules.queue_ops import save_to_queue, get_pending_from_queue, update_queue_status, is_duplicate, cleanup_old_queue_items
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
+from .services.recommendation_service import RecommendationService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -131,6 +132,17 @@ class NewsBot:
                 logger.info(f"✨ Successfully finished processing all {len(pending)} items.")
             else:
                 logger.info("ℹ️ No pending news items to process in this cycle.")
+
+            # Step 3: Update personalized recommendations once per day at 2 AM IST (20:30 UTC)
+            now_utc = datetime.now(timezone.utc)
+            # We run it if the hour is 20 (UTC) which is 1:30 AM - 2:30 AM IST
+            if now_utc.hour == 20:
+                logger.info("🚀 Stage 3 - Scheduled Time (2 AM IST): Updating personalized recommendations...")
+                rec_service = RecommendationService(db)
+                rec_service.update_all_recommendations()
+            else:
+                logger.info(f"ℹ️ Skipping Stage 3 - Current time {now_utc.strftime('%H:%M')} UTC is not the scheduled 20:30 UTC (2 AM IST).")
+            
         finally:
             db.close()
         logger.info("NewsBot loop segment complete.")

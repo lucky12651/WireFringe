@@ -110,6 +110,7 @@ export const authApi = {
 // Posts API
 export const postsApi = {
   list: () => api('/api/admin/posts', { method: 'GET' }),
+  forYou: (limit = 20) => api(`/api/posts/for-you?limit=${limit}`, { method: 'GET' }),
   get: (id) => api(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: 'GET' }),
   create: (payload) =>
     api('/api/admin/posts', {

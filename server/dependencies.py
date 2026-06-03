@@ -28,26 +28,47 @@ def get_current_user(
     token: str | None = Depends(oauth2_scheme)
 ) -> User:
     """Get the currently authenticated user from JWT or session."""
+    user = get_optional_user(request, db, token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+
+def get_optional_user(
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str | None = Depends(oauth2_scheme)
+) -> User | None:
+    """Get the user if authenticated, otherwise return None."""
     user_id = None
     
     # 1. Try JWT token
-    if token:
-        payload = decode_access_token(token)
+    # Handle the case where token might be a Depends object if called manually
+    actual_token = token if isinstance(token, str) else None
+    
+    # If called manually without token, try to extract from headers
+    if not actual_token and "authorization" in request.headers:
+        auth_header = request.headers["authorization"]
+        if auth_header.startswith("Bearer "):
+            actual_token = auth_header[7:]
+
+    if actual_token:
+        payload = decode_access_token(actual_token)
         if payload:
             user_id = payload.get("sub")
     
-    # 2. Fallback to session (optional, but keeps compatibility)
+    # 2. Fallback to session
     if not user_id:
         user_id = request.session.get("user_id")
         
     if not user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        return None
         
     user = db.get(User, int(user_id))
     if user is None:
         if request.session:
             request.session.clear()
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        return None
     return user
 
 

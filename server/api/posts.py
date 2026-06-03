@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_current_user, get_db, require_user
+from ..dependencies import get_current_user, get_db, require_user, get_optional_user
 from ..models import User
 from ..schemas import (
     CreatorCountOut,
@@ -28,6 +28,23 @@ def get_post_service(db: Session = Depends(get_db)) -> PostService:
 
 
 # Public post endpoints
+
+
+@router.get("/posts/for-you", response_model=list[PostOut])
+async def get_for_you_posts(
+    request: Request,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> list[PostOut]:
+    """Get personalized posts for the current user."""
+    user = get_optional_user(request, db)
+
+    if not user:
+        # Fallback for non-logged in users: just latest posts
+        return service.list_posts()[:limit]
+    
+    return service.get_personalized_feed(user.id, limit)
 
 
 @router.get("/posts", response_model=list[PostOut])

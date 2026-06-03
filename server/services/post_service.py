@@ -8,9 +8,10 @@ import uuid
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..models import Post, User, NewsQueue
+from ..models import Post, User, NewsQueue, UserInteraction, PersonalizedFeed
 from ..repositories import CommentRepository, PostRepository, UserRepository
 from ..schemas import (
     CreatorCountOut,
@@ -198,16 +199,33 @@ class PostService:
 
         post.title = payload.title
         post.bucket = payload.bucket or post.bucket
-        post.content = payload.content or ""
-        post.creator = user.username if user.role == "author" else (payload.creator or user.username)
-        post.og_img = payload.ogImg
-        post.read_minutes = payload.readMinutes
-        if payload.excerpt is None:
-            post.excerpt = (post.content or "").strip()[:180]
-        else:
-            post.excerpt = payload.excerpt
-        self.db.commit()
-        return self._build_post_out(post)
+        post.content = payload.content or post.content
+        post.excerpt = payload.excerpt or post.excerpt
+        post.og_img = payload.ogImg or post.og_img
+        post.read_minutes = payload.readMinutes or post.read_minutes
+
+        updated = self.post_repo.update(post)
+        return self._build_post_out(updated)
+
+    def get_personalized_feed(self, user_id: int, limit: int = 20) -> list[PostOut]:
+        """Fetch pre-calculated personalized feed for the user."""
+        # 1. Try to get pre-calculated recommendations
+        recs = (
+            self.db.query(Post)
+            .join(PersonalizedFeed, Post.id == PersonalizedFeed.post_id)
+            .filter(PersonalizedFeed.user_id == user_id)
+            .order_by(PersonalizedFeed.score.desc(), Post.published_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        if recs:
+            author_lookup = self.user_repo.build_author_lookup()
+            return [self._build_post_out(p, author_lookup) for p in recs]
+
+        # 2. Fallback: if no pre-calculated recs, return latest posts
+        # (This handles new users or cases where the background task hasn't run yet)
+        return self.list_posts()[:limit]
 
     def get_news_queue(self) -> list[NewsQueueItem]:
         """Get all pending or failed news from the database queue."""

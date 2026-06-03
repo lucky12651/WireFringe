@@ -198,7 +198,14 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
   // Clean URL and metadata management
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!post?.title || isPreview) return;
+    if (!post?.id || isPreview) return;
+
+    // Track view for personalization
+    fetch('/api/views/increment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: post.id, interaction_type: 'view' }),
+    }).catch(() => {});
 
     const cleanPath = `/post/${encodeURIComponent(slugifyTitle(post.title))}`;
     const currentPath = String(window.location.pathname || '');

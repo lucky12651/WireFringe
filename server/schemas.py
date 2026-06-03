@@ -178,3 +178,8 @@ class CategoryWithCountOut(BaseModel):
     id: int
     name: str
     count: int
+
+
+class InteractionCreate(BaseModel):
+    post_id: str
+    interaction_type: str = "view"
