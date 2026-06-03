@@ -84,113 +84,91 @@ export function SettingsView({
   };
 
   return (
-    <>
-      <div className="admin-title-row">
-        <h2>Settings</h2>
-        <div className="accent-line"></div>
+    <div className="admin-view-container-v2">
+      <div className="section-header">
+        <h2 className="section-title">Account Settings</h2>
       </div>
 
-      {/* Profile Section */}
-      <section className="side-card" aria-label="Profile settings">
-        <div className="side-header">
-          <h3>Profile</h3>
-          <span>Shown on posts</span>
-        </div>
-
-        <div className="admin-settings-profile">
-          <div className="admin-settings-avatar" aria-label="Profile photo">
-            {me?.avatarUrl ? (
-              <img src={me.avatarUrl} alt="Profile" loading="lazy" />
-            ) : (
-              <div className="admin-settings-avatar-fallback">
-                {initialsFromName(displayName.trim() || me?.displayName || me?.username)}
-              </div>
-            )}
-          </div>
-
-          <div className="admin-settings-profile-body">
-            <div className="hint">Profile photo</div>
-            <input
-              className="input"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-            />
-            {photoHint && <div className="hint">{photoHint}</div>}
-          </div>
-        </div>
-
-        <form className="admin-form" onSubmit={handleProfileSubmit}>
-          <label>
-            <span className="label">Display name</span>
-            <input
-              className="input"
-              value={displayName}
-              placeholder={me?.username || ''}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
-            <div className="hint">
-              Shown as: <strong>{displayName.trim() || me?.username}</strong>
+      <div className="admin-grid-v2">
+        {/* Profile Info Card */}
+        <div className="admin-card-v2 profile-card">
+          <h3 className="card-title-v2">Public Profile</h3>
+          
+          <div className="avatar-upload-section">
+            <div className="user-avatar-v2 large">
+              {me?.avatarUrl ? (
+                <img src={me.avatarUrl} alt={me.username} />
+              ) : (
+                <span className="initials">{initialsFromName(me?.displayName || me?.username)}</span>
+              )}
             </div>
-          </label>
-
-          <label>
-            <span className="label">Username (login)</span>
-            <input className="input" value={me?.username || ''} readOnly />
-          </label>
-
-          <div className="row">
-            <ActionButton type="submit">Save profile</ActionButton>
-            <div className="hint">{profileHint}</div>
+            <div className="upload-controls">
+              <label className="secondary-btn-v2 upload-btn">
+                Change Photo
+                <input type="file" hidden accept="image/*" onChange={handlePhotoUpload} />
+              </label>
+              <p className="hint-v2">{photoHint || 'JPG, PNG or GIF. Max 1MB.'}</p>
+            </div>
           </div>
-        </form>
-      </section>
 
-      {/* Password Section */}
-      <section className="side-card" aria-label="Password settings">
-        <div className="side-header">
-          <h3>Password</h3>
-          <span>Update your password</span>
+          <form onSubmit={handleProfileSubmit} className="v2-form mt-32">
+            <div className="form-group-v2">
+              <label>Username</label>
+              <input type="text" value={me?.username || ''} disabled className="disabled-input" />
+              <p className="input-hint">Username cannot be changed.</p>
+            </div>
+            <div className="form-group-v2">
+              <label>Display Name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Name shown on articles"
+              />
+            </div>
+            {profileHint && <p className="form-hint-v2 success">{profileHint}</p>}
+            <button type="submit" className="primary-btn-v2">Save Profile</button>
+          </form>
         </div>
 
-        <form className="admin-form" onSubmit={handlePasswordSubmit}>
-          <label>
-            <span className="label">Current password</span>
-            <input
-              className="input"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-          </label>
-          <label>
-            <span className="label">New password</span>
-            <input
-              className="input"
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          </label>
-          <label>
-            <span className="label">Confirm new password</span>
-            <input
-              className="input"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </label>
-
-          <div className="row">
-            <ActionButton type="submit">Change password</ActionButton>
-            <div className="hint">{passwordHint}</div>
-          </div>
-        </form>
-      </section>
-    </>
+        {/* Password Security Card */}
+        <div className="admin-card-v2 password-card">
+          <h3 className="card-title-v2">Security</h3>
+          <p className="card-desc-v2">Update your password to keep your account secure.</p>
+          
+          <form onSubmit={handlePasswordSubmit} className="v2-form">
+            <div className="form-group-v2">
+              <label>Current Password</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="form-group-v2">
+              <label>New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min 8 characters"
+              />
+            </div>
+            <div className="form-group-v2">
+              <label>Confirm New Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            {passwordHint && <p className={`form-hint-v2 ${passwordHint.includes('updated') ? 'success' : ''}`}>{passwordHint}</p>}
+            <button type="submit" className="primary-btn-v2">Update Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

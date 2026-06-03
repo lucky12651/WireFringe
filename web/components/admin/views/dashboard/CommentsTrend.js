@@ -30,40 +30,28 @@ export default function CommentsTrend({ trendingComments, trendingHint, height }
   }, [trendingComments?.length, trendingHint]);
 
   return (
-    <div
-      className="side-card admin-chart-card dashboard-item-left-top"
-      style={height ? { height } : undefined}
-    >
-      <div className="admin-card-head">
-        <div>
-          <div className="h">Comments Trend</div>
-          <div className="hint">Top liked comments</div>
-        </div>
-        <div className="pill-btn" aria-hidden="true">
-          <span className="dot" style={{ background: 'var(--accent)' }}></span>
-          Last 15 days
-        </div>
-      </div>
+    <div className="admin-card-v2 dashboard-card-v2">
+      <h3 className="card-title-v2">Comments Trend</h3>
+      <p className="card-desc-v2">Top liked comments from the last 15 days.</p>
 
-      {trendingHint ? <div className="admin-chart-empty">{trendingHint}</div> : null}
+      {trendingHint ? <div className="v2-empty-state">{trendingHint}</div> : null}
 
       {!trendingHint && Array.isArray(trendingComments) && trendingComments.length ? (
-        <div className="admin-trend-list" ref={trendListRef}>
+        <div className="v2-trend-list">
           {trendingComments.map((c) => (
-            <div key={c.id} className="admin-trend-item">
-              <div className="admin-trend-top">
-                <div className="admin-trend-post">{c.postTitle || c.postId}</div>
-                <div className="admin-trend-likes">Likes: {c.likes || 0}</div>
+            <div key={c.id} className="v2-trend-item">
+              <div className="v2-trend-header">
+                <span className="v2-trend-post">{c.postTitle || c.postId}</span>
+                <span className="v2-trend-likes">+{c.likes || 0} Likes</span>
               </div>
-              <div className="admin-trend-body">
-                <span className="admin-trend-name">{c.name || 'Anonymous'}:</span>{' '}
-                {c.commentPreview || ''}
-              </div>
+              <p className="v2-trend-preview">
+                <strong>{c.name || 'Anonymous'}:</strong> {c.commentPreview || ''}
+              </p>
             </div>
           ))}
         </div>
       ) : !trendingHint ? (
-        <div className="admin-chart-empty">No comments yet.</div>
+        <div className="v2-empty-state">No trending comments found.</div>
       ) : null}
     </div>
   );

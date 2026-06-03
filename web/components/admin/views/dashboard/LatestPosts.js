@@ -1,56 +1,71 @@
 import React from 'react';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, EmptyState, ActionButton } from '../../shared';
+import { EmptyState, ActionButton } from '../../shared';
 import { formatDateShort } from '../../../../lib/utils';
 import { Icons } from '../../Layout/icons';
 
 export default function LatestPosts({ latestPosts }) {
   const EditIcon = Icons.edit;
+  const EyeIcon = Icons.eye;
 
   return (
-    <section className="side-card admin-mini-table" aria-label="Latest posts" style={{ padding: '0', overflow: 'hidden' }}>
-      <div className="side-header" style={{ padding: '20px 24px' }}>
-        <h3>Latest Posts</h3>
-        <span>{latestPosts.length}</span>
+    <section className="admin-latest-posts-v2" aria-label="Latest posts">
+      <div className="section-header">
+        <h3 className="section-title">Latest Articles</h3>
+        <button className="view-all-btn">View All</button>
       </div>
 
-      {latestPosts.length ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="actions-head"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {latestPosts.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell style={{ fontWeight: '600' }}>{p.title}</TableCell>
-                <TableCell>
-                  <span className={`status ${p.date ? 'published' : 'draft'}`}>
-                    {p.date ? 'Published' : 'Draft'}
-                  </span>
-                </TableCell>
-                <TableCell className="meta">{formatDateShort(p.date)}</TableCell>
-                <TableCell style={{ textAlign: 'right' }}>
-                  <ActionButton
-                    icon={EditIcon}
-                    href={`/admin/post?id=${encodeURIComponent(p.id)}`}
-                    style={{ width: 'fit-content', marginLeft: 'auto' }}
-                  >
-                    Edit
-                  </ActionButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div style={{ padding: '24px' }}>
+      <div className="posts-list">
+        {latestPosts.length ? (
+          latestPosts.map((p) => (
+            <div key={p.id} className="post-item-v2">
+              <div className="post-thumbnail">
+                <img src={p.ogImg || '/placeholder-post.jpg'} alt={p.title} />
+              </div>
+              <div className="post-info">
+                <div className="post-title-row">
+                  <h4 className="post-title">{p.title}</h4>
+                  <span className="post-category">{p.bucket}</span>
+                </div>
+                <p className="post-excerpt">{p.excerpt || 'No description available for this article...'}</p>
+                <div className="post-meta">
+                  <div className="meta-item">
+                    <Icons.users size={14} />
+                    <span>By {p.creatorName || 'Admin'}</span>
+                  </div>
+                  <div className="meta-item">
+                    <Icons.clock size={14} />
+                    <span>{formatDateShort(p.date)}</span>
+                  </div>
+                  
+                </div>
+              </div>
+              <div className="post-status-col">
+                <span className={`status-badge ${p.date ? 'active' : 'pending'}`}>
+                  {p.date ? 'Active' : 'Pending'}
+                </span>
+              </div>
+              <div className="post-actions">
+                <ActionButton
+                  icon={EditIcon}
+                  href={`/admin/post?id=${encodeURIComponent(p.id)}`}
+                  className="action-btn-outline"
+                >
+                  Update 
+                </ActionButton>
+                <ActionButton
+                  icon={EyeIcon}
+                  href={`/post/${p.id}`}
+                  className="action-btn-ghost"
+                >
+                  Preview
+                </ActionButton>
+              </div>
+            </div>
+          ))
+        ) : (
           <EmptyState>No posts yet.</EmptyState>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }
