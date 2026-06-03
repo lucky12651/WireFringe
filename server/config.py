@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     # AI & Automation
     ollama_api_url: str = os.environ.get("OLLAMA_API_URL", "https://api.ollama.cloud/v1")
     ollama_api_key: str = os.environ.get("OLLAMA_API_KEY", "")
+    groq_api_key: str = os.environ.get("GROQ_API_KEY", "")
+    groq_model: str = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
     revalidate_secret: str = os.environ.get("REVALIDATE_SECRET", "dev-revalidate-secret")
 
     class Config:

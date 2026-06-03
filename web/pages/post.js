@@ -309,9 +309,9 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                 </div>
               )}
 
-              {post.excerpt && (
+              {/* {post.excerpt && (
                 <p className={styles.excerpt}>{post.excerpt}</p>
-              )}
+              )} */}
             </header>
 
             {/* Post Layout */}
