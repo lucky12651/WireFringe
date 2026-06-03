@@ -1,56 +1,34 @@
-/* Theme Toggle - Matching LoginPage Design */
+/* Theme Toggle - Modern Capsule Switching */
 
 .themeToggle {
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #f5f5f5;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-dim);
 }
 
 .themeBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: #999;
+  color: var(--text-tertiary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .themeBtn:hover {
-  color: #666;
+  color: var(--text-primary);
 }
 
 .themeBtn.active {
-  background: white;
-  color: #1a1a1a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .themeToggle {
-    background: #2a2a2a;
-    border-color: #333;
-  }
-
-  .themeBtn {
-    color: #666;
-  }
-
-  .themeBtn:hover {
-    color: #999;
-  }
-
-  .themeBtn.active {
-    background: #333;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
+  background: var(--bg-primary);
+  color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
 }

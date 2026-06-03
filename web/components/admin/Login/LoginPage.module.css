@@ -1,10 +1,11 @@
-/* Login Page Styles - Split Screen Design */
+/* Login Page Styles - Split Screen Cozy Editorial Design */
 
 .loginContainer {
   display: flex;
   min-height: 100vh;
   width: 100%;
-  font-family:var(--font-body);
+  font-family: var(--font-body);
+  background: var(--bg-secondary);
 }
 
 /* Left Side - Image Section */
@@ -23,6 +24,11 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+  transition: transform 10s ease;
+}
+
+.imageSection:hover .backgroundImage {
+  transform: scale(1.05);
 }
 
 .imageOverlay {
@@ -33,14 +39,14 @@
   bottom: 0;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.3) 0%,
-    rgba(0, 0, 0, 0.1) 50%,
-    rgba(0, 0, 0, 0.5) 100%
+    rgba(28, 24, 22, 0.4) 0%,
+    rgba(28, 24, 22, 0.2) 50%,
+    rgba(28, 24, 22, 0.75) 100%
   );
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px;
+  padding: 48px;
   z-index: 1;
 }
 
@@ -58,7 +64,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1a1a1a;
+  color: #1c1816;
 }
 
 .brandIcon svg {
@@ -69,19 +75,20 @@
 .brandName {
   color: white;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 750;
   letter-spacing: -0.5px;
 }
 
 .imageContent {
   color: white;
-  max-width: 400px;
+  max-width: 460px;
 }
 
 .headline {
+  font-family: var(--font-heading);
   font-size: 42px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   margin: 0 0 16px 0;
   letter-spacing: -1px;
 }
@@ -89,17 +96,15 @@
 .subheadline {
   font-size: 16px;
   line-height: 1.6;
-  margin: 0 0 32px 0;
+  margin: 0;
   opacity: 0.9;
 }
-
-
 
 /* Right Side - Form Section */
 .formSection {
   width: 50%;
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--bg-primary);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -114,44 +119,23 @@
   width: 100%;
 }
 
-.topBar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 60px;
-}
-
-.signInButtonTop {
-  background: #1a1a1a;
-  color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.signInButtonTop:hover {
-  background: #333;
-}
-
 .formWrapper {
   display: flex;
   flex-direction: column;
 }
 
 .welcomeTitle {
-  font-size: 28px;
+  font-family: var(--font-heading);
+  font-size: 32px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   letter-spacing: -0.5px;
 }
 
 .welcomeSubtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 40px 0;
 }
 
@@ -169,41 +153,43 @@
 
 .label {
   font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .input {
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
   font-size: 15px;
-  color: #1a1a1a;
-  background: #fafafa;
-  transition: all 0.2s ease;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
 .input:focus {
   outline: none;
-  border-color: #1a1a1a;
-  background: #fff;
+  border-color: var(--brand-primary);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.15);
 }
 
 .input::placeholder {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .inputError {
-  border-color: #dc3545;
-  background: #fff5f5;
+  border-color: var(--brand-accent);
+  background: rgba(var(--brand-accent-rgb), 0.04);
 }
 
 .errorText {
   font-size: 13px;
-  color: #dc3545;
+  color: var(--brand-accent);
   margin-top: 4px;
+  font-weight: 500;
 }
 
 .passwordWrapper {
@@ -223,7 +209,7 @@
   gap: 10px;
   cursor: pointer;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .checkbox {
@@ -233,79 +219,66 @@
 .checkmark {
   width: 18px;
   height: 18px;
-  border: 2px solid #ccc;
+  border: 2px solid var(--border-dim);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  background: var(--bg-secondary);
 }
 
 .checkbox:checked + .checkmark {
-  background: #1a1a1a;
-  border-color: #1a1a1a;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
 }
 
 .checkbox:checked + .checkmark::after {
   content: '✓';
   color: white;
   font-size: 12px;
+  font-weight: bold;
 }
 
 .rememberText {
   user-select: none;
 }
 
-.forgotPassword {
-  font-size: 14px;
-  color: #666;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.forgotPassword:hover {
-  color: #1a1a1a;
-}
-
 .formError {
   padding: 12px 16px;
-  background: #fff5f5;
-  border: 1px solid #ffcdd2;
-  border-radius: 8px;
-  color: #c62828;
+  background: rgba(var(--brand-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--brand-accent-rgb), 0.2);
+  border-radius: var(--radius-md);
+  color: var(--brand-accent);
   font-size: 14px;
+  font-weight: 550;
 }
 
 .loginButton {
   width: 100%;
   padding: 16px;
-  background: #1a1a1a;
+  background: var(--brand-primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(var(--brand-primary-rgb), 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 8px;
 }
 
 .loginButton:hover:not(:disabled) {
-  background: #333;
+  background: var(--brand-hover);
   transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(var(--brand-primary-rgb), 0.35);
 }
 
 .loginButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-.helpText {
-  margin-top: auto;
-  padding-top: 40px;
-  text-align: center;
-  font-size: 14px;
-  color: #999;
+  box-shadow: none;
 }
 
 /* Responsive Design */
@@ -330,33 +303,29 @@
   }
 
   .formContainer {
-    padding: 30px 24px;
+    padding: 40px 24px;
     max-width: 100%;
   }
 
-  .topBar {
-    margin-bottom: 30px;
-  }
-
   .headline {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .imageOverlay {
-    padding: 24px;
+    padding: 28px;
   }
 }
 
 @media (max-width: 480px) {
   .headline {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .welcomeTitle {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .formContainer {
-    padding: 20px;
+    padding: 24px;
   }
 }

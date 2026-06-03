@@ -1,4 +1,4 @@
-/* Sidebar Styles - Matching LoginPage Design */
+/* Sidebar Styles - Matching Cozy Editorial Theme */
 
 .sidebar {
   position: sticky;
@@ -10,10 +10,11 @@
   height: calc(100vh - (var(--space-lg, 24px) + var(--admin-shell-top, 0px)) - var(--space-xl, 24px));
   max-height: calc(100vh - (var(--space-lg, 24px) + var(--admin-shell-top, 0px)) - var(--space-xl, 24px));
   overflow: hidden;
-  border-radius: 20px;
-  background: #ffffff;
-  border-right: 1px solid #e0e0e0;
+  border-radius: var(--radius-xl);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-dim);
   font-family: var(--font-body);
+  box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 980px) {
@@ -28,8 +29,8 @@
 
 /* Header Section */
 .header {
-  padding: 32px 24px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 32px 24px 20px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .brand {
@@ -39,36 +40,37 @@
 }
 
 .brandMark {
-  width: 48px;
-  height: 48px;
-  background: #1a1a1a;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  background: var(--brand-primary);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 14px;
+  color: #ffffff;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  box-shadow: 0 4px 10px rgba(var(--brand-primary-rgb), 0.3);
 }
 
 .brandText {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .brandTitle {
   font-size: 18px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.5px;
 }
 
 .brandSubtitle {
-  font-size: 13px;
-  color: #666;
+  font-size: 12px;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
@@ -79,7 +81,7 @@
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow-y: auto;
 }
 
@@ -92,7 +94,7 @@
 .sectionLabel {
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 8px 12px 4px;
@@ -100,7 +102,7 @@
 
 .navDivider {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--border-light);
   margin: 16px 12px;
 }
 
@@ -110,26 +112,29 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   background: transparent;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
 }
 
 .navItem:hover:not(:disabled) {
-  background: #f5f5f5;
-  color: #1a1a1a;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transform: translateX(3px);
 }
 
 .navItem.active {
-  background: #1a1a1a;
-  color: white;
+  background: var(--brand-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(var(--brand-primary-rgb), 0.25);
 }
 
 .navItem.disabled {
@@ -155,7 +160,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  background: #dc3545;
+  background: var(--brand-accent);
   color: white;
   font-size: 11px;
   font-weight: 600;
@@ -165,7 +170,7 @@
 /* Footer Section */
 .footer {
   padding: 20px 16px 24px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -176,15 +181,15 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #fafafa;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
 }
 
 .userAvatar {
   width: 36px;
   height: 36px;
-  background: #1a1a1a;
+  background: var(--brand-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -224,7 +229,7 @@
 .userName {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -232,7 +237,7 @@
 
 .userRole {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   text-transform: capitalize;
 }
 
@@ -247,138 +252,13 @@
   gap: 8px;
 }
 
-/* Dark Mode Support */
-/* Explicit theme support (admin theme toggle sets html[data-theme]) */
-:global(html[data-theme="dark"]) .sidebar {
-  background: #1a1a1a;
-  border-right-color: #333;
-}
-
-:global(html[data-theme="dark"]) .header {
-  border-bottom-color: #333;
-}
-
-:global(html[data-theme="dark"]) .brandMark {
-  background: white;
-  color: #1a1a1a;
-}
-
-:global(html[data-theme="dark"]) .brandTitle {
-  color: white;
-}
-
-:global(html[data-theme="dark"]) .brandSubtitle {
-  color: #999;
-}
-
-:global(html[data-theme="dark"]) .navDivider {
-  background: #333;
-}
-
-:global(html[data-theme="dark"]) .navItem {
-  color: #999;
-}
-
-:global(html[data-theme="dark"]) .navItem:hover:not(:disabled) {
-  background: #2a2a2a;
-  color: white;
-}
-
-:global(html[data-theme="dark"]) .navItem.active {
-  background: white;
-  color: #1a1a1a;
-}
-
-:global(html[data-theme="dark"]) .footer {
-  border-top-color: #333;
-}
-
-:global(html[data-theme="dark"]) .userInfo {
-  background: #2a2a2a;
-  border-color: #333;
-}
-
-:global(html[data-theme="dark"]) .userAvatar {
-  background: white;
-  color: #1a1a1a;
-}
-
-:global(html[data-theme="dark"]) .userName {
-  color: white;
-}
-
-/* Fallback for users without the explicit theme toggle */
-@media (prefers-color-scheme: dark) {
-  :global(html:not([data-theme])) .sidebar {
-    background: #1a1a1a;
-    border-right-color: #333;
-  }
-
-  :global(html:not([data-theme])) .header {
-    border-bottom-color: #333;
-  }
-
-  :global(html:not([data-theme])) .brandMark {
-    background: white;
-    color: #1a1a1a;
-  }
-
-  :global(html:not([data-theme])) .brandTitle {
-    color: white;
-  }
-
-  :global(html:not([data-theme])) .brandSubtitle {
-    color: #999;
-  }
-
-  :global(html:not([data-theme])) .navDivider {
-    background: #333;
-  }
-
-  :global(html:not([data-theme])) .navItem {
-    color: #999;
-  }
-
-  :global(html:not([data-theme])) .navItem:hover:not(:disabled) {
-    background: #2a2a2a;
-    color: white;
-  }
-
-  :global(html:not([data-theme])) .navItem.active {
-    background: white;
-    color: #1a1a1a;
-  }
-
-  :global(html:not([data-theme])) .footer {
-    border-top-color: #333;
-  }
-
-  :global(html:not([data-theme])) .userInfo {
-    background: #2a2a2a;
-    border-color: #333;
-  }
-
-  :global(html:not([data-theme])) .userAvatar {
-    background: white;
-    color: #1a1a1a;
-  }
-
-  :global(html:not([data-theme])) .userName {
-    color: white;
-  }
-}
-
 /* Responsive */
 @media (max-width: 980px) {
   .sidebar {
     width: 100%;
     min-height: auto;
     border-right: none;
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  :global(html[data-theme="dark"]) .sidebar {
-    border-bottom-color: #333;
+    border-bottom: 1px solid var(--border-dim);
   }
 
   .nav {

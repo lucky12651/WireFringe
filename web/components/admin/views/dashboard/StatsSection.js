@@ -4,7 +4,7 @@ import { StatCard } from '../../shared/StatCard';
 export default function StatsSection({
   postsCount,
   categoriesCount,
-  mediaCount,
+  queueCount,
   pendingCommentsCount,
   canViewPendingCommentsCount,
   postGrowthDelta,
@@ -24,9 +24,9 @@ export default function StatsSection({
           subtitle="Buckets used in posts"
         />
         <StatCard
-          title="Total Media Files"
-          value={mediaCount}
-          subtitle="Uploads in /static/uploads"
+          title="Pending News"
+          value={queueCount}
+          subtitle="In processing queue"
         />
         <StatCard
           title="Pending Comments"

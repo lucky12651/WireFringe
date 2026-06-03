@@ -11,7 +11,7 @@ const LatestPosts = dynamic(() => import('./dashboard/LatestPosts'));
 export function DashboardView({
   postsCount,
   categoriesCount,
-  mediaCount,
+  queueCount,
   pendingCommentsCount,
   canViewPendingCommentsCount,
   postGrowth30,
@@ -55,14 +55,12 @@ export function DashboardView({
   return (
     <>
       <div className="admin-dashboard-head">
-        <div className="admin-dashboard-title">
-          <h2>Dashboard</h2>
-        </div>
+
 
         <StatsSection
           postsCount={postsCount}
           categoriesCount={categoriesCount}
-          mediaCount={mediaCount}
+          queueCount={queueCount}
           pendingCommentsCount={pendingCommentsCount}
           canViewPendingCommentsCount={canViewPendingCommentsCount}
           postGrowthDelta={postGrowth30.delta}

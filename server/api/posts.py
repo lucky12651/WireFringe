@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
@@ -8,12 +10,15 @@ from ..models import User
 from ..schemas import (
     CreatorCountOut,
     MonthCountOut,
+    NewsQueueItem,
     PaginatedPostsOut,
     PostGrowthCountsOut,
     PostOut,
     PostUpsert,
 )
 from ..services import PostService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -120,6 +125,137 @@ def admin_posts_by_month_stats(
     creator = user.username if user.role == "author" else None
     months = max(1, min(int(months or 6), 24))
     return service.get_posts_by_month_counts(months, creator)
+
+
+@router.get("/admin/posts/queue", response_model=list[NewsQueueItem])
+def admin_get_news_queue(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> list[NewsQueueItem]:
+    """Get pending news from CSV queue."""
+    require_user(request, db)
+    return service.get_news_queue()
+
+
+@router.post("/admin/posts/queue/process")
+async def admin_process_queue_item(
+    link: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Manually trigger processing of a queue item."""
+    require_user(request, db)
+    
+    from ..news_bot import NewsBot
+    bot = NewsBot()
+    try:
+        # Find the item in DB
+        from ..models import NewsQueue
+        item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="Queue item not found")
+        
+        logger.info(f"Manual process triggered for: {link}")
+        success = await bot.process_item(db, item)
+        
+        if not success:
+            # Refresh item to get latest status (e.g. failed_scrape)
+            db.refresh(item)
+            logger.warning(f"Manual process failed for {link}: {item.status}")
+            return {
+                "success": False, 
+                "status": item.status,
+                "message": f"Processing failed at stage: {item.status}"
+            }
+        
+        return {"success": True, "message": "Article processed and published."}
+    except Exception as e:
+        logger.exception(f"Unexpected error during manual process: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await bot.close()
+
+
+@router.delete("/admin/posts/queue")
+def admin_delete_queue_item(
+    link: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Delete an item from the news queue."""
+    require_user(request, db)
+    from ..models import NewsQueue
+    item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Queue item not found")
+    
+    db.delete(item)
+    db.commit()
+    return {"success": True}
+
+
+@router.post("/admin/posts/queue/bulk-delete")
+def admin_bulk_delete_queue_items(
+    links: list[str],
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Bulk delete items from the news queue."""
+    require_user(request, db)
+    from ..models import NewsQueue
+    db.query(NewsQueue).filter(NewsQueue.link.in_(links)).delete(synchronize_session=False)
+    db.commit()
+    return {"success": True}
+
+
+@router.post("/admin/posts/queue/bulk-process")
+async def admin_bulk_process_queue_items(
+    links: list[str],
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Bulk process items from the news queue."""
+    require_user(request, db)
+    
+    from ..news_bot import NewsBot
+    bot = NewsBot()
+    results = []
+    try:
+        from ..models import NewsQueue
+        items = db.query(NewsQueue).filter(NewsQueue.link.in_(links)).all()
+        
+        for item in items:
+            success = await bot.process_item(db, item)
+            results.append({"link": item.link, "success": success})
+            # Add a small delay to be polite to target servers during bulk processing
+            await asyncio.sleep(2)
+            
+        return {"success": True, "results": results}
+    finally:
+        await bot.close()
+
+
+@router.post("/admin/posts/queue/refresh-feeds")
+async def admin_refresh_queue_feeds(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Manually trigger RSS feed collection to find new links."""
+    require_user(request, db)
+    
+    from ..news_bot import NewsBot, FEEDS
+    bot = NewsBot()
+    try:
+        all_items = []
+        for category, url in FEEDS.items():
+            items = await bot.fetch_rss_items(category, url)
+            all_items.extend(items[:10]) # Get a bit more for manual refresh
+        
+        bot.save_to_queue(db, all_items)
+        return {"success": True, "count": len(all_items)}
+    finally:
+        await bot.close()
 
 
 @router.get("/admin/post", response_model=PostOut)

@@ -4,35 +4,35 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-
-html::-webkit-scrollbar, body::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+*::-webkit-scrollbar {
+  display: none !important;
 }
 
 :root {
-  /* Colors - Clean & Editorial Palette (Google News) */
+  /* Colors - Cozy Editorial Palette (Coffee n Blog) */
   --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fc;
-  --bg-hover: #f0f1f5;
-  --bg-tertiary: #f1f3f4; /* Added for card backgrounds in light mode */
-  --border-dim: #dadce0;
-  --border-light: #e8eaed;
+  --bg-secondary: #faf9f6; /* Soft alabaster cream */
+  --bg-hover: #eae7df;
+  --bg-tertiary: #f4f2ec; /* Warm sand */
+  --border-dim: #dfdbd3;
+  --border-light: #eae7df;
   
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
-  --text-tertiary: #80868b;
+  --text-primary: #1c1816; /* Espresso black */
+  --text-secondary: #605751; /* Roasted charcoal */
+  --text-tertiary: #9c9189;
   
-  --brand-primary: #1a73e8;
-  --brand-hover: #1557b0;
-  --brand-accent: #ea4335;
+  --brand-primary: #945837; /* Copper terracotta */
+  --brand-hover: #754429;
+  --brand-accent: #b93c3c;
 
   /* RGB helpers (for rgba(var(--...))) */
-  --brand-primary-rgb: 26, 115, 232;
-  --brand-accent-rgb: 234, 67, 53;
+  --brand-primary-rgb: 148, 88, 55;
+  --brand-accent-rgb: 185, 60, 60;
   
   /* Layout & Spacing */
   --max-width: 1200px;
@@ -47,62 +47,81 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   --space-xl: 32px;
   
   /* Typography */
-  --font-heading: 'Outfit', sans-serif; /* Google Sans equivalent */
-  --font-body: 'Inter', sans-serif; /* Google Sans Text equivalent */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --font-sans: var(--font-body);
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px; /* Added for larger containers */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 100px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.1);
-  --shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.15);
+  --shadow-sm: 0 1px 3px 0 rgba(28, 24, 22, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(28, 24, 22, 0.08), 0 2px 4px -2px rgba(28, 24, 22, 0.08);
+  --shadow-lg: 0 10px 15px -3px rgba(28, 24, 22, 0.08), 0 4px 6px -4px rgba(28, 24, 22, 0.08);
+  --shadow-xl: 0 20px 25px -5px rgba(28, 24, 22, 0.1), 0 8px 10px -6px rgba(28, 24, 22, 0.1);
 }
 
-/* Dark mode overrides - Strictly matching Google News Screenshot */
+/* Dark mode overrides - Strictly matching cozy night coffee vibe */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #131314; /* Deepest background */
-    --bg-secondary: #292a2d; /* Layout background */
-    --bg-tertiary: #1f1f1f; /* Card/Section background (Tertiary Black) */
-    --bg-hover: #3c4043;
-    --border-dim: #3c4043;
-    --border-light: #212121;
+    --bg-primary: #0f0d0c; /* Rich dark roast espresso */
+    --bg-secondary: #171513; /* Warm charcoal black */
+    --bg-tertiary: #201d1b; /* Soft dark brown card bg */
+    --bg-hover: #2b2724;
+    --border-dim: #38312d;
+    --border-light: #25201d;
     
-    --text-primary: #e8eaed;
-    --text-secondary: #9aa0a6;
-    --text-tertiary: #80868b;
+    --text-primary: #f5eee8; /* Warm cream */
+    --text-secondary: #bcafa6; /* Warm silver */
+    --text-tertiary: #877a72;
+
+    --brand-primary: #cb845b; /* Soft copper gold */
+    --brand-hover: #e0996f;
+    --brand-primary-rgb: 203, 132, 91;
+    --brand-accent: #f87171;
+    --brand-accent-rgb: 248, 113, 113;
   }
 }
 
-/* Explicit theme overrides (used by admin theme toggle)
-   These override prefers-color-scheme when html[data-theme] is set. */
+/* Explicit theme overrides */
 html[data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fc;
-  --bg-hover: #f0f1f5;
-  --bg-tertiary: #f1f3f4;
-  --border-dim: #dadce0;
-  --border-light: #e8eaed;
+  --bg-secondary: #faf9f6;
+  --bg-tertiary: #f4f2ec;
+  --bg-hover: #eae7df;
+  --border-dim: #dfdbd3;
+  --border-light: #eae7df;
 
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
-  --text-tertiary: #80868b;
+  --text-primary: #1c1816;
+  --text-secondary: #605751;
+  --text-tertiary: #9c9189;
+
+  --brand-primary: #945837;
+  --brand-hover: #754429;
+  --brand-primary-rgb: 148, 88, 55;
+  --brand-accent: #b93c3c;
+  --brand-accent-rgb: 185, 60, 60;
 }
 
 html[data-theme="dark"] {
-  --bg-primary: #131314;
-  --bg-secondary: #292a2d;
-  --bg-tertiary: #1f1f1f;
-  --bg-hover: #3c4043;
-  --border-dim: #3c4043;
-  --border-light: #212121;
+  --bg-primary: #0f0d0c;
+  --bg-secondary: #171513;
+  --bg-tertiary: #201d1b;
+  --bg-hover: #2b2724;
+  --border-dim: #38312d;
+  --border-light: #25201d;
 
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --text-tertiary: #80868b;
+  --text-primary: #f5eee8;
+  --text-secondary: #bcafa6;
+  --text-tertiary: #877a72;
+
+  --brand-primary: #cb845b;
+  --brand-hover: #e0996f;
+  --brand-primary-rgb: 203, 132, 91;
+  --brand-accent: #f87171;
+  --brand-accent-rgb: 248, 113, 113;
 }
 
 /* ========================================

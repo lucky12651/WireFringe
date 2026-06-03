@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { Sidebar } from './Sidebar';
+import { TopBar } from './TopBar';
 
 export function AdminLayout({
   children,
@@ -29,11 +30,14 @@ export function AdminLayout({
           />
 
           <main className="admin-content" aria-label="Admin content">
-            {children}
+            <div className="admin-content-inner">
+              <TopBar activeView={activeView} />
+              {children}
+            </div>
           </main>
         </div>
 
-        
+
       </div>
     </>
   );
