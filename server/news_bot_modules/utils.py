@@ -7,14 +7,17 @@ logger = logging.getLogger(__name__)
 
 
 def clean_url(url: str) -> str:
-    """Remove common tracking parameters from URL."""
+    """Remove common tracking parameters and fragments from URL."""
     try:
+        # Strip fragment first (everything after #)
+        url = url.split('#')[0]
+        
         parsed = urlparse(url)
         q_params = parse_qsl(parsed.query)
         clean_params = [
             (k, v) for k, v in q_params
             if not k.startswith('utm_')
-            and k not in ['ref', 'source', 'feedburner', 'oc']
+            and k not in ['ref', 'source', 'feedburner', 'oc', 'publisher']
         ]
         return urlunparse(parsed._replace(query=urlencode(clean_params)))
     except Exception:

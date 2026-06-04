@@ -9,7 +9,7 @@ import { fetcher, api } from '../lib/api';
 import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
 import styles from '../styles/Home.module.css';
-import AdsenseAd from '../components/AdsenseAd/AdsenseAd';
+
 
 const CATEGORIES = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
 

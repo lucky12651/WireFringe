@@ -15,6 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from .api import api_router
 from .config import settings
 from .db import Base, SessionLocal, engine
+from . import models
 from .services import CategoryService
 from .news_bot import start_news_bot_loop
 
@@ -29,6 +30,13 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle events for the FastAPI application."""
+    # Ensure all tables are created
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified/created successfully.")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {e}")
+
     # Check for insecure default secrets
     if settings.session_secret == "dev-secret-change-me":
         logger.warning("SECURITY WARNING: Using default BLOG_SESSION_SECRET. Please change it in .env!")

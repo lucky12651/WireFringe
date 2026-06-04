@@ -130,6 +130,7 @@ export default function AdminPage() {
       comments.refreshTrendingComments();
       comments.refreshPendingCount();
       categories.refreshCategoriesWithCounts();
+      posts.refreshRecentCache();
     }
     if (activeView === 'comments') {
       comments.refreshComments();
@@ -204,6 +205,7 @@ export default function AdminPage() {
             trendingHint={comments.error}
             memberStats={users.memberStats}
             latestPosts={posts.latestPosts}
+            recentCache={posts.recentCache}
             me={me}
           />
         );

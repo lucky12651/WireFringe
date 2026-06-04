@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from .utils import clean_url
-from ..models import NewsQueue, Post
+from ..models import NewsQueue, Post, RecentNewsCache
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +23,12 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
         if in_queue:
             continue
 
-        is_published = db.query(Post).filter(
+        # Check against recent cache for faster uniqueness check
+        is_published = db.query(RecentNewsCache).filter(
             or_(
-                Post.link == link,
-                Post.title == title,
-                Post.title == cleaned_title
+                RecentNewsCache.link == link,
+                RecentNewsCache.title == title,
+                RecentNewsCache.title == cleaned_title
             )
         ).first()
 
@@ -70,13 +71,37 @@ def update_queue_status(db: Session, link: str, status: str) -> None:
 
 
 def is_duplicate(db: Session, source_url: str, resolved_url: str = None, title: str = None) -> bool:
-    """Check if post is a duplicate by link (original or resolved) or title."""
-    filters = [Post.link == source_url]
+    """Check if post is a duplicate by link (original or resolved) or title using recent cache."""
+    filters = [RecentNewsCache.link == source_url]
     if resolved_url and resolved_url != source_url:
-        filters.append(Post.link == resolved_url)
+        filters.append(RecentNewsCache.link == resolved_url)
 
     if title:
-        filters.append(Post.title == title)
+        filters.append(RecentNewsCache.title == title)
 
-    query = db.query(Post).filter(or_(*filters))
+    query = db.query(RecentNewsCache).filter(or_(*filters))
     return query.first() is not None
+
+
+def add_to_recent_cache(db: Session, title: str, link: str) -> None:
+    """Add a published post to the recent cache."""
+    try:
+        # Check if already in cache to avoid UniqueConstraint errors
+        existing = db.query(RecentNewsCache).filter(RecentNewsCache.link == link).first()
+        if not existing:
+            new_cache_item = RecentNewsCache(title=title, link=link)
+            db.add(new_cache_item)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding to recent cache: {e}")
+
+
+def cleanup_recent_cache(db: Session, hours: int = 2) -> int:
+    """Delete items from recent_news_cache that are older than specified hours."""
+    threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+    deleted = db.query(RecentNewsCache).filter(RecentNewsCache.created_at < threshold).delete()
+    db.commit()
+    if deleted > 0:
+        logger.info(f"🧹 Cleaned up {deleted} items from the recent news cache (> {hours}h old).")
+    return deleted

@@ -14,7 +14,15 @@ from .db import SessionLocal
 from .models import Post, NewsQueue
 from .news_bot_modules.constants import FEEDS
 from .news_bot_modules.rss_fetcher import fetch_rss_items
-from .news_bot_modules.queue_ops import save_to_queue, get_pending_from_queue, update_queue_status, is_duplicate, cleanup_old_queue_items
+from .news_bot_modules.queue_ops import (
+    save_to_queue, 
+    get_pending_from_queue, 
+    update_queue_status, 
+    is_duplicate, 
+    cleanup_old_queue_items,
+    add_to_recent_cache,
+    cleanup_recent_cache
+)
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
 from .services.recommendation_service import RecommendationService
@@ -35,8 +43,14 @@ class NewsBot:
                 "Accept-Language": "en-US,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "cross-site",
+                "Cache-Control": "max-age=0",
             }
         )
+        self.semaphore = asyncio.Semaphore(5)  # Process up to 5 articles concurrently
 
     async def trigger_revalidation(self):
         try:
@@ -97,6 +111,10 @@ class NewsBot:
             db.add(new_post)
             db.commit()
             logger.info(f"🚀 INSTANTLY PUBLISHED: {article_data.title}")
+            
+            # Add to recent cache for uniqueness check
+            add_to_recent_cache(db, article_data.title, resolved_url)
+            
             update_queue_status(db, source_url, "published")
             await self.trigger_revalidation()
             return True
@@ -106,13 +124,19 @@ class NewsBot:
             update_queue_status(db, source_url, "db_error")
             return False
 
+    async def process_item_with_semaphore(self, db, item: NewsQueue):
+        """Wraps process_item with a semaphore to control concurrency."""
+        async with self.semaphore:
+            return await self.process_item(db, item)
+
     async def run_cycle(self):
         logger.info("NewsBot engine loop initiated: Stage 1 - Gathering tracking feeds...")
 
         db = SessionLocal()
         try:
-            # Step 0: Cleanup old queue items (> 24h)
+            # Step 0: Cleanup old items
             cleanup_old_queue_items(db, hours=24)
+            cleanup_recent_cache(db, hours=2)
 
             all_items = []
             for category, url in FEEDS.items():
@@ -124,12 +148,14 @@ class NewsBot:
 
             pending = get_pending_from_queue(db)
             if pending:
-                logger.info(f"🚀 Stage 2 - Initiating extraction for {len(pending)} articles via newspaper4k...")
-                for idx, item in enumerate(pending, 1):
-                    logger.info(f"📦 [{idx}/{len(pending)}] Extracting clean story context: {item.title}")
-                    await self.process_item(db, item)
-                    await asyncio.sleep(10)
-                logger.info(f"✨ Successfully finished processing all {len(pending)} items.")
+                logger.info(f"🚀 Stage 2 - Initiating concurrent extraction for {len(pending)} articles...")
+                
+                # Use asyncio.gather to process items concurrently
+                tasks = [self.process_item_with_semaphore(db, item) for item in pending]
+                results = await asyncio.gather(*tasks)
+                
+                success_count = sum(1 for r in results if r)
+                logger.info(f"✨ Successfully finished processing {success_count}/{len(pending)} items.")
             else:
                 logger.info("ℹ️ No pending news items to process in this cycle.")
 

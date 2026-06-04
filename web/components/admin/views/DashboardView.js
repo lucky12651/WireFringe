@@ -7,6 +7,7 @@ const CommentsTrend = dynamic(() => import('./dashboard/CommentsTrend'));
 const PostGrowth = dynamic(() => import('./dashboard/PostGrowth'));
 
 const LatestPosts = dynamic(() => import('./dashboard/LatestPosts'));
+const RecentCache = dynamic(() => import('./dashboard/RecentCache'));
 
 export function DashboardView({
   postsCount,
@@ -21,6 +22,7 @@ export function DashboardView({
   memberStats,
   latestPosts,
   me,
+  recentCache,
 }) {
   const postGrowthCardRef = useRef(null);
   const [trendCardHeight, setTrendCardHeight] = useState(null);
@@ -67,6 +69,10 @@ export function DashboardView({
 
       <LatestPosts
         latestPosts={latestPosts}
+      />
+
+      <RecentCache
+        items={recentCache}
       />
 
       {/* Secondary stats grid */}

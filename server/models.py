@@ -131,3 +131,11 @@ class PersonalizedFeed(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "post_id", name="uq_user_post_recommendation"),
     )
+
+class RecentNewsCache(Base):
+    __tablename__ = "recent_news_cache"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

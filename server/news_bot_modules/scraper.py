@@ -5,7 +5,7 @@ import newspaper
 from bs4 import BeautifulSoup
 import httpx
 
-from .utils import extract_clean_url
+from .utils import extract_clean_url, clean_url
 
 logger = logging.getLogger(__name__)
 
@@ -17,20 +17,44 @@ async def scrape_article(url: str, http_client: httpx.AsyncClient) -> Tuple[Opti
     """
     import asyncio
 
-    target_url = extract_clean_url(url)
+    # Clean the URL (remove trackers, fragments) and then extract from Google News if necessary
+    target_url = clean_url(url)
+    target_url = extract_clean_url(target_url)
     resolved_url = target_url
+
+    # Configure newspaper to use a real browser User-Agent to avoid 403 Forbidden errors
+    config = newspaper.Config()
+    config.browser_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    config.request_timeout = 25
+    # Add more headers to the config if possible (newspaper4k config might be limited)
+    config.headers = {
+        "User-Agent": config.browser_user_agent,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.google.com/",
+    }
 
     try:
         logger.info(f"Attempting execution parse chain via newspaper4k: {target_url}")
 
         def fetch_article():
-            art = newspaper.article(target_url)
-            return {
-                "text": art.text,
-                "image": art.top_image,
-                "title": art.title,
-                "url": art.url
-            }
+            try:
+                # Pass config to newspaper.article
+                art = newspaper.article(target_url, config=config)
+                # Need to call download() and parse() explicitly if using article() directly usually
+                # but newspaper4k's article() might be a wrapper. 
+                # Let's use the standard pattern to be safe.
+                art.download()
+                art.parse()
+                return {
+                    "text": art.text,
+                    "image": art.top_image,
+                    "title": art.title,
+                    "url": art.url
+                }
+            except Exception as e:
+                logger.error(f"Newspaper4k internal error for {target_url}: {e}")
+                return {}
 
         data = await asyncio.to_thread(fetch_article)
         cleaned_text = data.get("text", "").strip()
@@ -47,7 +71,12 @@ async def scrape_article(url: str, http_client: httpx.AsyncClient) -> Tuple[Opti
                 if head_res.status_code in [301, 302, 307, 308] and "Location" in head_res.headers:
                     resolved_url = head_res.headers["Location"]
 
-            response = await http_client.get(resolved_url)
+            # Add Referer and other headers to bypass 403
+            headers = {
+                "Referer": "https://www.google.com/",
+                "Upgrade-Insecure-Requests": "1",
+            }
+            response = await http_client.get(resolved_url, headers=headers)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, "html.parser")

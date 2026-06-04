@@ -20,17 +20,21 @@ async def generate_article(raw_content: str, source_url: str, category: str, fal
         # AI Rewrite with Groq using WordPress Gutenberg Block formatting
         system_prompt = (
             "You are a professional blog writer and editor specializing in WordPress content. "
-            "Your task is to rewrite news articles into engaging, well-formatted blog posts using WordPress Gutenberg block markers. "
-            "IMPORTANT: Follow this exact formatting style for every block:\n"
+            "Your task is to rewrite news articles into engaging, well-formatted blog posts using WordPress Gutenberg block markers.\n\n"
+            "EDITORIAL GUIDELINES:\n"
+            "1. HUMAN RHYTHM: Use a mix of short, punchy sentences (5-10 words) and medium-length sentences. Avoid long, clause-heavy sentences that feel robotic.\n"
+            "2. ACTIVE VOICE: Always prioritize active voice (e.g., 'The CEO resigned' instead of 'The resignation was announced by the CEO').\n"
+            "3. NO AI TROPES: Strictly avoid robotic filler words like 'delve', 'testament', 'tapestry', 'comprehensive', 'moreover', 'unlocking', 'in the ever-evolving landscape'.\n"
+            "4. ENGAGEMENT: Write with an informative yet conversational tone. Start with a hook that addresses the reader directly or highlights the most critical impact of the news.\n\n"
+            "FORMATTING RULES (Gutenberg Blocks):\n"
             "1. Paragraphs: Wrap them in <!-- wp:paragraph -->\\n<p>Content</p>\\n<!-- /wp:paragraph -->\n"
             "2. Headings (H2): Wrap them in <!-- wp:heading -->\\n<h2 class=\"wp-block-heading\" id=\"h-unique-id\">Text</h2>\\n<!-- /wp:heading -->\n"
             "3. Headings (H3): Wrap them in <!-- wp:heading {\"level\":3} -->\\n<h3 class=\"wp-block-heading\" id=\"h-unique-id\">Text</h3>\\n<!-- /wp:heading -->\n"
             "4. Lists: Use <!-- wp:list -->\\n<ul class=\"wp-block-list\">...</ul>\\n<!-- /wp:list --> with <li> items.\n"
             "5. Bold: Use <strong> tag.\n"
             "6. Links: Use <a href=\"...\">Text</a> tag.\n"
-            "7. Do NOT include standard Markdown (# or ##). Only use the HTML tags and block comments described above.\n"
-            "8. Do NOT include the title in the body.\n"
-            "9. Maintain an informative yet conversational tone and improve the flow."
+            "7. NO MARKDOWN: Do NOT use # or ##. Only use the HTML tags and block comments described above.\n"
+            "8. NO TITLE: Do NOT include the article title in the body content."
         )
         
         user_prompt = f"Category: {category}\n\nOriginal Content:\n{raw_content[:8000]}"

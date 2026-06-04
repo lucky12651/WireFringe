@@ -200,3 +200,25 @@ export function calculateMemberStats(users, creatorCounts, canManageUsers) {
   list.sort((a, b) => b.count - a.count || a.username.localeCompare(b.username));
   return list;
 }
+
+export function formatRelativeDate(date) {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime?.())) return '';
+  
+  const now = new Date();
+  const diff = now - d;
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (minutes < 2) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return 'Yesterday';
+
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}

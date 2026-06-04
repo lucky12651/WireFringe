@@ -11,6 +11,7 @@ from ..schemas import (
     CreatorCountOut,
     MonthCountOut,
     NewsQueueItem,
+    RecentCacheItem,
     PaginatedPostsOut,
     PostGrowthCountsOut,
     PostOut,
@@ -251,6 +252,25 @@ async def admin_bulk_process_queue_items(
         return {"success": True, "results": results}
     finally:
         await bot.close()
+
+
+@router.get("/admin/posts/queue/recent-cache", response_model=list[RecentCacheItem])
+def admin_get_recent_cache(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> list[RecentCacheItem]:
+    """Get recently published items from cache."""
+    require_user(request, db)
+    from ..models import RecentNewsCache
+    items = db.query(RecentNewsCache).order_by(RecentNewsCache.created_at.desc()).limit(50).all()
+    return [
+        RecentCacheItem(
+            title=item.title,
+            link=item.link,
+            createdAt=item.created_at,
+        )
+        for item in items
+    ]
 
 
 @router.post("/admin/posts/queue/refresh-feeds")

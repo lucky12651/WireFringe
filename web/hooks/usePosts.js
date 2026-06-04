@@ -36,6 +36,12 @@ export function usePosts(initialLimit = 20) {
     { revalidateOnFocus: false }
   );
 
+  const { data: recentCacheData, mutate: refreshRecentCache } = useSWR(
+    '/api/admin/posts/queue/recent-cache',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   const refreshPosts = useCallback(() => {
     return mutate(swrKey);
   }, [swrKey]);
@@ -243,6 +249,8 @@ export function usePosts(initialLimit = 20) {
       setError: setActionError,
       queue: queueData || [],
       refreshQueue,
+      recentCache: recentCacheData || [],
+      refreshRecentCache,
     }),
     [
       posts,
@@ -269,6 +277,8 @@ export function usePosts(initialLimit = 20) {
       refreshQueueFeeds,
       queueData,
       refreshQueue,
+      recentCacheData,
+      refreshRecentCache,
     ]
   );
 }

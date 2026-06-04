@@ -109,6 +109,12 @@ class NewsQueueItem(BaseModel):
     status: str
 
 
+class RecentCacheItem(BaseModel):
+    title: str
+    link: str
+    createdAt: datetime
+
+
 class MediaFileOut(BaseModel):
     name: str
     url: str
