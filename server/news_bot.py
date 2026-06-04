@@ -85,7 +85,9 @@ class NewsBot:
             update_queue_status(db, source_url, "failed_scrape")
             return False
 
-        article_data = await generate_article(raw_content, source_url, category, item.title, scraped_img, parsed_title)
+        article_data = await generate_article(
+            raw_content, source_url, category, item.title, scraped_img, parsed_title
+        )
         if not article_data:
             update_queue_status(db, source_url, "failed_gen")
             return False
