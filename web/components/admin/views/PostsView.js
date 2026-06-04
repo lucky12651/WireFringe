@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ActionButton } from '../shared/ActionButton';
 import {
   Table,
@@ -11,14 +12,14 @@ import {
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
 import Loader from '../../Loader/Loader';
-import { formatDateShort } from '../../../lib/utils';
+import { formatDateShort, postUrl } from '../../../lib/utils';
 import { PlusIcon, EditIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, RefreshIcon } from '../Layout/icons';
 
 export function PostsView({
   posts,
   postsCount,
   onPublish,
-  onDelete, 
+  onDelete,
   onProcessQueue,
   onDeleteQueue,
   onBulkDeleteQueue,
@@ -106,9 +107,9 @@ export function PostsView({
 
   const handleBulkProcessClick = async () => {
     if (selectedQueueLinks.size === 0 || isProcessing) return;
-    
+
     const linksToProcess = Array.from(selectedQueueLinks);
-    
+
     // Set all selected as processing
     setProcessingLinks((prev) => {
       const next = new Set(prev);
@@ -244,7 +245,9 @@ export function PostsView({
                             <img src={p.ogImg || '/placeholder-post.jpg'} alt="" />
                           </div>
                           <div className="post-title-info">
-                            <span className="post-title-v2">{p.title}</span>
+                            <Link href={postUrl(p)} className="post-title-link">
+                              <span className="post-title-v2">{p.title}</span>
+                            </Link>
                             <span className="post-author-v2">By {p.creatorName || 'Admin'}</span>
                           </div>
                         </div>
@@ -253,7 +256,7 @@ export function PostsView({
                         <span className="count-badge-v2">{p.bucket}</span>
                       </td>
                       <td>
-                        <span className="date-v2">{formatDateShort(p.date)}</span>
+                        <span style={{ color: "#111" }}>{formatDateShort(p.date)}</span>
                       </td>
                       <td className="text-right">
                         <div className="action-group-v2">
@@ -287,21 +290,21 @@ export function PostsView({
           <div className="v2-table-wrapper">
             <div className="queue-header-v3" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
                   onChange={toggleSelectAllQueue}
                   id="select-all-queue"
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
-               
+
               </div>
               {selectedQueueLinks.size > 0 && (
                 <div className="bulk-actions-bar" style={{ margin: 0, padding: '8px 16px', borderRadius: '12px' }}>
                   <span>{selectedQueueLinks.size} selected</span>
                   <div className="bulk-btns">
-                    <button 
-                      className="approve-btn-v2" 
+                    <button
+                      className="approve-btn-v2"
                       onClick={handleBulkProcessClick}
                       disabled={isProcessing}
                     >
@@ -317,30 +320,30 @@ export function PostsView({
 
             <div className="queue-grid-v3">
               {queue.map((q) => (
-                <div 
-                  key={q.link} 
+                <div
+                  key={q.link}
                   className={`queue-card-v3 ${selectedQueueLinks.has(q.link) ? 'row-selected' : ''}`}
                   onClick={() => toggleSelectQueueItem(q.link)}
                 >
                   <div className="queue-card-header">
                     <div className="queue-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={selectedQueueLinks.has(q.link)}
                         onChange={() => toggleSelectQueueItem(q.link)}
                       />
                     </div>
                     <span className="source-badge-v2">{q.category}</span>
                   </div>
-                  
+
                   <div className="queue-content-v3">
                     <div className="queue-title-v3" title={q.title}>{q.title}</div>
                   </div>
 
                   <div className="queue-actions-v3" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      className="approve-btn-v2" 
-                      onClick={() => handleProcessQueueItem(q.link)} 
+                    <button
+                      className="approve-btn-v2"
+                      onClick={() => handleProcessQueueItem(q.link)}
                       title="Process"
                       disabled={isProcessing || processingLinks.has(q.link)}
                     >
@@ -365,7 +368,7 @@ export function PostsView({
         isOpen={!!postToDelete || !!queueItemToDelete || bulkQueueDelete}
         title="Confirm Deletion"
         message={
-          bulkQueueDelete 
+          bulkQueueDelete
             ? `Are you sure you want to remove ${selectedQueueLinks.size} selected items from the queue?`
             : `Are you sure you want to remove "${postToDelete?.title || queueItemToDelete?.title}"?`
         }

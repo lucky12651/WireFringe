@@ -280,6 +280,7 @@ html[data-theme="light"] {
     flex-direction: column;
     padding-bottom: 60px;
   }
+
   .admin-content {
     padding: 20px;
   }
@@ -334,10 +335,25 @@ html[data-theme="light"] {
   justify-content: center;
 }
 
-.admin-metric-blue .metric-icon-wrapper { background: #eef2ff; color: #4f46e5; }
-.admin-metric-purple .metric-icon-wrapper { background: #f5f3ff; color: #7c3aed; }
-.admin-metric-red .metric-icon-wrapper { background: #fff1f2; color: #e11d48; }
-.admin-metric-green .metric-icon-wrapper { background: #f0fdf4; color: #16a34a; }
+.admin-metric-blue .metric-icon-wrapper {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.admin-metric-purple .metric-icon-wrapper {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.admin-metric-red .metric-icon-wrapper {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+.admin-metric-green .metric-icon-wrapper {
+  background: #f0fdf4;
+  color: #16a34a;
+}
 
 .metric-title {
   font-size: 16px;
@@ -375,8 +391,15 @@ html[data-theme="light"] {
   font-weight: 600;
 }
 
-.metric-trend.up { background: #ecfdf5; color: #059669; }
-.metric-trend.down { background: #fef2f2; color: #dc2626; }
+.metric-trend.up {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.metric-trend.down {
+  background: #fef2f2;
+  color: #dc2626;
+}
 
 /* Latest Posts (V2) */
 .admin-latest-posts-v2 {
@@ -506,8 +529,15 @@ html[data-theme="light"] {
   font-weight: 600;
 }
 
-.status-badge.active { background: #ecfdf5; color: #059669; }
-.status-badge.pending { background: #fff7ed; color: #c2410c; }
+.status-badge.active {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-badge.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
 
 .post-actions {
   display: flex;
@@ -526,8 +556,14 @@ html[data-theme="light"] {
   border: 1px solid transparent !important;
 }
 
-.action-btn-outline:hover { background: #f5f5f5 !important; }
-.action-btn-ghost:hover { background: #f9f9f9 !important; color: #333 !important; }
+.action-btn-outline:hover {
+  background: #f5f5f5 !important;
+}
+
+.action-btn-ghost:hover {
+  background: #f9f9f9 !important;
+  color: #333 !important;
+}
 
 /* Admin View V2 Base Styles */
 .admin-view-container-v2 {
@@ -711,10 +747,25 @@ html[data-theme="light"] {
   text-transform: capitalize;
 }
 
-.role-badge.admin { background: #fef2f2; color: #dc2626; }
-.role-badge.editor { background: #f0f9ff; color: #0284c7; }
-.role-badge.author { background: #f0fdf4; color: #16a34a; }
-.role-badge.user { background: #f3f4f6; color: #4b5563; }
+.role-badge.admin {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.role-badge.editor {
+  background: #f0f9ff;
+  color: #0284c7;
+}
+
+.role-badge.author {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.role-badge.user {
+  background: #f3f4f6;
+  color: #4b5563;
+}
 
 .status-dot-active {
   display: flex;
@@ -752,7 +803,9 @@ html[data-theme="light"] {
   transform: scale(1.05);
 }
 
-.text-right { text-align: right; }
+.text-right {
+  text-align: right;
+}
 
 /* Settings Specific V2 */
 .avatar-upload-section {
@@ -818,7 +871,9 @@ html[data-theme="light"] {
   cursor: not-allowed;
 }
 
-.mt-32 { margin-top: 32px; }
+.mt-32 {
+  margin-top: 32px;
+}
 
 /* Comments Specific V2 */
 .commenter-info {
@@ -981,7 +1036,7 @@ html[data-theme="light"] {
 
 .media-date-v2 {
   font-size: 11px;
-  color: #999;
+  color: #111;
 }
 
 /* Categories Specific V2 */
@@ -1177,8 +1232,15 @@ html[data-theme="light"] {
 }
 
 @keyframes slideDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .bulk-actions-bar span {
@@ -1296,8 +1358,13 @@ html[data-theme="light"] {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dashboard Specific V2 */
@@ -1824,8 +1891,15 @@ html[data-theme="light"] .admin-theme-toggle {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .row-selected {
@@ -3189,4 +3263,14 @@ html[data-theme="light"] .admin-settings-avatar {
 /* Hide old orphaned Posts by Member section */
 .admin-content>.side-card[aria-label="Posts by member"] {
   display: none;
+}
+
+.post-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-title-link:hover .post-title-v2 {
+  color: var(--accent, #4f46e5);
+  text-decoration: underline;
 }

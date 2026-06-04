@@ -16,7 +16,7 @@ export default function RecentCache({ items }) {
   }
 
   return (
-    <section className="dashboard-card-v2 latest-posts-card-v2" style={{ marginTop: '32px' }}>
+    <section className="dashboard-card-v2 latest-posts-card-v2" style={{ marginTop: '32px', color: "#111" }}>
       <header className="card-header-v2">
         <div className="header-left-v2">
           <h2 className="card-title-v2">Recently Published (Cache)</h2>
@@ -39,15 +39,9 @@ export default function RecentCache({ items }) {
                 <tr key={idx}>
                   <td>
                     <div className="post-title-info">
-                      <a 
-                        href={item.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="post-name-v2"
-                        style={{ fontSize: '0.85rem' }}
-                      >
-                        {item.title}
-                      </a>
+
+                      {item.title}
+
                     </div>
                   </td>
                   <td>
