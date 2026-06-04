@@ -7,7 +7,6 @@ import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
 import Loader from '../components/Loader/Loader';
-import AdsenseAd from '../components/AdsenseAd/AdsenseAd';
 
 function slugifyTitle(title) {
   const s = String(title || '')
@@ -264,14 +263,7 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
           <article className={styles.post}>
             {/* Post Header */}
             <header className={styles.header}>
-              <div className={styles.horizontalAd} aria-label="Advertisement">
-                <AdsenseAd
-                  slot="4810585579"
-                  format="auto"
-                  fullWidthResponsive={true}
-                  style={{ height: 90 }}
-                />
-              </div>
+              {/* horizontal ad removed */}
 
               <div className={styles.meta}>
                 <span className={styles.category}>{post.bucket || 'News'}</span>
@@ -374,17 +366,7 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                   </div>
                 </div>
 
-                {/* Sidebar Ad Slot */}
-                <div className={styles.sidebarAd}>
-                  <ins
-                    className="adsbygoogle"
-                    style={{ display: 'block' }}
-                    data-ad-client="ca-pub-9036526646235532"
-                    data-ad-slot="4810585579"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"
-                  />
-                </div>
+                {/* sidebar ad removed */}
               </aside>
             </div>
           </article>
