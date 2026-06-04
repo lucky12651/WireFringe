@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Layout from '../components/Layout/Layout';
 import HeroSection from '../components/HeroSection/HeroSection';
 import CategoryCluster from '../components/CategoryCluster/CategoryCluster';
+import TopStories from '../components/TopStories/TopStories';
+import NewsletterSignup from '../components/NewsletterSignup/NewsletterSignup';
 import { fetcher, api } from '../lib/api';
 import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
@@ -264,15 +266,36 @@ export default function HomePage({ initialPosts }) {
       ) : (
         <>
           {/* Breaking bar */}
-          {filteredPosts?.[0] && (
+          {filteredPosts && filteredPosts.length > 0 && (
             <div className={styles.breakingBar} role="region" aria-label="Breaking">
               <div className={styles.breakingPill} aria-hidden="true">LIVE</div>
-              <div className={styles.breakingText}>
-                <span className={styles.breakingLabel}>Top story</span>
-                <Link href={postUrl(filteredPosts[0])} className={styles.breakingLink}>
-                  {filteredPosts[0].title}
-                </Link>
+
+              {/* single-line moving ticker with top 5 latest posts (includes top story) */}
+              <div className={styles.breakingTicker} aria-hidden="true">
+                <div className={styles.breakingTickerTrack}>
+                  {filteredPosts.slice(0,5).map((p) => (
+                    <span key={p.id || p.title} className={styles.breakingTickerItem}>
+                      <Link href={postUrl(p)} className={styles.breakingTickerLink}>
+                        <strong className={styles.breakingTickerCat}>{p.bucket || 'News'}</strong>
+                        <span className={styles.breakingTickerSep}>•</span>
+                        <span className={styles.breakingTickerTitle}>{p.title}</span>
+                      </Link>
+                    </span>
+                  ))}
+                </div>
+                <div className={styles.breakingTickerTrack} aria-hidden="true">
+                  {filteredPosts.slice(0,5).map((p) => (
+                    <span key={(p.id || p.title) + '-dup'} className={styles.breakingTickerItem}>
+                      <Link href={postUrl(p)} className={styles.breakingTickerLink}>
+                        <strong className={styles.breakingTickerCat}>{p.bucket || 'News'}</strong>
+                        <span className={styles.breakingTickerSep}>•</span>
+                        <span className={styles.breakingTickerTitle}>{p.title}</span>
+                      </Link>
+                    </span>
+                  ))}
+                </div>
               </div>
+
               <div className={styles.breakingMeta}>
                 <span className={styles.breakingCategory}>{filteredPosts[0].bucket || 'News'}</span>
                 <span aria-hidden="true">•</span>
@@ -292,6 +315,9 @@ export default function HomePage({ initialPosts }) {
               />
             </div>
           )} */}
+
+          {/* Top stories scroller */}
+          <TopStories posts={heroPosts.slice(0, 6)} />
 
           {/* Hero Section: 3-column layout */}
           <HeroSection posts={heroPosts} />
@@ -333,6 +359,11 @@ export default function HomePage({ initialPosts }) {
                       ) : null}
                     </Link>
                   ))}
+                </div>
+
+                {/* Newsletter call-to-action */}
+                <div className={styles.railCard}>
+                  <NewsletterSignup />
                 </div>
               </div>
 

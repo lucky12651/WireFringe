@@ -9,6 +9,9 @@
   border-radius: var(--radius-lg);
   background: rgba(var(--brand-primary-rgb), 0.06);
   margin: var(--space-lg) 0 var(--space-md);
+  /* force single-line layout */
+  flex-wrap: nowrap;
+  min-height: 44px;
 }
 
 .breakingPill {
@@ -20,6 +23,7 @@
   background: var(--brand-accent);
   padding: 5px 8px;
   border-radius: var(--radius-pill);
+  flex: 0 0 auto;
 }
 
 .breakingText {
@@ -27,7 +31,7 @@
   align-items: baseline;
   gap: var(--space-sm);
   min-width: 0;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .breakingLabel {
@@ -62,6 +66,80 @@
 .breakingCategory {
   color: var(--brand-primary);
   font-weight: 600;
+}
+
+/* Inline ticker inside breaking bar */
+
+.breakingMain {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.breakingTicker {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.breakingTickerTrack {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  white-space: nowrap;
+  padding-left: 6px;
+  animation: breaking-scroll 20s linear infinite;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+}
+
+.breakingTickerItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.breakingTickerLink {
+  color: var(--text-primary);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.breakingTickerCat {
+  color: var(--brand-primary);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.breakingTickerSep {
+  color: var(--text-tertiary);
+}
+
+.breakingTickerTitle {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+@keyframes breaking-scroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 600px) {
+  .breakingTickerTrack { gap: 18px; animation-duration: 26s; }
+  .breakingTickerTitle { font-size: 13px; }
 }
 
 .horizontalAd {
