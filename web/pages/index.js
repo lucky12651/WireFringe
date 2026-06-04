@@ -8,6 +8,7 @@ import CategoryCluster from '../components/CategoryCluster/CategoryCluster';
 import TopStories from '../components/TopStories/TopStories';
 import NewsletterSignup from '../components/NewsletterSignup/NewsletterSignup';
 import { fetcher, api } from '../lib/api';
+import { postUrl, slugifyTitle } from '../lib/utils';
 import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
 import styles from '../styles/Home.module.css';
@@ -57,26 +58,6 @@ function safeExcerpt(post) {
   const fromContent = stripHtml(post?.content || '').replace(/\s+/g, ' ').trim();
   if (!fromContent) return '';
   return fromContent.slice(0, 180) + (fromContent.length > 180 ? '…' : '');
-}
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
-
-function postUrl(post) {
-  const id = post?.id;
-  if (!id) return '/';
-  const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}`;
 }
 
 export async function getStaticProps() {

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { postUrl } from '../../lib/utils';
 import styles from './CategoryCluster.module.css';
 
 function formatDate(date) {
@@ -15,26 +16,6 @@ function formatDate(date) {
     month: 'long',
     day: 'numeric',
   });
-}
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
-
-function postUrl(post) {
-  const id = post?.id;
-  if (!id) return '/';
-  const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}`;
 }
 
 function NewsIcon() {

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { postUrl } from '../../lib/utils';
 import styles from './HeroSection.module.css';
 
 function formatDate(date) {
@@ -15,26 +16,6 @@ function formatDate(date) {
     month: 'short',
     day: 'numeric',
   });
-}
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
-
-function postUrl(post) {
-  const id = post?.id;
-  if (!id) return '/';
-  const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}`;
 }
 
 export default function HeroSection({ posts = [] }) {
@@ -55,12 +36,12 @@ export default function HeroSection({ posts = [] }) {
       <div className={styles.grid}>
         {/* Main Stage (Left Column) */}
         <section className={styles.mainStage}>
-          <div className={styles.sectionHeader}>
+          {/* <div className={styles.sectionHeader}>
             Top stories
-            {/* <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
-            </svg> */}
-          </div>
+            </svg>
+          </div> */}
 
           <header className={styles.featuredBox}>
             <Link href={postUrl(featured)} className={styles.featuredRow}>

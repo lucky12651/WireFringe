@@ -63,6 +63,13 @@ export function slugifyTitle(title) {
   return s.slice(0, 90) || 'post';
 }
 
+export function postUrl(post) {
+  const id = post?.id;
+  if (!id) return '/';
+  const slug = slugifyTitle(post?.title);
+  return `/post/${encodeURIComponent(slug)}`;
+}
+
 export function truncateText(text, maxLength, suffix = '…') {
   const s = String(text || '').trim();
   if (s.length <= maxLength) return s;

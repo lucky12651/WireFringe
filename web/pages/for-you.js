@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Layout from '../components/Layout/Layout';
 import HeroSection from '../components/HeroSection/HeroSection';
 import { fetcher, api } from '../lib/api';
+import { postUrl } from '../lib/utils';
 import Loader from '../components/Loader/Loader';
 import styles from '../styles/Home.module.css';
 import AdsenseAd from '../components/AdsenseAd/AdsenseAd';
@@ -42,26 +43,6 @@ function safeExcerpt(post) {
   const fromContent = stripHtml(post?.content || '').replace(/\s+/g, ' ').trim();
   if (!fromContent) return '';
   return fromContent.slice(0, 180) + (fromContent.length > 180 ? '…' : '');
-}
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
-
-function postUrl(post) {
-  const id = post?.id;
-  if (!id) return '/';
-  const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}`;
 }
 
 export default function ForYouPage() {

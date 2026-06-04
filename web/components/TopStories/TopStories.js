@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { postUrl } from '../../lib/utils';
 import styles from './TopStories.module.css';
 
 function formatDateDeterministic(date) {
@@ -23,7 +24,7 @@ export default function TopStories({ posts = [] }) {
 
       <div className={styles.scroller}>
         {posts.map((p) => (
-          <Link key={p.id} href={`/post/${encodeURIComponent((p.title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`} className={styles.card}>
+          <Link key={p.id} href={postUrl(p)} className={styles.card}>
             {p.ogImg ? (
               <div className={styles.thumb} style={{ backgroundImage: `url(${p.ogImg})` }} />
             ) : (

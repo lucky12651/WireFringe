@@ -6,27 +6,8 @@ import Layout from '../components/Layout/Layout';
 import CommentSection from '../components/CommentSection/CommentSection';
 import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
+import { slugifyTitle, postUrl } from '../lib/utils';
 import Loader from '../components/Loader/Loader';
-
-function slugifyTitle(title) {
-  const s = String(title || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return s.slice(0, 90) || 'post';
-}
-
-function postUrl(post) {
-  const id = post?.id;
-  if (!id) return '/';
-  const slug = slugifyTitle(post?.title);
-  return `/post/${encodeURIComponent(slug)}`;
-}
 
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
