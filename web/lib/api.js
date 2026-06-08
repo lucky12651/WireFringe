@@ -182,3 +182,9 @@ export const mediaApi = {
   list: () => api('/api/admin/media', { method: 'GET' }),
   upload: (file) => uploadFile('/api/admin/upload-image', file),
 };
+
+// Logs API
+export const logsApi = {
+  list: (skip = 0, limit = 100) => api(`/api/admin/logs?skip=${skip}&limit=${limit}`, { method: 'GET' }),
+  clear: () => api('/api/admin/logs', { method: 'DELETE' }),
+};

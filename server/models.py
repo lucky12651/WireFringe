@@ -139,3 +139,12 @@ class RecentNewsCache(Base):
     title: Mapped[str] = mapped_column(String, nullable=False, index=True)
     link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+ 
+class BotLog(Base):
+    __tablename__ = "bot_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    level: Mapped[str] = mapped_column(String, nullable=False, default="INFO")
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    module: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

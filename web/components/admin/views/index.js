@@ -5,3 +5,4 @@ export { MediaView } from './MediaView';
 export { CommentsView } from './CommentsView';
 export { UsersView } from './UsersView';
 export { SettingsView } from './SettingsView';
+export { LogsView } from './LogsView';

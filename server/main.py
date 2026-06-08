@@ -18,10 +18,14 @@ from .db import Base, SessionLocal, engine
 from . import models
 from .services import CategoryService
 from .news_bot import start_news_bot_loop
+from .db_logger import setup_db_logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Setup DB logging
+setup_db_logging()
 
 # Setup Rate Limiter
 limiter = Limiter(key_func=get_remote_address)

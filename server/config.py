@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -12,17 +13,17 @@ class Settings(BaseSettings):
     """Application configuration settings."""
 
     # Database
-    database_url: str = os.environ.get("DATABASE_URL", "")
-    db_connect_timeout: int = int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
+    database_url: str = Field("", validation_alias="DATABASE_URL")
+    db_connect_timeout: int = Field(5, validation_alias="DB_CONNECT_TIMEOUT")
 
     # Session/Security
-    session_secret: str = os.environ.get("BLOG_SESSION_SECRET", "dev-secret-change-me")
-    jwt_secret: str = os.environ.get("JWT_SECRET", "dev-jwt-secret-change-me")
+    session_secret: str = Field("dev-secret-change-me", validation_alias="BLOG_SESSION_SECRET")
+    jwt_secret: str = Field("dev-jwt-secret-change-me", validation_alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
     session_cookie: str = "blog_session"
     same_site: str = "lax"
-    https_only: bool = os.environ.get("HTTPS_ONLY", "false").lower() == "true"
+    https_only: bool = Field(False, validation_alias="HTTPS_ONLY")
 
     # CORS
     cors_origins: list[str] = [
@@ -49,17 +50,18 @@ class Settings(BaseSettings):
     backend_port: int = 8003
 
     # AI & Automation
-    ollama_api_url: str = os.environ.get("OLLAMA_API_URL", "https://api.ollama.cloud/v1")
-    ollama_api_key: str = os.environ.get("OLLAMA_API_KEY", "")
-    groq_api_key: str = os.environ.get("GROQ_API_KEY", "")
-    groq_model: str = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-    revalidate_secret: str = os.environ.get("REVALIDATE_SECRET", "dev-revalidate-secret")
+    ollama_api_url: str = Field("https://api.ollama.cloud/v1", validation_alias="OLLAMA_API_URL")
+    ollama_api_key: str = Field("", validation_alias="OLLAMA_API_KEY")
+    groq_api_key: str = Field("", validation_alias="GROQ_API_KEY")
+    groq_model: str = Field("llama-3.3-70b-versatile", validation_alias="GROQ_MODEL")
+    revalidate_secret: str = Field("dev-revalidate-secret", validation_alias="REVALIDATE_SECRET")
 
-    class Config:
-        env_file = Path(__file__).resolve().parent / ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        extra = "ignore"  # Allow extra environment variables without failing
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parent / ".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 
 settings = Settings()

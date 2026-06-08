@@ -22,7 +22,7 @@ export function Sidebar({
         onNavigate={onNavigate}
         pendingCommentsCount={pendingCommentsCount}
       />
-      <SidebarFooter me={me} onLogout={onLogout} />
+      <SidebarFooter me={me} onLogout={onLogout} onNavigate={onNavigate} />
     </aside>
   );
 }

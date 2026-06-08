@@ -13,7 +13,9 @@ const NAV_ITEMS = [
   { id: 'users', label: 'Users', adminOnly: true, icon: 'users' },
 ];
 
-const SYSTEM_ITEMS = [];
+const SYSTEM_ITEMS = [
+  { id: 'logs', label: 'System Logs', adminOnly: true, icon: 'logs' },
+];
 
 export function SidebarNav({
   me,
@@ -28,7 +30,7 @@ export function SidebarNav({
   const renderNavItem = (item) => {
     const isActive = activeView === item.id;
     const isDisabled = !isAuthed;
-    const isHidden = item.id === 'users' && isAuthor;
+    const isHidden = item.adminOnly && me?.role !== 'admin';
 
     return (
       <NavItem

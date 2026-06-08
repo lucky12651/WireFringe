@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { initTheme } from '../lib/theme';
 import { fetcher } from '../lib/api';
 import { pctChange } from '../lib/utils';
-import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia } from '../hooks';
+import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia, useLogs } from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
 import { LoginPage, SignupPage } from '../components/admin/Login';
 import {
@@ -15,6 +15,7 @@ import {
   CommentsView,
   UsersView,
   SettingsView,
+  LogsView,
 } from '../components/admin/views';
 
 export default function AdminPage() {
@@ -28,6 +29,7 @@ export default function AdminPage() {
   const categories = useCategories();
   const comments = useComments();
   const media = useMedia();
+  const logs = useLogs();
   const { me, isAuthed, isLoading, isInitialLoading, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
 
   // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
@@ -282,6 +284,15 @@ export default function AdminPage() {
             onUpdateProfile={auth.updateProfile}
             onUploadPhoto={auth.uploadPhoto}
             onChangePassword={auth.changePassword}
+          />
+        );
+
+      case 'logs':
+        return (
+          <LogsView
+            logs={logs.logs}
+            onRefresh={logs.refreshLogs}
+            isLoading={logs.isLoading}
           />
         );
 

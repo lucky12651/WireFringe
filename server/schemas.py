@@ -189,3 +189,13 @@ class CategoryWithCountOut(BaseModel):
 class InteractionCreate(BaseModel):
     post_id: str
     interaction_type: str = "view"
+
+class BotLogOut(BaseModel):
+    id: int
+    level: str
+    message: str
+    module: str | None = None
+    createdAt: datetime
+
+    class Config:
+        from_attributes = True
