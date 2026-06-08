@@ -73,6 +73,8 @@ class PostService:
             bucket=post.bucket,
             readMinutes=post.read_minutes,
             ogImg=post.og_img,
+            metaDescription=post.meta_description,
+            keywords=post.keywords,
             date=post.published_at,
         )
 
@@ -181,8 +183,10 @@ class PostService:
             content=payload.content or "",
             excerpt=excerpt or "",
             bucket=payload.bucket or "Tech",
-            read_minutes=payload.readMinutes,
+            read_minutes=payload.readMinutes or 1,
             og_img=payload.ogImg,
+            meta_description=payload.metaDescription,
+            keywords=payload.keywords,
             published_at=None,
         )
         created = self.post_repo.create(post)
@@ -203,6 +207,8 @@ class PostService:
         post.excerpt = payload.excerpt or post.excerpt
         post.og_img = payload.ogImg or post.og_img
         post.read_minutes = payload.readMinutes or post.read_minutes
+        post.meta_description = payload.metaDescription or post.meta_description
+        post.keywords = payload.keywords or post.keywords
 
         updated = self.post_repo.update(post)
         return self._build_post_out(updated)

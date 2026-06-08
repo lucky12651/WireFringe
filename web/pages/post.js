@@ -224,7 +224,8 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
   return (
     <Layout
       title={post?.title ? `${post.title} – Coffee n Blog` : undefined}
-      description={post?.excerpt || undefined}
+      description={post?.metaDescription || post?.excerpt || undefined}
+      keywords={post?.keywords || undefined}
       headerProps={{ user, activeCategory: post?.bucket || 'All' }}
       showInlineAd={false}
     >

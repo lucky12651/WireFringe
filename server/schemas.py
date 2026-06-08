@@ -19,6 +19,8 @@ class PostOut(BaseModel):
     bucket: str
     readMinutes: int | None = None
     ogImg: str | None = None
+    metaDescription: str | None = None
+    keywords: str | None = None
 
     date: datetime | None = None
 
@@ -100,6 +102,8 @@ class PostUpsert(BaseModel):
     creator: str | None = None
     ogImg: str | None = None
     readMinutes: int | None = None
+    metaDescription: str | None = None
+    keywords: str | None = None
 
 
 class NewsQueueItem(BaseModel):

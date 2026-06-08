@@ -85,8 +85,16 @@ class NewsBot:
             update_queue_status(db, source_url, "failed_scrape")
             return False
 
+        # Fetch recent posts for internal linking context
+        recent_posts = db.query(Post).order_by(Post.published_at.desc()).limit(15).all()
+        internal_links = [
+            {"title": p.title, "url": f"{settings.ui_url}/post/{p.id}"} 
+            for p in recent_posts
+        ]
+
         article_data = await generate_article(
-            raw_content, source_url, category, item.title, scraped_img, parsed_title
+            raw_content, source_url, category, item.title, scraped_img, parsed_title,
+            internal_links=internal_links
         )
         if not article_data:
             update_queue_status(db, source_url, "failed_gen")
@@ -106,6 +114,8 @@ class NewsBot:
             bucket=article_data.bucket,
             read_minutes=article_data.readMinutes,
             og_img=article_data.ogImg,
+            meta_description=article_data.metaDescription,
+            keywords=article_data.keywords,
             published_at=datetime.now(timezone.utc)
         )
 

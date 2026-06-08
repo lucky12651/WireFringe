@@ -25,6 +25,10 @@ class Post(Base):
     read_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     og_img: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # SEO Fields
+    meta_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    keywords: Mapped[str | None] = mapped_column(Text, nullable=True)  # Comma-separated
+
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 

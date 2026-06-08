@@ -8,6 +8,7 @@ export default function Layout({
   children, 
   title = 'Coffee n Blog – Latest News, Tech, Business & Trending',
   description = 'Stay informed with the latest stories from Coffee n Blog. We cover AI, technology, markets, and more with a focus on quality and verified facts.',
+  keywords = 'news, technology, business, AI, trending, blog',
   headerProps = {},
   showInlineAd = true
 }) {
@@ -16,6 +17,7 @@ export default function Layout({
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
+        {keywords && <meta name="keywords" content={keywords} />}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />

@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from typing import Optional
@@ -150,6 +151,7 @@ async def generate_article(
     fallback_title: str, 
     scraped_img: Optional[str] = None, 
     parsed_title: Optional[str] = None,
+    internal_links: Optional[list[dict]] = None,
     **kwargs
 ) -> Optional[PostUpsert]:
     """
@@ -160,33 +162,72 @@ async def generate_article(
     final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else fallback_title
     final_title = re.split(r' - \w+', final_title)[0].strip()
 
+    # Prepare internal links context
+    links_context = ""
+    if internal_links:
+        links_context = "\nINTERNAL LINKS CONTEXT (Use these to link related terms in the article if relevant):\n"
+        for link in internal_links:
+            links_context += f"- Title: {link['title']}, URL: {link['url']}\n"
+
     try:
         logger.info(f"Generating article for {source_url} using Groq AI paraphrasing.")
         
         system_prompt = (
-            "You are a professional news editor. Paraphrase the provided text into original, neutral journalistic copy while preserving chronological facts.\n\n"
+            "You are a professional news editor and SEO specialist. Paraphrase the provided text into original, neutral journalistic copy while preserving chronological facts.\n\n"
             "CRITICAL FORMATTING INSTRUCTIONS:\n"
-            "1. Output the text using WordPress Gutenberg block comments (, , ).\n"
+            "1. Output the text using WordPress Gutenberg block comments (<!-- wp:paragraph -->, <!-- wp:heading -->, <!-- wp:list -->).\n"
             "2. If you see a Twitter/X link (e.g., twitter.com/user/status/123), extract the URL and output it EXACTLY inside this block format:\n"
-            "   \\n<figure class=\"wp-block-embed is-provider-twitter wp-block-embed-twitter\"><div class=\"wp-block-embed__wrapper\">\\nURL\\n</div></figure>\\n\n"
-            "3. Clean up raw image references. If an image asset URL is provided inline, map it inside an block.\n"
-            "4. Strip out trailing image wrappers or raw 'pic.twitter.com' strings that don't represent standard user paths.\n"
-            "5. Strip all syndicated news noise, share icons, and read time estimates.\n"
-            "6. Output ONLY raw blocks. No introductions, conversational pleasantries, or wrapping backticks."
+            "   \n<figure class=\"wp-block-embed is-provider-twitter wp-block-embed-twitter\"><div class=\"wp-block-embed__wrapper\">\nURL\n</div></figure>\n\n"
+            "3. Clean up raw image references. If an image asset URL is provided inline, map it inside an <!-- wp:image --> block.\n"
+            "4. Strip all syndicated news noise, share icons, and marketing blurbs.\n"
+            "5. Enhance readability with <strong>bold</strong> for key names/entities and <em>italics</em> for emphasis.\n"
+            f"{links_context}\n"
+            "7. IMPORTANT: If any keywords in the content match the 'INTERNAL LINKS CONTEXT' provided above, wrap those keywords in an <a href='URL'> tag to create an internal link.\n\n"
+            "SEO REQUIREMENTS:\n"
+            "8. Generate a meta description (max 160 chars) optimized for search click-through rate.\n"
+            "9. Generate 5-10 SEO keywords (comma-separated) relevant to the article content.\n\n"
+            "OUTPUT FORMAT:\n"
+            "You MUST output your response in JSON format with the following keys:\n"
+            "- 'title': The paraphrased headline.\n"
+            "- 'content': The paraphrased article in Gutenberg blocks.\n"
+            "- 'meta_description': The SEO meta description.\n"
+            "- 'keywords': The comma-separated SEO keywords.\n"
+            "Output ONLY the JSON object."
         )
         
-        paraphrased_content = await groq_client.generate_content(raw_content, system_prompt)
+        response_text = await groq_client.generate_content(raw_content, system_prompt)
         
-        if paraphrased_content == "ERROR_429":
+        # Default values for fallback
+        meta_description = ""
+        keywords = ""
+
+        if response_text == "ERROR_429":
             logger.warning(f"Groq Rate Limit hit for {source_url}. Falling back to manual scripted formatting.")
             content = format_to_wp_blocks(raw_content)
-        elif paraphrased_content:
-            logger.info(f"Successfully paraphrased article for {source_url} using Groq.")
-            # If AI already provided blocks, use them directly; otherwise, fallback to scripted formatting
-            if "<!-- wp:" in paraphrased_content:
-                content = paraphrased_content
-            else:
-                content = format_to_wp_blocks(paraphrased_content)
+        elif response_text:
+            try:
+                # Clean JSON response if AI wraps it in backticks
+                json_str = re.search(r'\{.*\}', response_text, re.DOTALL).group(0)
+                data = json.loads(json_str)
+                
+                final_title = data.get('title', final_title)
+                content = data.get('content', '')
+                meta_description = data.get('meta_description', '')
+                keywords = data.get('keywords', '')
+                
+                logger.info(f"Successfully paraphrased article for {source_url} using Groq with SEO data.")
+                
+                # If AI failed to provide blocks in content, use manual formatter
+                if "<!-- wp:" not in content:
+                    content = format_to_wp_blocks(content or raw_content)
+                    
+            except Exception as e:
+                logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Falling back to text mode.")
+                # If JSON parsing fails, treat response as raw content if it looks like it
+                if "<!-- wp:" in response_text:
+                    content = response_text
+                else:
+                    content = format_to_wp_blocks(response_text)
         else:
             logger.warning(f"Groq paraphrasing failed for {source_url}. Falling back to raw content.")
             content = format_to_wp_blocks(raw_content)
@@ -195,7 +236,7 @@ async def generate_article(
         footer = f"\n\n<!-- wp:paragraph -->\n<p>\nSource context derived from original reporting via <a href=\"{source_url}\">Google News Search</a>.</p>\n<!-- /wp:paragraph -->"
         content += footer
 
-        # Generate cleaner text excerpt
+        # Generate cleaner text excerpt for preview
         plain_text = re.sub(r'<!--.*?-->', '', content)
         plain_text = re.sub(r'<[^>]+>', '', plain_text).strip()
         excerpt = plain_text[:220].rsplit(' ', 1)[0] + "..." if len(plain_text) > 220 else plain_text
@@ -207,7 +248,9 @@ async def generate_article(
             bucket=category,
             creator="Coffee N Blog",
             ogImg=og_img,
-            readMinutes=max(1, len(raw_content.split()) // 200)
+            readMinutes=max(1, len(raw_content.split()) // 200),
+            metaDescription=meta_description,
+            keywords=keywords
         )
     except Exception as e:
         logger.error(f"Error in scripted article generation for {source_url}: {e}")
