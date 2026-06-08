@@ -20,7 +20,7 @@ class GroqClient:
             "Content-Type": "application/json"
         }
 
-        payload = {
+        payload = { 
             "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
@@ -33,6 +33,9 @@ class GroqClient:
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(self.base_url, headers=headers, json=payload)
+                if response.status_code == 429:
+                    logger.warning("Groq API Rate Limit (429) hit.")
+                    return "ERROR_429"
                 response.raise_for_status()
                 data = response.json()
                 return data["choices"][0]["message"]["content"]

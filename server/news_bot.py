@@ -50,7 +50,7 @@ class NewsBot:
                 "Cache-Control": "max-age=0",
             }
         )
-        self.semaphore = asyncio.Semaphore(5)  # Process up to 5 articles concurrently
+        self.semaphore = asyncio.Semaphore(2)  # Process up to 2 articles concurrently to avoid rate limits
 
     async def trigger_revalidation(self):
         try:
@@ -129,7 +129,10 @@ class NewsBot:
     async def process_item_with_semaphore(self, db, item: NewsQueue):
         """Wraps process_item with a semaphore to control concurrency."""
         async with self.semaphore:
-            return await self.process_item(db, item)
+            result = await self.process_item(db, item)
+            # Small delay between items to be polite and avoid rate limits
+            await asyncio.sleep(2)
+            return result
 
     async def run_cycle(self):
         logger.info("NewsBot engine loop initiated: Stage 1 - Gathering tracking feeds...")

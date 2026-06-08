@@ -3,6 +3,7 @@ import re
 from typing import Optional
 
 from .constants import CATEGORY_IMAGES
+from .ai_client import groq_client
 from ..schemas import PostUpsert
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ async def generate_article(
 ) -> Optional[PostUpsert]:
     """
     Assembles article object by directly processing raw content with structural metadata.
-    Now entirely script-based with no AI dependency.
+    Now uses Groq AI for paraphrasing to ensure original content.
     """
     og_img = scraped_img or CATEGORY_IMAGES.get(category)
     final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else fallback_title
@@ -100,10 +101,33 @@ async def generate_article(
     final_title = re.split(r' - \w+', final_title)[0].strip()
 
     try:
-        logger.info(f"Generating article for {source_url} using scripted WordPress blocks.")
+        logger.info(f"Generating article for {source_url} using Groq AI paraphrasing.")
         
-        # Scripted formatting instead of AI
-        content = format_to_wp_blocks(raw_content)
+        # Paraphrase using Groq
+        system_prompt = (
+            "You are a professional news editor. Your task is to paraphrase the following news article content "
+            "to make it original while preserving all facts, quotes, and the chronological order of events. "
+            "Maintain a neutral, journalistic tone. "
+            "IMPORTANT: Output the content ENTIRELY in WordPress Gutenberg block format. "
+            "Use <!-- wp:paragraph --> for text, <!-- wp:heading --> for titles/subtitles, and <!-- wp:list --> for bullet points. "
+            "Enhance the readability by using HTML tags like <strong>bold</strong> for key names/entities and <em>italics</em> for emphasis where appropriate. "
+            "Output ONLY the paraphrased blocks without any greetings or meta-commentary."
+        )
+        paraphrased_content = await groq_client.generate_content(raw_content, system_prompt)
+        
+        if paraphrased_content == "ERROR_429":
+            logger.warning(f"Groq Rate Limit hit for {source_url}. Falling back to manual scripted formatting.")
+            content = format_to_wp_blocks(raw_content)
+        elif paraphrased_content:
+            logger.info(f"Successfully paraphrased article for {source_url} using Groq.")
+            # If AI already provided blocks, use them directly; otherwise, fallback to scripted formatting
+            if "<!-- wp:" in paraphrased_content:
+                content = paraphrased_content
+            else:
+                content = format_to_wp_blocks(paraphrased_content)
+        else:
+            logger.warning(f"Groq paraphrasing failed for {source_url}. Falling back to raw content.")
+            content = format_to_wp_blocks(raw_content)
         
         # Add source attribution footer
         footer = f"\n\n<!-- wp:paragraph -->\n<p>\nSource context derived from original reporting via <a href=\"{source_url}\">Google News Search</a>.</p>\n<!-- /wp:paragraph -->"
