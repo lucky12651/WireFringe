@@ -11,31 +11,56 @@ logger = logging.getLogger(__name__)
 def format_to_wp_blocks(raw_content: str) -> str:
     """
     Script-based formatter that converts raw text into WordPress Gutenberg blocks.
-    Groups text into paragraphs and detects headings.
+    Groups text into paragraphs, detects headings, and handles basic lists.
     """
     if not raw_content:
         return ""
 
-    # Normalize newlines and split into potential blocks by double newlines
-    # This preserves the paragraph structure from the original content
-    raw_blocks = re.split(r'\n\s*\n', raw_content.strip())
+    # Normalize newlines and split into potential blocks by double or more newlines
+    raw_blocks = re.split(r'\n\s*\n+', raw_content.strip())
     
     blocks = []
+    in_list = False
+    list_items = []
+
+    def flush_list():
+        nonlocal in_list, list_items
+        if in_list and list_items:
+            items_html = "".join([f"<li>{item}</li>" for item in list_items])
+            blocks.append(f'<!-- wp:list -->\n<ul>{items_html}</ul>\n<!-- /wp:list -->')
+            list_items = []
+            in_list = False
+
     for raw_block in raw_blocks:
         lines = [line.strip() for line in raw_block.split('\n') if line.strip()]
         if not lines:
             continue
             
+        # Check for list items (starting with -, *, or bullet)
+        first_line = lines[0]
+        if re.match(r'^[\-\*\•]\s+', first_line):
+            if not in_list:
+                in_list = True
+            # Extract text after the bullet for each line in this block if they all look like list items
+            for line in lines:
+                clean_item = re.sub(r'^[\-\*\•]\s+', '', line).strip()
+                if clean_item:
+                    list_items.append(clean_item)
+            continue
+        
+        # If we reach here, we are not in a list block anymore
+        flush_list()
+
         # If a block is just one short line, it might be a heading
         if len(lines) == 1:
             line = lines[0]
             # Heuristic for headings: 
-            # - Short (less than 120 chars)
-            # - Doesn't end with typical sentence punctuation
+            # - Short (less than 100 chars)
+            # - Doesn't end with typical sentence punctuation (except colon)
             # - Not a URL
             is_heading = (
-                len(line) < 120 and 
-                not line.endswith(('.', '!', '?', ':', ';', '"', ')')) and
+                len(line) < 100 and 
+                not line.endswith(('.', '!', '?', ';', '"', ')')) and
                 not line.startswith(('http://', 'https://'))
             )
             
@@ -48,6 +73,9 @@ def format_to_wp_blocks(raw_content: str) -> str:
         # Escape basic HTML entities
         safe_text = full_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         blocks.append(f'<!-- wp:paragraph -->\n<p>{safe_text}</p>\n<!-- /wp:paragraph -->')
+    
+    # Final flush in case content ends with a list
+    flush_list()
             
     return "\n\n".join(blocks)
 
