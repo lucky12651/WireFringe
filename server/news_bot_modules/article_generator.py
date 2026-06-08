@@ -94,7 +94,7 @@ async def generate_article(
             bucket=category,
             creator="Coffee N Blog",
             ogImg=og_img,
-            readMinutes=max(1, len(raw_content.split()) // 220)
+            readMinutes=max(1, len(raw_content.split()) // 200)
         )
     except Exception as e:
         logger.error(f"Error in scripted article generation for {source_url}: {e}")
