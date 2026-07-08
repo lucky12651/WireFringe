@@ -2,7 +2,7 @@
    CnB Global Variables (Google News Theme)
    ======================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 
 /* Hide scrollbars globally */
 * {
@@ -47,8 +47,8 @@
   --space-xl: 32px;
   
   /* Typography */
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Rethink Sans', sans-serif;
+  --font-body: 'Rethink Sans', sans-serif;
   --font-sans: var(--font-body);
   --radius-sm: 6px;
   --radius-md: 10px;
