@@ -248,6 +248,10 @@ async def generate_article(
         plain_text = re.sub(r'<[^>]+>', '', plain_text).strip()
         excerpt = plain_text[:220].rsplit(' ', 1)[0] + "..." if len(plain_text) > 220 else plain_text
 
+        # Clean HTML/Gutenberg comments from title if any got generated
+        final_title = re.sub(r'<[^>]+>', '', final_title)
+        final_title = re.sub(r'<!--.*?-->', '', final_title).strip()
+
         return PostUpsert(
             title=final_title,
             content=content,
