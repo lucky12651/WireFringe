@@ -72,6 +72,7 @@ class NewsBot:
 
         logger.info(f"Processing: {source_url}")
         raw_content, scraped_img, parsed_title, resolved_url = await scrape_article(source_url, self.http_client)
+        logger.info(f"Scraped raw content length: {len(raw_content) if raw_content else 0}")
 
         final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else item.title
         final_title = re.split(r' - \w+', final_title)[0].strip()
@@ -136,14 +137,6 @@ class NewsBot:
             update_queue_status(db, source_url, "db_error")
             return False
 
-    async def process_item_with_semaphore(self, db, item: NewsQueue):
-        """Wraps process_item with a semaphore to control concurrency."""
-        async with self.semaphore:
-            result = await self.process_item(db, item)
-            # Small delay between items to be polite and avoid rate limits
-            await asyncio.sleep(2)
-            return result
-
     async def run_cycle(self):
         logger.info("NewsBot engine loop initiated: Stage 1 - Gathering tracking feeds...")
 
@@ -161,18 +154,45 @@ class NewsBot:
             logger.info("Syncing discovered items into the staging database queue...")
             self.save_to_queue(db, all_items)
 
+            # Check daily post limit (max 4 per day)
+            now = datetime.now(timezone.utc)
+            start_of_day = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+            posts_today = db.query(Post).filter(Post.published_at >= start_of_day).count()
+            remaining_slots = max(0, 12 - posts_today)
+            
+            # Enforce constant gap of 2 hours (7200 seconds) between publications
+            last_post = db.query(Post).order_by(Post.published_at.desc()).first()
+            time_gap_ok = True
+            if last_post and last_post.published_at:
+                elapsed = now - last_post.published_at
+                if elapsed.total_seconds() < 7200:
+                    time_gap_ok = False
+                    remaining_minutes = int((7200 - elapsed.total_seconds()) / 60)
+                    logger.info(f"Time gap restriction: Only {elapsed.total_seconds() / 60:.1f} minutes elapsed since last post. Need to wait another {remaining_minutes} minutes.")
+
+            logger.info(f"Daily limit status: {posts_today}/12 posts published today. Remaining slots: {remaining_slots}")
+
             pending = get_pending_from_queue(db)
-            if pending:
-                logger.info(f"🚀 Stage 2 - Initiating concurrent extraction for {len(pending)} articles...")
+            if pending and remaining_slots > 0 and time_gap_ok:
+                logger.info(f"🚀 Stage 2 - Initiating sequential extraction for up to 1 article (slots: {remaining_slots})...")
                 
-                # Use asyncio.gather to process items concurrently
-                tasks = [self.process_item_with_semaphore(db, item) for item in pending]
-                results = await asyncio.gather(*tasks)
+                success_count = 0
+                for item in pending:
+                    success = await self.process_item(db, item)
+                    if success:
+                        success_count += 1
+                        break  # Only process 1 item per run to respect the gap
+                    else:
+                        # Small delay before trying next item in queue if it fails
+                        await asyncio.sleep(2)
                 
-                success_count = sum(1 for r in results if r)
-                logger.info(f"✨ Successfully finished processing {success_count}/{len(pending)} items.")
-            else:
+                logger.info(f"✨ Successfully finished processing {success_count} items in this cycle.")
+            elif not pending:
                 logger.info("ℹ️ No pending news items to process in this cycle.")
+            elif not time_gap_ok:
+                logger.info("ℹ️ Skipping news extraction due to 2-hour constant gap restriction.")
+            else:
+                logger.info("ℹ️ Daily limit of 12 posts already reached. Skipping news extraction.")
 
             # Step 3: Update personalized recommendations once per day at 2 AM IST (20:30 UTC)
             now_utc = datetime.now(timezone.utc)

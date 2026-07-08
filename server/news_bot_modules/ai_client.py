@@ -15,6 +15,8 @@ class GroqClient:
             logger.warning("GROQ_API_KEY is not set. Skipping AI generation.")
             return ""
 
+        logger.info(f"GROQ REQUEST: model={self.model}, prompt_len={len(prompt)}, system_prompt_len={len(system_prompt)}, api_key_prefix={self.api_key[:10] if self.api_key else 'None'}")
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"

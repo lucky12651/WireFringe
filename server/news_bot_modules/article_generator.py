@@ -158,6 +158,14 @@ async def generate_article(
     Assembles article object by directly processing raw content with structural metadata.
     Uses Groq AI with a strict system instruction to structure media blocks cleanly.
     """
+    if not raw_content:
+        return None
+
+    # Guard against excessively large inputs to prevent 413 Payload Too Large errors
+    if len(raw_content) > 15000:
+        logger.info(f"Truncating excessively large raw content from {len(raw_content)} to 15000 characters.")
+        raw_content = raw_content[:15000]
+
     og_img = scraped_img or CATEGORY_IMAGES.get(category)
     final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else fallback_title
     final_title = re.split(r' - \w+', final_title)[0].strip()
@@ -202,39 +210,38 @@ async def generate_article(
         keywords = ""
 
         if response_text == "ERROR_429":
-            logger.warning(f"Groq Rate Limit hit for {source_url}. Falling back to manual scripted formatting.")
-            content = format_to_wp_blocks(raw_content)
-        elif response_text:
-            try:
-                # Clean JSON response if AI wraps it in backticks
-                json_str = re.search(r'\{.*\}', response_text, re.DOTALL).group(0)
-                data = json.loads(json_str)
+            logger.warning(f"Groq Rate Limit hit for {source_url}. Failing generation because AI is required.")
+            return None
+        elif not response_text:
+            logger.warning(f"Groq paraphrasing failed (empty response) for {source_url}. Failing generation because AI is required.")
+            return None
+
+        try:
+            # Clean JSON response if AI wraps it in backticks
+            json_str = re.search(r'\{.*\}', response_text, re.DOTALL).group(0)
+            data = json.loads(json_str)
+            
+            final_title = data.get('title', final_title)
+            content = data.get('content', '').strip()
+            meta_description = data.get('meta_description', '')
+            keywords = data.get('keywords', '')
+            
+            if not content:
+                logger.warning(f"AI returned empty paraphrased content for {source_url}. Failing generation.")
+                return None
                 
-                final_title = data.get('title', final_title)
-                content = data.get('content', '')
-                meta_description = data.get('meta_description', '')
-                keywords = data.get('keywords', '')
+            logger.info(f"Successfully paraphrased article for {source_url} using Groq Llama with SEO data.")
+            
+            # If AI failed to provide blocks in content, use manual formatter on the AI content
+            if "<!-- wp:" not in content:
+                content = format_to_wp_blocks(content)
                 
-                logger.info(f"Successfully paraphrased article for {source_url} using Groq with SEO data.")
-                
-                # If AI failed to provide blocks in content, use manual formatter
-                if "<!-- wp:" not in content:
-                    content = format_to_wp_blocks(content or raw_content)
-                    
-            except Exception as e:
-                logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Falling back to text mode.")
-                # If JSON parsing fails, treat response as raw content if it looks like it
-                if "<!-- wp:" in response_text:
-                    content = response_text
-                else:
-                    content = format_to_wp_blocks(response_text)
-        else:
-            logger.warning(f"Groq paraphrasing failed for {source_url}. Falling back to raw content.")
-            content = format_to_wp_blocks(raw_content)
+        except Exception as e:
+            logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Failing generation because AI is required.")
+            return None
         
         # Add source attribution footer
-        footer = f"\n\n<!-- wp:paragraph -->\n<p>\nSource context derived from original reporting via <a href=\"{source_url}\">Google News Search</a>.</p>\n<!-- /wp:paragraph -->"
-        content += footer
+        
 
         # Generate cleaner text excerpt for preview
         plain_text = re.sub(r'<!--.*?-->', '', content)
