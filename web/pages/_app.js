@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import '../styles/variables.css';
-import '../styles/admin.css';
+// Single global CSS entry — Next 16 was dropping a second global import (admin.css),
+// which left /admin unstyled in production while CSS modules still loaded.
+import '../styles/globals.css';
 import { initTheme } from '../lib/theme';
 
 import Head from 'next/head';
