@@ -24,19 +24,20 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/coffeenblog
 
 ## 3) Start the backend
 
+Default API port is **8000** (matches GridWork monorepo deploys). Override with `--port` if needed.
+
 ```powershell
-python -m uvicorn server.main:app --reload --port 8003
+python -m uvicorn server.main:app --reload --port 8000
 ```
 
 Troubleshooting:
 
-- If the Next.js homepage shows `TypeError: Failed to fetch`, it usually means the FastAPI backend is not reachable from the Next.js dev server.
-	- Confirm FastAPI is running on `http://127.0.0.1:8003`.
-	- If your backend is on a different host/port, set `BACKEND_URL` before `npm run dev`:
-		- PowerShell: `$env:BACKEND_URL = "http://127.0.0.1:8001"`
+- If the Next.js homepage shows `TypeError: Failed to fetch`, FastAPI is not reachable from Next.js.
+	- Confirm FastAPI is running on `http://127.0.0.1:8000`.
+	- Override: `$env:BACKEND_URL = "http://127.0.0.1:8000"` and `$env:INTERNAL_API_URL = "http://127.0.0.1:8000"` before `npm run dev` / build.
 
 Open:
-- http://127.0.0.1:8003/
+- http://127.0.0.1:8000/
 
 ## Reading a post
 
@@ -56,7 +57,7 @@ Run Next.js and FastAPI as two different servers:
 Terminal 1 (backend):
 
 ```powershell
-python -m uvicorn server.main:app --reload --port 8003
+python -m uvicorn server.main:app --reload --port 8000
 ```
 
 Terminal 2 (frontend):
@@ -72,18 +73,32 @@ Open:
 - Admin: http://127.0.0.1:3000/admin
 
 FastAPI is backend-only (API + `/static/*` for CSS/uploads):
-- http://127.0.0.1:8003/api/health
+- http://127.0.0.1:8000/api/health
 
-The Next.js dev server proxies these paths to FastAPI (see `web/next.config.js`):
-- `/api/*` → `http://127.0.0.1:8003/api/*`
-- `/static/*` → `http://127.0.0.1:8003/static/*`
+The Next.js server proxies these paths to FastAPI (see `web/next.config.js`):
+- `/api/*` → `BACKEND_URL` or `http://127.0.0.1:8000/api/*`
+- `/static/*` → same backend
+
+SSR uses `INTERNAL_API_URL` or `BACKEND_URL` (default `http://127.0.0.1:8000`).
 
 If your backend runs on a different port, set:
 
 ```powershell
-$env:BACKEND_URL = "http://127.0.0.1:8003"
+$env:BACKEND_URL = "http://127.0.0.1:8000"
+$env:INTERNAL_API_URL = "http://127.0.0.1:8000"
 npm run dev
 ```
+
+### GridWork deploy
+
+Use monorepo deploy (Next + FastAPI). Prefer project env:
+
+```env
+BACKEND_URL=http://127.0.0.1:8000
+INTERNAL_API_URL=http://127.0.0.1:8000
+```
+
+Do **not** set `BACKEND_URL=http://host.docker.internal:8003` on GridWork — the API runs **inside** the same container on port 8000.
 
 ### Build
 

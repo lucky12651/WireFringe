@@ -8,12 +8,16 @@ const nextConfig = {
   // Add your LAN IP here if you open the dev server from another device.
   allowedDevOrigins: ['127.0.0.1', 'localhost', '10.5.0.2', '80.225.223.80'],
 
-  // Two-server setup:
+  // Two-server / monorepo setup:
   // - Next.js on :3000 (UI)
-  // - FastAPI on :8003 (API + /static uploads/CSS)
+  // - FastAPI on :8000 by default (GridWork Docker monorepo; override with BACKEND_URL for local)
   // Proxy API + static assets to FastAPI to keep same-origin cookies working.
   async rewrites() {
-    const backend = process.env.BACKEND_URL || 'http://127.0.0.1:8003';
+    const backend = (
+      process.env.BACKEND_URL ||
+      process.env.INTERNAL_API_URL ||
+      'http://127.0.0.1:8000'
+    ).replace(/\/$/, '');
     return [
       {
         source: '/api/:path*',

@@ -29,10 +29,14 @@ class Settings(BaseSettings):
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
         "http://localhost:8003",
         "http://127.0.0.1:8003",
         "http://10.5.0.2:3000",
         "http://80.225.223.80:3000",
+        "https://coffeenblog.gridwork.me",
+        "http://coffeenblog.gridwork.me",
     ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -43,11 +47,11 @@ class Settings(BaseSettings):
     uploads_dir: Path = PROJECT_ROOT / "static" / "uploads"
     static_dir: Path = PROJECT_ROOT / "static"
 
-    # App
+    # App — default 8000 matches GridWork monorepo / Docker (override via BACKEND_URL / BACKEND_PORT)
     app_title: str = "Coffee n Blog API"
     ui_url: str = "http://127.0.0.1:3000"
-    backend_url: str = "http://127.0.0.1:8003"
-    backend_port: int = 8003
+    backend_url: str = Field("http://127.0.0.1:8000", validation_alias="BACKEND_URL")
+    backend_port: int = Field(8000, validation_alias="BACKEND_PORT")
 
     # AI & Automation
     ollama_api_url: str = Field("https://api.ollama.cloud/v1", validation_alias="OLLAMA_API_URL")

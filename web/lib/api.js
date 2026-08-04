@@ -5,11 +5,25 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
+/**
+ * Server-side (SSR / getStaticProps) must call FastAPI directly.
+ * Prefer INTERNAL_API_URL, then BACKEND_URL, then monorepo default :8000
+ * (GridWork / Docker run API on 8000; local can override via env).
+ */
+function internalApiBase() {
+  return (
+    process.env.INTERNAL_API_URL ||
+    process.env.BACKEND_URL ||
+    'http://127.0.0.1:8000'
+  ).replace(/\/$/, '');
+}
+
 export async function api(path, options = {}) {
   // Use absolute URL if on server and not a full URL
-  const url = (typeof window === 'undefined' && !path.startsWith('http'))
-    ? `${process.env.INTERNAL_API_URL || 'http://localhost:8003'}${path}`
-    : path;
+  const url =
+    typeof window === 'undefined' && !path.startsWith('http')
+      ? `${internalApiBase()}${path}`
+      : path;
 
   // Add JWT token if available
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
