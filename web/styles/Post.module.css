@@ -1,11 +1,11 @@
-/* Article page — screenshot 6 dark Verge */
+/* Article page — Verge-like dark longform */
 
 .postPage {
-  padding: 32px 0 64px;
-  /* Wider canvas so article + 300px ad sidebar breathe like modern news sites */
+  padding: 36px 0 72px;
   max-width: 1120px;
   margin: 0 auto;
   position: relative;
+  background: var(--bg, #000);
 }
 
 .post {
@@ -20,7 +20,7 @@
 .skeletonTitle,
 .skeletonImage,
 .skeletonText {
-  background: #1a1a1a;
+  background: #141414;
   border-radius: 2px;
   margin-bottom: 14px;
 }
@@ -29,21 +29,23 @@
 .skeletonText { height: 16px; width: 70%; }
 
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  max-width: 720px;
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
 }
 
 .category {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mint);
 }
@@ -53,24 +55,26 @@
 }
 
 .title {
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2.1rem, 5.2vw, 3.25rem);
   font-weight: 900;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-  margin-bottom: 16px;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  margin-bottom: 18px;
   color: #fff;
 }
 
 .excerpt {
-  font-size: 1.15rem;
-  color: #bbb;
-  line-height: 1.45;
-  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #b8b8b8;
+  line-height: 1.5;
+  margin-bottom: 22px;
+  letter-spacing: -0.01em;
 }
 
 .excerpt::before {
   content: '/ ';
-  color: #666;
+  color: #555;
+  font-weight: 600;
 }
 
 .authorRow {
@@ -117,8 +121,11 @@
 }
 
 .authorName {
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--mint);
 }
 
@@ -140,8 +147,9 @@
 }
 
 .hero {
-  margin-bottom: 28px;
-  background: #111;
+  margin-bottom: 32px;
+  background: #0c0c0c;
+  overflow: hidden;
 }
 
 .hero img {
@@ -152,9 +160,11 @@
 
 .content {
   font-family: var(--font-serif);
-  font-size: 18px;
-  line-height: 1.75;
-  color: #e8e8e8;
+  font-size: 19px;
+  line-height: 1.78;
+  color: #e6e6e6;
+  letter-spacing: 0.005em;
+  max-width: 680px;
 }
 
 .content p {

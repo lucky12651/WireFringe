@@ -2,26 +2,27 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0a0a0a;
+  background: var(--bg, #000);
   color: #fff;
 }
 
 .main {
   flex: 1;
+  background: var(--bg, #000);
 }
 
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 28px;
   width: 100%;
 }
 
-/* Footer — screenshot 5 */
+/* Footer — Verge-style centered brand + links */
 .footer {
-  background: #0a0a0a;
-  border-top: 1px solid #1a1a1a;
-  padding: 56px 24px 40px;
+  background: #000;
+  border-top: 1px solid #161616;
+  padding: 64px 24px 48px;
   margin-top: 0;
   text-align: center;
 }

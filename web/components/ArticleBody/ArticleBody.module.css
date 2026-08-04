@@ -3,9 +3,11 @@
 
 .content {
   font-family: var(--font-serif);
-  font-size: 18px;
-  line-height: 1.75;
-  color: #e8e8e8;
+  font-size: 19px;
+  line-height: 1.78;
+  color: #e6e6e6;
+  letter-spacing: 0.005em;
+  max-width: 680px;
 }
 
 .block {
@@ -13,7 +15,7 @@
 }
 
 .content :global(p) {
-  margin-bottom: 1.35em;
+  margin-bottom: 1.45em;
 }
 
 .content :global(h2),
@@ -21,17 +23,19 @@
 .content :global(h4) {
   font-family: var(--font-sans);
   color: #fff;
-  margin-top: 1.6em;
-  margin-bottom: 0.6em;
+  margin-top: 1.75em;
+  margin-bottom: 0.65em;
+  letter-spacing: -0.03em;
 }
 
 .content :global(h2) {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .content :global(h3) {
-  font-size: 1.25rem;
+  font-size: 1.28rem;
   font-weight: 700;
 }
 

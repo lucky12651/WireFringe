@@ -4,48 +4,49 @@
 .stream {
   min-width: 0;
   flex: 1;
-  min-height: 0; /* allow flex child to scroll */
+  min-height: 0;
   height: 100%;
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px 8px 20px 24px;
+  padding: 18px 10px 20px 22px;
   overflow: hidden;
+  background: var(--bg, #000);
 }
 
-/* Tabs stay pinned at top of the stream panel */
+/* Tabs — Verge pill LATEST / FOLLOWING */
 .tabs {
   display: flex;
   gap: 0;
-  margin: 0 auto 14px;
-  background: #1a1a1a;
+  margin: 0 auto 16px;
+  background: #121212;
   border-radius: 999px;
   padding: 3px;
   width: fit-content;
   flex-shrink: 0;
   z-index: 5;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid #1f1f1f;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
 .tab {
   appearance: none;
   border: none;
   background: transparent;
-  color: #777;
+  color: #6a6a6a;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 9px 18px;
+  padding: 10px 18px;
   border-radius: 999px;
   cursor: pointer;
   transition:
-    background 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.25s ease,
-    box-shadow 0.28s ease;
+    background 0.22s ease,
+    color 0.2s ease,
+    box-shadow 0.22s ease;
 }
 
 .tab:hover {
@@ -55,7 +56,7 @@
 .tabActive {
   background: var(--mint);
   color: #000;
-  box-shadow: 0 2px 16px rgba(60, 255, 208, 0.4);
+  box-shadow: 0 2px 14px rgba(60, 255, 208, 0.35);
 }
 
 .tabActive:hover {
@@ -97,10 +98,10 @@
 }
 
 .item {
-  padding: 20px 4px 20px 0;
-  border-bottom: 1px dotted #333;
-  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transition: background 0.28s ease;
+  padding: 22px 4px 22px 0;
+  border-bottom: 1px dotted var(--border-dotted, #333);
+  animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: background 0.22s ease;
   flex-shrink: 0;
 }
 
@@ -173,19 +174,21 @@
 }
 
 .authorName {
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--mint);
 }
 
 .authorTime {
-  font-size: 10px;
-  color: #666;
-  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #5c5c5c;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .row {
@@ -201,13 +204,13 @@
 
 .title {
   display: block;
-  font-size: 16.5px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   line-height: 1.28;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   color: #fff;
   margin-bottom: 8px;
-  transition: color 0.22s ease;
+  transition: color 0.18s ease;
 }
 
 .title:hover {
@@ -216,27 +219,28 @@
 
 .inlineTitle {
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .body {
   font-size: 14px;
   line-height: 1.55;
-  color: #b8b8b8;
+  color: #a0a0a0;
   margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .item:hover .body {
-  color: #d0d0d0;
+  color: #c4c4c4;
 }
 
 .thumb {
-  width: 76px;
-  height: 76px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   overflow: hidden;
-  background: #1a1a1a;
-  border-radius: 2px;
+  background: #111;
 }
 
 .thumb img {

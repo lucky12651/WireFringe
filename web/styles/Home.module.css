@@ -1,39 +1,39 @@
-/* Homepage — polished Verge two-column; stream runs full page height */
+/* Homepage — Verge two-column: stories left, latest stream right */
 
 .page {
   padding-bottom: 0;
+  background: var(--bg, #000);
 }
 
 .homeGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--stream-width, 400px);
+  grid-template-columns: minmax(0, 1fr) var(--stream-width, 380px);
   gap: 0;
-  /* Left column sets height; right sticks and scrolls inside */
   align-items: start;
   min-height: 60vh;
   position: relative;
 }
 
-/* Vertical dotted line — height follows left content */
+/* Vertical dotted divider between main + stream */
 .homeGrid::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  right: var(--stream-width, 400px);
+  right: var(--stream-width, 380px);
   width: 0;
-  border-left: 1px dotted #3a3a3a;
+  border-left: 1px dotted var(--border-dotted, #333);
   pointer-events: none;
   z-index: 1;
 }
 
 .leftCol {
   min-width: 0;
-  padding: 20px 32px 48px 0;
+  padding: 24px 36px 64px 0;
 }
 
 .homeAd {
-  margin: 20px 0 24px;
+  margin: 28px 0 32px;
   width: 100%;
 }
 
@@ -41,30 +41,31 @@
   margin-top: 8px;
 }
 
-/* Right column: sticky panel + own scrollbar; stops when left ends */
+/* Right column: sticky panel + own scrollbar */
 .rightCol {
   min-width: 0;
   position: sticky;
-  top: var(--header-height, 84px);
-  height: calc(100vh - var(--header-height, 84px));
-  max-height: calc(100vh - var(--header-height, 84px));
+  top: var(--header-height, 88px);
+  height: calc(100vh - var(--header-height, 88px));
+  max-height: calc(100vh - var(--header-height, 88px));
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-self: start;
+  background: var(--bg, #000);
 }
 
-/* Package section */
+/* Package section — Verge "Title / subtitle" blocks */
 .package {
-  margin-top: 40px;
+  margin-top: 48px;
   padding-top: 0;
-  animation: sectionIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sectionIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes sectionIn {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -74,11 +75,11 @@
 
 .packageRule {
   height: 2px;
-  background: linear-gradient(90deg, var(--mint), transparent 85%);
+  background: linear-gradient(90deg, var(--mint) 0%, var(--mint) 12%, transparent 90%);
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   transform-origin: left;
-  animation: ruleGrow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ruleGrow 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes ruleGrow {
@@ -91,63 +92,59 @@
 }
 
 .packageHead {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 22px;
   color: #fff;
+  line-height: 1.2;
 }
 
 .packageHead span {
-  color: #777;
+  color: #6e6e6e;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .packageLayout {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 24px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 28px;
   align-items: start;
 }
 
 .packageFeature {
   display: block;
   color: inherit;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.packageFeature:hover {
-  transform: translateY(-4px);
 }
 
 .packageFeatureImg {
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: #1a1a1a;
-  margin-bottom: 14px;
-  border-radius: 2px;
+  background: #111;
+  margin-bottom: 16px;
 }
 
 .packageFeatureImg img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .packageFeature:hover .packageFeatureImg img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .packageFeatureTitle {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  margin-bottom: 8px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
   color: #fff;
-  transition: color 0.2s ease;
+  transition: color 0.18s ease;
 }
 
 .packageFeature:hover .packageFeatureTitle {
@@ -156,9 +153,10 @@
 
 .packageFeatureDek {
   font-size: 15px;
-  color: #999;
-  margin-bottom: 10px;
-  line-height: 1.45;
+  color: #9a9a9a;
+  margin-bottom: 12px;
+  line-height: 1.48;
+  letter-spacing: -0.01em;
 }
 
 .packageList {
@@ -169,12 +167,11 @@
 
 .packageItem {
   display: grid;
-  grid-template-columns: 1fr 72px;
-  gap: 14px;
-  padding: 16px 0;
-  border-bottom: 1px dotted #333;
+  grid-template-columns: 1fr 80px;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px dotted var(--border-dotted, #333);
   color: inherit;
-  transition: background 0.2s;
 }
 
 .packageItem:first-child {
@@ -186,39 +183,38 @@
 }
 
 .packageItem:hover .packageThumb img {
-  transform: scale(1.08);
+  transform: scale(1.07);
 }
 
 .packageItemTitle {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.25;
   color: #fff;
   margin-bottom: 6px;
-  transition: color 0.2s ease;
-  letter-spacing: -0.02em;
+  transition: color 0.18s ease;
+  letter-spacing: -0.025em;
 }
 
 .packageItemDek {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #888;
   margin-bottom: 8px;
-  line-height: 1.4;
+  line-height: 1.42;
 }
 
 .packageThumb {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   overflow: hidden;
-  background: #1a1a1a;
-  border-radius: 2px;
+  background: #111;
 }
 
 .packageThumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .metaRow {
@@ -230,43 +226,44 @@
 }
 
 .author {
+  font-family: var(--font-mono);
   color: var(--mint);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Most Popular */
+/* Most Popular — big ranked list like Verge */
 .mostPopular {
-  margin-top: 44px;
-  scroll-margin-top: 80px;
+  margin-top: 52px;
+  scroll-margin-top: 90px;
 }
 
 .mostPopular .packageRule {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .mostPopular h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  letter-spacing: -0.03em;
 }
 
 .rankList {
   list-style: none;
-  margin: 0;
+  margin: 12px 0 0;
   padding: 0;
 }
 
 .rankItem {
   display: grid;
-  grid-template-columns: 40px 1fr;
-  gap: 14px;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
   align-items: start;
-  padding: 16px 0;
-  border-bottom: 1px dotted #333;
-  transition: background 0.2s;
+  padding: 18px 0;
+  border-bottom: 1px dotted var(--border-dotted, #333);
 }
 
 .rankItem:hover .rankTitle {
@@ -279,61 +276,66 @@
 }
 
 .rankNum {
-  width: 32px;
-  height: 32px;
-  background: #1a1a1a;
+  width: 36px;
+  height: 36px;
+  background: #141414;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 15px;
+  font-family: var(--font-mono);
   border-radius: 2px;
-  transition: background 0.25s, color 0.25s, transform 0.25s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s;
 }
 
 .rankItem:hover .rankNum {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .rankTitle {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
   color: #fff;
   display: block;
-  margin-bottom: 6px;
-  letter-spacing: -0.02em;
-  transition: color 0.2s ease;
+  margin-bottom: 8px;
+  letter-spacing: -0.025em;
+  transition: color 0.18s ease;
 }
 
 /* Category rows */
 .catSection {
-  margin-top: 44px;
+  margin-top: 52px;
 }
 
 .catHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   border-top: 2px solid var(--mint);
-  padding-top: 14px;
+  padding-top: 16px;
 }
 
 .catHeader h2 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .catMore {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #777;
-  transition: color 0.2s;
+  color: #6a6a6a;
+  font-weight: 700;
+  transition: color 0.18s;
 }
 
 .catMore:hover {
@@ -343,47 +345,41 @@
 .catGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  gap: 20px;
 }
 
 .catCard {
   display: block;
   color: inherit;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.catCard:hover {
-  transform: translateY(-5px);
 }
 
 .catCardImg {
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: #1a1a1a;
-  margin-bottom: 10px;
-  border-radius: 2px;
+  background: #111;
+  margin-bottom: 12px;
 }
 
 .catCardImg img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .catCard:hover .catCardImg img {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .catCardTitle {
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 15.5px;
+  font-weight: 800;
+  line-height: 1.28;
   color: #fff;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-  transition: color 0.2s;
+  margin-bottom: 10px;
+  letter-spacing: -0.025em;
+  transition: color 0.18s;
 }
 
 .catCard:hover .catCardTitle {

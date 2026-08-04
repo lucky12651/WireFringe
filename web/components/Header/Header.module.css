@@ -14,6 +14,7 @@
   z-index: 11000;
   background: #000;
   width: 100%;
+  border-bottom: 1px solid transparent;
 }
 
 /* Shared width shell — logo left edge, nav+icons right edge */
@@ -113,9 +114,9 @@
 }
 
 .logoText {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.06em;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.065em;
   line-height: 1;
   white-space: nowrap;
   color: #fff;
@@ -163,20 +164,21 @@
   appearance: none;
   background: none;
   border: none;
-  color: #f0f0f0;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 2px 7px;
+  color: #e8e8e8;
+  font-size: 14.5px;
+  font-weight: 600;
+  padding: 2px 8px;
   cursor: pointer;
   white-space: nowrap;
   font-family: var(--font-body, Inter, Helvetica, Arial, sans-serif);
   transition: color 0.15s ease;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .navLink:hover,
 .navActive {
-  color: #fff;
+  color: var(--mint);
 }
 
 /* Icons sit immediately after the category list (right side) */

@@ -1,6 +1,6 @@
 /* =========================================================
-   Coffee n Blog — The Verge DARK design system
-   Matched to Desktop screenshots 1–9 + theverge.com
+   Coffee n Blog — The Verge–inspired dark design system
+   Pure black canvas · mint accents · purple hover highlights
    ========================================================= */
 
 * {
@@ -8,35 +8,36 @@
   margin: 0;
   padding: 0;
   scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+  scrollbar-color: #3a3a3a transparent;
 }
 
 :root,
 html,
 html[data-theme='dark'],
 html[data-theme='light'] {
-  /* Force Verge dark look (screenshots are dark) */
-  --bg: #0a0a0a;
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #0a0a0a;
-  --bg-elevated: #141414;
+  /* Pure black Verge canvas */
+  --bg: #000000;
+  --bg-primary: #000000;
+  --bg-secondary: #050505;
+  --bg-elevated: #111111;
   --bg-tertiary: #141414;
-  --bg-hover: #1a1a1a;
-  --bg-header: #0a0a0a;
-  --bg-card: #111111;
-  --bg-stream: #0a0a0a;
-  --bg-highlight: #5b4bff; /* purple title highlight */
+  --bg-hover: #161616;
+  --bg-header: #000000;
+  --bg-card: #0c0c0c;
+  --bg-stream: #000000;
+  --bg-highlight: #5b4bff; /* purple title highlight on hover */
 
   --text: #ffffff;
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #666666;
+  --text-secondary: #a8a8a8;
+  --text-tertiary: #6b6b6b;
   --text-muted: #555555;
-  --text-soft: #cccccc;
-  --text-dek: #dddddd;
+  --text-soft: #c8c8c8;
+  --text-dek: #d4d4d4;
 
   --mint: #3cffd0;
   --mint-hover: #2ee6b8;
+  --mint-dim: rgba(60, 255, 208, 0.12);
   --purple: #5b4bff;
   --purple-deep: #5200ff;
 
@@ -49,14 +50,15 @@ html[data-theme='light'] {
   --brand-accent-rgb: 60, 255, 208;
 
   --border: #2a2a2a;
-  --border-dim: #2a2a2a;
-  --border-light: #1f1f1f;
+  --border-dim: #222222;
+  --border-light: #1a1a1a;
   --border-strong: #3a3a3a;
-  --border-header: #1a1a1a;
+  --border-header: #141414;
+  --border-dotted: #333333;
 
   --max-width: 1280px;
-  --header-height: 84px;
-  --stream-width: 400px;
+  --header-height: 88px;
+  --stream-width: 380px;
 
   --space-xs: 4px;
   --space-sm: 8px;
@@ -69,17 +71,28 @@ html[data-theme='light'] {
   --font-heading: 'Inter', Helvetica, Arial, sans-serif;
   --font-body: 'Inter', Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-serif: Georgia, 'Times New Roman', 'Liberation Serif', serif;
+
+  /* Type scale (Verge-like hierarchy) */
+  --fs-hero: clamp(1.85rem, 4.2vw, 3rem);
+  --fs-h1: clamp(1.75rem, 3.5vw, 2.75rem);
+  --fs-h2: 1.35rem;
+  --fs-h3: 1.125rem;
+  --fs-card: 1.05rem;
+  --fs-body: 1.0625rem;
+  --fs-dek: 1.0625rem;
+  --fs-meta: 0.6875rem;
+  --fs-stream: 0.9375rem;
 
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
   --radius-pill: 999px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
-  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.65);
 
   color-scheme: dark;
 }
@@ -96,21 +109,27 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
+  letter-spacing: -0.011em;
 }
 
 /* Global motion polish */
 a,
 button {
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease,
-    transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.2s ease,
+    opacity 0.18s ease,
+    box-shadow 0.2s ease;
 }
 
 img {
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 ::selection {
-  background: rgba(60, 255, 208, 0.28);
+  background: rgba(60, 255, 208, 0.3);
   color: #fff;
 }
 
@@ -124,12 +143,17 @@ img {
   }
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
-  line-height: 1.15;
+  line-height: 1.12;
   color: var(--text-primary);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 a {
@@ -143,7 +167,10 @@ img {
   display: block;
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   font-family: inherit;
 }
 
@@ -159,15 +186,15 @@ button, input, textarea, select {
   border: 0 !important;
 }
 
-/* Mint subscribe chip — exact Verge style */
+/* Mint subscribe chip — Verge style */
 .btn-subscribe {
   display: inline-block;
   background: var(--mint) !important;
   color: #000 !important;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 6px 10px;
   border-radius: 2px;
@@ -204,5 +231,15 @@ button, input, textarea, select {
   background: var(--bg-highlight);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  padding: 0 0.12em;
+  padding: 0 0.1em;
+}
+
+/* Meta / byline — mint mono uppercase */
+.meta-author {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mint);
 }
