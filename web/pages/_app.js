@@ -37,10 +37,11 @@ export default function App({ Component, pageProps }) {
         if (el.dataset.cnbPushed === 'true') return;
 
         // Avoid the common "availableWidth=0" TagError.
-        // Only push when the element has a real, measurable size.
-        const w = el.offsetWidth || 0;
-        const h = el.offsetHeight || 0;
-        if (w < 50 || h < 50) return;
+        // Prefer width; height can be short for leaderboards (90px).
+        const w = el.offsetWidth || el.parentElement?.offsetWidth || 0;
+        const h = el.offsetHeight || el.parentElement?.offsetHeight || 0;
+        if (w < 50) return;
+        if (h > 0 && h < 40) return;
 
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});

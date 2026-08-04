@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Layout from '../components/Layout/Layout';
 import HeroSection from '../components/HeroSection/HeroSection';
 import { fetcher } from '../lib/api';
-import { postUrl } from '../lib/utils';
+import { postUrl, postExcerpt } from '../lib/utils';
 import Loader from '../components/Loader/Loader';
 import styles from '../styles/Home.module.css';
 
@@ -24,9 +24,7 @@ function formatRelative(date) {
 }
 
 function excerpt(post, max = 160) {
-  const raw = String(post?.excerpt || '').trim();
-  if (raw) return raw.length > max ? raw.slice(0, max) + '…' : raw;
-  return '';
+  return postExcerpt(post, max);
 }
 
 function initials(name) {

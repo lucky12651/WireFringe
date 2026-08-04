@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { postUrl } from '../../lib/utils';
+import { postUrl, postExcerpt } from '../../lib/utils';
 import styles from './SearchResults.module.css';
 
 function formatDate(date) {
@@ -34,7 +34,9 @@ export default function SearchResults({ results = [], query = '' }) {
                     <time>{formatDate(post.date)}</time>
                   </div>
                   <h3 className={styles.cardTitle}>{post.title}</h3>
-                  <p className={styles.excerpt}>{post.excerpt}</p>
+                  {postExcerpt(post, 180) ? (
+                    <p className={styles.excerpt}>{postExcerpt(post, 180)}</p>
+                  ) : null}
                 </div>
               </article>
             </Link>

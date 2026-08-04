@@ -21,6 +21,8 @@ class PostOut(BaseModel):
     ogImg: str | None = None
     metaDescription: str | None = None
     keywords: str | None = None
+    # Approved public comments only (pending do not count)
+    commentCount: int = 0
 
     date: datetime | None = None
 

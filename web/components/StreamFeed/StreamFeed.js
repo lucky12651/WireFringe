@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { postUrl } from '../../lib/utils';
+import { postUrl, postExcerpt } from '../../lib/utils';
 import styles from './StreamFeed.module.css';
 
 function author(post) {
@@ -19,9 +19,7 @@ function formatRelative(date) {
 }
 
 function excerpt(post, max = 180) {
-  const raw = String(post?.excerpt || '').trim();
-  if (raw) return raw.length > max ? raw.slice(0, max) + '…' : raw;
-  return '';
+  return postExcerpt(post, max);
 }
 
 function initials(name) {
@@ -183,7 +181,7 @@ export default function StreamFeed({
 
                 <div className={styles.actions}>
                   <span className={styles.action} title="Comments">
-                    <ChatIcon /> {post.readMinutes || 0}
+                    <ChatIcon /> {Number(post.commentCount) || 0}
                   </span>
                   <span className={styles.action} title="Share">
                     <ShareIcon />

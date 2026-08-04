@@ -152,3 +152,19 @@ class CommentRepository(BaseRepository[Comment]):
         result = self.db.execute(delete(Comment).where(Comment.post_id == post_id))
         self.db.commit()
         return result.rowcount
+
+    def count_approved_by_post_ids(self, post_ids: list[str]) -> dict[str, int]:
+        """Return approved comment counts keyed by post_id."""
+        if not post_ids:
+            return {}
+        # Deduplicate while preserving type
+        ids = list({str(pid) for pid in post_ids if pid is not None and str(pid)})
+        if not ids:
+            return {}
+        rows = self.db.execute(
+            select(Comment.post_id, func.count(Comment.id))
+            .where(Comment.post_id.in_(ids))
+            .where(Comment.approved.is_(True))
+            .group_by(Comment.post_id)
+        ).all()
+        return {str(post_id): int(count or 0) for post_id, count in rows}

@@ -6,13 +6,23 @@ import Layout from '../components/Layout/Layout';
 import HeroSection from '../components/HeroSection/HeroSection';
 import NewsletterSignup from '../components/NewsletterSignup/NewsletterSignup';
 import StreamFeed from '../components/StreamFeed/StreamFeed';
+import AdUnit from '../components/AdUnit/AdUnit';
 import { fetcher, api } from '../lib/api';
-import { postUrl } from '../lib/utils';
+import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
+import { AD_SLOTS } from '../lib/ads';
 import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
 import styles from '../styles/Home.module.css';
 
-const CATEGORIES = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
+const CATEGORIES = [
+  'All',
+  'AI & Future Tech',
+  'Tech',
+  'Business & Markets',
+  'Personal Finance',
+  'India News',
+  'Sports',
+];
 
 function slugifyCategory(cat) {
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
@@ -23,25 +33,13 @@ function unslugifyCategory(slug) {
   return CATEGORIES.find((c) => slugifyCategory(c) === slug) || 'All';
 }
 
-function stripHtml(html) {
-  if (!html) return '';
-  if (typeof window === 'undefined') return String(html).replace(/<[^>]+>/g, ' ');
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
-}
-
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
 }
 
 function excerpt(post, max = 160) {
-  const raw = String(post?.excerpt || '').trim();
-  if (raw) return raw.length > max ? raw.slice(0, max) + '…' : raw;
-  const from = stripHtml(post?.content || '').replace(/\s+/g, ' ').trim();
-  if (!from) return '';
-  return from.slice(0, max) + (from.length > max ? '…' : '');
+  return postExcerpt(post, max);
 }
 
 function author(post) {
@@ -60,6 +58,7 @@ export async function getStaticProps() {
       excerpt: p.excerpt,
       bucket: p.bucket,
       readMinutes: p.readMinutes ?? null,
+      commentCount: Number(p.commentCount) || 0,
       ogImg: p.ogImg ?? null,
       date: p.date ?? null,
     }));
@@ -137,11 +136,26 @@ export default function HomePage({ initialPosts }) {
       .slice(0, 5);
   }, [filtered]);
 
-  const packageA = filtered.slice(5, 9);
-  const packageB = filtered.slice(9, 13);
+  // Package blocks themed to real site content (feature + up to 3 cards)
+  const packageA = filtered
+    .filter((p) =>
+      ['AI & Future Tech', 'Future Tech', 'Tech', 'Technology'].includes(p.bucket)
+    )
+    .slice(0, 4);
+  const packageC = filtered
+    .filter((p) => ['Business & Markets', 'Business'].includes(p.bucket))
+    .slice(0, 4);
+  const packageB = filtered.filter((p) => p.bucket === 'India News').slice(0, 4);
+  const packageD = filtered
+    .filter((p) => ['Personal Finance', 'Gadgets'].includes(p.bucket))
+    .slice(0, 4);
+
   const catTech = filtered.filter((p) => p.bucket === 'Tech').slice(0, 4);
   const catAI = filtered.filter((p) => p.bucket === 'AI & Future Tech').slice(0, 4);
   const catBiz = filtered.filter((p) => p.bucket === 'Business & Markets').slice(0, 4);
+  const catFinance = filtered.filter((p) => p.bucket === 'Personal Finance').slice(0, 4);
+  const catIndia = filtered.filter((p) => p.bucket === 'India News').slice(0, 4);
+  const catSports = filtered.filter((p) => p.bucket === 'Sports').slice(0, 4);
 
   return (
     <Layout
@@ -167,16 +181,37 @@ export default function HomePage({ initialPosts }) {
             <div className={styles.leftCol}>
               <HeroSection posts={heroPosts} />
 
-              {/* Package 1 */}
+              {/* 1 — Leaderboard under hero */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+              </div>
+
               {packageA.length > 0 && (
                 <PackageBlock
-                  title="Dynamic range"
-                  subtitle="The latest ways to take photos and record video."
+                  title="AI frontline"
+                  subtitle="Enterprise AI, cyber security, and the tools rewriting how we work."
                   posts={packageA}
                 />
               )}
 
-              {/* Most Popular */}
+              {/* 2 — Between AI frontline & Market pulse */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+              </div>
+
+              {packageC.length > 0 && (
+                <PackageBlock
+                  title="Market pulse"
+                  subtitle="Business moves, markets, and the strategy stories behind the numbers."
+                  posts={packageC}
+                />
+              )}
+
+              {/* 3 — Before Most Popular */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+              </div>
+
               {mostRead.length > 0 && (
                 <section className={styles.mostPopular} id="most-popular">
                   <div className={styles.packageRule} />
@@ -200,22 +235,76 @@ export default function HomePage({ initialPosts }) {
                 </section>
               )}
 
-              {/* Package 2 */}
+              {/* 4 — After Most Popular */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+              </div>
+
               {packageB.length > 0 && (
                 <PackageBlock
-                  title="Consoles in crisis"
-                  subtitle="The future looks increasingly expensive and digital."
+                  title="India desk"
+                  subtitle="Politics, policy, and national headlines from across the country."
                   posts={packageB}
                 />
               )}
 
+              {/* 5 — Between India desk & Wallet watch */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+              </div>
+
+              {packageD.length > 0 && (
+                <PackageBlock
+                  title="Wallet watch"
+                  subtitle="Personal finance, tax, gold, and money moves that hit home."
+                  posts={packageD}
+                />
+              )}
+
+              {/* 6 — Before category rows */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+              </div>
+
               <CategoryRow title="Latest from Tech" posts={catTech} href="/?category=tech" />
-              <CategoryRow title="Latest from AI" posts={catAI} href="/?category=ai-future-tech" />
               <CategoryRow
-                title="Latest from Business"
+                title="Latest from AI & Future Tech"
+                posts={catAI}
+                href="/?category=ai-future-tech"
+              />
+
+              {/* 7 — Mid category stack */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+              </div>
+
+              <CategoryRow
+                title="Latest from Business & Markets"
                 posts={catBiz}
                 href="/?category=business-markets"
               />
+              <CategoryRow
+                title="Latest from Personal Finance"
+                posts={catFinance}
+                href="/?category=personal-finance"
+              />
+
+              {/* 8 — Lower page rectangle */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+              </div>
+
+              <CategoryRow
+                title="Latest from India News"
+                posts={catIndia}
+                href="/?category=india-news"
+              />
+              <CategoryRow title="Latest from Sports" posts={catSports} href="/?category=sports" />
+
+              {/* 9 — Bottom of home feed */}
+              <div className={styles.homeAd}>
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+              </div>
             </div>
 
             {/* RIGHT — polished LATEST stream */}

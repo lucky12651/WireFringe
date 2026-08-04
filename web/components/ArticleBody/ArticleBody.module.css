@@ -1,0 +1,102 @@
+/* Article body inherits post content typography via :global parent .content
+   but we also define styles here so ads nest cleanly. */
+
+.content {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.75;
+  color: #e8e8e8;
+}
+
+.block {
+  /* each original HTML block */
+}
+
+.content :global(p) {
+  margin-bottom: 1.35em;
+}
+
+.content :global(h2),
+.content :global(h3),
+.content :global(h4) {
+  font-family: var(--font-sans);
+  color: #fff;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+}
+
+.content :global(h2) {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.content :global(h3) {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.content :global(a) {
+  color: var(--mint);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(60, 255, 208, 0.35);
+}
+
+.content :global(a):hover {
+  text-decoration-color: var(--mint);
+}
+
+.content :global(ul),
+.content :global(ol) {
+  margin: 0 0 1.35em 1.2em;
+}
+
+.content :global(blockquote) {
+  margin: 1.5em 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--mint);
+  color: #aaa;
+}
+
+.content :global(img) {
+  margin: 1.3em 0;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.content :global(pre) {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 1.3em 0;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  border-radius: 4px;
+}
+
+.content :global(code) {
+  font-family: var(--font-mono);
+  background: rgba(60, 255, 208, 0.08);
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+
+.content :global(pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+/* Wrapper around mid-paragraph ads — full break from reading flow */
+.inlineAdWrap {
+  width: 100%;
+  margin: 8px 0 12px;
+  clear: both;
+}
+
+/* Slightly tighten last p before an ad so spacing feels intentional */
+.block + .inlineAdWrap {
+  margin-top: 4px;
+}
+

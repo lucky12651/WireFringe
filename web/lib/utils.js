@@ -73,14 +73,62 @@ export function postUrl(post) {
 export function truncateText(text, maxLength, suffix = '…') {
   const s = String(text || '').trim();
   if (s.length <= maxLength) return s;
-  return s.slice(0, maxLength) + suffix;
+  // Prefer breaking on a word boundary so previews don't cut mid-word
+  const cut = s.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(' ');
+  const base = lastSpace > Math.floor(maxLength * 0.6) ? cut.slice(0, lastSpace) : cut;
+  return base.trimEnd() + suffix;
+}
+
+/**
+ * Strip WordPress Gutenberg comments, HTML tags, and decode common entities
+ * so card previews never show raw markup like `<!-- wp:paragraph -->`.
+ */
+export function stripHtml(html) {
+  let s = String(html || '');
+  if (!s) return '';
+
+  // WordPress / HTML comments (including <!-- wp:paragraph -->)
+  s = s.replace(/<!--[\s\S]*?-->/g, ' ');
+  // Scripts / styles
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ');
+  s = s.replace(/<style[\s\S]*?<\/style>/gi, ' ');
+  // All remaining tags
+  s = s.replace(/<\/?[^>]+>/g, ' ');
+  // Decode common entities
+  s = s
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => {
+      const code = Number(n);
+      return Number.isFinite(code) ? String.fromCharCode(code) : '';
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => {
+      const code = parseInt(h, 16);
+      return Number.isFinite(code) ? String.fromCharCode(code) : '';
+    });
+
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 export function sanitizePreview(text) {
-  return String(text || '')
-    .trim()
-    .replace(/\n/g, ' ')
-    .replace(/\s+/g, ' ');
+  return stripHtml(text);
+}
+
+/**
+ * Clean plain-text excerpt for cards (home packages, hero, stream, search).
+ * Prefers post.excerpt, falls back to content.
+ */
+export function postExcerpt(post, max = 160) {
+  const fromExcerpt = stripHtml(post?.excerpt || '');
+  const fromContent = fromExcerpt ? '' : stripHtml(post?.content || '');
+  const text = fromExcerpt || fromContent;
+  if (!text) return '';
+  return truncateText(text, max);
 }
 
 /**

@@ -105,6 +105,15 @@
   margin-bottom: 16px;
 }
 
+.footerLegal a {
+  color: #888;
+  text-decoration: none;
+}
+
+.footerLegal a:hover {
+  color: var(--mint);
+}
+
 .footerLegal span {
   color: #555;
 }

@@ -32,6 +32,15 @@
   padding: 20px 32px 48px 0;
 }
 
+.homeAd {
+  margin: 20px 0 24px;
+  width: 100%;
+}
+
+.homeAd + .homeAd {
+  margin-top: 8px;
+}
+
 /* Right column: sticky panel + own scrollbar; stops when left ends */
 .rightCol {
   min-width: 0;

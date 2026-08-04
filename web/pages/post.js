@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout/Layout';
 import CommentSection from '../components/CommentSection/CommentSection';
+import ArticleBody from '../components/ArticleBody/ArticleBody';
+import AdUnit from '../components/AdUnit/AdUnit';
 import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
-import { slugifyTitle, postUrl } from '../lib/utils';
+import { slugifyTitle, postUrl, stripHtml } from '../lib/utils';
+import { AD_SLOTS } from '../lib/ads';
 import Loader from '../components/Loader/Loader';
 
 function formatDate(date) {
@@ -16,14 +19,6 @@ function formatDate(date) {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-function stripHtml(html) {
-  if (!html) return '';
-  if (typeof window === 'undefined') return String(html).replace(/<[^>]+>/g, ' ');
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
 }
 
 function getInitials(name) {
@@ -41,16 +36,26 @@ function getInitials(name) {
 }
 
 export async function getServerSideProps(context) {
-  const { query, req, asPath } = context;
+  const { query, params, asPath } = context;
   const isPreview = query.preview === 'true';
 
   if (isPreview) {
     return { props: { initialPost: null, initialLatest: [], isPreview: true } };
   }
 
-  const slugMatch = asPath.match(/^\/post\/([^/?#]+)/);
-  const slug = slugMatch ? decodeURIComponent(slugMatch[1]) : null;
-  const id = query.id;
+  // Prefer dynamic [slug] param, then path, then ?id=
+  const path = String(asPath || '');
+  const slugMatch = path.match(/^\/post\/([^/?#]+)/);
+  const rawSlug = params?.slug || (slugMatch ? slugMatch[1] : null);
+  let slug = null;
+  if (rawSlug) {
+    try {
+      slug = decodeURIComponent(String(rawSlug));
+    } catch {
+      slug = String(rawSlug);
+    }
+  }
+  const id = query?.id;
 
   try {
     const postUrl = slug
@@ -245,8 +250,6 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
           <article className={styles.post}>
             {/* Post Header */}
             <header className={styles.header}>
-              {/* horizontal ad removed */}
-
               <div className={styles.meta}>
                 <span className={styles.category}>{post.bucket || 'News'}</span>
                 <span aria-hidden="true">•</span>
@@ -282,15 +285,9 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                   </div>
                 </div>
               )}
-
-              {/* {post.excerpt && (
-                <p className={styles.excerpt}>{post.excerpt}</p>
-              )} */}
             </header>
 
-            {/* Post Layout */}
             <div className={styles.layout}>
-              {/* Main Content */}
               <div className={styles.contentWrapper}>
                 {post.ogImg && (
                   <figure className={styles.hero}>
@@ -298,14 +295,17 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                   </figure>
                 )}
 
-                <div
-                  className={styles.content}
-                  dangerouslySetInnerHTML={{
-                    __html: post.content || `<p>${stripHtml(post.excerpt || '')}</p>`,
-                  }}
+                {/* Top-of-article leaderboard (modern news pattern) */}
+                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+
+                {/* Body with inline ads between paragraphs */}
+                <ArticleBody
+                  html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
                 />
 
-                {/* Related Posts */}
+                {/* After-article multipath unit */}
+                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+
                 {relatedPosts.length > 0 && (
                   <section className={styles.related}>
                     <h2 className={styles.relatedTitle}>More to read</h2>
@@ -327,20 +327,24 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                   </section>
                 )}
 
-                {/* Comment System */}
                 <CommentSection postId={post.id} />
               </div>
 
-              {/* Sidebar */}
               <aside className={styles.sidebar}>
+                <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
+
                 <div className={styles.sidebarCard}>
                   <h3 className={styles.sidebarCardTitle}>Latest Headlines</h3>
                   <div className={styles.sidebarList}>
                     {sidebarPosts.map((p, index) => (
                       <Link key={p.id} href={postUrl(p)} className={styles.sidebarItem}>
-                        <span className={styles.sidebarItemNum} aria-hidden="true">{index + 1}</span>
+                        <span className={styles.sidebarItemNum} aria-hidden="true">
+                          {index + 1}
+                        </span>
                         <div className={styles.sidebarItemContent}>
-                          <span className={styles.relatedSource} style={{ fontSize: '10px' }}>{p.bucket}</span>
+                          <span className={styles.relatedSource} style={{ fontSize: '10px' }}>
+                            {p.bucket}
+                          </span>
                           <h4>{p.title}</h4>
                         </div>
                       </Link>
@@ -348,7 +352,9 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                   </div>
                 </div>
 
-                {/* sidebar ad removed */}
+                <div className={styles.sidebarStickyAd}>
+                  <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
+                </div>
               </aside>
             </div>
           </article>

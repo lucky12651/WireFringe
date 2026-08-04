@@ -1,4 +1,4 @@
-// Slugged post URLs (e.g. /post/my-headline?id=...) are rendered by the same page logic
-// as /post?id=..., so we simply re-export the existing page.
+// Slugged post URLs (e.g. /post/my-headline) use the same page + data loading
+// as /post?id=... — re-export both the page and getServerSideProps.
 
-export { default } from '../post';
+export { default, getServerSideProps } from '../post';

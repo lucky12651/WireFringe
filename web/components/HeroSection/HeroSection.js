@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { postUrl } from '../../lib/utils';
+import { postUrl, postExcerpt } from '../../lib/utils';
 import styles from './HeroSection.module.css';
 
 function formatDate(date) {
@@ -14,9 +14,7 @@ function authorName(post) {
 }
 
 function excerpt(post, max = 110) {
-  const raw = String(post?.excerpt || '').trim();
-  if (!raw) return '';
-  return raw.length > max ? raw.slice(0, max) + '…' : raw;
+  return postExcerpt(post, max);
 }
 
 /** Purple highlight only on hover (CSS .hl) */
@@ -70,11 +68,9 @@ export default function HeroSection({ posts = [] }) {
             <div className={styles.meta}>
               <span className={styles.author}>{authorName(featured)}</span>
               {featured.date ? <span className={styles.date}>{formatDate(featured.date)}</span> : null}
-              {featured.readMinutes ? (
-                <span className={styles.comments}>
-                  <CommentIcon /> {featured.readMinutes}
-                </span>
-              ) : null}
+              <span className={styles.comments} title="Comments">
+                <CommentIcon /> {Number(featured.commentCount) || 0}
+              </span>
             </div>
           </div>
         </div>
@@ -93,11 +89,9 @@ export default function HeroSection({ posts = [] }) {
                 </Link>
                 <div className={styles.cardMeta}>
                   <span className={styles.author}>{authorName(post)}</span>
-                  {post.readMinutes ? (
-                    <span className={styles.comments}>
-                      <CommentIcon /> {post.readMinutes}
-                    </span>
-                  ) : null}
+                  <span className={styles.comments} title="Comments">
+                    <CommentIcon /> {Number(post.commentCount) || 0}
+                  </span>
                 </div>
               </div>
             </article>

@@ -1,12 +1,10 @@
 /* =========================================================
-   Header — The Verge layout (from 1.PNG + user note)
+   Header layout
 
    ┌──────────────────────────────────────── shell ────────┐
    │                              [SUBSCRIBE] [SIGN IN]    │  ← top, right
-   │  Coffee n Blog / Tech / … / AI / Policy   🔔  ☰     │  ← lower
+   │  Coffee n Blog     Tech / … / AI / Policy  🔍 🔔 ☰  │  ← logo left, nav+icons right
    │  ─────────────────────────────────────────────────    │  ← mint line
-   │  ↑ left edge                              right edge ↑│
-   │  both rows share the same shell → same end distance   │
    └───────────────────────────────────────────────────────┘
    ========================================================= */
 
@@ -18,13 +16,13 @@
   width: 100%;
 }
 
-/* Shared width shell — both rows end at the same right edge */
+/* Shared width shell — logo left edge, nav+icons right edge */
 .shell {
   position: relative;
   width: 100%;
-  max-width: 1100px; /* Verge-like content width */
+  max-width: var(--max-width, 1280px);
   margin: 0 auto;
-  padding: 14px 20px 12px;
+  padding: 14px 24px 12px;
   box-sizing: border-box;
 }
 
@@ -85,31 +83,33 @@
   color: #3cffd0;
 }
 
-/* ---- BOTTOM: logo + list, full width of shell so line ends under Sign In ---- */
+/* ---- BOTTOM: logo left | categories + icons right ---- */
 .navRow {
   width: 100%;
   display: flex;
-  justify-content: center; /* cluster centered, still inside shell */
+  justify-content: stretch;
 }
 
 .nav {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   flex-wrap: nowrap;
-  width: 100%; /* span shell so underline runs edge-to-edge of shell */
+  width: 100%;
   border-bottom: 1.5px solid #3cffd0;
   padding-bottom: 7px;
-  gap: 0;
+  gap: 16px;
 }
 
+/* Logo pinned to left corner of the shell */
 .logo {
   display: flex;
   align-items: center;
   text-decoration: none;
   color: #fff;
-  margin-right: 2px;
+  margin-right: 0;
   flex-shrink: 0;
+  margin-left: 0;
 }
 
 .logoText {
@@ -126,6 +126,24 @@
   color: #3cffd0;
   font-style: italic;
   font-weight: 800;
+}
+
+/* Categories + search/bell/menu clustered on the right */
+.navRight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.navLinks {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
 }
 
 .navItem {
@@ -161,13 +179,14 @@
   color: #fff;
 }
 
-/* Push icons to the right end of the underline (same end as Sign In) */
+/* Icons sit immediately after the category list (right side) */
 .navIcons {
   display: inline-flex;
   align-items: center;
-  margin-left: auto; /* sit at right end of full-width nav / underline */
   flex-shrink: 0;
-  padding-left: 8px;
+  padding-left: 10px;
+  margin-left: 2px;
+  border-left: 1px solid #222;
 }
 
 .iconBtn {
@@ -280,7 +299,7 @@
 }
 
 .searchForm {
-  max-width: 1100px;
+  max-width: var(--max-width, 1280px);
   margin: 0 auto;
   position: relative;
   display: flex;
@@ -523,9 +542,14 @@
   transform: scale(1.08);
 }
 
-@media (max-width: 900px) {
-  .navItem {
-    display: none;
+@media (max-width: 1000px) {
+  .navLinks {
+    display: none; /* categories live in drawer; logo left + icons right */
+  }
+
+  .navIcons {
+    border-left: none;
+    padding-left: 0;
   }
 
   .logoText {

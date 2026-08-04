@@ -45,7 +45,12 @@ class PostService:
         s = s[:90] or "post"
         return s
 
-    def _build_post_out(self, post: Post, author_lookup: dict[str, User] | None = None) -> PostOut:
+    def _build_post_out(
+        self,
+        post: Post,
+        author_lookup: dict[str, User] | None = None,
+        comment_counts: dict[str, int] | None = None,
+    ) -> PostOut:
         """Convert Post model to PostOut schema with author info."""
         if author_lookup is None:
             author_lookup = self.user_repo.build_author_lookup()
@@ -61,6 +66,14 @@ class PostService:
             creator_name = creator_raw
             creator_avatar = None
 
+        comment_count = 0
+        if comment_counts is not None:
+            comment_count = int(comment_counts.get(str(post.id), 0) or 0)
+        else:
+            # Single-post path: load approved count for this post only
+            counts = self.comment_repo.count_approved_by_post_ids([str(post.id)])
+            comment_count = int(counts.get(str(post.id), 0) or 0)
+
         return PostOut(
             id=post.id,
             title=post.title,
@@ -75,20 +88,27 @@ class PostService:
             ogImg=post.og_img,
             metaDescription=post.meta_description,
             keywords=post.keywords,
+            commentCount=comment_count,
             date=post.published_at,
         )
+
+    def _comment_counts_for_posts(self, posts: list[Post]) -> dict[str, int]:
+        ids = [str(p.id) for p in posts if getattr(p, "id", None) is not None]
+        return self.comment_repo.count_approved_by_post_ids(ids)
 
     def list_posts(self) -> list[PostOut]:
         """List all posts."""
         posts = self.post_repo.list_published()
         author_lookup = self.user_repo.build_author_lookup()
-        return [self._build_post_out(p, author_lookup) for p in posts]
+        comment_counts = self._comment_counts_for_posts(posts)
+        return [self._build_post_out(p, author_lookup, comment_counts) for p in posts]
 
     def list_posts_by_creator(self, creator: str) -> list[PostOut]:
         """List posts by a specific creator."""
         posts = self.post_repo.get_by_creator(creator)
         author_lookup = self.user_repo.build_author_lookup()
-        return [self._build_post_out(p, author_lookup) for p in posts]
+        comment_counts = self._comment_counts_for_posts(posts)
+        return [self._build_post_out(p, author_lookup, comment_counts) for p in posts]
 
     def list_posts_paginated(
         self, offset: int = 0, limit: int = 20, creator: str | None = None
@@ -97,7 +117,8 @@ class PostService:
         posts = self.post_repo.list_paginated(offset, limit, creator)
         total_count = self.post_repo.count(creator)
         author_lookup = self.user_repo.build_author_lookup()
-        return [self._build_post_out(p, author_lookup) for p in posts], total_count
+        comment_counts = self._comment_counts_for_posts(posts)
+        return [self._build_post_out(p, author_lookup, comment_counts) for p in posts], total_count
 
     def count_posts_by_creator(self, creator: str | None = None) -> list[CreatorCountOut]:
         """Return post counts grouped by creator username."""

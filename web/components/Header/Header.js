@@ -185,57 +185,63 @@ export default function Header({
             )}
           </div>
 
-          {/* BOTTOM row — logo + links + icons, mint underline ends same right edge as Sign In */}
+          {/* BOTTOM row — logo left corner | nav links + search/icons right */}
           <div className={styles.navRow}>
             <nav className={styles.nav} aria-label="Main">
               <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
                 <LogoMark />
               </Link>
 
-              {NAV.map((item) => (
-                <span key={item.label} className={styles.navItem}>
-                  <span className={styles.slash} aria-hidden="true">
-                    /
-                  </span>
+              <div className={styles.navRight}>
+                <div className={styles.navLinks}>
+                  {NAV.map((item, index) => (
+                    <span key={item.label} className={styles.navItem}>
+                      {index > 0 ? (
+                        <span className={styles.slash} aria-hidden="true">
+                          /
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={`${styles.navLink} ${
+                          activeCategory === item.cat ? styles.navActive : ''
+                        }`}
+                        onClick={() => goCat(item.cat)}
+                      >
+                        {item.label}
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                <span className={styles.navIcons}>
                   <button
                     type="button"
-                    className={`${styles.navLink} ${
-                      activeCategory === item.cat ? styles.navActive : ''
-                    }`}
-                    onClick={() => goCat(item.cat)}
+                    className={styles.iconBtn}
+                    aria-label="Search"
+                    onClick={() => {
+                      setSearchOpen((v) => !v);
+                      setTimeout(() => searchRef.current?.focus(), 40);
+                    }}
                   >
-                    {item.label}
+                    <SearchIcon />
+                  </button>
+                  <button type="button" className={styles.iconBtn} aria-label="Notifications">
+                    <BellIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
+                    aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((v) => !v)}
+                  >
+                    <span className={styles.menuBar} />
+                    <span className={styles.menuBar} />
+                    <span className={styles.menuBar} />
                   </button>
                 </span>
-              ))}
-
-              <span className={styles.navIcons}>
-                <button
-                  type="button"
-                  className={styles.iconBtn}
-                  aria-label="Search"
-                  onClick={() => {
-                    setSearchOpen((v) => !v);
-                    setTimeout(() => searchRef.current?.focus(), 40);
-                  }}
-                >
-                  <SearchIcon />
-                </button>
-                <button type="button" className={styles.iconBtn} aria-label="Notifications">
-                  <BellIcon />
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
-                  aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-                  aria-expanded={menuOpen}
-                  onClick={() => setMenuOpen((v) => !v)}
-                >
-                  <span className={styles.menuBar} />
-                  <span className={styles.menuBar} />
-                  <span className={styles.menuBar} />
-                </button>
-              </span>
+              </div>
             </nav>
           </div>
         </div>

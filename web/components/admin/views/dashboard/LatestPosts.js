@@ -1,6 +1,6 @@
 import React from 'react';
 import { EmptyState, ActionButton } from '../../shared';
-import { formatDateShort } from '../../../../lib/utils';
+import { formatDateShort, postExcerpt } from '../../../../lib/utils';
 import { Icons } from '../../Layout/icons';
 
 export default function LatestPosts({ latestPosts }) {
@@ -26,7 +26,9 @@ export default function LatestPosts({ latestPosts }) {
                   <h4 className="post-title">{p.title}</h4>
                   <span className="post-category">{p.bucket}</span>
                 </div>
-                <p className="post-excerpt">{p.excerpt || 'No description available for this article...'}</p>
+                <p className="post-excerpt">
+                  {postExcerpt(p, 140) || 'No description available for this article...'}
+                </p>
                 <div className="post-meta">
                   <div className="meta-item">
                     <Icons.users size={14} />

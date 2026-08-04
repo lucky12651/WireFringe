@@ -10,6 +10,7 @@ export default function Layout({
   description = 'Coffee n Blog is about technology and how it makes us feel.',
   keywords = 'tech, AI, science, culture, news',
   headerProps = {},
+  showAdRails = true,
 }) {
   return (
     <>
@@ -26,7 +27,7 @@ export default function Layout({
 
       <div className={styles.layout}>
         <Header {...headerProps} />
-        <AdRails />
+        {showAdRails ? <AdRails /> : null}
         <main className={styles.main} id="content">
           <div className={styles.container}>{children}</div>
         </main>
@@ -49,22 +50,24 @@ export default function Layout({
               <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube">
                 ▶
               </a>
-              <a href="/api/health" aria-label="RSS">
+              <Link href="/archives" aria-label="Archives">
                 ≈
-              </a>
+              </Link>
             </div>
           </div>
 
-          <nav className={styles.footerLinks}>
-            <Link href="/">Contact</Link>
+          <nav className={styles.footerLinks} aria-label="Footer">
+            <Link href="/contact">Contact</Link>
             <span>|</span>
-            <Link href="/">Tip Us</Link>
+            <Link href="/tip-us">Tip Us</Link>
             <span>|</span>
-            <Link href="/">Community Guidelines</Link>
+            <Link href="/community-guidelines">Community Guidelines</Link>
             <span>|</span>
-            <Link href="/">Archives</Link>
+            <Link href="/archives">Archives</Link>
             <span>|</span>
-            <Link href="/">About</Link>
+            <Link href="/about">About</Link>
+            <span>|</span>
+            <Link href="/disclaimer">Disclaimer</Link>
             <span>|</span>
             <Link href="/admin">Admin</Link>
             <span>|</span>
@@ -72,11 +75,11 @@ export default function Layout({
           </nav>
 
           <div className={styles.footerLegal}>
-            <span>Terms of Use</span>
+            <Link href="/terms">Terms of Use</Link>
             <span>|</span>
-            <span>Privacy Notice</span>
+            <Link href="/privacy">Privacy Notice</Link>
             <span>|</span>
-            <span>Cookie Policy</span>
+            <Link href="/cookies">Cookie Policy</Link>
           </div>
 
           <p className={styles.copyright}>
