@@ -7,10 +7,11 @@ import HeroSection from '../components/HeroSection/HeroSection';
 import NewsletterSignup from '../components/NewsletterSignup/NewsletterSignup';
 import StreamFeed from '../components/StreamFeed/StreamFeed';
 import AdUnit from '../components/AdUnit/AdUnit';
+import Reveal from '../components/Reveal/Reveal';
+import { HomeSkeleton } from '../components/Skeleton/Skeleton';
 import { fetcher, api } from '../lib/api';
 import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
-import Loader from '../components/Loader/Loader';
 import SearchResults from '../components/SearchResults/SearchResults';
 import styles from '../styles/Home.module.css';
 
@@ -169,9 +170,7 @@ export default function HomePage({ initialPosts }) {
       showInlineAd={false}
     >
       {loading ? (
-        <div style={{ height: '70vh', display: 'flex', alignItems: 'center' }}>
-          <Loader />
-        </div>
+        <HomeSkeleton />
       ) : searchQuery.trim() ? (
         <SearchResults results={filtered} query={searchQuery} />
       ) : (
@@ -179,7 +178,9 @@ export default function HomePage({ initialPosts }) {
           <div className={styles.homeGrid}>
             {/* LEFT — Top stories + packages */}
             <div className={styles.leftCol}>
-              <HeroSection posts={heroPosts} />
+              <Reveal as="div" className={styles.heroReveal}>
+                <HeroSection posts={heroPosts} />
+              </Reveal>
 
               {/* 1 — Leaderboard under hero */}
               <div className={styles.homeAd}>
@@ -213,7 +214,7 @@ export default function HomePage({ initialPosts }) {
               </div>
 
               {mostRead.length > 0 && (
-                <section className={styles.mostPopular} id="most-popular">
+                <Reveal as="section" className={styles.mostPopular} id="most-popular">
                   <div className={styles.packageRule} />
                   <h2>Most Popular</h2>
                   <ol className={styles.rankList}>
@@ -232,7 +233,7 @@ export default function HomePage({ initialPosts }) {
                       </li>
                     ))}
                   </ol>
-                </section>
+                </Reveal>
               )}
 
               {/* 4 — After Most Popular */}
@@ -330,7 +331,7 @@ function PackageBlock({ title, subtitle, posts }) {
   const rest = posts.slice(1, 4);
 
   return (
-    <section className={styles.package}>
+    <Reveal as="section" className={styles.package}>
       <div className={styles.packageRule} />
       <h2 className={styles.packageHead}>
         {title} <span>/ {subtitle}</span>
@@ -372,14 +373,14 @@ function PackageBlock({ title, subtitle, posts }) {
           ))}
         </div>
       </div>
-    </section>
+    </Reveal>
   );
 }
 
 function CategoryRow({ title, posts, href }) {
   if (!posts?.length) return null;
   return (
-    <section className={styles.catSection}>
+    <Reveal as="section" className={styles.catSection}>
       <div className={styles.catHeader}>
         <h2>{title}</h2>
         <Link href={href} className={styles.catMore}>
@@ -399,6 +400,6 @@ function CategoryRow({ title, posts, href }) {
           </Link>
         ))}
       </div>
-    </section>
+    </Reveal>
   );
 }

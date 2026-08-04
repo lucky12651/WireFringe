@@ -12,9 +12,12 @@
   position: sticky;
   top: 0;
   z-index: 11000;
-  background: #000;
   width: 100%;
-  border-bottom: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 /* Shared width shell — logo left edge, nav+icons right edge */
@@ -46,15 +49,18 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 5px 9px 4px;
+  padding: 6px 11px 5px;
   border-radius: 2px;
   line-height: 1.2;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
+  box-shadow: 0 0 0 0 transparent;
 }
 
 .subscribe:hover {
-  background: #2ee6b8;
+  background: #5fffe0;
+  box-shadow: 0 6px 22px rgba(60, 255, 208, 0.35);
+  transform: translateY(-1px);
 }
 
 .signIn {
@@ -192,21 +198,24 @@
 }
 
 .iconBtn {
-  width: 32px;
-  height: 28px;
+  width: 34px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  color: #e8e8e8;
+  color: #e0e0e0;
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s ease;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .iconBtn:hover {
   color: #3cffd0;
+  background: rgba(60, 255, 208, 0.08);
+  box-shadow: 0 0 16px rgba(60, 255, 208, 0.12);
 }
 
 .menuBtn {

@@ -6,11 +6,12 @@ import Layout from '../components/Layout/Layout';
 import CommentSection from '../components/CommentSection/CommentSection';
 import ArticleBody from '../components/ArticleBody/ArticleBody';
 import AdUnit from '../components/AdUnit/AdUnit';
+import Reveal from '../components/Reveal/Reveal';
+import { PostSkeleton } from '../components/Skeleton/Skeleton';
 import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
-import { slugifyTitle, postUrl, stripHtml } from '../lib/utils';
+import { slugifyTitle, postUrl, stripHtml, postExcerpt } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
-import Loader from '../components/Loader/Loader';
 
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -236,34 +237,39 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
     >
       <div className={styles.postPage}>
         {loading ? (
-          <div style={{ height: '70vh', display: 'flex', alignItems: 'center', width: '100%' }}>
-            <Loader />
-          </div>
+          <PostSkeleton />
         ) : error ? (
-          <div style={{ textAlign: 'center', padding: '100px 0' }}>
-            <h2 style={{ marginBottom: '20px' }}>{error}</h2>
-            <Link href="/" style={{ color: 'var(--brand-primary)', fontWeight: 'bold' }}>
+          <div className={styles.errorState}>
+            <h2>{error}</h2>
+            <Link href="/" className={styles.errorBack}>
               ← Back to Home
             </Link>
           </div>
         ) : post ? (
           <article className={styles.post}>
-            {/* Post Header */}
+            {/* Magazine masthead */}
             <header className={styles.header}>
               <div className={styles.meta}>
                 <span className={styles.category}>{post.bucket || 'News'}</span>
-                <span aria-hidden="true">•</span>
+                <span className={styles.metaDot} aria-hidden="true">
+                  •
+                </span>
                 <time dateTime={post.date?.toISOString()}>{formatDate(post.date)}</time>
-                {post.readMinutes && (
+                {post.readMinutes ? (
                   <>
-                    <span aria-hidden="true">•</span>
-                    <span>{post.readMinutes} min read</span>
+                    <span className={styles.metaDot} aria-hidden="true">
+                      •
+                    </span>
+                    <span className={styles.readTime}>{post.readMinutes} min read</span>
                   </>
-                )}
+                ) : null}
               </div>
               <h1 className={styles.title}>{post.title}</h1>
+              {postExcerpt(post, 200) ? (
+                <p className={styles.dek}>{postExcerpt(post, 200)}</p>
+              ) : null}
 
-              {authorName && (
+              {authorName ? (
                 <div className={styles.authorRow}>
                   <div className={styles.authorAvatar}>
                     {authorAvatarUrl && !avatarFailed ? (
@@ -284,48 +290,56 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                     <span className={styles.authorName}>{authorName}</span>
                   </div>
                 </div>
-              )}
+              ) : null}
             </header>
+
+            {/* Full-bleed magazine hero */}
+            {post.ogImg ? (
+              <figure className={styles.hero}>
+                <img src={post.ogImg} alt={post.title} />
+                <figcaption className={styles.heroCaption}>
+                  {post.bucket ? `${post.bucket} · ` : ''}
+                  {formatDate(post.date)}
+                </figcaption>
+              </figure>
+            ) : null}
 
             <div className={styles.layout}>
               <div className={styles.contentWrapper}>
-                {post.ogImg && (
-                  <figure className={styles.hero}>
-                    <img src={post.ogImg} alt={post.title} />
-                  </figure>
-                )}
-
-                {/* Top-of-article leaderboard (modern news pattern) */}
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
 
-                {/* Body with inline ads between paragraphs */}
                 <ArticleBody
                   html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+                  magazine
                 />
 
-                {/* After-article multipath unit */}
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
 
-                {relatedPosts.length > 0 && (
-                  <section className={styles.related}>
-                    <h2 className={styles.relatedTitle}>More to read</h2>
+                {relatedPosts.length > 0 ? (
+                  <Reveal as="section" className={styles.related}>
+                    <div className={styles.relatedHead}>
+                      <h2 className={styles.relatedTitle}>More to read</h2>
+                      <span className={styles.relatedRule} aria-hidden="true" />
+                    </div>
                     <div className={styles.relatedGrid}>
                       {relatedPosts.map((p) => (
                         <Link key={p.id} href={postUrl(p)} className={styles.relatedCard}>
-                          {p.ogImg && (
+                          {p.ogImg ? (
                             <div className={styles.relatedThumb}>
                               <img src={p.ogImg} alt="" loading="lazy" />
                             </div>
+                          ) : (
+                            <div className={styles.relatedThumbPh} />
                           )}
                           <div className={styles.relatedBody}>
                             <span className={styles.relatedSource}>{p.bucket}</span>
-                            <h4 style={{ fontSize: '14px', fontWeight: '500' }}>{p.title}</h4>
+                            <h4>{p.title}</h4>
                           </div>
                         </Link>
                       ))}
                     </div>
-                  </section>
-                )}
+                  </Reveal>
+                ) : null}
 
                 <CommentSection postId={post.id} />
               </div>
@@ -342,9 +356,7 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                           {index + 1}
                         </span>
                         <div className={styles.sidebarItemContent}>
-                          <span className={styles.relatedSource} style={{ fontSize: '10px' }}>
-                            {p.bucket}
-                          </span>
+                          <span className={styles.relatedSource}>{p.bucket}</span>
                           <h4>{p.title}</h4>
                         </div>
                       </Link>

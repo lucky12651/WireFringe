@@ -1,0 +1,231 @@
+/* Shimmer skeletons — home + post loading */
+
+.pulse {
+  background: linear-gradient(
+    90deg,
+    #121212 0%,
+    #1a1a1a 40%,
+    #222 50%,
+    #1a1a1a 60%,
+    #121212 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.35s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.block {
+  display: block;
+}
+
+/* ---- Home skeleton ---- */
+.home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--stream-width, 380px);
+  gap: 0;
+  min-height: 70vh;
+  padding: 24px 0 48px;
+  position: relative;
+}
+
+.home::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: var(--stream-width, 380px);
+  border-left: 1px dotted #2e2e2e;
+  pointer-events: none;
+}
+
+.homeLeft {
+  padding-right: 36px;
+  min-width: 0;
+}
+
+.homeRight {
+  padding-left: 22px;
+}
+
+.heroMedia {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 20px;
+  border-radius: 6px;
+}
+
+.heroLine {
+  height: 28px;
+  width: 72%;
+  margin-bottom: 12px;
+}
+
+.heroLineShort {
+  height: 18px;
+  width: 48%;
+  margin-bottom: 28px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.cardRow {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.thumb {
+  width: 100px;
+  height: 74px;
+  border-radius: 4px;
+}
+
+.line {
+  height: 14px;
+  margin-bottom: 10px;
+}
+
+.lineSm {
+  height: 12px;
+  width: 60%;
+  margin-bottom: 8px;
+}
+
+.streamTab {
+  width: 180px;
+  height: 36px;
+  border-radius: 999px;
+  margin: 0 auto 20px;
+}
+
+.streamItem {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px dotted #2a2a2a;
+}
+
+.streamThumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 4px;
+}
+
+/* ---- Post skeleton ---- */
+.post {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 0 64px;
+}
+
+.postHeader {
+  max-width: 720px;
+  margin-bottom: 28px;
+}
+
+.postMeta {
+  height: 12px;
+  width: 40%;
+  margin-bottom: 18px;
+}
+
+.postTitle {
+  height: 42px;
+  width: 90%;
+  margin-bottom: 12px;
+}
+
+.postTitle2 {
+  height: 42px;
+  width: 65%;
+  margin-bottom: 24px;
+}
+
+.postAuthor {
+  height: 40px;
+  width: 200px;
+  border-radius: 999px;
+  margin-bottom: 28px;
+}
+
+.postLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 40px;
+}
+
+.postHero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 28px;
+  border-radius: 6px;
+}
+
+.postBodyLine {
+  height: 16px;
+  margin-bottom: 14px;
+  max-width: 680px;
+}
+
+.sidebarBox {
+  height: 250px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+}
+
+.sidebarList {
+  height: 280px;
+  border-radius: 6px;
+}
+
+@media (max-width: 1000px) {
+  .home {
+    grid-template-columns: 1fr;
+  }
+
+  .home::before {
+    display: none;
+  }
+
+  .homeLeft {
+    padding-right: 0;
+  }
+
+  .homeRight {
+    padding-left: 0;
+    margin-top: 28px;
+  }
+
+  .postLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+    background: #161616;
+  }
+}

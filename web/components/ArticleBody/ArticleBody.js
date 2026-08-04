@@ -121,7 +121,7 @@ function isParagraphBlock(html) {
   return text.length > 80;
 }
 
-export default function ArticleBody({ html, className = '' }) {
+export default function ArticleBody({ html, className = '', magazine = false }) {
   const blocks = useMemo(() => splitHtmlBlocks(html), [html]);
 
   const nodes = useMemo(() => {
@@ -131,12 +131,16 @@ export default function ArticleBody({ html, className = '' }) {
     let paraCount = 0;
     let adsPlaced = 0;
     let parasSinceAd = 0;
+    let firstParaDone = false;
 
     blocks.forEach((block, idx) => {
+      const isFirstPara = !firstParaDone && isParagraphBlock(block);
+      if (isFirstPara) firstParaDone = true;
+
       out.push(
         <div
           key={`b-${idx}`}
-          className={styles.block}
+          className={`${styles.block} ${isFirstPara && magazine ? styles.dropCap : ''}`.trim()}
           dangerouslySetInnerHTML={{ __html: block }}
         />
       );
@@ -170,15 +174,23 @@ export default function ArticleBody({ html, className = '' }) {
     });
 
     return out;
-  }, [blocks]);
+  }, [blocks, magazine]);
 
   if (!nodes.length) {
     return (
-      <div className={`${styles.content} ${className}`.trim()}>
+      <div
+        className={`${styles.content} ${magazine ? styles.magazine : ''} ${className}`.trim()}
+      >
         <p>No content available.</p>
       </div>
     );
   }
 
-  return <div className={`${styles.content} ${className}`.trim()}>{nodes}</div>;
+  return (
+    <div
+      className={`${styles.content} ${magazine ? styles.magazine : ''} ${className}`.trim()}
+    >
+      {nodes}
+    </div>
+  );
 }

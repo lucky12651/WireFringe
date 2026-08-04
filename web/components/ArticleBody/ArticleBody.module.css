@@ -10,6 +10,25 @@
   max-width: 680px;
 }
 
+/* Magazine longform */
+.magazine {
+  font-size: 1.125rem;
+  line-height: 1.82;
+  max-width: 42rem;
+}
+
+.dropCap :global(p)::first-letter {
+  float: left;
+  font-family: var(--font-heading, Inter, sans-serif);
+  font-size: 3.55em;
+  font-weight: 900;
+  line-height: 0.8;
+  padding: 0.1em 0.12em 0 0;
+  margin-right: 0.04em;
+  color: var(--mint);
+  letter-spacing: -0.04em;
+}
+
 .block {
   /* each original HTML block */
 }

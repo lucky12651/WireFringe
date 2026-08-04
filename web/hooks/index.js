@@ -6,3 +6,4 @@ export { useUsers } from './useUsers';
 export { useComments } from './useComments';
 export { useMedia } from './useMedia';
 export { useLogs } from './useLogs';
+export { useReveal } from './useReveal';
