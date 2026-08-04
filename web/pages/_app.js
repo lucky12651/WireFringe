@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import '../styles/variables.css';
 import '../styles/admin.css';
-import { initTheme, startAutoThemeSync } from '../lib/theme';
+import { initTheme } from '../lib/theme';
 
 import Head from 'next/head';
 
@@ -18,12 +18,13 @@ export default function App({ Component, pageProps }) {
   const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || DEFAULT_ADSENSE_CLIENT;
 
   useEffect(() => {
-    // Apply the theme immediately on first client render.
-    initTheme({ defaultTheme: 'auto' });
-
-    // If the user has not explicitly selected a theme, auto-switch at 6am/6pm.
-    const stop = startAutoThemeSync();
-    return () => stop();
+    // Screenshots show dark Verge; lock dark.
+    initTheme({ defaultTheme: 'dark' });
+    try {
+      localStorage.setItem('cnb_theme', 'dark');
+      localStorage.setItem('cnb_theme_mode', 'manual');
+      document.documentElement.dataset.theme = 'dark';
+    } catch (_) {}
   }, []);
 
   const refreshAds = useCallback(() => {

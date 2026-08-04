@@ -16,7 +16,7 @@ export default function RecentCache({ items }) {
   }
 
   return (
-    <section className="dashboard-card-v2 latest-posts-card-v2" style={{ marginTop: '32px', color: "#111" }}>
+    <section className="dashboard-card-v2 latest-posts-card-v2" style={{ marginTop: '32px' }}>
       <header className="card-header-v2">
         <div className="header-left-v2">
           <h2 className="card-title-v2">Recently Published (Cache)</h2>

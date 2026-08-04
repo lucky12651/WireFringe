@@ -2,20 +2,21 @@ import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="en" data-theme="dark">
       <Head>
         <meta charSet="UTF-8" />
+        <meta name="theme-color" content="#0a0a0a" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
       </Head>
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var key='cnb_theme';var modeKey='cnb_theme_mode';var mode=localStorage.getItem(modeKey);var saved=localStorage.getItem(key);var theme=null;if(mode==='manual'&&(saved==='light'||saved==='dark')){theme=saved;}if(!theme){var h=(new Date()).getHours();theme=(h>=6&&h<18)?'light':'dark';}document.documentElement.dataset.theme=theme;}catch(e){}})();`,
+            __html: `document.documentElement.dataset.theme='dark';try{localStorage.setItem('cnb_theme','dark');localStorage.setItem('cnb_theme_mode','manual');}catch(e){}`,
           }}
         />
         <Main />

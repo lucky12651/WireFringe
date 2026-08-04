@@ -1,14 +1,51 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import WeatherWidget from './WeatherWidget';
 import styles from './Header.module.css';
 
-const CATEGORY_TABS = ['All', 'AI & Future Tech', 'Tech', 'Business & Markets', 'Personal Finance'];
+const NAV = [
+  { label: 'Tech', cat: 'Tech' },
+  { label: 'Reviews', cat: 'Tech' },
+  { label: 'Science', cat: 'AI & Future Tech' },
+  { label: 'Entertainment', cat: 'Business & Markets' },
+  { label: 'AI', cat: 'AI & Future Tech' },
+  { label: 'Policy', cat: 'Personal Finance' },
+];
+
+const DRAWER_SECTIONS = [
+  {
+    title: 'Sections',
+    items: [
+      { label: 'Tech', cat: 'Tech' },
+      { label: 'Reviews', cat: 'Tech' },
+      { label: 'Science', cat: 'AI & Future Tech' },
+      { label: 'Entertainment', cat: 'Business & Markets' },
+      { label: 'AI', cat: 'AI & Future Tech' },
+      { label: 'Policy', cat: 'Personal Finance' },
+      { label: 'Business', cat: 'Business & Markets' },
+      { label: 'Finance', cat: 'Personal Finance' },
+    ],
+  },
+  {
+    title: 'Features',
+    items: [
+      { label: 'Latest', href: '/' },
+      { label: 'Most Popular', href: '/#most-popular' },
+      { label: 'For You', href: '/for-you' },
+    ],
+  },
+];
 
 function slugifyCategory(cat) {
-  if (cat === 'For You') return 'for-you';
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+function LogoMark() {
+  return (
+    <span className={styles.logoText} aria-label="Coffee n Blog">
+      Coffee<span className={styles.logoN}>n</span>Blog
+    </span>
+  );
 }
 
 export default function Header({
@@ -16,206 +53,334 @@ export default function Header({
   onSearchChange,
   activeCategory = 'All',
   onCategoryChange,
-  user = null
+  user = null,
 }) {
   const router = useRouter();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const searchInputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef(null);
+  const dropRef = useRef(null);
 
-  const handleCategoryClick = (category) => {
-    if (category === 'For You') {
-      router.push('/for-you');
-      return;
-    }
-    if (onCategoryChange) {
-      onCategoryChange(category);
-    } else {
-      // Default navigation logic if no handler provided (e.g., on post pages)
-      if (category === 'All') {
-        router.push('/');
-      } else {
-        router.push(`/?category=${slugifyCategory(category)}`);
-      }
-    }
-  };
-
+  useEffect(() => setLocalSearch(searchQuery), [searchQuery]);
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange?.(localSearch);
-    }, 500);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => onSearchChange?.(localSearch), 350);
+    return () => clearTimeout(t);
   }, [localSearch, onSearchChange]);
 
-  // Keyboard shortcut Ctrl+K to focus search
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          searchInputRef.current?.focus();
-        }
+        e.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => searchRef.current?.focus(), 40);
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setMenuOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Click outside to close dropdown
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
+    const outside = (e) => {
+      if (dropRef.current && !dropRef.current.contains(e.target)) setDropdownOpen(false);
     };
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDropdownOpen]);
+    if (dropdownOpen) document.addEventListener('mousedown', outside);
+    return () => document.removeEventListener('mousedown', outside);
+  }, [dropdownOpen]);
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
+  const goCat = (cat) => {
+    setMenuOpen(false);
+    if (onCategoryChange) onCategoryChange(cat);
+    else if (cat === 'All') router.push('/');
+    else router.push(`/?category=${slugifyCategory(cat)}`);
+  };
+
+  const goHref = (href) => {
+    setMenuOpen(false);
+    router.push(href);
+  };
+
+  const logout = async () => {
     try {
-      const res = await fetch('/api/admin/logout', { method: 'POST' });
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-      if (res.ok) {
-        window.location.href = '/';
-      }
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
+      await fetch('/api/admin/logout', { method: 'POST' });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    } catch (_) {}
   };
 
   return (
-    <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}>
-      <div className={styles.top}>
-        <div className={styles.container}>
-          <div className={styles.inner}>
-
-            {/* Left: Logo */}
-            <div className={styles.leftSection}>
-              <Link href="/" className={styles.logo}>
-                <span className={styles.logoText}>
-                  Coffee N Blog
-                </span>
-              </Link>
-            </div>
-
-            {/* Center: Search */}
-            <div className={styles.centerSection}>
-              <div className={styles.searchWrapper}>
-                <form
-                  className={styles.search}
-                  onSubmit={(e) => e.preventDefault()}
-                  role="search"
+    <>
+      <header className={styles.header}>
+        {/*
+          Same max-width shell so top (Subscribe/Sign In) and bottom (nav line)
+          end at the same right edge — like The Verge.
+        */}
+        <div className={styles.shell}>
+          {/* TOP row — Subscribe + Sign In (right aligned) */}
+          <div className={styles.utility}>
+            <a href="#newsletter" className={styles.subscribe}>
+              SUBSCRIBE
+            </a>
+            {user ? (
+              <div className={styles.profile} ref={dropRef}>
+                <button
+                  type="button"
+                  className={styles.signIn}
+                  onClick={() => setDropdownOpen((v) => !v)}
                 >
-                  <label htmlFor="gn-search" className="visually-hidden">Search for topics, locations & sources</label>
-                  <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                  <input
-                    ref={searchInputRef}
-                    id="gn-search"
-                    type="search"
-                    className={styles.searchInput}
-                    placeholder="Search for topics, locations & sources"
-                    value={localSearch}
-                    onChange={(e) => setLocalSearch(e.target.value)}
-                  />
-                  <kbd className={styles.searchKbd} aria-hidden="true">Ctrl K</kbd>
-                </form>
-              </div>
-            </div>
-
-            {/* Right: Actions */}
-            <div className={styles.rightSection}>
-              <div className={styles.actions}>
-                <WeatherWidget />
-                {user ? (
-                  <div className={styles.profileWrapper} ref={dropdownRef}>
-                    <button
-                      className={styles.profileBtn}
-                      aria-label="Account"
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      aria-expanded={isDropdownOpen}
-                      aria-haspopup="true"
+                  <UserIcon />
+                  <span>SIGN IN</span>
+                </button>
+                {dropdownOpen && (
+                  <div className={styles.dropdown}>
+                    <Link
+                      href="/for-you"
+                      className={styles.dropItem}
+                      onClick={() => setDropdownOpen(false)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
-                        <path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm146.5-204.5Q340-521 340-580t40.5-99.5Q421-720 480-720t99.5 40.5Q620-639 620-580t-40.5 99.5Q539-440 480-440t-99.5-40.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm100-95.5q47-15.5 86-44.5-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160q53 0 100-15.5ZM523-537q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm-43-43Zm0 360Z" />
-                      </svg>
-                    </button>
-
-                    {isDropdownOpen && (
-                      <div className={styles.dropdownMenu}>
-                        <Link href="/for-you" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
-                          Personalised News
+                      For You
+                    </Link>
+                    {user.role !== 'user' && (
+                      <>
+                        <Link
+                          href="/admin"
+                          className={styles.dropItem}
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          Dashboard
                         </Link>
-                        <div className={styles.dropdownDivider} />
-                        {user.role !== 'user' && (
-                          <>
-                            <Link href="/admin" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
-                              Dashboard
-                            </Link>
-                            <Link href="/admin/post" className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
-                              New Post
-                            </Link>
-                            <div className={styles.dropdownDivider} />
-                          </>
-                        )}
-                        <button className={styles.dropdownItem} onClick={handleLogout}>
-                          Logout
-                        </button>
-                      </div>
+                        <Link
+                          href="/admin/post"
+                          className={styles.dropItem}
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          New Post
+                        </Link>
+                      </>
                     )}
+                    <button type="button" className={styles.dropItem} onClick={logout}>
+                      Log out
+                    </button>
                   </div>
-                ) : (
-                  <Link href="/login" className={styles.signInBtn}>
-                    Sign in
-                  </Link>
                 )}
               </div>
-            </div>
-
+            ) : (
+              <Link href="/login" className={styles.signIn}>
+                <UserIcon />
+                <span>SIGN IN</span>
+              </Link>
+            )}
           </div>
-        </div>
-      </div>
 
-      {/* Category Navigation */}
-      <nav className={styles.nav} aria-label="Categories">
-        <div className={styles.container}>
-          <div className={styles.navCentered}>
-            <div className={styles.navScroll}>
-              {(user ? ['For You', ...CATEGORY_TABS] : CATEGORY_TABS).map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  className={`${styles.navItem} ${activeCategory === category ? styles.navItemActive : ''}`}
-                  onClick={() => handleCategoryClick(category)}
-                  aria-current={activeCategory === category ? 'page' : undefined}
-                >
-                  {category}
-                  {activeCategory === category && <div className={styles.navActiveLine} />}
-                </button>
+          {/* BOTTOM row — logo + links + icons, mint underline ends same right edge as Sign In */}
+          <div className={styles.navRow}>
+            <nav className={styles.nav} aria-label="Main">
+              <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
+                <LogoMark />
+              </Link>
+
+              {NAV.map((item) => (
+                <span key={item.label} className={styles.navItem}>
+                  <span className={styles.slash} aria-hidden="true">
+                    /
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.navLink} ${
+                      activeCategory === item.cat ? styles.navActive : ''
+                    }`}
+                    onClick={() => goCat(item.cat)}
+                  >
+                    {item.label}
+                  </button>
+                </span>
               ))}
+
+              <span className={styles.navIcons}>
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  aria-label="Search"
+                  onClick={() => {
+                    setSearchOpen((v) => !v);
+                    setTimeout(() => searchRef.current?.focus(), 40);
+                  }}
+                >
+                  <SearchIcon />
+                </button>
+                <button type="button" className={styles.iconBtn} aria-label="Notifications">
+                  <BellIcon />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
+                  aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((v) => !v)}
+                >
+                  <span className={styles.menuBar} />
+                  <span className={styles.menuBar} />
+                  <span className={styles.menuBar} />
+                </button>
+              </span>
+            </nav>
+          </div>
+        </div>
+
+        {searchOpen && (
+          <div className={styles.searchBar}>
+            <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
+              <SearchIcon className={styles.searchIcon} />
+              <input
+                ref={searchRef}
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search stories…"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.searchClose}
+                onClick={() => {
+                  setLocalSearch('');
+                  onSearchChange?.('');
+                  setSearchOpen(false);
+                }}
+              >
+                Close
+              </button>
+            </form>
+          </div>
+        )}
+      </header>
+
+      <div
+        className={`${styles.drawerBackdrop} ${menuOpen ? styles.drawerBackdropOpen : ''}`}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden={!menuOpen}
+      />
+      <aside
+        className={`${styles.drawer} ${menuOpen ? styles.drawerOpen : ''}`}
+        aria-hidden={!menuOpen}
+        aria-label="Site menu"
+      >
+        <div className={styles.drawerHeader}>
+          <LogoMark />
+          <button
+            type="button"
+            className={styles.drawerClose}
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
+        <div className={styles.drawerBody}>
+          <a href="#newsletter" className={styles.drawerSubscribe} onClick={() => setMenuOpen(false)}>
+            SUBSCRIBE
+          </a>
+          {!user ? (
+            <Link href="/login" className={styles.drawerSignIn} onClick={() => setMenuOpen(false)}>
+              <UserIcon /> Sign in / Sign up
+            </Link>
+          ) : (
+            <button type="button" className={styles.drawerSignIn} onClick={logout}>
+              <UserIcon /> Log out
+            </button>
+          )}
+          {DRAWER_SECTIONS.map((section) => (
+            <div key={section.title} className={styles.drawerSection}>
+              <h3 className={styles.drawerSectionTitle}>{section.title}</h3>
+              <ul className={styles.drawerList}>
+                {section.items.map((item) => (
+                  <li key={item.label}>
+                    {item.href ? (
+                      <button type="button" className={styles.drawerLink} onClick={() => goHref(item.href)}>
+                        {item.label}
+                        <span className={styles.drawerArrow}>→</span>
+                      </button>
+                    ) : (
+                      <button type="button" className={styles.drawerLink} onClick={() => goCat(item.cat)}>
+                        {item.label}
+                        <span className={styles.drawerArrow}>→</span>
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          <div className={styles.drawerSection}>
+            <h3 className={styles.drawerSectionTitle}>Follow</h3>
+            <div className={styles.drawerSocial}>
+              <a href="https://x.com" target="_blank" rel="noreferrer">
+                X
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noreferrer">
+                YT
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer">
+                IG
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noreferrer">
+                FB
+              </a>
             </div>
           </div>
         </div>
-      </nav>
-    </header>
+      </aside>
+    </>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg width="11" height="14" viewBox="0 0 18 24" fill="currentColor" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M14.063 4.872c0 2.69-2.267 4.872-5.063 4.872S3.937 7.563 3.937 4.872C3.937 2.182 6.204 0 9 0s5.063 2.181 5.063 4.872ZM2.778 13.598c1.65-1.588 3.888-2.48 6.222-2.48 2.334 0 4.572.892 6.223 2.48 1.65 1.588 2.577 3.742 2.577 5.988V23.2H.2v-3.614c0-2.246.927-4.4 2.578-5.988Z"
+      />
+    </svg>
+  );
+}
+
+function SearchIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
   );
 }

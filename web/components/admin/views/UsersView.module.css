@@ -1,6 +1,6 @@
 .username {
   font-weight: 600;
-  color: var(--text);
+  color: #fff;
 }
 
 .avatarWrap {
@@ -15,8 +15,8 @@
   height: 34px;
   border-radius: 999px;
   object-fit: cover;
-  border: 1px solid var(--border-light);
-  background: var(--bg-tertiary);
+  border: 1px solid #2a2a2a;
+  background: #1a1a1a;
 }
 
 .avatarFallback {
@@ -25,16 +25,16 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  color: var(--text);
-  background: rgba(var(--accent-rgb), 0.12);
-  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  color: #3cffd0;
+  background: rgba(60, 255, 208, 0.12);
+  border: 1px solid rgba(60, 255, 208, 0.25);
 }
 
 .avatarIcon {
   display: inline-flex;
   width: 18px;
   height: 18px;
-  color: var(--text);
+  color: #3cffd0;
 }
 
 .avatarIcon :global(svg) {
@@ -47,12 +47,13 @@
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  background: var(--tag-bg);
-  border: 1px solid var(--tag-border);
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  color: var(--text-soft);
+  color: #aaa;
+  font-family: var(--font-mono, monospace);
   white-space: nowrap;
 }
 

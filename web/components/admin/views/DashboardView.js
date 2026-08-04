@@ -67,27 +67,18 @@ export function DashboardView({
         />
       </div>
 
-      <LatestPosts
-        latestPosts={latestPosts}
-      />
+      <RecentCache items={recentCache} />
 
-      <RecentCache
-        items={recentCache}
-      />
-
-      {/* Secondary stats grid */}
       <section className="admin-dashboard-grid-v2" aria-label="Dashboard panels">
         <CommentsTrend
           trendingComments={trendingComments}
           trendingHint={trendingHint}
         />
-
-        <PostGrowth
-          postsByMonth={postsByMonth}
-        />
-
-      
+        <PostGrowth postsByMonth={postsByMonth} />
       </section>
+
+      {/* Latest articles last */}
+      <LatestPosts latestPosts={latestPosts} />
     </div>
   );
 }

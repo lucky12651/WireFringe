@@ -23,6 +23,16 @@ export default function AdminPage() {
   const [activeView, setActiveView] = useState('dashboard');
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
 
+  // Match public site: force dark Verge admin theme
+  useEffect(() => {
+    initTheme({ defaultTheme: 'dark' });
+    try {
+      localStorage.setItem('cnb_theme', 'dark');
+      localStorage.setItem('cnb_theme_mode', 'manual');
+      document.documentElement.dataset.theme = 'dark';
+    } catch (_) {}
+  }, []);
+
   // Initialize hooks
   const auth = useAuth();
   const posts = usePosts();
@@ -98,11 +108,6 @@ export default function AdminPage() {
       router.replace('/');
     }
   }, [isAuthed, me, router]);
-
-  // Initialize theme and auth on mount
-  useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
-  }, []);
 
   // Load initial data when user is authenticated
   useEffect(() => {

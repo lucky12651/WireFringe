@@ -56,9 +56,11 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
           
 
           <div className={styles.imageContent}>
-            <h1 className={styles.headline}>Coffee n Blog</h1>
+            <h1 className={styles.headline}>
+              Coffee<span style={{ color: '#3CFFD0' }}>n</span>Blog
+            </h1>
             <p className={styles.subheadline}>
-              Share your stories, insights, and ideas with the world in just a few clicks
+              Technology and how it makes us feel.
             </p>
             
           </div>

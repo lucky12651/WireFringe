@@ -4,18 +4,42 @@ import styles from './HeroSection.module.css';
 
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
-  const now = new Date();
-  const diff = now - date;
-  const hours = Math.floor(diff / (1000 * 60 * 60));
+  return date
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    .toUpperCase();
+}
 
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  if (hours < 48) return 'Yesterday';
+function authorName(post) {
+  return String(post?.creatorName || post?.creator || 'Staff').toUpperCase();
+}
 
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+function excerpt(post, max = 110) {
+  const raw = String(post?.excerpt || '').trim();
+  if (!raw) return '';
+  return raw.length > max ? raw.slice(0, max) + '…' : raw;
+}
+
+/** Purple highlight only on hover (CSS .hl) */
+function HighlightTitle({ title, className }) {
+  const t = String(title || '');
+  if (t.length < 24) {
+    return (
+      <h1 className={className}>
+        <span className={styles.hl}>{t}</span>
+      </h1>
+    );
+  }
+  const mid = Math.floor(t.length * 0.42);
+  let split = t.indexOf(' ', mid);
+  if (split < 0) split = mid;
+  const first = t.slice(0, split).trimEnd();
+  const second = t.slice(split).trimStart();
+  return (
+    <h1 className={className}>
+      {first}{' '}
+      <span className={styles.hl}>{second}</span>
+    </h1>
+  );
 }
 
 export default function HeroSection({ posts = [] }) {
@@ -28,83 +52,66 @@ export default function HeroSection({ posts = [] }) {
   }
 
   const featured = posts[0];
-  const subHeadlines = posts.slice(1, 7);
-  const picksForYou = posts.slice(7, 12);
+  const grid = posts.slice(1, 5);
 
   return (
-    <div className={styles.hero}>
-      <div className={styles.grid}>
-        {/* Main Stage (Left Column) */}
-        <section className={styles.mainStage}>
-          {/* <div className={styles.sectionHeader}>
-            Top stories
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </div> */}
+    <section className={styles.hero}>
+      <Link href={postUrl(featured)} className={styles.featured}>
+        <div className={styles.media}>
+          {featured.ogImg ? (
+            <img src={featured.ogImg} alt="" loading="eager" />
+          ) : (
+            <div className={styles.ph} />
+          )}
+          <div className={styles.shade} />
+          <div className={styles.overlay}>
+            <HighlightTitle title={featured.title} className={styles.title} />
+            {excerpt(featured) ? <p className={styles.dek}>{excerpt(featured)}</p> : null}
+            <div className={styles.meta}>
+              <span className={styles.author}>{authorName(featured)}</span>
+              {featured.date ? <span className={styles.date}>{formatDate(featured.date)}</span> : null}
+              {featured.readMinutes ? (
+                <span className={styles.comments}>
+                  <CommentIcon /> {featured.readMinutes}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </Link>
 
-          <header className={styles.featuredBox}>
-            <Link href={postUrl(featured)} className={styles.featuredRow}>
-              <div className={styles.featuredImage}>
-                {featured.ogImg ? (
-                  <img src={featured.ogImg} alt={featured.title} loading="eager" />
-                ) : (
-                  <div className={styles.skeleton} style={{ height: '100%' }} />
-                )}
-              </div>
-              <article className={styles.featuredText}>
-                <span className={styles.source}>{featured.bucket || 'Top News'}</span>
-                <h2 className={styles.titleLarge}>{featured.title}</h2>
-                <span className={styles.time}>{formatDate(featured.date)}</span>
-              </article>
-            </Link>
-          </header>
-
-          <div className={styles.subHeadlines}>
-            {subHeadlines.map((post) => (
-              <Link key={post.id} href={postUrl(post)} className={styles.subItem}>
-                <span className={styles.source} style={{ fontSize: '11px' }}>{post.bucket || 'News'}</span>
-                <h3 className={styles.subTitle}>{post.title}</h3>
-                <span className={styles.time}>{formatDate(post.date)}</span>
+      {grid.length > 0 && (
+        <div className={styles.grid}>
+          {grid.map((post) => (
+            <article key={post.id} className={styles.card}>
+              <Link href={postUrl(post)} className={styles.thumb}>
+                {post.ogImg ? <img src={post.ogImg} alt="" loading="lazy" /> : <div className={styles.ph} />}
               </Link>
-            ))}
-          </div>
-
-          <Link href="/?category=all" className={styles.moreHeadlines}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <line x1="3" y1="9" x2="21" y2="9" />
-              <line x1="9" y1="21" x2="9" y2="9" />
-            </svg>
-            See more headlines and perspectives
-          </Link>
-        </section>
-
-        {/* Sidebar (Right Column) - Picks For You */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sectionHeader} style={{ color: 'var(--text-primary)', cursor: 'default', justifyContent: 'space-between', width: '100%' }}>
-            Picks for you
-           
-          </div>
-
-          <div className={styles.sidebarList}>
-            {picksForYou.map((post) => (
-              <Link key={post.id} href={postUrl(post)} className={styles.compactCard}>
-                <div className={styles.compactContent}>
-                  <span className={styles.source} style={{ fontSize: '11px' }}>{post.bucket || 'Latest'}</span>
-                  <h4 className={styles.compactTitle}>{post.title}</h4>
-                  <span className={styles.time}>{formatDate(post.date)}</span>
+              <div className={styles.cardBody}>
+                <Link href={postUrl(post)} className={styles.cardTitle}>
+                  {post.title}
+                </Link>
+                <div className={styles.cardMeta}>
+                  <span className={styles.author}>{authorName(post)}</span>
+                  {post.readMinutes ? (
+                    <span className={styles.comments}>
+                      <CommentIcon /> {post.readMinutes}
+                    </span>
+                  ) : null}
                 </div>
-                {post.ogImg && (
-                  <div className={styles.compactThumb}>
-                    <img src={post.ogImg} alt="" loading="lazy" />
-                  </div>
-                )}
-              </Link>
-            ))}
-          </div>
-        </aside>
-      </div>
-    </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }

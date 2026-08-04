@@ -1,7 +1,7 @@
 .adRail {
   display: none;
   position: fixed;
-  top: 160px;
+  top: 100px;
   width: var(--ad-rail-width);
   z-index: 10;
 }

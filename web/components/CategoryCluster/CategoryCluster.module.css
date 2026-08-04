@@ -1,128 +1,87 @@
 .cluster {
-  background: var(--bg-tertiary);
-  padding: var(--space-lg);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-xl);
+  margin-bottom: 36px;
 }
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: var(--space-lg);
-}
-
-.titleLink {
-  text-decoration: none;
-  color: inherit;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .title {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   color: var(--text-primary);
 }
 
-.titleLink:hover .title {
-  text-decoration: underline;
+.title:hover {
+  box-shadow: inset 0 -0.12em 0 0 var(--mint);
 }
 
 .moreLink {
-  font-size: 14px;
-  color: var(--brand-primary);
-  font-weight: 500;
-  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 .moreLink:hover {
-  text-decoration: underline;
+  color: var(--purple);
+}
+
+html[data-theme='dark'] .moreLink:hover {
+  color: var(--mint);
 }
 
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: var(--space-xl);
-  row-gap: var(--space-xs);
+  gap: 22px 24px;
 }
 
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-}
-
-/* Unified Compact Card Design (Matching Screenshot) */
 .card {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--border-light);
-  text-decoration: none;
-  color: inherit;
-  transition: opacity 0.2s ease;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  align-items: start;
 }
 
-.card:last-child {
-  border-bottom: none;
+.thumb {
+  width: 100px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  display: block;
 }
 
-.card:hover {
-  opacity: 0.8;
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
 }
 
-.card:hover .cardTitle {
-  text-decoration: underline;
+.card:hover .thumb img {
+  transform: scale(1.05);
 }
 
-.cardContent {
-  flex: 1;
+.body {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.cardMetaTop {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: 4px;
-}
-
-.sourceIcon {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  background: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sourceIcon img {
-  width: 12px;
-  height: 12px;
-  object-fit: contain;
-}
-
-.sourceName {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-primary);
 }
 
 .cardTitle {
-  font-family: var(--font-heading);
   font-size: 15px;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.3;
   margin-bottom: 8px;
+  color: var(--text-primary);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -130,46 +89,26 @@
   overflow: hidden;
 }
 
-.cardMetaBottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
+.cardTitle:hover {
+  box-shadow: inset 0 -0.12em 0 0 var(--mint);
 }
 
-.timeInfo {
+.meta {
   font-size: 12px;
   color: var(--text-secondary);
   display: flex;
-  gap: var(--space-xs);
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.newsIcon {
-  width: 18px;
-  height: 18px;
-  opacity: 0.6;
-  color: var(--text-secondary);
+.author {
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.cardMedia {
-  width: 88px;
-  height: 88px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  flex-shrink: 0;
-  background: var(--bg-secondary);
-}
-
-@media (max-width: 500px) {
-  .cardMedia {
-    width: 64px;
-    height: 64px;
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
   }
-}
-
-.cardMedia img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }

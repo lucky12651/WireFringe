@@ -55,9 +55,11 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
       <div className={styles.imageSection}>
         <div className={styles.imageOverlay}>
           <div className={styles.imageContent}>
-            <h1 className={styles.headline}>Join Coffee n Blog</h1>
+            <h1 className={styles.headline}>
+              Join Coffee<span style={{ color: '#3CFFD0' }}>nBlog</span>
+            </h1>
             <p className={styles.subheadline}>
-              Create an account to start sharing your stories and connecting with others
+              Create an account to follow writers, save stories, and join the conversation.
             </p>
           </div>
         </div>

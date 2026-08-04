@@ -1,18 +1,19 @@
+/* Kept for compatibility; homepage no longer features this scroller prominently */
 .topStories {
-  margin: 0 0 var(--space-lg);
+  margin: 24px 0 8px;
 }
 
 .headerRow {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: var(--space-sm);
+  margin-bottom: 16px;
 }
 
 .title {
-  font-family: var(--font-heading);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.3px;
 }
 
 .hint {
@@ -22,37 +23,34 @@
 
 .scroller {
   display: flex;
-  gap: var(--space-md);
+  gap: 16px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
 }
 
 .card {
-  display: inline-grid;
-  grid-template-columns: 160px 1fr;
-  gap: var(--space-sm);
-  min-width: 420px;
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   text-decoration: none;
   color: inherit;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm);
-  border: 1px solid var(--border-light);
 }
 
-.thumb {
-  width: 160px;
-  height: 100px;
+.thumb,
+.thumbPlaceholder {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 4px;
+  background: #222;
   background-size: cover;
   background-position: center;
-  border-radius: var(--radius-sm);
+  transition: transform 0.35s ease;
 }
 
-.thumbPlaceholder {
-  width: 160px;
-  height: 100px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
+.card:hover .thumb {
+  transform: scale(1.02);
 }
 
 .info {
@@ -62,15 +60,19 @@
 }
 
 .meta {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .headline {
-  font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.25;
-  margin: 0;
+  line-height: 1.3;
+  transition: color 0.15s ease;
+}
+
+.card:hover .headline {
+  color: var(--accent);
 }

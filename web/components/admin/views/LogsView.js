@@ -73,7 +73,7 @@ export function LogsView({ logs, onRefresh, isLoading }) {
               <tbody>
                 {filteredLogs.map((log) => (
                   <tr key={log.id}>
-                    <td className="text-muted" style={{ fontSize: '12px',color:"#111" }}>
+                    <td className="text-muted" style={{ fontSize: '12px' }}>
                       {formatDate(log.createdAt)}
                     </td>
                     <td>

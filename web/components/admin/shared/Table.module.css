@@ -1,10 +1,10 @@
 .tableWrapper {
   width: 100%;
   overflow-x: auto;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  background: var(--bg-primary);
-  box-shadow: var(--shadow-sm);
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: #141414;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
 
 .table {
@@ -15,21 +15,22 @@
 }
 
 .tableHeader {
-  background: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-light);
+  background: #101010;
+  border-bottom: 1px solid #2a2a2a;
 }
 
 .tableHead {
   padding: 12px 16px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #888;
   text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, monospace);
 }
 
 .tableRow {
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #1f1f1f;
   transition: background 0.2s ease;
 }
 
@@ -38,16 +39,15 @@
 }
 
 .tableBody .tableRow:nth-child(even) {
-  background: rgba(var(--accent-rgb, var(--brand-primary-rgb, 26, 115, 232)),
-      0.03);
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .tableRow:hover {
-  background: var(--bg-hover);
+  background: rgba(60, 255, 208, 0.04);
 }
 
 .tableCell {
-  padding: 16px;
-  color: var(--text-primary);
+  padding: 14px 16px;
+  color: #e8e8e8;
   vertical-align: middle;
 }
