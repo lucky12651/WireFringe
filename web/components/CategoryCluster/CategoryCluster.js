@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { postUrl } from '../../lib/utils';
+import AuthorByline from '../AuthorByline/AuthorByline';
 import styles from './CategoryCluster.module.css';
 
 function formatDate(date) {
@@ -16,10 +17,6 @@ function formatDate(date) {
     month: 'short',
     day: 'numeric',
   });
-}
-
-function authorName(post) {
-  return String(post?.creatorName || post?.creator || post?.bucket || 'Staff').toUpperCase();
 }
 
 function Card({ post }) {
@@ -39,7 +36,7 @@ function Card({ post }) {
           <h3 className={styles.cardTitle}>{post.title}</h3>
         </Link>
         <div className={styles.meta}>
-          <span className={styles.author}>{authorName(post)}</span>
+          <AuthorByline post={post} size="sm" />
           <span aria-hidden="true">•</span>
           <span>{formatDate(post.date)}</span>
         </div>

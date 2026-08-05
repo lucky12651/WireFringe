@@ -604,7 +604,7 @@ html[data-theme='light'] {
 }
 
 /* =========================================================
-   ALL ADMIN VIEWS — Verge dark theme (Posts, Media, Users…)
+   ALL ADMIN VIEWS ï¿½ Verge dark theme (Posts, Media, Usersï¿½)
    ========================================================= */
 
 .admin-view-container-v2 {
@@ -1449,20 +1449,21 @@ html[data-theme='light'] {
   }
 }
 
-/* Modal overlays used by DeleteConfirmModal etc */
+/* Modal styles live in globals.css (single Next CSS entry). Keep a light mirror. */
+.modal-overlay,
 .modal-backdrop,
 .delete-modal-backdrop {
-  background: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(6px);
 }
 
 .modal,
 .delete-modal,
 .modal-content {
-  background: #141414 !important;
+  background: #121212 !important;
   border: 1px solid #2a2a2a !important;
   color: #fff !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
 }
 
 /* Editor page shell pieces */
@@ -1487,7 +1488,7 @@ html[data-theme='light'] {
 }
 
 /* =========================================================
-   POST EDITOR (/admin/post) — Verge dark match
+   POST EDITOR (/admin/post) ï¿½ Verge dark match
    ========================================================= */
 
 .admin-editor-shell {

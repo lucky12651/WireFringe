@@ -1,8 +1,58 @@
-﻿/* Coffee n Blog global styles — variables + admin (single entry so Next always bundles them) */
+﻿/* Wirefringe global styles — variables + admin (single entry so Next always bundles them) */
 /* =========================================================
-   Coffee n Blog â€” The Vergeâ€“inspired dark design system
+   Wirefringe — The Verge–inspired dark design system
    Pure black canvas Â· mint accents Â· purple hover highlights
    ========================================================= */
+
+/* ---------- Shared BrandLogo (Header F style site-wide) ---------- */
+.wf-logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  line-height: 1;
+}
+
+.wf-logo {
+  display: inline-block;
+  font-weight: 900;
+  letter-spacing: -0.065em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  font-family: var(--font-heading, Inter, Helvetica, Arial, sans-serif);
+}
+
+/* Mint italic F — same tilt treatment as Header */
+.wf-logo-f {
+  color: #3cffd0;
+  font-style: italic;
+  font-weight: 800;
+  display: inline-block;
+  transform: skewX(-6deg);
+  text-shadow: 0 0 18px rgba(60, 255, 208, 0.25);
+}
+
+.wf-logo--sm {
+  font-size: 18px;
+}
+
+.wf-logo--md {
+  font-size: 26px;
+}
+
+.wf-logo--lg {
+  font-size: 32px;
+}
+
+.wf-logo--xl {
+  font-size: 44px;
+  text-shadow: 0 0 40px rgba(60, 255, 208, 0.12);
+}
+
+.wf-logo--xl .wf-logo-f {
+  text-shadow: 0 0 24px rgba(60, 255, 208, 0.35);
+}
 
 * {
   box-sizing: border-box;
@@ -10,6 +60,24 @@
   padding: 0;
   scrollbar-width: thin;
   scrollbar-color: #3a3a3a transparent;
+}
+
+/* Hide unfilled AdSense units site-wide (stops black dead blocks after footer) */
+ins.adsbygoogle[data-ad-status='unfilled'] {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Google sometimes injects anchor / sticky containers — keep them from bloating page height */
+body > ins.adsbygoogle,
+body > div[id^='google_ads_iframe'],
+body > div[class*='google-auto-placed'] {
+  max-width: 100vw !important;
 }
 
 :root,
@@ -1698,20 +1766,340 @@ html[data-theme='light'] {
   }
 }
 
-/* Modal overlays used by DeleteConfirmModal etc */
+/* =========================================================
+   Admin modals (delete / password / role)
+   ========================================================= */
+.modal-overlay,
 .modal-backdrop,
 .delete-modal-backdrop {
-  background: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(4px);
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(6px);
 }
 
 .modal,
 .delete-modal,
 .modal-content {
-  background: #141414 !important;
+  width: min(520px, 100%);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+  background: #121212 !important;
   border: 1px solid #2a2a2a !important;
   color: #fff !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.modal-body {
+  padding: 14px 20px 6px;
+  color: #c8c8c8;
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.modal-body p {
+  margin: 0 0 10px;
+}
+
+.modal-body strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.modal-body .form-group-v2 {
+  margin-top: 12px;
+}
+
+.modal-body .form-group-v2 input,
+.modal-body .form-group-v2 select,
+.modal-body .form-group-v2 textarea {
+  background: #0a0a0a !important;
+  border-color: #333 !important;
+  color: #fff !important;
+}
+
+.modal-warning {
+  color: #ff9b9b !important;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+  margin-top: 10px !important;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid #222;
+  margin-top: 8px;
+}
+
+/* ActionButton uses CSS modules + flex:1 by default — don't stretch in modals */
+.modal-actions > * {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 110px;
+}
+
+.delete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.delete-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: #0c0c0c;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  color: #ddd;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.delete-option-card:hover {
+  border-color: rgba(60, 255, 208, 0.28);
+  background: #101010;
+}
+
+.delete-option-card.is-selected {
+  border-color: rgba(60, 255, 208, 0.45);
+  background: rgba(60, 255, 208, 0.06);
+  box-shadow: 0 0 0 1px rgba(60, 255, 208, 0.08);
+}
+
+.delete-option-card.is-danger.is-selected {
+  border-color: rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.07);
+  box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.08);
+}
+
+.delete-option-card input[type='radio'] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: #3cffd0;
+}
+
+.delete-option-card.is-danger input[type='radio'] {
+  accent-color: #ff6b6b;
+}
+
+.delete-option-card .option-title {
+  display: block;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.delete-option-card .option-desc {
+  display: block;
+  color: #999;
+  font-size: 12px;
+}
+
+.delete-transfer-box {
+  margin: 0 0 0 28px;
+  padding: 10px 12px 12px;
+  border-left: 2px solid rgba(60, 255, 208, 0.35);
+}
+
+.delete-transfer-box label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.delete-transfer-box select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  background: #0a0a0a;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.delete-transfer-box select:focus {
+  border-color: #3cffd0;
+  box-shadow: 0 0 0 3px rgba(60, 255, 208, 0.12);
+}
+
+@media (max-width: 560px) {
+  .modal-overlay,
+  .modal-backdrop,
+  .delete-modal-backdrop {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal,
+  .delete-modal,
+  .modal-content {
+    width: 100%;
+    border-radius: 14px 14px 0 0 !important;
+    max-height: 92vh;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions > * {
+    width: 100% !important;
+  }
+}
+
+/* Post brand byline settings card */
+.brand-byline-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .brand-byline-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.brand-byline-preview-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.brand-logo-preview-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.brand-logo-preview-wrap img {
+  max-width: 220px;
+  max-height: 56px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.brand-logo-placeholder {
+  color: #888;
+  font-size: 13px;
+  font-family: var(--font-mono, monospace);
+}
+
+.brand-byline-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.brand-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: #0c0c0c;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.brand-toggle-row:hover {
+  border-color: rgba(60, 255, 208, 0.3);
+}
+
+.brand-toggle-row input[type='checkbox'] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #3cffd0;
+}
+
+.brand-toggle-row .option-title {
+  display: block;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.brand-toggle-row .option-desc {
+  display: block;
+  color: #999;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.brand-status-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.brand-status-pill.on {
+  color: #3cffd0;
+  background: rgba(60, 255, 208, 0.1);
+  border: 1px solid rgba(60, 255, 208, 0.3);
+}
+
+.brand-status-pill.off {
+  color: #aaa;
+  background: #161616;
+  border: 1px solid #2a2a2a;
 }
 
 /* Editor page shell pieces */

@@ -4,6 +4,8 @@
   flex-direction: column;
   background: transparent;
   color: #fff;
+  position: relative;
+  overflow-x: clip;
 }
 
 .main {
@@ -53,16 +55,8 @@
 }
 
 .footerLogo {
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: -0.065em;
-  color: #fff;
-  text-shadow: 0 0 40px rgba(60, 255, 208, 0.12);
-}
-
-.footerLogo span {
-  color: var(--mint);
-  text-shadow: 0 0 24px rgba(60, 255, 208, 0.35);
+  display: flex;
+  align-items: center;
 }
 
 .social {
@@ -145,7 +139,7 @@
 }
 
 @media (max-width: 640px) {
-  .footerLogo {
+  .footerLogo :global(.wf-logo--xl) {
     font-size: 32px;
   }
 

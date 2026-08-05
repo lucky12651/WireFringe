@@ -257,7 +257,7 @@ async def generate_article(
             content=content,
             excerpt=excerpt,
             bucket=category,
-            creator="Coffee N Blog",
+            creator="Wirefringe",
             ogImg=og_img,
             readMinutes=max(1, len(raw_content.split()) // 200),
             metaDescription=meta_description,

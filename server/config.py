@@ -35,8 +35,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8003",
         "http://10.5.0.2:3000",
         "http://80.225.223.80:3000",
-        "https://coffeenblog.gridwork.me",
-        "http://coffeenblog.gridwork.me",
+        "https://wirefringe.gridwork.me",
+        "http://wirefringe.gridwork.me",
     ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     static_dir: Path = PROJECT_ROOT / "static"
 
     # App — default 8000 matches GridWork monorepo / Docker (override via BACKEND_URL / BACKEND_PORT)
-    app_title: str = "Coffee n Blog API"
+    app_title: str = "Wirefringe API"
     ui_url: str = "http://127.0.0.1:3000"
     backend_url: str = Field("http://127.0.0.1:8000", validation_alias="BACKEND_URL")
     backend_port: int = Field(8000, validation_alias="BACKEND_PORT")

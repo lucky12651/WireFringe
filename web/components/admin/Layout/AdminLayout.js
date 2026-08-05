@@ -15,7 +15,7 @@ export function AdminLayout({
   return (
     <>
       <Head>
-        <title>Coffee n Blog – Admin</title>
+        <title>Wirefringe – Admin</title>
       </Head>
 
       <div className="page-shell page-shell-admin">

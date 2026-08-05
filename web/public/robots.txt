@@ -1,4 +1,4 @@
-# Coffee n Blog — crawler rules
+# Wirefringe — crawler rules
 User-agent: *
 Allow: /
 
@@ -10,4 +10,4 @@ Disallow: /signup
 Disallow: /api/
 
 # Sitemap (update domain if needed)
-Sitemap: https://coffeenblog.com/sitemap.xml
+Sitemap: https://wirefringe.gridwork.me/sitemap.xml

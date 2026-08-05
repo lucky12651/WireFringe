@@ -168,6 +168,36 @@ export function useAuth() {
     }
   }, []);
 
+  const updateBrandByline = useCallback(async (enabled) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const user = await authApi.updateBrandByline(enabled);
+      setMe(user);
+      return { success: true, user };
+    } catch (err) {
+      setError(err?.message || 'Failed to update brand byline');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const uploadBrandLogo = useCallback(async (file) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const user = await authApi.uploadBrandLogo(file);
+      setMe(user);
+      return { success: true, user };
+    } catch (err) {
+      setError(err?.message || 'Failed to upload brand logo');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return useMemo(
     () => ({
       me,
@@ -185,6 +215,8 @@ export function useAuth() {
       logout,
       updateProfile,
       uploadPhoto,
+      updateBrandByline,
+      uploadBrandLogo,
       changePassword,
       setError,
     }),
@@ -204,6 +236,8 @@ export function useAuth() {
       logout,
       updateProfile,
       uploadPhoto,
+      updateBrandByline,
+      uploadBrandLogo,
       changePassword,
     ]
   );

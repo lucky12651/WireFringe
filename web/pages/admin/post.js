@@ -222,16 +222,16 @@ export default function AdminPostPage() {
   return (
     <>
       <Head>
-        <title>Coffee n Blog – Admin Editor</title>
+        <title>Wirefringe – Admin Editor</title>
       </Head>
 
       <div className="page-shell page-shell-admin">
         <header className="site-header admin-header">
           <div className="header-inner">
             <Link className="brand" href="/admin" aria-label="Back to admin">
-              <div className="brand-mark">
-                <div className="brand-mark-inner">CnB</div>
-              </div>
+              <span className="wf-logo wf-logo--sm" aria-hidden="true">
+                Wire<span className="wf-logo-f">F</span>ringe
+              </span>
               <div className="brand-text">
                 <h1>Editor</h1>
                 <span id="editorMode">{modeLabel}</span>

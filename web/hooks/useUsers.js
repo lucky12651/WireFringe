@@ -36,15 +36,44 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
     }
   }, [refreshUsers]);
 
-  const deleteUser = useCallback(async (id) => {
+  const deleteUser = useCallback(async (id, options = {}) => {
     try {
       setIsLoading(true);
       setError(null);
-      await usersApi.delete(id);
+      const result = await usersApi.delete(id, options);
       await refreshUsers();
-      return { success: true };
+      return { success: true, result };
     } catch (err) {
       setError(err?.message || 'Failed to delete user');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refreshUsers]);
+
+  const setUserPassword = useCallback(async (id, newPassword) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await usersApi.setPassword(id, newPassword);
+      return { success: true };
+    } catch (err) {
+      setError(err?.message || 'Failed to update password');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const setUserRole = useCallback(async (id, role) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updated = await usersApi.setRole(id, role);
+      await refreshUsers();
+      return { success: true, user: updated };
+    } catch (err) {
+      setError(err?.message || 'Failed to update role');
       return { success: false, error: err?.message };
     } finally {
       setIsLoading(false);
@@ -73,6 +102,8 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       setUsers,
       createUser,
       deleteUser,
+      setUserPassword,
+      setUserRole,
       creatorCounts,
       memberStats,
       setError,
@@ -85,6 +116,8 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       setUsers,
       createUser,
       deleteUser,
+      setUserPassword,
+      setUserRole,
       creatorCounts,
       memberStats,
     ]

@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { postUrl, postExcerpt } from '../../lib/utils';
+import AuthorByline from '../AuthorByline/AuthorByline';
 import styles from './StreamFeed.module.css';
-
-function author(post) {
-  return String(post?.creatorName || post?.creator || 'Staff').toUpperCase();
-}
 
 function formatRelative(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -20,16 +17,6 @@ function formatRelative(date) {
 
 function excerpt(post, max = 180) {
   return postExcerpt(post, max);
-}
-
-function initials(name) {
-  const p = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!p.length) return '?';
-  if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
-  return (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
 /**
@@ -75,23 +62,18 @@ export default function StreamFeed({
         <div className={styles.list}>
           {posts.map((post, idx) => {
             const mode = idx % 4; // vary card layouts like Verge
-            const name = author(post);
             const body = excerpt(post, mode === 1 ? 220 : 140);
 
             return (
               <article key={post.id} className={styles.item}>
                 <div className={styles.authorRow}>
-                  <div className={styles.avatar} style={{ '--hue': (idx * 47) % 360 }}>
-                    {post.creatorAvatarUrl ? (
-                      <img src={post.creatorAvatarUrl} alt="" />
-                    ) : (
-                      <span>{initials(name)}</span>
-                    )}
-                  </div>
-                  <div className={styles.authorMeta}>
-                    <div className={styles.authorName}>{name}</div>
-                    <div className={styles.authorTime}>{formatRelative(post.date)}</div>
-                  </div>
+                  <AuthorByline
+                    post={post}
+                    size="sm"
+                    showAvatar
+                    time={formatRelative(post.date)}
+                    className={styles.byline}
+                  />
                 </div>
 
                 {/* Layout variants for visual interest */}

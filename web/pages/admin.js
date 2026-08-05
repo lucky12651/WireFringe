@@ -278,6 +278,8 @@ export default function AdminPage() {
             users={users.users}
             onCreate={users.createUser}
             onDelete={users.deleteUser}
+            onSetPassword={users.setUserPassword}
+            onSetRole={users.setUserRole}
             canManageUsers={canManageUsers}
           />
         );
@@ -288,6 +290,8 @@ export default function AdminPage() {
             me={me}
             onUpdateProfile={auth.updateProfile}
             onUploadPhoto={auth.uploadPhoto}
+            onUpdateBrandByline={auth.updateBrandByline}
+            onUploadBrandLogo={auth.uploadBrandLogo}
             onChangePassword={auth.changePassword}
           />
         );

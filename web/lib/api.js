@@ -1,5 +1,5 @@
 /**
- * Shared API client for Coffee n Blog
+ * Shared API client for Wirefringe
  * DRY: Centralized fetch logic used across all admin components
  */
 
@@ -114,6 +114,12 @@ export const authApi = {
       body: JSON.stringify({ displayName }),
     }),
   uploadPhoto: (file) => uploadFile('/api/admin/profile/photo', file),
+  updateBrandByline: (enabled) =>
+    api('/api/admin/profile/brand-byline', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: !!enabled }),
+    }),
+  uploadBrandLogo: (file) => uploadFile('/api/admin/profile/brand-logo', file),
   changePassword: (currentPassword, newPassword) =>
     api('/api/admin/profile/password', {
       method: 'PUT',
@@ -173,8 +179,32 @@ export const usersApi = {
       method: 'POST',
       body: JSON.stringify({ username, password, role }),
     }),
-  delete: (id) =>
-    api(`/api/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  setPassword: (id, newPassword) =>
+    api(`/api/admin/users/${encodeURIComponent(id)}/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ newPassword }),
+    }),
+  setRole: (id, role) =>
+    api(`/api/admin/users/${encodeURIComponent(id)}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    }),
+  /**
+   * Delete a user.
+   * @param {number|string} id
+   * @param {{ postsAction?: 'delete'|'transfer', transferToUserId?: number|null }} [options]
+   */
+  delete: (id, options = {}) =>
+    api(`/api/admin/users/${encodeURIComponent(id)}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({
+        postsAction: options.postsAction || 'transfer',
+        transferToUserId:
+          options.transferToUserId === undefined || options.transferToUserId === null
+            ? null
+            : Number(options.transferToUserId),
+      }),
+    }),
 };
 
 // Comments API

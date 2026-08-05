@@ -13,6 +13,9 @@ class PostOut(BaseModel):
     creator: str | None = None
     creatorName: str | None = None
     creatorAvatarUrl: str | None = None
+    # When true, public UI shows brand logo instead of username text on posts
+    creatorBrandByline: bool = False
+    creatorBrandLogoUrl: str | None = None
     content: str
     excerpt: str
 
@@ -58,6 +61,8 @@ class MeOut(BaseModel):
     role: str
     displayName: str | None = None
     avatarUrl: str | None = None
+    brandBylineEnabled: bool = False
+    brandLogoUrl: str | None = None
     token: str | None = None
 
 
@@ -73,6 +78,8 @@ class UserOut(BaseModel):
     role: str
     avatarUrl: str | None = None
     displayName: str | None = None
+    brandBylineEnabled: bool = False
+    brandLogoUrl: str | None = None
 
 
 class UserCreate(BaseModel):
@@ -91,9 +98,42 @@ class ProfileUpdateRequest(BaseModel):
     displayName: str | None = None
 
 
+class BrandBylineUpdateRequest(BaseModel):
+    """Toggle post-only brand logo byline (not site-wide branding)."""
+
+    enabled: bool
+
+
 class PasswordChangeRequest(BaseModel):
     currentPassword: str
     newPassword: str
+
+
+class AdminPasswordSetRequest(BaseModel):
+    """Admin sets another user's password (no current password required)."""
+
+    newPassword: str = Field(..., min_length=8, max_length=200)
+
+
+class AdminRoleUpdateRequest(BaseModel):
+    """Admin changes another user's role."""
+
+    role: str = Field(..., min_length=1, max_length=32)
+
+
+class AdminUserDeleteRequest(BaseModel):
+    """Options when deleting a user and their posts."""
+
+    # "delete" removes their posts; "transfer" reassigns posts to another user
+    postsAction: str = Field("transfer", min_length=1, max_length=32)
+    transferToUserId: int | None = None
+
+
+class AdminUserDeleteOut(BaseModel):
+    ok: bool = True
+    postsDeleted: int = 0
+    postsTransferred: int = 0
+    transferToUsername: str | None = None
 
 
 class PostUpsert(BaseModel):

@@ -6,11 +6,8 @@ import HeroSection from '../components/HeroSection/HeroSection';
 import { fetcher } from '../lib/api';
 import { postUrl, postExcerpt } from '../lib/utils';
 import Loader from '../components/Loader/Loader';
+import AuthorByline from '../components/AuthorByline/AuthorByline';
 import styles from '../styles/Home.module.css';
-
-function author(post) {
-  return String(post?.creatorName || post?.creator || 'Staff').toUpperCase();
-}
 
 function formatRelative(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -25,16 +22,6 @@ function formatRelative(date) {
 
 function excerpt(post, max = 160) {
   return postExcerpt(post, max);
-}
-
-function initials(name) {
-  const p = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!p.length) return '?';
-  if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
-  return (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
 export default function ForYouPage() {
@@ -111,11 +98,12 @@ export default function ForYouPage() {
               {posts.slice(5).map((post) => (
                 <article key={post.id} className={styles.feedItem}>
                   <div className={styles.authorRow}>
-                    <div className={styles.avatar}>{initials(author(post))}</div>
-                    <div>
-                      <div className={styles.authorName}>{author(post)}</div>
-                      <div className={styles.authorTime}>{formatRelative(post.date)}</div>
-                    </div>
+                    <AuthorByline
+                      post={post}
+                      size="sm"
+                      showAvatar
+                      time={formatRelative(post.date)}
+                    />
                   </div>
                   <Link href={postUrl(post)} className={styles.feedTitle}>
                     {post.title}

@@ -2,12 +2,14 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../Header/Header';
 import AdRails from '../AdRails/AdRails';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '../../lib/site';
 import styles from './Layout.module.css';
 
 export default function Layout({
   children,
-  title = 'Coffee n Blog – Tech, Science, Culture',
-  description = 'Coffee n Blog is about technology and how it makes us feel.',
+  title = `${SITE_NAME} – Tech, Science, Culture`,
+  description = SITE_DESCRIPTION || SITE_TAGLINE,
   keywords = 'tech, AI, science, culture, news',
   headerProps = {},
   showAdRails = true,
@@ -35,7 +37,7 @@ export default function Layout({
         <footer className={styles.footer}>
           <div className={styles.footerTop}>
             <div className={styles.footerLogo}>
-              Coffee<span>n</span>Blog
+              <BrandLogo size="xl" href="/" />
             </div>
             <div className={styles.social}>
               <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook">
@@ -83,7 +85,7 @@ export default function Layout({
           </div>
 
           <p className={styles.copyright}>
-            © {new Date().getFullYear()} COFFEE N BLOG. ALL RIGHTS RESERVED.
+            © {new Date().getFullYear()} {SITE_NAME.toUpperCase()}. ALL RIGHTS RESERVED.
           </p>
         </footer>
       </div>

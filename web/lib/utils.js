@@ -1,5 +1,5 @@
 /**
- * Shared utility functions for Coffee n Blog
+ * Shared utility functions for Wirefringe
  * DRY: Common formatting and calculation logic
  */
 

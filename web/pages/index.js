@@ -13,6 +13,7 @@ import { fetcher, api } from '../lib/api';
 import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
 import SearchResults from '../components/SearchResults/SearchResults';
+import AuthorByline from '../components/AuthorByline/AuthorByline';
 import styles from '../styles/Home.module.css';
 
 const CATEGORIES = [
@@ -43,10 +44,6 @@ function excerpt(post, max = 160) {
   return postExcerpt(post, max);
 }
 
-function author(post) {
-  return String(post?.creatorName || post?.creator || 'Staff').toUpperCase();
-}
-
 export async function getStaticProps() {
   try {
     const data = await api('/api/posts');
@@ -56,6 +53,8 @@ export async function getStaticProps() {
       creator: p.creator ?? null,
       creatorName: p.creatorName ?? null,
       creatorAvatarUrl: p.creatorAvatarUrl ?? null,
+      creatorBrandByline: !!p.creatorBrandByline,
+      creatorBrandLogoUrl: p.creatorBrandLogoUrl ?? null,
       excerpt: p.excerpt,
       bucket: p.bucket,
       readMinutes: p.readMinutes ?? null,
@@ -226,7 +225,7 @@ export default function HomePage({ initialPosts }) {
                             {post.title}
                           </Link>
                           <div className={styles.metaRow}>
-                            <span className={styles.author}>{author(post)}</span>
+                            <AuthorByline post={post} size="sm" />
                             <span style={{ color: '#666' }}>{formatDate(post.date)}</span>
                           </div>
                         </div>
@@ -346,7 +345,7 @@ function PackageBlock({ title, subtitle, posts }) {
             <p className={styles.packageFeatureDek}>{excerpt(feature, 120)}</p>
           ) : null}
           <div className={styles.metaRow}>
-            <span className={styles.author}>{author(feature)}</span>
+            <AuthorByline post={feature} size="sm" />
           </div>
         </Link>
 
@@ -359,7 +358,7 @@ function PackageBlock({ title, subtitle, posts }) {
                   <p className={styles.packageItemDek}>{excerpt(post, 90)}</p>
                 ) : null}
                 <div className={styles.metaRow}>
-                  <span className={styles.author}>{author(post)}</span>
+                  <AuthorByline post={post} size="sm" />
                 </div>
               </div>
               {post.ogImg ? (
@@ -395,7 +394,7 @@ function CategoryRow({ title, posts, href }) {
             </div>
             <h3 className={styles.catCardTitle}>{post.title}</h3>
             <div className={styles.metaRow}>
-              <span className={styles.author}>{author(post)}</span>
+              <AuthorByline post={post} size="sm" />
             </div>
           </Link>
         ))}

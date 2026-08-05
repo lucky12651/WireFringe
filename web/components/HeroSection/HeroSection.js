@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { postUrl, postExcerpt } from '../../lib/utils';
+import AuthorByline from '../AuthorByline/AuthorByline';
 import styles from './HeroSection.module.css';
 
 function formatDate(date) {
@@ -7,10 +8,6 @@ function formatDate(date) {
   return date
     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     .toUpperCase();
-}
-
-function authorName(post) {
-  return String(post?.creatorName || post?.creator || 'Staff').toUpperCase();
 }
 
 function excerpt(post, max = 110) {
@@ -66,7 +63,7 @@ export default function HeroSection({ posts = [] }) {
             <HighlightTitle title={featured.title} className={styles.title} />
             {excerpt(featured) ? <p className={styles.dek}>{excerpt(featured)}</p> : null}
             <div className={styles.meta}>
-              <span className={styles.author}>{authorName(featured)}</span>
+              <AuthorByline post={featured} size="sm" className={styles.authorByline} />
               {featured.date ? <span className={styles.date}>{formatDate(featured.date)}</span> : null}
               <span className={styles.comments} title="Comments">
                 <CommentIcon /> {Number(featured.commentCount) || 0}
@@ -88,7 +85,7 @@ export default function HeroSection({ posts = [] }) {
                   {post.title}
                 </Link>
                 <div className={styles.cardMeta}>
-                  <span className={styles.author}>{authorName(post)}</span>
+                  <AuthorByline post={post} size="sm" className={styles.authorByline} />
                   <span className={styles.comments} title="Comments">
                     <CommentIcon /> {Number(post.commentCount) || 0}
                   </span>

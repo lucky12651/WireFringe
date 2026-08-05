@@ -41,6 +41,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Error creating database tables: {e}")
 
+    # Lightweight schema upgrades (create_all does not add columns)
+    try:
+        _ensure_user_profile_columns()
+        _ensure_comment_moderation_columns()
+        _seed_default_categories()
+        settings.uploads_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("Schema upgrades / seed complete.")
+    except Exception as e:
+        logger.error(f"Error during schema upgrade/seed: {e}")
+
     # Check for insecure default secrets
     if settings.session_secret == "dev-secret-change-me":
         logger.warning("SECURITY WARNING: Using default BLOG_SESSION_SECRET. Please change it in .env!")
@@ -158,6 +168,44 @@ def _ensure_user_profile_columns() -> None:
             conn.execute(text("ALTER TABLE users ADD COLUMN display_name VARCHAR"))
         if "avatar_url" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR"))
+        added_brand_byline = False
+        if "brand_byline_enabled" not in existing:
+            conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN brand_byline_enabled BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+            )
+            added_brand_byline = True
+        if "brand_logo_url" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN brand_logo_url VARCHAR"))
+
+        # One-time default for Wirefringe when feature columns are first introduced
+        if added_brand_byline:
+            conn.execute(
+                text(
+                    """
+                    UPDATE users
+                    SET brand_byline_enabled = TRUE,
+                        brand_logo_url = COALESCE(
+                            NULLIF(TRIM(brand_logo_url), ''),
+                            '/wirefringe.png'
+                        )
+                    WHERE lower(username) = 'wirefringe'
+                    """
+                )
+            )
+        else:
+            # Keep a default logo path only if Wirefringe never set one
+            conn.execute(
+                text(
+                    """
+                    UPDATE users
+                    SET brand_logo_url = '/wirefringe.png'
+                    WHERE lower(username) = 'wirefringe'
+                      AND (brand_logo_url IS NULL OR TRIM(brand_logo_url) = '')
+                    """
+                )
+            )
 
 
 def _ensure_comment_moderation_columns() -> None:

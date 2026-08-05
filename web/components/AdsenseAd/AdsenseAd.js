@@ -20,10 +20,11 @@ export default function AdsenseAd({
   const adTest = process.env.NODE_ENV !== 'production' ? 'on' : undefined;
 
   const resolvedStyle = useMemo(() => {
-    // AdSense needs real box size — never collapse to 0 width/height
+    // AdSense needs a real initial box, but keep max height so unfilled
+    // units don't open a huge black gap under the page / after the footer.
     const base = fullWidthResponsive
-      ? { display: 'block', width: '100%', minHeight: 90 }
-      : { display: 'block', minHeight: 90 };
+      ? { display: 'block', width: '100%', minHeight: 90, maxWidth: '100%' }
+      : { display: 'block', minHeight: 90, maxWidth: '100%' };
     return { ...base, ...(style || {}) };
   }, [fullWidthResponsive, style]);
 

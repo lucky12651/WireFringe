@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
+import BrandLogo from '../../BrandLogo/BrandLogo';
 import styles from './LoginPage.module.css';
 
-// Zod validation schema
 const signupSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   displayName: z.string().min(1, 'Display name is required'),
 });
 
+const COLLAGE = [
+  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=70',
+];
+
 export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,7 +51,6 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -50,109 +63,116 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
   };
 
   return (
-    <div className={styles.loginContainer}>
-      {/* Left Side - Image */}
-      <div className={styles.imageSection}>
-        <div className={styles.imageOverlay}>
-          <div className={styles.imageContent}>
-            <h1 className={styles.headline}>
-              Join Coffee<span style={{ color: '#3CFFD0' }}>nBlog</span>
-            </h1>
-            <p className={styles.subheadline}>
-              Create an account to follow writers, save stories, and join the conversation.
-            </p>
+    <div className={styles.page}>
+      <div className={styles.collage} aria-hidden="true">
+        {COLLAGE.map((src, i) => (
+          <div key={i} className={styles.collageCell}>
+            <img src={src} alt="" loading="lazy" />
           </div>
-        </div>
-        <img
-          src="https://res.cloudinary.com/djap3kkqi/image/upload/v1773555965/jeremy-bishop-uAfZBP-GtiA-unsplash_converted_1_ptt4fb.avif"
-          alt="Coffee and creative workspace"
-          className={styles.backgroundImage}
-        />
+        ))}
       </div>
+      <div className={styles.scrim} aria-hidden="true" />
 
-      {/* Right Side - Form */}
-      <div className={styles.formSection}>
-        <div className={styles.formContainer}>
-          <div className={styles.formWrapper}>
-            <h2 className={styles.welcomeTitle}>Create Your Account</h2>
-            <p className={styles.welcomeSubtitle}>Sign up for free today</p>
+      <div className={styles.center}>
+        <div className={styles.logoMark}>
+          <BrandLogo size="lg" />
+        </div>
 
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.inputGroup}>
-                <label htmlFor="displayName" className={styles.label}>
-                  Full Name
-                </label>
+        <div className={styles.card}>
+          <h1 className={styles.title}>
+            Create an
+            <br />
+            account
+          </h1>
+          <p className={styles.legal}>
+            Join Wirefringe to follow stories and join the conversation. By signing up you agree
+            to our <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link>.
+          </p>
+
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <div className={styles.field}>
+              <label htmlFor="signup-display">Display name</label>
+              <input
+                id="signup-display"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                autoComplete="name"
+                className={errors.displayName ? styles.inputError : undefined}
+              />
+              {errors.displayName ? (
+                <span className={styles.fieldError}>{errors.displayName}</span>
+              ) : null}
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="signup-username">Username</label>
+              <input
+                id="signup-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                className={errors.username ? styles.inputError : undefined}
+              />
+              {errors.username ? (
+                <span className={styles.fieldError}>{errors.username}</span>
+              ) : null}
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="signup-password">Password</label>
+              <div className={styles.passwordRow}>
                 <input
-                  id="displayName"
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className={`${styles.input} ${errors.displayName ? styles.inputError : ''}`}
-                />
-                {errors.displayName && (
-                  <span className={styles.errorText}>{errors.displayName}</span>
-                )}
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label htmlFor="username" className={styles.label}>
-                  Username
-                </label>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Choose a username"
-                  className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
-                  autoComplete="username"
-                />
-                {errors.username && (
-                  <span className={styles.errorText}>{errors.username}</span>
-                )}
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label htmlFor="password" className={styles.label}>
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
+                  id="signup-password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password (min 8 characters)"
-                  className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
                   autoComplete="new-password"
+                  className={errors.password ? styles.inputError : undefined}
                 />
-                {errors.password && (
-                  <span className={styles.errorText}>{errors.password}</span>
-                )}
+                <button
+                  type="button"
+                  className={styles.showPass}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
               </div>
+              {errors.password ? (
+                <span className={styles.fieldError}>{errors.password}</span>
+              ) : null}
+            </div>
 
-              {(errors.form || serverError) && (
-                <div className={styles.formError}>{errors.form || serverError}</div>
-              )}
+            {(errors.form || serverError) && (
+              <div className={styles.formError}>{errors.form || serverError}</div>
+            )}
 
-              <button
-                type="submit"
-                className={styles.loginButton}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Creating account...' : 'Sign Up'}
-              </button>
+            <button type="submit" className={styles.primaryBtn} disabled={isLoading}>
+              {isLoading ? 'Creating…' : 'Create account'}
+            </button>
+          </form>
 
-              <div className={styles.toggleMode}>
-                Already have an account?{' '}
-                <span type="button" onClick={onToggleMode} >
-                  Sign In
-                </span>
-              </div>
-            </form>
-          </div>
+          <p className={styles.switchMode}>
+            Already have an account?{' '}
+            <button type="button" className={styles.linkBtn} onClick={onToggleMode}>
+              Sign in
+            </button>
+          </p>
         </div>
       </div>
+
+      <footer className={styles.footer}>
+        <nav className={styles.footerLinks} aria-label="Legal">
+          <Link href="/terms">Terms of Use</Link>
+          <Link href="/privacy">Privacy Notice</Link>
+          <Link href="/cookies">Cookie Policy</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/about">About</Link>
+        </nav>
+        <p className={styles.copy}>© {new Date().getFullYear()} Wirefringe. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

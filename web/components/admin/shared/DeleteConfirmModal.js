@@ -31,10 +31,11 @@ export function DeleteConfirmModal({
           <p className="modal-warning">This action cannot be undone.</p>
         </div>
         <div className="modal-actions">
-          <ActionButton onClick={onCancel} disabled={isDeleting}>
+          <ActionButton size="sm" onClick={onCancel} disabled={isDeleting}>
             Cancel
           </ActionButton>
           <ActionButton
+            size="sm"
             onClick={onConfirm}
             variant="danger"
             disabled={isDeleting}

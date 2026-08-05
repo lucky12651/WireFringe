@@ -1,0 +1,76 @@
+.avatar {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.md {
+  width: 40px;
+  height: 40px;
+}
+
+.lg {
+  width: 52px;
+  height: 52px;
+}
+
+/* Brand mark: light plate so black wordmark stays legible */
+.brand {
+  background: #f2f2f2;
+  border-color: rgba(60, 255, 208, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(60, 255, 208, 0.2),
+    0 0 14px rgba(60, 255, 208, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.logoImg {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  display: block;
+}
+
+.fallback {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--mint, #3cffd0);
+  font-size: 0.7em;
+  line-height: 1;
+  user-select: none;
+}
+
+.sm .fallback {
+  font-size: 10px;
+}
+
+.md .fallback {
+  font-size: 12px;
+}
+
+.lg .fallback {
+  font-size: 14px;
+}

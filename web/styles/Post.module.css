@@ -123,53 +123,8 @@
   padding-top: 4px;
 }
 
-.authorAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #141414;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-}
-
-.authorAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.authorAvatarFallback {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--mint);
-  font-family: var(--font-mono);
-}
-
-.authorMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.authorLabel {
-  font-size: 10px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-family: var(--font-mono);
-}
-
-.authorName {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--mint);
+.authorByline {
+  min-width: 0;
 }
 
 /* Hero image — same horizontal span as title/header above */

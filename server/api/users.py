@@ -8,6 +8,10 @@ from slowapi.util import get_remote_address
 from ..auth import create_access_token
 from ..dependencies import get_db, require_admin, require_user
 from ..schemas import (
+    AdminPasswordSetRequest,
+    AdminRoleUpdateRequest,
+    AdminUserDeleteOut,
+    AdminUserDeleteRequest,
     LoginRequest,
     MeOut,
     PasswordChangeRequest,
@@ -171,15 +175,74 @@ def admin_create_user(
     return service._build_user_out(user_model)
 
 
-@router.delete("/users/{user_id}")
+@router.put("/users/{user_id}/password")
+def admin_set_user_password(
+    user_id: int,
+    payload: AdminPasswordSetRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> dict:
+    """Admin sets any user's password (no current password required)."""
+    user = require_user(request, db)
+    require_admin(user)
+    service.admin_set_password(user_id, payload.newPassword, user)
+    return {"ok": True}
+
+
+@router.put("/users/{user_id}/role", response_model=UserOut)
+def admin_set_user_role(
+    user_id: int,
+    payload: AdminRoleUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> UserOut:
+    """Admin changes any user's role."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.admin_set_role(user_id, payload.role, user)
+
+
+@router.delete("/users/{user_id}", response_model=AdminUserDeleteOut)
 def admin_delete_user(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
     service: UserService = Depends(get_user_service),
-) -> dict:
-    """Delete a user."""
+    postsAction: str = "transfer",
+    transferToUserId: int | None = None,
+) -> AdminUserDeleteOut:
+    """Delete a user.
+
+    Query params:
+    - postsAction: "delete" (remove their posts) or "transfer" (reassign posts)
+    - transferToUserId: required when postsAction=transfer
+    """
     user = require_user(request, db)
     require_admin(user)
-    service.delete_user(user_id, user)
-    return {"ok": True}
+    return service.delete_user(
+        user_id,
+        user,
+        posts_action=postsAction,
+        transfer_to_user_id=transferToUserId,
+    )
+
+
+@router.post("/users/{user_id}/delete", response_model=AdminUserDeleteOut)
+def admin_delete_user_with_body(
+    user_id: int,
+    payload: AdminUserDeleteRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> AdminUserDeleteOut:
+    """Delete a user with JSON body options (preferred by admin UI)."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.delete_user(
+        user_id,
+        user,
+        posts_action=payload.postsAction,
+        transfer_to_user_id=payload.transferToUserId,
+    )

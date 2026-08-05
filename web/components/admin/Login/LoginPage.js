@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
+import BrandLogo from '../../BrandLogo/BrandLogo';
 import styles from './LoginPage.module.css';
 
-// Zod validation schema
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
+const COLLAGE = [
+  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=70',
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=70',
+];
+
 export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +50,6 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -49,116 +62,112 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
   };
 
   return (
-    <div className={styles.loginContainer}>
-      {/* Left Side - Image */}
-      <div className={styles.imageSection}>
-        <div className={styles.imageOverlay}>
-          
-
-          <div className={styles.imageContent}>
-            <h1 className={styles.headline}>
-              Coffee<span style={{ color: '#3CFFD0' }}>n</span>Blog
-            </h1>
-            <p className={styles.subheadline}>
-              Technology and how it makes us feel.
-            </p>
-            
+    <div className={styles.page}>
+      <div className={styles.collage} aria-hidden="true">
+        {COLLAGE.map((src, i) => (
+          <div key={i} className={styles.collageCell}>
+            <img src={src} alt="" loading="lazy" />
           </div>
-        </div>
-        <img
-          src="https://res.cloudinary.com/djap3kkqi/image/upload/v1773555965/jeremy-bishop-uAfZBP-GtiA-unsplash_converted_1_ptt4fb.avif"
-          alt="Coffee and creative workspace"
-          className={styles.backgroundImage}
-        />
+        ))}
       </div>
+      <div className={styles.scrim} aria-hidden="true" />
 
-      {/* Right Side - Form */}
-      <div className={styles.formSection}>
-        <div className={styles.formContainer}>
-          {/* Sign In button top right */}
-          
+      <div className={styles.center}>
+        <div className={styles.logoMark}>
+          <BrandLogo size="lg" />
+        </div>
 
-          <div className={styles.formWrapper}>
-            <h2 className={styles.welcomeTitle}>Welcome Back to Coffee n Blog!</h2>
-            <p className={styles.welcomeSubtitle}>Sign in to your account</p>
+        <div className={styles.card}>
+          <h1 className={styles.title}>
+            Sign in or
+            <br />
+            create an account
+          </h1>
+          <p className={styles.legal}>
+            Your account is used to sign in to Wirefringe. By signing in you agree to our{' '}
+            <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link>.
+          </p>
 
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.inputGroup}>
-                <label htmlFor="username" className={styles.label}>
-                  Username
-                </label>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <div className={styles.field}>
+              <label htmlFor="login-username">Username</label>
+              <input
+                id="login-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder=""
+                autoComplete="username"
+                className={errors.username ? styles.inputError : undefined}
+              />
+              {errors.username ? (
+                <span className={styles.fieldError}>{errors.username}</span>
+              ) : null}
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="login-password">Password</label>
+              <div className={styles.passwordRow}>
                 <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                  className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
-                  autoComplete="username"
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder=""
+                  autoComplete="current-password"
+                  className={errors.password ? styles.inputError : undefined}
                 />
-                {errors.username && (
-                  <span className={styles.errorText}>{errors.username}</span>
-                )}
+                <button
+                  type="button"
+                  className={styles.showPass}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
               </div>
+              {errors.password ? (
+                <span className={styles.fieldError}>{errors.password}</span>
+              ) : null}
+            </div>
 
-              <div className={styles.inputGroup}>
-                <label htmlFor="password" className={styles.label}>
-                  Password
-                </label>
-                <div className={styles.passwordWrapper}>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-                    autoComplete="current-password"
-                  />
-                </div>
-                {errors.password && (
-                  <span className={styles.errorText}>{errors.password}</span>
-                )}
-              </div>
+            <label className={styles.remember}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span>Remember me</span>
+            </label>
 
-              <div className={styles.optionsRow}>
-                <label className={styles.rememberMe}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className={styles.checkbox}
-                  />
-                  <span className={styles.checkmark}></span>
-                  <span className={styles.rememberText}>Remember Me</span>
-                </label>
-                
-              </div>
+            {(errors.form || serverError) && (
+              <div className={styles.formError}>{errors.form || serverError}</div>
+            )}
 
-              {(errors.form || serverError) && (
-                <div className={styles.formError}>{errors.form || serverError}</div>
-              )}
+            <button type="submit" className={styles.primaryBtn} disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
 
-              <button
-                type="submit"
-                className={styles.loginButton}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Signing in...' : 'Login'}
-              </button>
-
-              <div className={styles.toggleMode}>
-                Don't have an account?{' '}
-                <span  onClick={onToggleMode} >
-                  Sign Up
-                </span>
-              </div>
-            </form>
-
-           
-          </div>
+          <p className={styles.switchMode}>
+            Don&apos;t have an account?{' '}
+            <button type="button" className={styles.linkBtn} onClick={onToggleMode}>
+              Create one
+            </button>
+          </p>
         </div>
       </div>
+
+      <footer className={styles.footer}>
+        <nav className={styles.footerLinks} aria-label="Legal">
+          <Link href="/terms">Terms of Use</Link>
+          <Link href="/privacy">Privacy Notice</Link>
+          <Link href="/cookies">Cookie Policy</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/about">About</Link>
+        </nav>
+        <p className={styles.copy}>© {new Date().getFullYear()} Wirefringe. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

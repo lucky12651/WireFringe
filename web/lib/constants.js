@@ -1,9 +1,16 @@
 /**
- * App constants for Coffee n Blog
+ * App constants for Wirefringe
  */
 
 // User roles
-export const ROLES = ['admin', 'editor', 'author'];
+export const ROLES = ['admin', 'editor', 'author', 'user'];
+
+export const ROLE_OPTIONS = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'editor', label: 'Editor' },
+  { value: 'author', label: 'Author' },
+  { value: 'user', label: 'Normal User' },
+];
 
 // Default values
 export const DEFAULT_THEME = 'dark';

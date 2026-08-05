@@ -48,6 +48,11 @@ class User(Base):
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Post byline brand treatment (does NOT change site-wide header/footer logo)
+    # When enabled, public posts show brand_logo_url instead of the username text.
+    brand_byline_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    brand_logo_url: Mapped[str | None] = mapped_column(String, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
 

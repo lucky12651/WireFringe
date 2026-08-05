@@ -1,0 +1,111 @@
+.byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.brand {
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.lg .label {
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+/* No box — just the logo image */
+.logoWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.wordmark {
+  display: block;
+  width: auto;
+  height: 21px; /* +30% from 16px */
+  max-width: 195px;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+}
+
+.sm .wordmark {
+  height: 18px; /* +30% from 14px */
+  max-width: 156px;
+}
+
+.md .wordmark {
+  height: 21px;
+}
+
+.lg .wordmark {
+  height: 26px; /* +30% from 20px */
+  max-width: 234px;
+}
+
+.textBlock {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mint, #3cffd0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sm .name {
+  font-size: 10px;
+}
+
+.lg .name {
+  font-size: 12px;
+}
+
+.time {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #777;
+}
+
+.brand:has(.time) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.brand .time {
+  padding-left: 0;
+}

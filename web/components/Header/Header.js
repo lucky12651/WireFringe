@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import BrandLogo from '../BrandLogo/BrandLogo';
 import styles from './Header.module.css';
 
 const NAV = [
@@ -41,11 +42,7 @@ function slugifyCategory(cat) {
 }
 
 function LogoMark() {
-  return (
-    <span className={styles.logoText} aria-label="Coffee n Blog">
-      Coffee<span className={styles.logoN}>n</span>Blog
-    </span>
-  );
+  return <BrandLogo size="md" className={styles.logoText} />;
 }
 
 export default function Header({

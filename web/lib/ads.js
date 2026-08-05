@@ -1,5 +1,5 @@
 /**
- * Google AdSense slot map for Coffee n Blog
+ * Google AdSense slot map for Wirefringe
  * Reuses your approved slot until extra slots are created in AdSense.
  */
 export const ADSENSE_CLIENT =

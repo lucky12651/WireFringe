@@ -57,11 +57,28 @@ class PostService:
         creator_raw = (post.creator or "").strip() or None
         author = None
         if creator_raw:
-            author = author_lookup.get(creator_raw.lower())
+            key = creator_raw.lower()
+            author = author_lookup.get(key)
+            # Fuzzy match: ignore spaces/punctuation so "Wirefringe" / "Wire Fringe" resolve
+            if author is None:
+                compact = re.sub(r"[^a-z0-9]+", "", key)
+                for lookup_key, user in author_lookup.items():
+                    if re.sub(r"[^a-z0-9]+", "", lookup_key) == compact:
+                        author = user
+                        break
 
+        brand_byline = False
+        brand_logo: str | None = None
         if author is not None:
             creator_name = (author.display_name or author.username).strip() or author.username
-            creator_avatar = author.avatar_url or None
+            creator_avatar = (author.avatar_url or "").strip() or None
+            brand_byline = bool(getattr(author, "brand_byline_enabled", False))
+            brand_logo = (getattr(author, "brand_logo_url", None) or "").strip() or None
+            if brand_byline and not brand_logo:
+                # Sensible default for brand accounts without a custom upload yet
+                uname = (author.username or "").strip().lower().replace(" ", "")
+                if "wirefringe" in uname:
+                    brand_logo = "/wirefringe.png"
         else:
             creator_name = creator_raw
             creator_avatar = None
@@ -81,6 +98,8 @@ class PostService:
             creator=post.creator,
             creatorName=creator_name,
             creatorAvatarUrl=creator_avatar,
+            creatorBrandByline=brand_byline,
+            creatorBrandLogoUrl=brand_logo if brand_byline else None,
             content=post.content,
             excerpt=post.excerpt,
             bucket=post.bucket,

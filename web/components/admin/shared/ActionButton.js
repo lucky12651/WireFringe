@@ -25,11 +25,13 @@ export function ActionButton({
   className = '',
   variant = 'default',
   size = 'md',
+  grow = false,
   ...props 
 }) {
   const variantClass = variant === 'danger' ? styles.danger : '';
   const sizeClass = size === 'sm' ? styles.sm : '';
-  const combinedClassName = `${styles.actionButton} ${variantClass} ${sizeClass} ${className}`.trim();
+  const growClass = grow ? styles.grow : '';
+  const combinedClassName = `${styles.actionButton} ${variantClass} ${sizeClass} ${growClass} ${className}`.trim();
 
   const content = (
     <>

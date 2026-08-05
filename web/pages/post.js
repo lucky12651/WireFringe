@@ -12,6 +12,7 @@ import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl, stripHtml, postExcerpt } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
+import AuthorByline from '../components/AuthorByline/AuthorByline';
 
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -20,20 +21,6 @@ function formatDate(date) {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-function getInitials(name) {
-  const cleaned = String(name || '').trim();
-  if (!cleaned) return '';
-
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-
-  const first = parts[0]?.[0] || '';
-  const last = parts[parts.length - 1]?.[0] || '';
-  return `${first}${last}`.toUpperCase();
 }
 
 export async function getServerSideProps(context) {
@@ -93,7 +80,6 @@ export async function getServerSideProps(context) {
 export default function PostPage({ initialPost, initialLatest, isPreview: initialIsPreview, error: initialError }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const slugFromPath = useMemo(() => {
     if (!router.isReady) return '';
@@ -223,13 +209,9 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
     return url || '';
   }, [post]);
 
-  useEffect(() => {
-    setAvatarFailed(false);
-  }, [authorAvatarUrl]);
-
   return (
     <Layout
-      title={post?.title ? `${post.title} – Coffee n Blog` : undefined}
+      title={post?.title ? `${post.title} – Wirefringe` : undefined}
       description={post?.metaDescription || post?.excerpt || undefined}
       keywords={post?.keywords || undefined}
       headerProps={{ user, activeCategory: post?.bucket || 'All' }}
@@ -271,24 +253,14 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
 
               {authorName ? (
                 <div className={styles.authorRow}>
-                  <div className={styles.authorAvatar}>
-                    {authorAvatarUrl && !avatarFailed ? (
-                      <img
-                        src={authorAvatarUrl}
-                        alt={`Profile photo of ${authorName}`}
-                        loading="lazy"
-                        onError={() => setAvatarFailed(true)}
-                      />
-                    ) : (
-                      <div className={styles.authorAvatarFallback} aria-hidden="true">
-                        {getInitials(authorName) || '—'}
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.authorMeta}>
-                    <span className={styles.authorLabel}>By</span>
-                    <span className={styles.authorName}>{authorName}</span>
-                  </div>
+                  <AuthorByline
+                    post={post}
+                    name={authorName}
+                    avatarUrl={authorAvatarUrl}
+                    size="lg"
+                    label="By"
+                    className={styles.authorByline}
+                  />
                 </div>
               ) : null}
             </header>

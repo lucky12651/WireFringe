@@ -1,4 +1,4 @@
-# Coffee n Blog (FastAPI + PostgreSQL)
+# Wirefringe (FastAPI + PostgreSQL)
 
 This project uses Next.js (React) for the UI and FastAPI + PostgreSQL for the backend.
 
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 Put your PostgreSQL connection string in `server/.env`:
 
 ```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/coffeenblog
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/wirefringe
 ```
 
 ## 3) Start the backend
@@ -97,36 +97,3 @@ Use monorepo deploy (Next + FastAPI). Prefer project env:
 BACKEND_URL=http://127.0.0.1:8000
 INTERNAL_API_URL=http://127.0.0.1:8000
 ```
-
-Do **not** set `BACKEND_URL=http://host.docker.internal:8003` on GridWork — the API runs **inside** the same container on port 8000.
-
-### Build
-
-From the project root:
-
-```powershell
-cd .\web
-npm install
-npm run build
-```
-
-## Admin panel
-
-Open:
-- http://127.0.0.1:3000/admin
-
-### Create the first admin user (one-time)
-
-Run this from the project root:
-
-```powershell
-python -m server.create_admin --username admin --password "change-me" --role admin
-```
-
-Then log in at `/admin`.
-
-### Roles
-
-- `admin`: can manage posts + users
-- `editor`: can manage posts only
-- `author`: can manage only their own posts (and see comments/trends for their posts)

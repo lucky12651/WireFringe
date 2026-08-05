@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db, require_user
-from ..schemas import MeOut, BotLogOut
+from ..schemas import BrandBylineUpdateRequest, MeOut, BotLogOut
 from ..services import MediaService, UserService
 from ..models import BotLog
 
@@ -53,3 +53,29 @@ async def admin_upload_profile_photo(
     user = require_user(request, db)
     url = await media_service.store_uploaded_image(file)
     return user_service.update_avatar(user, url)
+
+
+@router.put("/profile/brand-byline", response_model=MeOut)
+def admin_update_brand_byline(
+    payload: BrandBylineUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
+) -> MeOut:
+    """Toggle post-only brand logo byline for the current user."""
+    user = require_user(request, db)
+    return user_service.update_brand_byline(user, payload.enabled)
+
+
+@router.post("/profile/brand-logo", response_model=MeOut)
+async def admin_upload_brand_logo(
+    request: Request,
+    db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+    user_service: UserService = Depends(get_user_service),
+    media_service: MediaService = Depends(get_media_service),
+) -> MeOut:
+    """Upload post-only brand logo (does not change site header/footer logo)."""
+    user = require_user(request, db)
+    url = await media_service.store_uploaded_image(file)
+    return user_service.update_brand_logo(user, url)
