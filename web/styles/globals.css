@@ -62,24 +62,6 @@
   scrollbar-color: #3a3a3a transparent;
 }
 
-/* Hide unfilled AdSense units site-wide (stops black dead blocks after footer) */
-ins.adsbygoogle[data-ad-status='unfilled'] {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Google sometimes injects anchor / sticky containers — keep them from bloating page height */
-body > ins.adsbygoogle,
-body > div[id^='google_ads_iframe'],
-body > div[class*='google-auto-placed'] {
-  max-width: 100vw !important;
-}
-
 :root,
 html,
 html[data-theme='dark'],

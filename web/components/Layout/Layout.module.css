@@ -4,8 +4,6 @@
   flex-direction: column;
   background: transparent;
   color: #fff;
-  position: relative;
-  overflow-x: clip;
 }
 
 .main {

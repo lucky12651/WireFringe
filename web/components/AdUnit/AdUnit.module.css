@@ -1,4 +1,4 @@
-/* Modern news-site ad frames — hide empty units to avoid black dead space */
+/* Modern news-site ad frames (Verge / CNN / Wired style) */
 
 .unit {
   width: 100%;
@@ -8,17 +8,6 @@
   align-items: stretch;
   gap: 8px;
   opacity: 0.95;
-}
-
-/* Unfilled / failed ads must not leave a black block (especially near footer) */
-.unit[data-ad-empty='true'] {
-  display: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  border: none !important;
 }
 
 .labelRow {
@@ -50,11 +39,27 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: transparent;
+  background: #0f0f0f;
   border: 1px solid #222;
   border-radius: 2px;
   overflow: hidden;
   position: relative;
+}
+
+/* subtle empty state so layout doesn't collapse before fill */
+.slot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.012) 10px,
+    rgba(255, 255, 255, 0.012) 20px
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .slot :global(ins.adsbygoogle) {
@@ -62,47 +67,37 @@
   z-index: 1;
   min-width: 100% !important;
   display: block !important;
-  max-width: 100%;
-}
-
-/* Hide Google's own unfilled containers inside our frames */
-.slot :global(ins.adsbygoogle[data-ad-status='unfilled']) {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
 }
 
 /* ---- Variants ---- */
 
 .banner {
-  margin: 20px 0 24px;
+  margin: 24px 0 32px;
 }
 
 .banner .slot {
-  min-height: 90px;
-  max-height: 120px;
-  padding: 6px;
-  background: #0a0a0a;
+  min-height: 100px;
+  padding: 10px 8px;
 }
 
 .multipath {
-  margin: 28px 0 24px;
-  padding: 12px 0 4px;
+  margin: 36px 0 32px;
+  padding: 20px 0 8px;
   border-top: 1px solid #1f1f1f;
   border-bottom: 1px solid #1f1f1f;
 }
 
 .multipath .slot {
-  min-height: 200px;
-  max-height: 280px;
-  padding: 10px;
-  background: #0a0a0a;
+  min-height: 280px;
+  padding: 14px 12px;
+  background: #0c0c0c;
   border-color: #252525;
 }
 
+/* Mid-article — the key news-site placement */
 .inArticle {
-  margin: 36px 0;
-  padding: 4px 0;
+  margin: 40px 0;
+  padding: 8px 0 4px;
 }
 
 .inArticle .labelRow {
@@ -122,12 +117,12 @@
 }
 
 .inArticle .slot {
-  min-height: 200px;
-  max-height: 320px;
-  padding: 12px;
-  background: #0a0a0a;
+  min-height: 280px;
+  padding: 16px 12px;
+  background: linear-gradient(180deg, #121212 0%, #0d0d0d 100%);
   border: 1px solid #262626;
   border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .sidebar {
@@ -135,11 +130,9 @@
 }
 
 .sidebar .slot {
-  min-height: 200px;
-  max-height: 280px;
-  padding: 8px;
+  min-height: 260px;
+  padding: 10px;
   border-radius: 4px;
-  background: #0a0a0a;
 }
 
 .rail {
@@ -147,8 +140,7 @@
 }
 
 .rail .slot {
-  min-height: 400px;
-  max-height: 600px;
+  min-height: 600px;
   width: 160px;
   padding: 0;
   background: transparent;
@@ -156,41 +148,44 @@
   border-radius: 0;
 }
 
+.rail .slot::before {
+  display: none;
+}
+
 .rail .labelRow {
   display: none;
 }
 
+/* Homepage mid-feed style */
 .homeBreak {
-  margin: 28px 0 22px;
+  margin: 36px 0 28px;
 }
 
 @media (max-width: 700px) {
   .unit {
-    margin: 18px 0;
+    margin: 22px 0;
   }
 
   .inArticle {
-    margin: 24px 0;
+    margin: 28px -4px;
   }
 
   .inArticle .slot {
-    min-height: 180px;
-    max-height: 280px;
-    padding: 8px;
+    min-height: 250px;
+    padding: 12px 8px;
+    border-radius: 2px;
   }
 
   .banner .slot {
-    min-height: 80px;
-    max-height: 100px;
+    min-height: 90px;
   }
 
   .multipath {
-    margin: 22px 0 18px;
-    padding: 12px 0 2px;
+    margin: 28px 0 24px;
+    padding: 16px 0 4px;
   }
 
   .multipath .slot {
-    min-height: 180px;
-    max-height: 250px;
+    min-height: 250px;
   }
 }

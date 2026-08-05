@@ -2,23 +2,15 @@
   display: none;
   position: fixed;
   top: calc(var(--header-height, 84px) + 16px);
-  bottom: auto;
   width: var(--ad-rail-width, 160px);
   z-index: 5;
   pointer-events: none;
-  /* Never extend past the viewport into a black strip under the footer */
-  max-height: calc(100vh - var(--header-height, 84px) - 32px);
 }
 
 .stickyInner {
   pointer-events: auto;
   max-height: calc(100vh - var(--header-height, 84px) - 32px);
   overflow: hidden;
-}
-
-/* Hide whole rail if its ad unit was marked empty */
-.adRail:has([data-ad-empty='true']) {
-  display: none !important;
 }
 
 .adRailLeft {
