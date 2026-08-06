@@ -29,8 +29,17 @@ export function AdminLayout({
             pendingCommentsCount={pendingCommentsCount}
           />
 
-          <main className="admin-content" aria-label="Admin content">
-            <div className="admin-content-inner">
+          <main
+            className={`admin-content${
+              activeView === 'adsense' ? ' admin-content--adsense' : ''
+            }`}
+            aria-label="Admin content"
+          >
+            <div
+              className={`admin-content-inner${
+                activeView === 'adsense' ? ' admin-content-inner--adsense' : ''
+              }`}
+            >
               <TopBar activeView={activeView} />
               {children}
             </div>

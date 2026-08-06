@@ -231,6 +231,7 @@ export default function AdminPage() {
             latestPosts={posts.latestPosts}
             recentCache={posts.recentCache}
             me={me}
+            onNavigate={setActiveView}
           />
         );
 
