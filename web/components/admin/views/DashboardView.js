@@ -4,22 +4,21 @@ import {
   formatRelativeDate,
   postExcerpt,
   postUrl,
+  cn,
 } from '../../../lib/utils';
-import styles from './DashboardView.module.css';
 
 function categoryTint(bucket) {
   const s = String(bucket || '').toLowerCase();
-  if (s.includes('sport')) return styles.thumbTintAmber;
+  if (s.includes('sport')) return 'bg-gradient-to-br from-[#e8b342] to-transparent';
   if (s.includes('financ') || s.includes('money') || s.includes('market')) {
-    return styles.thumbTintMint;
+    return 'bg-gradient-to-br from-mint to-transparent';
   }
-  if (s.includes('tech') || s.includes('scien')) return styles.thumbTintPurple;
-  return styles.thumbTintBlue;
+  if (s.includes('tech') || s.includes('scien')) return 'bg-gradient-to-br from-purple to-transparent';
+  return 'bg-gradient-to-br from-[#5b8def] to-transparent';
 }
 
 function shortMonth(label) {
   const s = String(label || '');
-  // "Jun 2025" / "JUN" / "2025-06"
   if (/^\d{4}-\d{2}$/.test(s)) {
     const m = Number(s.slice(5, 7));
     return ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][
@@ -145,74 +144,113 @@ export function DashboardView({
   const trends = Array.isArray(trendingComments) ? trendingComments : [];
 
   return (
-    <div className={styles.wrap}>
+    <div className="flex flex-col gap-0 animate-fade-up motion-reduce:animate-none">
       {/* Content pipeline */}
-      <section className={styles.pipeline} aria-label="Content pipeline">
-        <div className={styles.pipelineTop}>
-          <span className={styles.pipelineLabel}>Content pipeline — news bot</span>
+      <section
+        className="bg-bg-elevated border border-line rounded-lg py-5 px-[26px] mb-[22px] max-[720px]:p-4"
+        aria-label="Content pipeline"
+      >
+        <div className="flex justify-between items-baseline mb-[18px] gap-3 flex-wrap">
+          <span className="font-mono text-[9.5px] tracking-[0.16em] text-[#666] uppercase">
+            Content pipeline — news bot
+          </span>
           <span
-            className={`${styles.pipelineLive} ${!isProcessing ? styles.pipelineLiveIdle : ''}`}
+            className={cn(
+              'font-mono text-[10px] flex items-center gap-1.5 tracking-[0.06em]',
+              isProcessing ? 'text-mint' : 'text-[#888]'
+            )}
           >
-            <span className={`${styles.liveDot} ${!isProcessing ? styles.liveDotIdle : ''}`} />
+            <span
+              className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                isProcessing
+                  ? 'bg-mint shadow-[0_0_6px_rgba(60,255,208,0.5)] animate-pulse'
+                  : 'bg-[#555]'
+              )}
+            />
             {isProcessing ? 'PROCESSING' : 'STANDBY'}
           </span>
         </div>
 
-        <div className={styles.pipelineFlow}>
-          <div className={styles.pfNode}>
-            <div className={styles.pfChip}>
-              <span className={styles.pfNum}>{pending}</span>
-              <div className={styles.pfIcon}>
+        <div className="flex items-center overflow-x-auto pb-1">
+          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
+            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-line bg-[#0a0a0a] flex flex-col items-center justify-center">
+              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-white leading-none">
+                {pending}
+              </span>
+              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-line flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-[#666]">
                 <IconClock />
               </div>
             </div>
-            <div className={styles.pfCaption}>
-              <strong>Pending queue</strong>
-              <span>Processing</span>
+            <div className="text-center">
+              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Pending queue</strong>
+              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">Processing</span>
             </div>
           </div>
 
-          <div className={`${styles.pfTrace} ${!isProcessing ? styles.pfTraceIdle : ''}`} />
+          <div
+            className={cn(
+              'flex-auto h-[1.5px] min-w-6 bg-line relative -top-[19px] -mx-2.5 overflow-hidden',
+              isProcessing
+                ? "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-85 after:animate-pulse"
+                : "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-25"
+            )}
+          />
 
-          <div className={`${styles.pfNode} ${styles.pfAccent}`}>
-            <div className={styles.pfChip}>
-              <span className={styles.pfNum}>{cacheCount}</span>
-              <div className={styles.pfIcon}>
+          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
+            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-mint bg-[#0a0a0a] shadow-[0_0_18px_rgba(60,255,208,0.25)] flex flex-col items-center justify-center">
+              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-mint leading-none">
+                {cacheCount}
+              </span>
+              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-mint flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-mint">
                 <IconShield />
               </div>
             </div>
-            <div className={styles.pfCaption}>
-              <strong>Cache</strong>
-              <span>Last {cacheCount || 50} handled</span>
+            <div className="text-center">
+              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Cache</strong>
+              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">
+                Last {cacheCount || 50} handled
+              </span>
             </div>
           </div>
 
-          <div className={`${styles.pfTrace} ${!isProcessing ? styles.pfTraceIdle : ''}`} />
+          <div
+            className={cn(
+              'flex-auto h-[1.5px] min-w-6 bg-line relative -top-[19px] -mx-2.5 overflow-hidden',
+              isProcessing
+                ? "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-85 after:animate-pulse"
+                : "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-25"
+            )}
+          />
 
-          <div className={styles.pfNode}>
-            <div className={styles.pfChip}>
-              <span className={styles.pfNum}>{published}</span>
-              <div className={styles.pfIcon}>
+          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
+            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-line bg-[#0a0a0a] flex flex-col items-center justify-center">
+              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-white leading-none">
+                {published}
+              </span>
+              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-line flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-[#666]">
                 <IconCheck />
               </div>
             </div>
-            <div className={styles.pfCaption}>
-              <strong>Published</strong>
-              <span>Live content</span>
+            <div className="text-center">
+              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Published</strong>
+              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">Live content</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Workspace: activity + signals */}
-      <div className={styles.workspace}>
-        <section className={styles.feedCard} aria-label="Activity">
-          <div className={styles.feedHead}>
+      <div className="grid grid-cols-1 min-[1151px]:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+        <section className="bg-bg-elevated border border-line rounded-lg overflow-hidden min-w-0" aria-label="Activity">
+          <div className="flex justify-between items-center py-5 px-[22px] pb-4 border-b border-line gap-3.5 flex-wrap max-[720px]:p-4">
             <div>
-              <h2>Activity</h2>
-              <p>Bot output and published articles, most recent first.</p>
+              <h2 className="text-[15.5px] m-0 mb-1 font-bold text-white tracking-tight">Activity</h2>
+              <p className="m-0 text-[11.5px] text-[#666]">
+                Bot output and published articles, most recent first.
+              </p>
             </div>
-            <div className={styles.feedFilters} role="tablist" aria-label="Activity filters">
+            <div className="flex gap-1.5 flex-wrap" role="tablist" aria-label="Activity filters">
               {[
                 { id: 'all', label: 'All' },
                 { id: 'active', label: 'Live' },
@@ -223,9 +261,12 @@ export function DashboardView({
                   type="button"
                   role="tab"
                   aria-selected={filter === f.id}
-                  className={`${styles.filterBtn} ${
-                    filter === f.id ? styles.filterBtnActive : ''
-                  }`}
+                  className={cn(
+                    'font-mono text-[10px] tracking-wide rounded-full py-1.5 px-3 cursor-pointer transition-colors border',
+                    filter === f.id
+                      ? 'text-black bg-mint border-mint font-bold'
+                      : 'text-[#a0a0a0] bg-[#0a0a0a] border-line hover:text-white hover:border-[#444]'
+                  )}
                   onClick={() => setFilter(f.id)}
                 >
                   {f.label}
@@ -234,52 +275,63 @@ export function DashboardView({
             </div>
           </div>
 
-          <div className={styles.feedList}>
+          <div className="flex flex-col max-h-[min(640px,70vh)] overflow-y-auto">
             {visible.length === 0 ? (
-              <div className={styles.feedEmpty}>No activity items for this filter.</div>
+              <div className="py-10 px-[22px] text-center text-[#666] text-[12.5px]">
+                No activity items for this filter.
+              </div>
             ) : (
               visible.map((item) => {
                 const isLive = item.kind === 'active';
                 return (
-                  <article key={item.key} className={styles.feedRow}>
-                    <div className={styles.thumb}>
+                  <article
+                    key={item.key}
+                    className="flex gap-3.5 py-4 px-[22px] border-b border-line last:border-b-0 items-start transition-colors hover:bg-[#1a1a1a] max-[720px]:flex-wrap max-[720px]:py-3.5 max-[720px]:px-4"
+                  >
+                    <div className="w-[52px] h-[52px] rounded-md shrink-0 bg-[#0a0a0a] border border-line flex items-center justify-center overflow-hidden relative">
                       {item.ogImg ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.ogImg} alt="" />
+                        <img src={item.ogImg} alt="" className="w-full h-full object-cover block" />
                       ) : (
                         <>
                           <span
-                            className={`${styles.thumbTint} ${
-                              isLive ? categoryTint(item.bucket) : styles.thumbTintMint
-                            }`}
+                            className={cn(
+                              'absolute inset-0 opacity-45 pointer-events-none',
+                              isLive ? categoryTint(item.bucket) : 'bg-gradient-to-br from-mint to-transparent'
+                            )}
                           />
-                          <span className={styles.thumbIcon}>
+                          <span className="relative z-[1] w-[18px] h-[18px] text-[#666] flex items-center justify-center [&>svg]:w-[18px] [&>svg]:h-[18px]">
                             {isLive ? <IconArticle /> : <IconShield />}
                           </span>
                         </>
                       )}
                     </div>
 
-                    <div className={styles.feedBody}>
-                      <div className={styles.feedTitleRow}>
-                        <span className={styles.feedTitle}>{item.title}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-[13px] font-semibold text-white leading-snug">{item.title}</span>
                         {isLive && item.bucket ? (
-                          <span className={`${styles.chip} ${styles.chipCat}`}>{item.bucket}</span>
+                          <span className="font-mono text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-sm uppercase font-bold whitespace-nowrap text-[#8ab4ff] bg-[rgba(91,141,239,0.12)] border border-[rgba(91,141,239,0.3)]">
+                            {item.bucket}
+                          </span>
                         ) : null}
                         <span
-                          className={`${styles.chip} ${
-                            isLive ? styles.chipActive : styles.chipCached
-                          }`}
+                          className={cn(
+                            'font-mono text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-sm uppercase font-bold whitespace-nowrap border bg-transparent',
+                            isLive ? 'text-mint border-mint' : 'text-[#a0a0a0] border-line'
+                          )}
                         >
                           {isLive ? 'Active' : 'Cached'}
                         </span>
                       </div>
 
                       {item.excerpt ? (
-                        <p className={styles.feedSnippet}>{item.excerpt}</p>
+                        <p className="text-[11.5px] text-[#666] leading-normal m-0 mb-1.5 line-clamp-1">
+                          {item.excerpt}
+                        </p>
                       ) : null}
 
-                      <div className={styles.feedMeta}>
+                      <div className="flex items-center gap-3 text-[10.5px] text-[#555] font-mono flex-wrap [&_span]:flex [&_span]:items-center [&_span]:gap-1 [&>span>svg]:w-2.5 [&>span>svg]:h-2.5 [&>span>svg]:shrink-0">
                         {isLive ? (
                           <>
                             <span>By {item.author}</span>
@@ -301,16 +353,16 @@ export function DashboardView({
                     </div>
 
                     {isLive && item.id ? (
-                      <div className={styles.feedActions}>
+                      <div className="flex gap-1.5 shrink-0 self-center max-[720px]:ml-[66px] max-[720px]:w-full">
                         <a
-                          className={styles.iconBtn}
+                          className="font-mono text-[10px] text-[#a0a0a0] bg-[#0a0a0a] border border-line rounded-md py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-colors hover:text-white hover:border-mint/35 [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
                           href={`/admin/post?id=${encodeURIComponent(item.id)}`}
                         >
                           <IconEdit />
                           Update
                         </a>
                         <a
-                          className={styles.iconBtn}
+                          className="font-mono text-[10px] text-[#a0a0a0] bg-[#0a0a0a] border border-line rounded-md py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-colors hover:text-white hover:border-mint/35 [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
                           href={postUrl({ id: item.id, title: item.title })}
                           target="_blank"
                           rel="noreferrer"
@@ -326,91 +378,120 @@ export function DashboardView({
             )}
           </div>
 
-          <div className={styles.feedFoot}>
-            <button type="button" onClick={() => onNavigate?.('posts')}>
+          <div className="py-3.5 px-[22px] text-center border-t border-line">
+            <button
+              type="button"
+              className="font-mono text-[11px] text-[#a0a0a0] bg-transparent border-none cursor-pointer tracking-wide hover:text-mint"
+              onClick={() => onNavigate?.('posts')}
+            >
               View all articles →
             </button>
           </div>
         </section>
 
-        <aside className={styles.signals} aria-label="Signals">
-          <div className={styles.sigCard}>
-            <div className={styles.sigLabel}>Moderation &amp; taxonomy</div>
-            <div className={styles.statPair}>
-              <div className={styles.statBlock}>
-                <div className={styles.statN}>{Number(categoriesCount) || 0}</div>
-                <div className={styles.statL}>Categories</div>
-                <div className={styles.statS}>Buckets used</div>
+        <aside className="flex flex-col gap-3.5 sticky top-7 max-[1150px]:static max-[1150px]:flex-row max-[1150px]:flex-wrap" aria-label="Signals">
+          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
+            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+              Moderation &amp; taxonomy
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="bg-[#0a0a0a] border border-line rounded-md py-3 px-3">
+                <div className="font-mono font-extrabold text-xl text-white leading-none">
+                  {Number(categoriesCount) || 0}
+                </div>
+                <div className="text-[10px] text-[#a0a0a0] mt-1.5">Categories</div>
+                <div className="text-[9px] text-[#555] font-mono mt-px uppercase tracking-wide">Buckets used</div>
               </div>
-              <div className={styles.statBlock}>
+              <div className="bg-[#0a0a0a] border border-line rounded-md py-3 px-3">
                 <div
-                  className={`${styles.statN} ${
-                    pendingComments > 0 ? styles.statNWarn : ''
-                  }`}
+                  className={cn(
+                    'font-mono font-extrabold text-xl leading-none',
+                    pendingComments > 0 ? 'text-[#e8b342]' : 'text-white'
+                  )}
                 >
                   {pendingComments}
                 </div>
-                <div className={styles.statL}>Pending comments</div>
-                <div className={styles.statS}>Awaiting approval</div>
+                <div className="text-[10px] text-[#a0a0a0] mt-1.5">Pending comments</div>
+                <div className="text-[9px] text-[#555] font-mono mt-px uppercase tracking-wide">
+                  Awaiting approval
+                </div>
               </div>
             </div>
           </div>
 
-          <div className={styles.sigCard}>
-            <div className={styles.sigLabel}>Comments trend</div>
-            <p className={styles.trendDesc}>Top liked comments from the last 15 days.</p>
+          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
+            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+              Comments trend
+            </div>
+            <p className="text-[10.5px] text-[#666] m-0 mb-2.5 leading-snug">
+              Top liked comments from the last 15 days.
+            </p>
 
             {trendingHint ? (
-              <div className={styles.trendEmpty}>
+              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-[#555]">
                 <IconChat />
-                <p>{trendingHint}</p>
+                <p className="m-0 text-[11px] text-[#555]">{trendingHint}</p>
               </div>
             ) : trends.length ? (
-              <div className={styles.trendList}>
+              <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto">
                 {trends.map((c) => (
-                  <div key={c.id} className={styles.trendItem}>
-                    <div className={styles.trendHeader}>
-                      <span className={styles.trendPost}>{c.postTitle || c.postId}</span>
-                      <span className={styles.trendLikes}>+{c.likes || 0} likes</span>
+                  <div key={c.id} className="bg-[#0a0a0a] border border-line rounded-md py-2.5 px-2.5">
+                    <div className="flex justify-between gap-2 mb-1">
+                      <span className="text-[10.5px] font-semibold text-[#e8e8e8] overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+                        {c.postTitle || c.postId}
+                      </span>
+                      <span className="font-mono text-[9.5px] text-mint shrink-0">+{c.likes || 0} likes</span>
                     </div>
-                    <p className={styles.trendPreview}>
+                    <p className="m-0 text-[10.5px] text-[#666] leading-snug line-clamp-2">
                       <strong>{c.name || 'Anonymous'}:</strong> {c.commentPreview || ''}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className={styles.trendEmpty}>
+              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-[#555]">
                 <IconChat />
-                <p>No trending comments found.</p>
+                <p className="m-0 text-[11px] text-[#555]">No trending comments found.</p>
               </div>
             )}
           </div>
 
-          <div className={styles.sigCard}>
-            <div className={styles.sigLabel}>Post growth</div>
-            <p className={styles.trendDesc}>Articles published over the last 6 months.</p>
+          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
+            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+              Post growth
+            </div>
+            <p className="text-[10.5px] text-[#666] m-0 mb-2.5 leading-snug">
+              Articles published over the last 6 months.
+            </p>
 
             {months.length === 0 ? (
-              <div className={styles.trendEmpty}>
-                <p>No growth data available yet.</p>
+              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center">
+                <p className="m-0 text-[11px] text-[#555]">No growth data available yet.</p>
               </div>
             ) : (
-              <div className={styles.chart} role="img" aria-label="Post growth by month">
+              <div className="flex items-end gap-2 h-[110px] mt-3.5" role="img" aria-label="Post growth by month">
                 {months.map((m) => {
                   const count = Number(m.count) || 0;
                   const pct = maxMonth ? Math.round((count / maxMonth) * 100) : 0;
                   return (
-                    <div key={m.key || m.label} className={styles.barCol} title={`${m.label}: ${count}`}>
-                      <div className={styles.bar}>
+                    <div
+                      key={m.key || m.label}
+                      className="group flex-1 flex flex-col items-center gap-2 h-full justify-end min-w-0"
+                      title={`${m.label}: ${count}`}
+                    >
+                      <div className="w-full h-full bg-[#0a0a0a] border border-line rounded-t-sm relative flex items-end justify-center overflow-visible">
                         <div
-                          className={styles.barFill}
+                          className="w-full bg-line rounded-t-sm relative min-h-1 transition-all duration-200 group-hover:bg-mint group-hover:shadow-[0_0_10px_rgba(60,255,208,0.35)]"
                           style={{ height: `${Math.max(count > 0 ? 8 : 2, pct)}%` }}
                         >
-                          <span className={styles.barVal}>{count}</span>
+                          <span className="absolute -top-4 left-0 right-0 text-center font-mono text-[8.5px] text-[#555] transition-colors group-hover:text-mint group-hover:font-bold">
+                            {count}
+                          </span>
                         </div>
                       </div>
-                      <span className={styles.barMonth}>{shortMonth(m.label)}</span>
+                      <span className="font-mono text-[9px] text-[#555] tracking-wide uppercase">
+                        {shortMonth(m.label)}
+                      </span>
                     </div>
                   );
                 })}

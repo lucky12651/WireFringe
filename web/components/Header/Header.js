@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import BrandLogo from '../BrandLogo/BrandLogo';
-import styles from './Header.module.css';
+import { cn } from '../../lib/utils';
 
 const NAV = [
   { label: 'Tech', cat: 'Tech' },
@@ -41,8 +41,8 @@ function slugifyCategory(cat) {
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-function LogoMark() {
-  return <BrandLogo size="md" className={styles.logoText} />;
+function LogoMark({ className }) {
+  return <BrandLogo size="md" className={className} />;
 }
 
 export default function Header({
@@ -120,32 +120,30 @@ export default function Header({
 
   return (
     <>
-      <header className={styles.header}>
-        {/*
-          Same max-width shell so top (Subscribe/Sign In) and bottom (nav line)
-          end at the same right edge — like The Verge.
-        */}
-        <div className={styles.shell}>
-          {/* TOP row — Subscribe + Sign In (right aligned) */}
-          <div className={styles.utility}>
-            <a href="#newsletter" className={styles.subscribe}>
+      <header className="sticky top-0 z-[11000] w-full bg-black/80 backdrop-blur-[16px] backdrop-saturate-150 border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+        <div className="relative w-full max-w-site mx-auto px-4 pt-3 pb-2.5 box-border md:px-6 md:pt-3.5 md:pb-3">
+          <div className="flex justify-end items-center gap-3.5 w-full mb-2.5">
+            <a
+              href="#newsletter"
+              className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
+            >
               SUBSCRIBE
             </a>
             {user ? (
-              <div className={styles.profile} ref={dropRef}>
+              <div className="relative" ref={dropRef}>
                 <button
                   type="button"
-                  className={styles.signIn}
+                  className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
                   onClick={() => setDropdownOpen((v) => !v)}
                 >
                   <UserIcon />
                   <span>SIGN IN</span>
                 </button>
                 {dropdownOpen && (
-                  <div className={styles.dropdown}>
+                  <div className="absolute top-[calc(100%+10px)] right-0 w-[200px] bg-bg-elevated border border-line rounded-sm shadow-lg py-1.5 z-[12000] animate-drop-in">
                     <Link
                       href="/for-you"
-                      className={styles.dropItem}
+                      className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
                       onClick={() => setDropdownOpen(false)}
                     >
                       For You
@@ -154,55 +152,72 @@ export default function Header({
                       <>
                         <Link
                           href="/admin"
-                          className={styles.dropItem}
+                          className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
                           onClick={() => setDropdownOpen(false)}
                         >
                           Dashboard
                         </Link>
                         <Link
                           href="/admin/post"
-                          className={styles.dropItem}
+                          className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
                           onClick={() => setDropdownOpen(false)}
                         >
                           New Post
                         </Link>
                       </>
                     )}
-                    <button type="button" className={styles.dropItem} onClick={logout}>
+                    <button
+                      type="button"
+                      className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer hover:bg-[#1a1a1a] hover:text-mint"
+                      onClick={logout}
+                    >
                       Log out
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <Link href="/login" className={styles.signIn}>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
+              >
                 <UserIcon />
                 <span>SIGN IN</span>
               </Link>
             )}
           </div>
 
-          {/* BOTTOM row — logo left corner | nav links + search/icons right */}
-          <div className={styles.navRow}>
-            <nav className={styles.nav} aria-label="Main">
-              <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
+          <div className="w-full flex justify-stretch">
+            <nav
+              className="flex items-center justify-between flex-nowrap w-full border-b-[1.5px] border-mint pb-[7px] gap-4"
+              aria-label="Main"
+            >
+              <Link
+                href="/"
+                className="flex items-center no-underline text-white shrink-0 max-md:text-xl"
+                onClick={() => setMenuOpen(false)}
+              >
                 <LogoMark />
               </Link>
 
-              <div className={styles.navRight}>
-                <div className={styles.navLinks}>
+              <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0">
+                <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
                   {NAV.map((item, index) => (
-                    <span key={item.label} className={styles.navItem}>
+                    <span key={item.label} className="inline-flex items-center">
                       {index > 0 ? (
-                        <span className={styles.slash} aria-hidden="true">
+                        <span
+                          className="text-[#888] text-sm ml-[5px] mr-px select-none leading-none"
+                          aria-hidden="true"
+                        >
                           /
                         </span>
                       ) : null}
                       <button
                         type="button"
-                        className={`${styles.navLink} ${
-                          activeCategory === item.cat ? styles.navActive : ''
-                        }`}
+                        className={cn(
+                          'appearance-none bg-transparent border-0 text-[#e8e8e8] text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
+                          activeCategory === item.cat ? 'text-mint' : 'hover:text-mint'
+                        )}
                         onClick={() => goCat(item.cat)}
                       >
                         {item.label}
@@ -211,10 +226,10 @@ export default function Header({
                   ))}
                 </div>
 
-                <span className={styles.navIcons}>
+                <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-[#222]">
                   <button
                     type="button"
-                    className={styles.iconBtn}
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-[#e0e0e0] cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
                     aria-label="Search"
                     onClick={() => {
                       setSearchOpen((v) => !v);
@@ -223,19 +238,38 @@ export default function Header({
                   >
                     <SearchIcon />
                   </button>
-                  <button type="button" className={styles.iconBtn} aria-label="Notifications">
+                  <button
+                    type="button"
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-[#e0e0e0] cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
+                    aria-label="Notifications"
+                  >
                     <BellIcon />
                   </button>
                   <button
                     type="button"
-                    className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
+                    className="group w-8 h-7 inline-flex flex-col items-center justify-center gap-1 bg-transparent border-0 cursor-pointer p-0"
                     aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                     aria-expanded={menuOpen}
                     onClick={() => setMenuOpen((v) => !v)}
                   >
-                    <span className={styles.menuBar} />
-                    <span className={styles.menuBar} />
-                    <span className={styles.menuBar} />
+                    <span
+                      className={cn(
+                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        menuOpen && 'translate-y-[5.5px] rotate-45'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        menuOpen && 'opacity-0 w-0'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        menuOpen && '-translate-y-[5.5px] -rotate-45'
+                      )}
+                    />
                   </button>
                 </span>
               </div>
@@ -244,20 +278,23 @@ export default function Header({
         </div>
 
         {searchOpen && (
-          <div className={styles.searchBar}>
-            <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
-              <SearchIcon className={styles.searchIcon} />
+          <div className="border-t border-line-light px-5 pt-3 pb-3.5 bg-black animate-drop-in">
+            <form
+              className="max-w-site mx-auto relative flex items-center"
+              onSubmit={(e) => e.preventDefault()}
+            >
+              <SearchIcon className="absolute left-3 text-[#666] pointer-events-none" />
               <input
                 ref={searchRef}
                 type="search"
-                className={styles.searchInput}
+                className="w-full h-[42px] pl-10 pr-[72px] border border-line rounded-sm bg-bg-elevated text-white text-[15px] outline-none focus:border-mint"
                 placeholder="Search stories…"
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
               />
               <button
                 type="button"
-                className={styles.searchClose}
+                className="absolute right-2.5 bg-transparent border-0 text-[#888] font-mono text-[11px] uppercase tracking-wide cursor-pointer hover:text-mint"
                 onClick={() => {
                   setLocalSearch('');
                   onSearchChange?.('');
@@ -272,76 +309,101 @@ export default function Header({
       </header>
 
       <div
-        className={`${styles.drawerBackdrop} ${menuOpen ? styles.drawerBackdropOpen : ''}`}
+        className={cn(
+          'fixed inset-0 bg-black/55 z-[12000] transition-all duration-300 backdrop-blur-[2px]',
+          menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        )}
         onClick={() => setMenuOpen(false)}
         aria-hidden={!menuOpen}
       />
       <aside
-        className={`${styles.drawer} ${menuOpen ? styles.drawerOpen : ''}`}
+        className={cn(
+          'fixed top-0 right-0 bottom-0 w-[min(400px,92vw)] bg-[#0a0a0a] border-l border-[#222] z-[12001] transition-transform duration-300 ease-out flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.5)]',
+          menuOpen ? 'translate-x-0' : 'translate-x-[105%]'
+        )}
         aria-hidden={!menuOpen}
         aria-label="Site menu"
       >
-        <div className={styles.drawerHeader}>
-          <LogoMark />
+        <div className="flex items-center justify-between px-[22px] py-5 border-b border-line-dim">
+          <LogoMark className="!text-[22px]" />
           <button
             type="button"
-            className={styles.drawerClose}
+            className="w-9 h-9 border border-[#333] rounded-full bg-transparent text-[#ccc] text-base cursor-pointer flex items-center justify-center hover:text-white hover:border-mint hover:bg-mint/10"
             onClick={() => setMenuOpen(false)}
             aria-label="Close menu"
           >
             ✕
           </button>
         </div>
-        <div className={styles.drawerBody}>
-          <a href="#newsletter" className={styles.drawerSubscribe} onClick={() => setMenuOpen(false)}>
+        <div className="flex-1 overflow-y-auto px-[22px] pt-5 pb-10">
+          <a
+            href="#newsletter"
+            className="block text-center bg-mint text-black font-mono text-xs font-bold tracking-widest uppercase p-3.5 rounded-sm mb-3.5 hover:bg-[#2ee6b8]"
+            onClick={() => setMenuOpen(false)}
+          >
             SUBSCRIBE
           </a>
           {!user ? (
-            <Link href="/login" className={styles.drawerSignIn} onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 w-full p-3 mb-7 border border-[#333] rounded-sm bg-transparent text-[#ddd] text-sm cursor-pointer no-underline hover:border-mint hover:text-mint"
+              onClick={() => setMenuOpen(false)}
+            >
               <UserIcon /> Sign in / Sign up
             </Link>
           ) : (
-            <button type="button" className={styles.drawerSignIn} onClick={logout}>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 w-full p-3 mb-7 border border-[#333] rounded-sm bg-transparent text-[#ddd] text-sm cursor-pointer hover:border-mint hover:text-mint"
+              onClick={logout}
+            >
               <UserIcon /> Log out
             </button>
           )}
           {DRAWER_SECTIONS.map((section) => (
-            <div key={section.title} className={styles.drawerSection}>
-              <h3 className={styles.drawerSectionTitle}>{section.title}</h3>
-              <ul className={styles.drawerList}>
+            <div key={section.title} className="mb-7">
+              <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-[#666] mb-2.5 pb-2 border-b border-line-dim">
+                {section.title}
+              </h3>
+              <ul className="list-none m-0 p-0">
                 {section.items.map((item) => (
                   <li key={item.label}>
-                    {item.href ? (
-                      <button type="button" className={styles.drawerLink} onClick={() => goHref(item.href)}>
-                        {item.label}
-                        <span className={styles.drawerArrow}>→</span>
-                      </button>
-                    ) : (
-                      <button type="button" className={styles.drawerLink} onClick={() => goCat(item.cat)}>
-                        {item.label}
-                        <span className={styles.drawerArrow}>→</span>
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="group flex items-center justify-between w-full py-3 bg-transparent border-0 border-b border-line-light text-white text-lg font-semibold cursor-pointer text-left transition-all hover:text-mint hover:pl-1.5"
+                      onClick={() => (item.href ? goHref(item.href) : goCat(item.cat))}
+                    >
+                      {item.label}
+                      <span className="text-[#444] transition-all group-hover:text-mint group-hover:translate-x-[3px]">
+                        →
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
-          <div className={styles.drawerSection}>
-            <h3 className={styles.drawerSectionTitle}>Follow</h3>
-            <div className={styles.drawerSocial}>
-              <a href="https://x.com" target="_blank" rel="noreferrer">
-                X
-              </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer">
-                YT
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer">
-                IG
-              </a>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer">
-                FB
-              </a>
+          <div className="mb-7">
+            <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-[#666] mb-2.5 pb-2 border-b border-line-dim">
+              Follow
+            </h3>
+            <div className="flex gap-2.5 flex-wrap">
+              {[
+                { href: 'https://x.com', label: 'X' },
+                { href: 'https://youtube.com', label: 'YT' },
+                { href: 'https://instagram.com', label: 'IG' },
+                { href: 'https://facebook.com', label: 'FB' },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-10 h-10 border-[1.5px] border-mint rounded-full text-mint flex items-center justify-center text-[11px] font-bold transition-all hover:bg-mint hover:text-black hover:scale-110"
+                >
+                  {s.label}
+                </a>
+              ))}
             </div>
           </div>
         </div>

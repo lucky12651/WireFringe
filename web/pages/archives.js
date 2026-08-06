@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import useSWR from 'swr';
 import StaticPage from '../components/StaticPage/StaticPage';
-import pageStyles from '../components/StaticPage/StaticPage.module.css';
 import { fetcher, api } from '../lib/api';
 import { postUrl } from '../lib/utils';
 import { SITE_NAME } from '../lib/site';
@@ -54,15 +53,25 @@ export default function ArchivesPage({ initialPosts }) {
       {posts.length === 0 ? (
         <p>No posts yet. Check back soon.</p>
       ) : (
-        <div className={pageStyles.archiveList}>
+        <div className="flex flex-col gap-0 border-t border-[#222]">
           {posts.map((post) => (
-            <Link key={post.id} href={postUrl(post)} className={pageStyles.archiveItem}>
-              <span className={pageStyles.archiveDate}>{formatDate(post.date) || '—'}</span>
+            <Link
+              key={post.id}
+              href={postUrl(post)}
+              className="group grid grid-cols-1 sm:grid-cols-[110px_1fr] gap-1.5 sm:gap-4 py-4 border-b border-[#1c1c1c] no-underline text-inherit"
+            >
+              <span className="font-mono text-[11px] text-[#666] pt-1">
+                {formatDate(post.date) || '—'}
+              </span>
               <div>
                 {post.bucket ? (
-                  <div className={pageStyles.archiveBucket}>{post.bucket}</div>
+                  <div className="font-mono text-[10px] font-bold tracking-wide uppercase text-mint mb-1">
+                    {post.bucket}
+                  </div>
                 ) : null}
-                <div className={pageStyles.archiveTitle}>{post.title}</div>
+                <div className="text-base font-bold text-white leading-snug transition-colors group-hover:text-mint">
+                  {post.title}
+                </div>
               </div>
             </Link>
           ))}

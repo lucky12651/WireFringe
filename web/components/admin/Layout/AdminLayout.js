@@ -2,6 +2,8 @@ import React from 'react';
 import Head from 'next/head';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 export function AdminLayout({
   children,
@@ -18,8 +20,8 @@ export function AdminLayout({
         <title>Wirefringe – Admin</title>
       </Head>
 
-      <div className="page-shell page-shell-admin">
-        <div className="admin-shell">
+      <div className={tw.pageShellAdmin}>
+        <div className={tw.adminShell}>
           <Sidebar
             me={me}
             isAuthed={isAuthed}
@@ -30,15 +32,17 @@ export function AdminLayout({
           />
 
           <main
-            className={`admin-content${
-              activeView === 'adsense' ? ' admin-content--adsense' : ''
-            }`}
+            className={cn(
+              tw.adminContent,
+              activeView === 'adsense' && 'max-w-none'
+            )}
             aria-label="Admin content"
           >
             <div
-              className={`admin-content-inner${
-                activeView === 'adsense' ? ' admin-content-inner--adsense' : ''
-              }`}
+              className={cn(
+                tw.adminContentInner,
+                activeView === 'adsense' && 'max-w-none'
+              )}
             >
               <TopBar activeView={activeView} />
               {children}

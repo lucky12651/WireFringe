@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { postUrl } from '../../lib/utils';
 import AuthorByline from '../AuthorByline/AuthorByline';
-import styles from './CategoryCluster.module.css';
 
 function formatDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -23,19 +22,29 @@ function Card({ post }) {
   if (!post) return null;
 
   return (
-    <article className={styles.card}>
+    <article className="group grid grid-cols-[100px_1fr] gap-3 items-start">
       {post.ogImg ? (
-        <Link href={postUrl(post)} className={styles.thumb}>
-          <img src={post.ogImg} alt="" loading="lazy" />
+        <Link
+          href={postUrl(post)}
+          className="w-[100px] aspect-[4/3] overflow-hidden bg-[#141414] block"
+        >
+          <img
+            src={post.ogImg}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         </Link>
       ) : (
-        <div className={styles.thumb} />
+        <div className="w-[100px] aspect-[4/3] overflow-hidden bg-[#141414]" />
       )}
-      <div className={styles.body}>
+      <div className="min-w-0">
         <Link href={postUrl(post)}>
-          <h3 className={styles.cardTitle}>{post.title}</h3>
+          <h3 className="text-[15px] font-bold leading-snug mb-2 text-white line-clamp-3 hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
+            {post.title}
+          </h3>
         </Link>
-        <div className={styles.meta}>
+        <div className="text-xs text-ink-secondary flex items-center gap-2 flex-wrap">
           <AuthorByline post={post} size="sm" />
           <span aria-hidden="true">•</span>
           <span>{formatDate(post.date)}</span>
@@ -55,17 +64,22 @@ export default function CategoryCluster({ title, posts = [] }) {
   const gridPosts = posts.slice(0, 4);
 
   return (
-    <section className={styles.cluster}>
-      <header className={styles.header}>
-        <Link href={`/?category=${slugifyCategory(title)}`} className={styles.titleLink}>
-          <h2 className={styles.title}>{title}</h2>
+    <section className="mb-9">
+      <header className="flex items-baseline justify-between gap-4 mb-4 pb-2.5 border-b border-line">
+        <Link href={`/?category=${slugifyCategory(title)}`}>
+          <h2 className="text-lg font-extrabold tracking-wide text-white hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
+            {title}
+          </h2>
         </Link>
-        <Link href={`/?category=${slugifyCategory(title)}`} className={styles.moreLink}>
+        <Link
+          href={`/?category=${slugifyCategory(title)}`}
+          className="font-mono text-[11px] font-semibold tracking-wide uppercase text-ink-secondary hover:text-mint"
+        >
           View all
         </Link>
       </header>
 
-      <div className={styles.layout}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-[22px] gap-x-6">
         {gridPosts.map((post) => (
           <Card key={post.id} post={post} />
         ))}

@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { postUrl, postExcerpt } from '../../lib/utils';
+import { postUrl, postExcerpt, cn } from '../../lib/utils';
 import AuthorByline from '../AuthorByline/AuthorByline';
-import styles from './StreamFeed.module.css';
 
 function formatRelative(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -31,18 +30,31 @@ export default function StreamFeed({
   NewsletterComponent = null,
 }) {
   return (
-    <aside className={styles.stream} aria-label="Latest stream">
-      <div className={styles.tabs}>
+    <aside
+      className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pr-2.5 pb-5 pl-[22px] overflow-hidden bg-black max-md:h-auto max-md:max-h-none max-md:overflow-visible max-md:pt-7 max-md:px-0 max-md:pb-0"
+      aria-label="Latest stream"
+    >
+      <div className="flex gap-0 mx-auto mb-4 bg-gradient-to-b from-[#161616] to-[#0e0e0e] rounded-pill p-[3px] w-fit shrink-0 z-[5] justify-center border border-white/[0.06] shadow-[0_8px_28px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
         <button
           type="button"
-          className={`${styles.tab} ${feedTab === 'latest' ? styles.tabActive : ''}`}
+          className={cn(
+            'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
+            feedTab === 'latest'
+              ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
+              : 'bg-transparent text-[#6a6a6a] hover:text-[#ccc]'
+          )}
           onClick={() => onTabChange?.('latest')}
         >
           LATEST
         </button>
         <button
           type="button"
-          className={`${styles.tab} ${feedTab === 'following' ? styles.tabActive : ''}`}
+          className={cn(
+            'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
+            feedTab === 'following'
+              ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
+              : 'bg-transparent text-[#6a6a6a] hover:text-[#ccc]'
+          )}
           onClick={() => onTabChange?.('following')}
         >
           FOLLOWING
@@ -50,70 +62,93 @@ export default function StreamFeed({
       </div>
 
       {feedTab === 'following' && !user ? (
-        <div className={styles.empty}>
+        <div className="text-center px-3 py-10 text-[#888] text-sm flex-1">
           <p>Sign in to follow writers and topics.</p>
-          <Link href="/login" className={styles.signInBtn}>
+          <Link
+            href="/login"
+            className="inline-block mt-3.5 bg-mint text-black font-mono text-[11px] font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm transition-all hover:bg-mint-hover hover:-translate-y-0.5"
+          >
             SIGN IN
           </Link>
         </div>
       ) : posts.length === 0 ? (
-        <div className={styles.empty}>No posts yet.</div>
+        <div className="text-center px-3 py-10 text-[#888] text-sm flex-1">No posts yet.</div>
       ) : (
-        <div className={styles.list}>
+        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1.5 -mr-0.5 max-md:overflow-visible max-md:max-h-none">
           {posts.map((post, idx) => {
-            const mode = idx % 4; // vary card layouts like Verge
+            const mode = idx % 4;
             const body = excerpt(post, mode === 1 ? 220 : 140);
 
             return (
-              <article key={post.id} className={styles.item}>
-                <div className={styles.authorRow}>
+              <article
+                key={post.id}
+                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-[#333] animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.055),transparent)] hover:rounded-sm"
+              >
+                <div className="flex items-center gap-2.5 mb-3">
                   <AuthorByline
                     post={post}
                     size="sm"
                     showAvatar
                     time={formatRelative(post.date)}
-                    className={styles.byline}
                   />
                 </div>
 
-                {/* Layout variants for visual interest */}
                 {mode === 0 && (
-                  <div className={styles.row}>
-                    <div className={styles.main}>
-                      <Link href={postUrl(post)} className={styles.title}>
+                  <div className="flex gap-3.5 items-start">
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={postUrl(post)}
+                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                      >
                         {post.title}
                       </Link>
-                      {body ? <p className={styles.body}>{body}</p> : null}
+                      {body ? (
+                        <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                          {body}
+                        </p>
+                      ) : null}
                     </div>
                     {post.ogImg ? (
-                      <Link href={postUrl(post)} className={styles.thumb}>
-                        <img src={post.ogImg} alt="" loading="lazy" />
+                      <Link
+                        href={postUrl(post)}
+                        className="w-20 h-20 shrink-0 overflow-hidden bg-[#111]"
+                      >
+                        <img
+                          src={post.ogImg}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                        />
                       </Link>
                     ) : null}
                   </div>
                 )}
 
                 {mode === 1 && (
-                  <div className={styles.quick}>
-                    <p className={styles.body}>
-                      <strong className={styles.inlineTitle}>{post.title}.</strong> {body}
+                  <div>
+                    <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                      <strong className="text-white font-extrabold tracking-tight">{post.title}.</strong>{' '}
+                      {body}
                     </p>
                     {post.link ? (
                       <a
                         href={post.link}
                         target="_blank"
                         rel="noreferrer"
-                        className={styles.extLink}
+                        className="inline text-mint text-[13px] font-semibold border-b border-mint/35 transition-colors hover:border-mint hover:text-mint-hover"
                       >
                         {String(post.bucket || 'Source').toUpperCase()}
                       </a>
                     ) : (
-                      <Link href={postUrl(post)} className={styles.extLink}>
+                      <Link
+                        href={postUrl(post)}
+                        className="inline text-mint text-[13px] font-semibold border-b border-mint/35 transition-colors hover:border-mint hover:text-mint-hover"
+                      >
                         READ MORE
                       </Link>
                     )}
                     {body.length > 80 ? (
-                      <blockquote className={styles.quote}>
+                      <blockquote className="mt-3 mb-1 py-2 pl-3.5 border-l-2 border-[#3a3a3a] text-[#888] text-[13.5px] leading-normal italic transition-colors group-hover:border-mint/50">
                         {body.slice(0, 120)}
                         {body.length > 120 ? '…' : ''}
                       </blockquote>
@@ -123,49 +158,85 @@ export default function StreamFeed({
 
                 {mode === 2 && (
                   <>
-                    <Link href={postUrl(post)} className={styles.title}>
+                    <Link
+                      href={postUrl(post)}
+                      className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                    >
                       {post.title}
                     </Link>
                     {post.ogImg ? (
-                      <Link href={postUrl(post)} className={styles.wideImg}>
-                        <img src={post.ogImg} alt="" loading="lazy" />
+                      <Link
+                        href={postUrl(post)}
+                        className="block w-full aspect-video overflow-hidden bg-[#1a1a1a] my-2.5 mb-3 rounded-sm"
+                      >
+                        <img
+                          src={post.ogImg}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                        />
                       </Link>
                     ) : null}
-                    {body ? <p className={styles.body}>{body}</p> : null}
+                    {body ? (
+                      <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                        {body}
+                      </p>
+                    ) : null}
                   </>
                 )}
 
                 {mode === 3 && (
-                  <div className={styles.row}>
-                    <div className={styles.main}>
-                      <Link href={postUrl(post)} className={styles.title}>
+                  <div className="flex gap-3.5 items-start">
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={postUrl(post)}
+                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                      >
                         {post.title}
                       </Link>
-                      {body ? <p className={styles.body}>{body}</p> : null}
+                      {body ? (
+                        <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                          {body}
+                        </p>
+                      ) : null}
                       {post.link ? (
                         <a
                           href={post.link}
                           target="_blank"
                           rel="noreferrer"
-                          className={styles.extLink}
+                          className="inline text-mint text-[13px] font-semibold border-b border-mint/35 transition-colors hover:border-mint hover:text-mint-hover"
                         >
                           [{String(post.bucket || 'SOURCE').toUpperCase()}]
                         </a>
                       ) : null}
                     </div>
                     {post.ogImg ? (
-                      <Link href={postUrl(post)} className={styles.thumb}>
-                        <img src={post.ogImg} alt="" loading="lazy" />
+                      <Link
+                        href={postUrl(post)}
+                        className="w-20 h-20 shrink-0 overflow-hidden bg-[#111]"
+                      >
+                        <img
+                          src={post.ogImg}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                        />
                       </Link>
                     ) : null}
                   </div>
                 )}
 
-                <div className={styles.actions}>
-                  <span className={styles.action} title="Comments">
+                <div className="flex items-center gap-3.5 mt-3 text-[#555]">
+                  <span
+                    className="inline-flex items-center gap-1 text-xs text-[#555] transition-colors group-hover:text-[#888] hover:!text-mint"
+                    title="Comments"
+                  >
                     <ChatIcon /> {Number(post.commentCount) || 0}
                   </span>
-                  <span className={styles.action} title="Share">
+                  <span
+                    className="inline-flex items-center gap-1 text-xs text-[#555] transition-colors group-hover:text-[#888] hover:!text-mint"
+                    title="Share"
+                  >
                     <ShareIcon />
                   </span>
                 </div>
@@ -176,7 +247,7 @@ export default function StreamFeed({
       )}
 
       {showNewsletter && NewsletterComponent ? (
-        <div id="newsletter" className={styles.newsletter}>
+        <div id="newsletter" className="mt-3 pt-3.5 border-t border-dotted border-[#333] shrink-0">
           {NewsletterComponent}
         </div>
       ) : null}

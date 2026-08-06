@@ -1,19 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ActionButton } from '../shared/ActionButton';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../shared/Table';
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
-import Loader from '../../Loader/Loader';
-import { formatDateShort, postUrl } from '../../../lib/utils';
+import { formatDateShort, postUrl, cn } from '../../../lib/utils';
 import { PlusIcon, EditIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, RefreshIcon } from '../Layout/icons';
+import { tw } from '../../../lib/tw';
 
 export function PostsView({
   posts,
@@ -192,78 +183,78 @@ export function PostsView({
   }, [posts.length]);
 
   return (
-    <div className="admin-view-container-v2">
-      <div className="section-header">
-        <div className="title-group-v2">
-          <h2 className="section-title">Articles</h2>
-          <div className="v2-tabs">
+    <div className={tw.adminView}>
+      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+        <div className={tw.titleGroup}>
+          <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Articles</h2>
+          <div className={tw.tabs}>
             <button
-              className={`v2-tab-btn ${activeTab === 'published' ? 'active' : ''}`}
+              className={cn(tw.tab, activeTab === 'published' && tw.tabActive)}
               onClick={() => setActiveTab('published')}
             >
-              Published <span className="tab-count-v2">{postsCount}</span>
+              Published <span className="ml-1 opacity-80">{postsCount}</span>
             </button>
             <button
-              className={`v2-tab-btn ${activeTab === 'queue' ? 'active' : ''}`}
+              className={cn(tw.tab, activeTab === 'queue' && tw.tabActive)}
               onClick={() => setActiveTab('queue')}
             >
-              Queue <span className="tab-count-v2">{queue.length}</span>
+              Queue <span className="ml-1 opacity-80">{queue.length}</span>
             </button>
           </div>
         </div>
-        <div className="header-actions-v2">
+        <div className={tw.headerActions}>
           {activeTab === 'queue' && (
-            <button className="secondary-btn-v2" onClick={onRefreshFeeds}>
+            <button className={tw.secondaryBtn} onClick={onRefreshFeeds}>
               <RefreshIcon size={16} /> Refresh Feeds
             </button>
           )}
-          <a href="/admin/post" className="primary-btn-v2">
+          <a href="/admin/post" className={tw.primaryBtn}>
             <PlusIcon /> New Article
           </a>
         </div>
       </div>
 
-      <div className="admin-card-v2 posts-card-v2">
+      <div className={tw.card}>
         {activeTab === 'published' ? (
           <>
-            <div className="v2-table-wrapper">
-              <table className="v2-table">
+            <div className={tw.tableWrap}>
+              <table className={tw.table}>
                 <thead>
                   <tr>
-                    <th>Article</th>
-                    <th>Category</th>
-                    <th>Date</th>
-                    <th className="text-right">Actions</th>
+                    <th className={tw.th}>Article</th>
+                    <th className={tw.th}>Category</th>
+                    <th className={tw.th}>Date</th>
+                    <th className={cn(tw.th, tw.textRight)}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {posts.map((p) => (
                     <tr key={p.id}>
-                      <td>
-                        <div className="post-cell-v2">
-                          <div className="post-thumb-mini">
-                            <img src={p.ogImg || '/placeholder-post.jpg'} alt="" />
+                      <td className={tw.td}>
+                        <div className={tw.postCell}>
+                          <div className={tw.postThumb}>
+                            <img src={p.ogImg || '/placeholder-post.jpg'} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <div className="post-title-info">
-                            <Link href={postUrl(p)} className="post-title-link">
-                              <span className="post-title-v2">{p.title}</span>
+                          <div className="min-w-0">
+                            <Link href={postUrl(p)} className="no-underline text-white hover:text-mint">
+                              <span className="font-semibold text-sm block truncate">{p.title}</span>
                             </Link>
-                            <span className="post-author-v2">By {p.creatorName || 'Admin'}</span>
+                            <span className="text-xs text-[#888]">By {p.creatorName || 'Admin'}</span>
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <span className="count-badge-v2">{p.bucket}</span>
+                      <td className={tw.td}>
+                        <span className="font-mono text-xs text-mint">{p.bucket}</span>
                       </td>
-                      <td>
-                        <span style={{ color: "#111" }}>{formatDateShort(p.date)}</span>
+                      <td className={tw.td}>
+                        <span className="text-[#e0e0e0]">{formatDateShort(p.date)}</span>
                       </td>
-                      <td className="text-right">
-                        <div className="action-group-v2">
-                          <a href={`/admin/post?id=${encodeURIComponent(p.id)}`} className="edit-btn-v2" title="Edit">
+                      <td className={cn(tw.td, tw.textRight)}>
+                        <div className={tw.actionGroup}>
+                          <a href={`/admin/post?id=${encodeURIComponent(p.id)}`} className={tw.iconBtn} title="Edit">
                             <EditIcon size={16} />
                           </a>
-                          <button className="delete-btn-v2" onClick={() => handleDeleteClick(p)} title="Delete">
+                          <button className={tw.iconBtnDanger} onClick={() => handleDeleteClick(p)} title="Delete">
                             <TrashIcon size={16} />
                           </button>
                         </div>
@@ -275,21 +266,21 @@ export function PostsView({
             </div>
 
             {totalPages > 1 && (
-              <div className="v2-pagination">
-                <button className="page-btn-v2" disabled={!hasPrev} onClick={() => onPageChange(page - 1)}>
+              <div className={tw.pagination}>
+                <button className={tw.pageBtn} disabled={!hasPrev} onClick={() => onPageChange(page - 1)}>
                   <ChevronLeftIcon /> Prev
                 </button>
-                <span className="page-info-v2">Page {page + 1} of {totalPages}</span>
-                <button className="page-btn-v2" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>
+                <span className={tw.pageInfo}>Page {page + 1} of {totalPages}</span>
+                <button className={tw.pageBtn} disabled={!hasNext} onClick={() => onPageChange(page + 1)}>
                   Next <ChevronRightIcon />
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="v2-table-wrapper">
-            <div className="queue-header-v3" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className={tw.tableWrap}>
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
@@ -297,20 +288,19 @@ export function PostsView({
                   id="select-all-queue"
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
-
               </div>
               {selectedQueueLinks.size > 0 && (
-                <div className="bulk-actions-bar" style={{ margin: 0, padding: '8px 16px', borderRadius: '12px' }}>
+                <div className="m-0 py-2 px-4 rounded-xl flex items-center gap-3 bg-bg-elevated border border-line">
                   <span>{selectedQueueLinks.size} selected</span>
-                  <div className="bulk-btns">
+                  <div className="flex gap-2">
                     <button
-                      className="approve-btn-v2"
+                      className={tw.iconBtnApprove}
                       onClick={handleBulkProcessClick}
                       disabled={isProcessing}
                     >
                       {isProcessing ? 'Processing...' : 'Process'}
                     </button>
-                    <button className="delete-btn-v2" onClick={handleBulkDeleteClick}>
+                    <button className={tw.iconBtnDanger} onClick={handleBulkDeleteClick}>
                       Remove
                     </button>
                   </div>
@@ -318,38 +308,43 @@ export function PostsView({
               )}
             </div>
 
-            <div className="queue-grid-v3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {queue.map((q) => (
                 <div
                   key={q.link}
-                  className={`queue-card-v3 ${selectedQueueLinks.has(q.link) ? 'row-selected' : ''}`}
+                  className={cn(
+                    'rounded-lg border border-line bg-[#101010] p-3 cursor-pointer transition-colors hover:border-mint/30',
+                    selectedQueueLinks.has(q.link) && 'border-mint/50 bg-mint/[0.04]'
+                  )}
                   onClick={() => toggleSelectQueueItem(q.link)}
                 >
-                  <div className="queue-card-header">
-                    <div className="queue-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedQueueLinks.has(q.link)}
                         onChange={() => toggleSelectQueueItem(q.link)}
                       />
                     </div>
-                    <span className="source-badge-v2">{q.category}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-wide text-mint bg-mint/10 px-2 py-0.5 rounded">
+                      {q.category}
+                    </span>
                   </div>
 
-                  <div className="queue-content-v3">
-                    <div className="queue-title-v3" title={q.title}>{q.title}</div>
+                  <div className="mb-3">
+                    <div className="text-sm font-semibold text-white line-clamp-2" title={q.title}>{q.title}</div>
                   </div>
 
-                  <div className="queue-actions-v3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="approve-btn-v2"
+                      className={tw.iconBtnApprove}
                       onClick={() => handleProcessQueueItem(q.link)}
                       title="Process"
                       disabled={isProcessing || processingLinks.has(q.link)}
                     >
-                      {processingLinks.has(q.link) ? <RefreshIcon size={16} className="spin" /> : <CheckIcon size={16} />}
+                      {processingLinks.has(q.link) ? <RefreshIcon size={16} className={tw.spin} /> : <CheckIcon size={16} />}
                     </button>
-                    <button className="delete-btn-v2" onClick={() => { setQueueItemToDelete(q); }} title="Remove">
+                    <button className={tw.iconBtnDanger} onClick={() => { setQueueItemToDelete(q); }} title="Remove">
                       <TrashIcon size={16} />
                     </button>
                   </div>

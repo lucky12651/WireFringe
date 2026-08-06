@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import AdsenseAd from '../AdsenseAd/AdsenseAd';
 import { AD_SLOTS, loadAdsenseConfig } from '../../lib/ads';
-import styles from './AdUnit.module.css';
+import { cn } from '../../lib/utils';
 
 /**
  * Modern news-style ad frame: label, min size, placement variants.
@@ -48,39 +48,54 @@ export default function AdUnit({
       format: format || 'horizontal',
       fullWidth: fullWidthResponsive !== false,
       style: { minHeight: 90, width: '100%' },
-      frameClass: styles.banner,
+      unitClass: 'my-6 mb-8 max-md:my-[22px]',
+      slotClass: 'min-h-[100px] p-2.5 px-2 max-md:min-h-[90px]',
+      hideLabel: false,
+      centerLabel: false,
     },
     multipath: {
       format: format || 'auto',
       fullWidth: fullWidthResponsive !== false,
       style: { minHeight: 250, width: '100%' },
-      frameClass: styles.multipath,
+      unitClass: 'my-9 mb-8 pt-5 pb-2 border-t border-b border-line-dim max-md:my-7 max-md:mb-6 max-md:pt-4 max-md:pb-1',
+      slotClass: 'min-h-[280px] p-3.5 px-3 bg-[#0c0c0c] border-[#252525] max-md:min-h-[250px]',
+      hideLabel: false,
+      centerLabel: false,
     },
     inArticle: {
-      // fluid + in-article layout is the modern mid-story AdSense format
       format: format || 'fluid',
       fullWidth: true,
       style: { display: 'block', minHeight: 280, width: '100%', textAlign: 'center' },
       layout: 'in-article',
-      frameClass: styles.inArticle,
+      unitClass: 'my-10 max-md:my-7 max-md:-mx-1 pt-2 pb-1',
+      slotClass:
+        'min-h-[280px] p-4 px-3 bg-gradient-to-b from-[#121212] to-[#0d0d0d] border border-[#262626] rounded-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-md:min-h-[250px] max-md:p-3 max-md:px-2 max-md:rounded-sm',
+      hideLabel: false,
+      centerLabel: true,
     },
     sidebar: {
       format: format || 'rectangle',
       fullWidth: false,
       style: { minHeight: 250, width: '100%', maxWidth: 300 },
-      frameClass: styles.sidebar,
+      unitClass: 'm-0 mb-5',
+      slotClass: 'min-h-[260px] p-2.5 rounded-sm',
+      hideLabel: false,
+      centerLabel: false,
     },
     rail: {
       format: format || 'vertical',
       fullWidth: false,
       style: { width: 160, minHeight: 600 },
-      frameClass: styles.rail,
+      unitClass: 'm-0',
+      slotClass: 'min-h-[600px] w-40 p-0 bg-transparent border-0 rounded-none',
+      hideLabel: true,
+      centerLabel: false,
+      noStripe: true,
     },
   };
 
   const cfg = variantConfig[variant] || variantConfig.banner;
 
-  // Nudge AdSense to fill when this unit mounts (route changes)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const tryPush = () => {
@@ -118,15 +133,51 @@ export default function AdUnit({
   return (
     <aside
       ref={unitRef}
-      className={`${styles.unit} ${cfg.frameClass} ${className}`.trim()}
+      className={cn(
+        'w-full flex flex-col items-stretch gap-2 opacity-95',
+        cfg.unitClass,
+        className
+      )}
       aria-label={label}
       data-ad-variant={variant}
     >
-      <div className={styles.labelRow}>
-        <span className={styles.label}>{label}</span>
-        <span className={styles.labelLine} aria-hidden="true" />
-      </div>
-      <div className={styles.slot}>
+      {!cfg.hideLabel ? (
+        <div
+          className={cn(
+            'flex items-center gap-2.5 w-full',
+            cfg.centerLabel && 'justify-center mb-0.5'
+          )}
+        >
+          <span
+            className={cn(
+              'font-mono text-[9px] font-bold tracking-[0.16em] uppercase text-[#5a5a5a] shrink-0',
+              cfg.centerLabel && 'text-[#4a4a4a] tracking-[0.18em]'
+            )}
+          >
+            {label}
+          </span>
+          <span
+            className={cn(
+              'flex-1 h-px bg-gradient-to-r from-line via-line-light to-transparent',
+              cfg.centerLabel && 'max-w-12 bg-line'
+            )}
+            aria-hidden="true"
+          />
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          'w-full min-w-0 flex justify-center items-center bg-[#0f0f0f] border border-[#222] rounded-sm overflow-hidden relative',
+          cfg.slotClass,
+          '[&_ins.adsbygoogle]:relative [&_ins.adsbygoogle]:z-[1] [&_ins.adsbygoogle]:!min-w-full [&_ins.adsbygoogle]:!block'
+        )}
+      >
+        {!cfg.noStripe ? (
+          <div
+            className="absolute inset-0 pointer-events-none z-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_10px,rgba(255,255,255,0.012)_10px,rgba(255,255,255,0.012)_20px)]"
+            aria-hidden="true"
+          />
+        ) : null}
         <AdsenseAd
           slot={adSlot}
           format={cfg.format}

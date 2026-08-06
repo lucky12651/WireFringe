@@ -1,9 +1,9 @@
 import Link from 'next/link';
+import { cn } from '../../lib/utils';
+import { tw } from '../../lib/tw';
 
 /**
- * Site wordmark — same everywhere:
- * Wire + mint italic “F” + ringe (matches Header).
- *
+ * Site wordmark — styles via Tailwind (no global CSS logo classes).
  * size: sm | md | lg | xl
  */
 export default function BrandLogo({
@@ -13,22 +13,24 @@ export default function BrandLogo({
   onClick,
   asLink = false,
 }) {
+  const sizeClass =
+    size === 'sm'
+      ? tw.logoSm
+      : size === 'lg'
+        ? tw.logoLg
+        : size === 'xl'
+          ? tw.logoXl
+          : tw.logoMd;
+
   const mark = (
-    <span
-      className={`wf-logo wf-logo--${size} ${className}`.trim()}
-      aria-label="Wirefringe"
-    >
-      Wire<span className="wf-logo-f">F</span>ringe
+    <span className={cn(tw.logo, sizeClass, className)} aria-label="Wirefringe">
+      Wire<span className={tw.logoF}>F</span>ringe
     </span>
   );
 
   if (href != null || asLink) {
     return (
-      <Link
-        href={href || '/'}
-        className="wf-logo-link"
-        onClick={onClick}
-      >
+      <Link href={href || '/'} className={tw.logoLink} onClick={onClick}>
         {mark}
       </Link>
     );

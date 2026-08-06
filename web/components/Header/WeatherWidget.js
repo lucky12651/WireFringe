@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import styles from './Header.module.css';
 
 export default function WeatherWidget() {
   const [weather, setWeather] = useState(null);
@@ -9,24 +8,22 @@ export default function WeatherWidget() {
   useEffect(() => {
     async function fetchWeather() {
       try {
-        // 1. Get location via IP (using ipwho.is - more reliable free tier with HTTPS)
         const locRes = await fetch('https://ipwho.is/');
         const locData = await locRes.json();
-        
+
         if (locData.success) {
           setLocation(locData.city);
-          
-          // 2. Get weather via Open-Meteo (no API key needed)
+
           const weatherRes = await fetch(
             `https://api.open-meteo.com/v1/forecast?latitude=${locData.latitude}&longitude=${locData.longitude}&current_weather=true`
           );
           const weatherData = await weatherRes.json();
-          
+
           if (weatherData.current_weather) {
             setWeather({
               temp: Math.round(weatherData.current_weather.temperature),
               code: weatherData.current_weather.weathercode,
-              isDay: weatherData.current_weather.is_day
+              isDay: weatherData.current_weather.is_day,
             });
           }
         }
@@ -42,26 +39,27 @@ export default function WeatherWidget() {
 
   if (loading || !weather) return null;
 
-  // Simple mapping of WMO weather codes to icons
   const getWeatherIcon = (code, isDay) => {
-    if (code === 0) return isDay ? '☀️' : '🌙'; // Clear sky
-    if (code <= 3) return isDay ? '⛅' : '☁️'; // Partly cloudy
-    if (code <= 48) return '🌫️'; // Fog
-    if (code <= 67) return '🌧️'; // Rain
-    if (code <= 77) return '❄️'; // Snow
-    if (code <= 82) return '🌧️'; // Rain showers
-    if (code <= 99) return '⛈️'; // Thunderstorm
+    if (code === 0) return isDay ? '☀️' : '🌙';
+    if (code <= 3) return isDay ? '⛅' : '☁️';
+    if (code <= 48) return '🌫️';
+    if (code <= 67) return '🌧️';
+    if (code <= 77) return '❄️';
+    if (code <= 82) return '🌧️';
+    if (code <= 99) return '⛈️';
     return '🌡️';
   };
 
   return (
-    <div className={styles.weatherWidget}>
-      <div className={styles.weatherLocation}>{location || 'Local'}</div>
-      <div className={styles.weatherMain}>
-        <span className={styles.weatherIcon}>
+    <div className="flex flex-col items-end gap-0.5 font-mono text-[11px] text-ink-secondary">
+      <div className="uppercase tracking-wide text-[10px] text-ink-tertiary">
+        {location || 'Local'}
+      </div>
+      <div className="flex items-center gap-1.5 text-white font-semibold">
+        <span className="text-sm leading-none">
           {getWeatherIcon(weather.code, weather.isDay)}
         </span>
-        <span className={styles.weatherTemp}>{weather.temp}° C</span>
+        <span>{weather.temp}° C</span>
       </div>
     </div>
   );

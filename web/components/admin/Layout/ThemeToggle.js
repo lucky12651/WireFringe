@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from '../../../lib/utils';
 import { getTheme, setTheme, initTheme } from '../../../lib/theme';
-import styles from './ThemeToggle.module.css';
 
 export function ThemeToggle() {
   const [themeMode, setThemeMode] = useState('dark');
@@ -16,10 +16,18 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className={styles.themeToggle} aria-label="Theme">
+    <div
+      className="flex gap-1 p-1 bg-bg-elevated rounded-full border border-line"
+      aria-label="Theme"
+    >
       <button
         type="button"
-        className={`${styles.themeBtn} ${themeMode === 'light' ? styles.active : ''}`}
+        className={cn(
+          'flex items-center justify-center w-8 h-8 border-none rounded-full cursor-pointer transition-all duration-200',
+          themeMode === 'light'
+            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(60,255,208,0.3)]'
+            : 'bg-transparent text-[#777] hover:text-white'
+        )}
         onClick={() => handleSetTheme('light')}
         aria-label="Light mode"
       >
@@ -37,7 +45,12 @@ export function ThemeToggle() {
       </button>
       <button
         type="button"
-        className={`${styles.themeBtn} ${themeMode === 'dark' ? styles.active : ''}`}
+        className={cn(
+          'flex items-center justify-center w-8 h-8 border-none rounded-full cursor-pointer transition-all duration-200',
+          themeMode === 'dark'
+            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(60,255,208,0.3)]'
+            : 'bg-transparent text-[#777] hover:text-white'
+        )}
         onClick={() => handleSetTheme('dark')}
         aria-label="Dark mode"
       >

@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { initTheme } from '../../lib/theme';
 import { api, postsApi, mediaApi } from '../../lib/api';
-import { slugifyTitle } from '../../lib/utils';
+import { slugifyTitle, cn } from '../../lib/utils';
+import { tw } from '../../lib/tw';
+import BrandLogo from '../../components/BrandLogo/BrandLogo';
 import { useCategories } from '../../hooks/useCategories';
 
 export default function AdminPostPage() {
@@ -225,121 +227,119 @@ export default function AdminPostPage() {
         <title>Wirefringe – Admin Editor</title>
       </Head>
 
-      <div className="page-shell page-shell-admin">
-        <header className="site-header admin-header">
-          <div className="header-inner">
-            <Link className="brand" href="/admin" aria-label="Back to admin">
-              <span className="wf-logo wf-logo--sm" aria-hidden="true">
-                Wire<span className="wf-logo-f">F</span>ringe
-              </span>
-              <div className="brand-text">
-                <h1>Editor</h1>
-                <span id="editorMode">{modeLabel}</span>
+      <div className={tw.pageShellAdmin}>
+        <header className="border-b border-line bg-black/80">
+          <div className="flex items-center justify-between gap-4 px-6 py-3 max-w-[1280px] mx-auto w-full">
+            <Link className="flex items-center gap-3 no-underline text-white" href="/admin" aria-label="Back to admin">
+              <BrandLogo size="sm" />
+              <div>
+                <h1 className="m-0 text-base font-extrabold">Editor</h1>
+                <span id="editorMode" className="text-xs text-[#888]">{modeLabel}</span>
               </div>
             </Link>
 
-            <div className="admin-topbar">
-              <div className="admin-me" id="meLine">
+            <div className={tw.adminTopbar}>
+              <div className={tw.adminMe} id="meLine">
                 {me ? `Signed in as ${me.username} (${me.role})` : ''}
               </div>
-              <button className="pill-btn" id="logoutBtn" type="button" onClick={onLogout}>
-                <span className="dot" style={{ background: 'var(--accent)' }}></span>
+              <button className={tw.pillBtn} id="logoutBtn" type="button" onClick={onLogout}>
+                <span className={tw.dot} style={{ background: 'var(--accent)' }}></span>
                 Logout
               </button>
             </div>
           </div>
         </header>
 
-        <main className="admin-editor-shell" style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-          <section className="side-card admin-editor-card" style={{ flex: 1, minWidth: 0 }}>
-            <form id="editorForm" className="admin-form" onSubmit={onSave}>
+        <main className={tw.editorShell}>
+          <section className={cn(tw.sideCard, tw.editorCard)}>
+            <form id="editorForm" className={tw.form} onSubmit={onSave}>
               <input type="hidden" id="postId" value={postId} readOnly />
 
-              <div className="admin-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
+              <div className={tw.editorToolbar} role="toolbar" aria-label="Editor toolbar">
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="bold"
                   onClick={() => exec('bold')}
                   aria-label="Bold"
                   title="Bold"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     B
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="italic"
                   onClick={() => exec('italic')}
                   aria-label="Italic"
                   title="Italic"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     I
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="underline"
                   onClick={() => exec('underline')}
                   aria-label="Underline"
                   title="Underline"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     U
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="strikeThrough"
                   onClick={() => exec('strikeThrough')}
                   aria-label="Strikethrough"
                   title="Strikethrough"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     S
                   </span>
                 </button>
 
-                <div className="toolbar-spacer"></div>
+                <div className="w-px h-6 bg-line mx-1 self-center"></div>
 
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-block="h2"
                   onClick={() => formatBlock('h2')}
                   aria-label="Heading 2"
                   title="Heading 2"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     H2
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-block="h3"
                   onClick={() => formatBlock('h3')}
                   aria-label="Heading 3"
                   title="Heading 3"
                 >
-                  <span className="tb-icon tb-icon-text" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
                     H3
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="insertUnorderedList"
                   onClick={() => exec('insertUnorderedList')}
                   aria-label="Bulleted list"
                   title="Bulleted list"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="5" cy="6" r="1" stroke="currentColor" strokeWidth="2" />
                       <circle cx="5" cy="12" r="1" stroke="currentColor" strokeWidth="2" />
@@ -351,14 +351,14 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-cmd="insertOrderedList"
                   onClick={() => exec('insertOrderedList')}
                   aria-label="Numbered list"
                   title="Numbered list"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="4" y="5" width="2" height="2" rx="0.4" fill="currentColor" />
                       <rect x="4" y="11" width="2" height="2" rx="0.4" fill="currentColor" />
@@ -370,14 +370,14 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-block="blockquote"
                   onClick={() => formatBlock('blockquote')}
                   aria-label="Quote"
                   title="Quote"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M7 17H11V11H7V7H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M13 17H17V11H13V7H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -385,14 +385,14 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   data-block="pre"
                   onClick={() => formatBlock('pre')}
                   aria-label="Code block"
                   title="Code block"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M8 9L4 12L8 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M16 9L20 12L16 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -401,10 +401,10 @@ export default function AdminPostPage() {
                   </span>
                 </button>
 
-                <div className="toolbar-spacer"></div>
+                <div className="w-px h-6 bg-line mx-1 self-center"></div>
 
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   id="linkBtn"
                   onClick={() => {
@@ -415,7 +415,7 @@ export default function AdminPostPage() {
                   aria-label="Insert link"
                   title="Insert link"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
@@ -435,14 +435,14 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   id="unlinkBtn"
                   onClick={() => exec('unlink')}
                   aria-label="Remove link"
                   title="Remove link"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
@@ -464,7 +464,7 @@ export default function AdminPostPage() {
                 </button>
 
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   id="imageUrlBtn"
                   onClick={() => {
@@ -475,7 +475,7 @@ export default function AdminPostPage() {
                   aria-label="Insert image from URL"
                   title="Insert image from URL"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
                       <circle cx="9" cy="11" r="1.5" fill="currentColor" />
@@ -484,14 +484,14 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className="pill-btn"
+                  className={tw.pillBtn}
                   type="button"
                   id="uploadImageBtn"
                   onClick={() => fileInputRef.current?.click()}
                   aria-label="Upload image"
                   title="Upload image"
                 >
-                  <span className="tb-icon" aria-hidden="true">
+                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       <path d="M7 9L12 4L17 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -525,30 +525,30 @@ export default function AdminPostPage() {
               <div
                 ref={editorRef}
                 id="editor"
-                className="admin-editor"
+                className={tw.editor}
                 contentEditable={true}
                 spellCheck={true}
                 aria-label="Post content"
                 suppressContentEditableWarning={true}
               ></div>
 
-              <div className="row">
-                <button className="hero-cta" type="submit" id="saveBtn">
+              <div className="flex items-center gap-3 flex-wrap mt-4">
+                <button className={tw.heroCta} type="submit" id="saveBtn">
                   Save
                 </button>
                 {postId ? (
-                  <button className="pill-btn" type="button" id="deleteBtn" onClick={onDelete}>
-                    <span className="dot" style={{ background: 'var(--danger)' }}></span>
+                  <button className={tw.pillBtn} type="button" id="deleteBtn" onClick={onDelete}>
+                    <span className={tw.dot} style={{ background: 'var(--danger)' }}></span>
                     Delete
                   </button>
                 ) : null}
                 {postId ? (
-                  <a className="pill-btn" id="viewBtn" href={viewHref}>
-                    <span className="dot" style={{ background: 'var(--accent)' }}></span>
+                  <a className={tw.pillBtn} id="viewBtn" href={viewHref}>
+                    <span className={tw.dot} style={{ background: 'var(--accent)' }}></span>
                     View
                   </a>
                 ) : null}
-                <div className="hint" id="hint">
+                <div className={tw.formHint} id="hint">
                   {hint}
                 </div>
               </div>
@@ -557,7 +557,7 @@ export default function AdminPostPage() {
 
           {/* Right Sidebar - Metadata Panel */}
           <aside
-            className="side-card admin-sidebar"
+            className={cn(tw.sideCard, tw.editorSidebar)}
             style={{
               width: sidebarExpanded ? '280px' : '44px',
               flexShrink: 0,
@@ -568,7 +568,7 @@ export default function AdminPostPage() {
             }}
           >
             <div
-              className="admin-sidebar-header"
+              className={tw.editorSidebarHeader}
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
               title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
               style={{
@@ -580,17 +580,11 @@ export default function AdminPostPage() {
                 cursor: 'pointer',
               }}
             >
-              {sidebarExpanded && <span className="label" style={{ margin: 0, fontSize: '0.8rem' }}>Metadata</span>}
+              {sidebarExpanded && <span className={cn(tw.formLabel, 'm-0 text-[0.8rem]')}>Metadata</span>}
               <span
-                className="tb-icon"
+                className="inline-flex items-center justify-center w-[22px] h-[22px] transition-transform duration-200"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '22px',
-                  height: '22px',
                   transform: sidebarExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.25s ease',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -601,7 +595,7 @@ export default function AdminPostPage() {
 
             {sidebarExpanded && (
               <div
-                className="admin-sidebar-content"
+                className={tw.editorSidebarContent}
                 style={{
                   padding: '1rem',
                   display: 'flex',
@@ -610,24 +604,22 @@ export default function AdminPostPage() {
                 }}
               >
                 {/* Title field */}
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Title</span>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Title</label>
                   <input
-                    className="input"
-                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                    className={tw.formInput}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Post title..."
                   />
-                </label>
+                </div>
 
                 {/* Category & Read minutes row */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
-                    <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Category</span>
+                <div className="flex gap-2">
+                  <div className={cn(tw.formGroup, 'flex-1')}>
+                    <label className={tw.formLabel}>Category</label>
                     <select
-                      className="input"
-                      style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                      className={tw.formSelect}
                       value={bucket}
                       onChange={(e) => setBucket(e.target.value)}
                     >
@@ -635,45 +627,42 @@ export default function AdminPostPage() {
                         <option key={b}>{b}</option>
                       ))}
                     </select>
-                  </label>
+                  </div>
 
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '80px' }}>
-                    <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Read min</span>
+                  <div className={cn(tw.formGroup, 'w-20')}>
+                    <label className={tw.formLabel}>Read min</label>
                     <input
-                      className="input"
+                      className={tw.formInput}
                       type="number"
                       min="1"
-                      style={{ fontSize: '0.875rem', padding: '0.5rem' }}
                       value={readMinutes}
                       onChange={(e) => setReadMinutes(e.target.value)}
                       placeholder="3"
                     />
-                  </label>
+                  </div>
                 </div>
 
                 {/* OpenGraph Image URL */}
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>OpenGraph Image URL (optional)</span>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>OpenGraph Image URL (optional)</label>
                   <input
-                    className="input"
-                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                    className={tw.formInput}
                     placeholder="https://..."
                     value={ogImg}
                     onChange={(e) => setOgImg(e.target.value)}
                   />
-                </label>
+                </div>
 
                 {/* Excerpt */}
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span className="label" style={{ margin: 0, fontSize: '0.75rem' }}>Excerpt (optional)</span>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Excerpt (optional)</label>
                   <textarea
-                    className="input textarea"
-                    style={{ fontSize: '0.875rem', padding: '0.5rem', minHeight: '80px', resize: 'vertical' }}
+                    className={tw.formTextarea}
                     placeholder="If empty, excerpt is auto-generated"
                     value={excerpt}
                     onChange={(e) => setExcerpt(e.target.value)}
                   ></textarea>
-                </label>
+                </div>
               </div>
             )}
           </aside>

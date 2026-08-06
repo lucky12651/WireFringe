@@ -1,54 +1,68 @@
-import styles from './Skeleton.module.css';
-
 function Bone({ className = '', style }) {
-  return <div className={`${styles.pulse} ${styles.block} ${className}`.trim()} style={style} />;
+  return (
+    <div
+      className={`block rounded-sm bg-[linear-gradient(90deg,#121212_0%,#1a1a1a_40%,#222_50%,#1a1a1a_60%,#121212_100%)] bg-[length:200%_100%] animate-shimmer motion-reduce:animate-none motion-reduce:bg-[#161616] ${className}`.trim()}
+      style={style}
+    />
+  );
 }
 
 export function HomeSkeleton() {
   return (
-    <div className={styles.home} aria-busy="true" aria-label="Loading homepage">
-      <div className={styles.homeLeft}>
-        <Bone className={styles.heroMedia} />
-        <Bone className={styles.heroLine} />
-        <Bone className={styles.heroLineShort} />
-        <div className={styles.grid2}>
+    <div
+      className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 min-h-[70vh] pt-6 pb-12 relative"
+      aria-busy="true"
+      aria-label="Loading homepage"
+    >
+      <div
+        className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] border-l border-dotted border-[#2e2e2e] pointer-events-none"
+        aria-hidden="true"
+      />
+      <div className="min-w-0 pr-0 min-[1001px]:pr-9">
+        <Bone className="w-full aspect-video mb-5 rounded-md" />
+        <Bone className="h-7 w-[72%] mb-3" />
+        <Bone className="h-[18px] w-[48%] mb-7" />
+        <div className="grid grid-cols-1 max-md:grid-cols-1 md:grid-cols-2 gap-[18px] mb-9">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={styles.cardRow}>
-              <Bone className={styles.thumb} />
+            <div key={i} className="grid grid-cols-[100px_1fr] gap-3.5 items-start">
+              <Bone className="w-[100px] h-[74px] rounded-sm" />
               <div>
-                <Bone className={styles.line} style={{ width: '90%' }} />
-                <Bone className={styles.lineSm} />
-                <Bone className={styles.lineSm} style={{ width: '40%' }} />
+                <Bone className="h-3.5 mb-2.5" style={{ width: '90%' }} />
+                <Bone className="h-3 w-[60%] mb-2" />
+                <Bone className="h-3 w-[40%] mb-2" />
               </div>
             </div>
           ))}
         </div>
-        <Bone className={styles.line} style={{ width: '30%', height: 20, marginBottom: 20 }} />
-        <div className={styles.grid2}>
+        <Bone className="mb-5" style={{ width: '30%', height: 20 }} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[18px] mb-9">
           <Bone style={{ height: 220, borderRadius: 6 }} />
           <div>
             {[0, 1, 2].map((i) => (
-              <div key={i} className={styles.cardRow} style={{ marginBottom: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <Bone className={styles.line} />
-                  <Bone className={styles.lineSm} />
+              <div key={i} className="grid grid-cols-[1fr_72px] gap-3.5 items-start mb-4">
+                <div className="flex-1">
+                  <Bone className="h-3.5 mb-2.5" />
+                  <Bone className="h-3 w-[60%] mb-2" />
                 </div>
-                <Bone className={styles.streamThumb} />
+                <Bone className="w-[72px] h-[72px] rounded-sm" />
               </div>
             ))}
           </div>
         </div>
       </div>
-      <div className={styles.homeRight}>
-        <Bone className={styles.streamTab} />
+      <div className="pl-0 mt-7 min-[1001px]:pl-[22px] min-[1001px]:mt-0">
+        <Bone className="w-[180px] h-9 rounded-pill mx-auto mb-5" />
         {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className={styles.streamItem}>
+          <div
+            key={i}
+            className="grid grid-cols-[1fr_72px] gap-3 py-4 border-b border-dotted border-line"
+          >
             <div>
-              <Bone className={styles.lineSm} style={{ width: '35%', marginBottom: 12 }} />
-              <Bone className={styles.line} />
-              <Bone className={styles.lineSm} style={{ width: '80%' }} />
+              <Bone className="h-3 mb-3" style={{ width: '35%' }} />
+              <Bone className="h-3.5 mb-2.5" />
+              <Bone className="h-3" style={{ width: '80%' }} />
             </div>
-            <Bone className={styles.streamThumb} />
+            <Bone className="w-[72px] h-[72px] rounded-sm" />
           </div>
         ))}
       </div>
@@ -58,23 +72,23 @@ export function HomeSkeleton() {
 
 export function PostSkeleton() {
   return (
-    <div className={styles.post} aria-busy="true" aria-label="Loading article">
-      <div className={styles.postHeader}>
-        <Bone className={styles.postMeta} />
-        <Bone className={styles.postTitle} />
-        <Bone className={styles.postTitle2} />
-        <Bone className={styles.postAuthor} />
+    <div className="max-w-[1120px] mx-auto pt-9 pb-16" aria-busy="true" aria-label="Loading article">
+      <div className="max-w-[720px] mb-7">
+        <Bone className="h-3 w-[40%] mb-[18px]" />
+        <Bone className="h-[42px] w-[90%] mb-3" />
+        <Bone className="h-[42px] w-[65%] mb-6" />
+        <Bone className="h-10 w-[200px] rounded-pill mb-7" />
       </div>
-      <div className={styles.postLayout}>
+      <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_300px] gap-10">
         <div>
-          <Bone className={styles.postHero} />
+          <Bone className="w-full aspect-video mb-7 rounded-md" />
           {[92, 100, 88, 96, 70, 100, 85, 60].map((w, i) => (
-            <Bone key={i} className={styles.postBodyLine} style={{ width: `${w}%` }} />
+            <Bone key={i} className="h-4 mb-3.5 max-w-[680px]" style={{ width: `${w}%` }} />
           ))}
         </div>
         <aside>
-          <Bone className={styles.sidebarBox} />
-          <Bone className={styles.sidebarList} />
+          <Bone className="h-[250px] mb-5 rounded-md" />
+          <Bone className="h-[280px] rounded-md" />
         </aside>
       </div>
     </div>

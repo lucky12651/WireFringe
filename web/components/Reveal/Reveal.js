@@ -1,5 +1,12 @@
 import useReveal from '../../hooks/useReveal';
-import styles from './Reveal.module.css';
+import { cn } from '../../lib/utils';
+
+const DELAY_MS = {
+  1: 'delay-[60ms]',
+  2: 'delay-[120ms]',
+  3: 'delay-[180ms]',
+  4: 'delay-[240ms]',
+};
 
 /**
  * Scroll-reveal wrapper for sections/cards.
@@ -20,7 +27,12 @@ export default function Reveal({
   return (
     <Tag
       ref={ref}
-      className={`${styles.reveal} ${visible ? styles.visible : ''} ${className}`.trim()}
+      className={cn(
+        'transition-[opacity,transform] duration-700 ease-out will-change-[opacity,transform] motion-reduce:opacity-100 motion-reduce:translate-y-0 motion-reduce:transition-none',
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[22px]',
+        DELAY_MS[delay] || '',
+        className
+      )}
       data-delay={delay || undefined}
       {...rest}
     >

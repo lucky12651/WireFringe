@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-// Single global CSS entry — Next 16 was dropping a second global import (admin.css),
-// which left /admin unstyled in production while CSS modules still loaded.
+// Single global CSS entry: Tailwind + design tokens + shared helpers (GridWork-style).
 import '../styles/globals.css';
 import { initTheme } from '../lib/theme';
 import { loadAdsenseConfig } from '../lib/ads';

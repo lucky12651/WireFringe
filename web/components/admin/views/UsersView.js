@@ -4,6 +4,8 @@ import { SuccessToast } from '../shared';
 import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { Icons, PlusIcon, TrashIcon } from '../Layout/icons';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -101,9 +103,9 @@ export function UsersView({
   if (!canManageUsers) {
     return (
       <>
-        <div className="admin-title-row">
+        <div className={tw.adminTitleRow}>
           <h2>Users</h2>
-          <div className="accent-line"></div>
+          <div className={tw.accentLine}></div>
         </div>
         <EmptyState>Users management is admin-only.</EmptyState>
       </>
@@ -380,40 +382,40 @@ export function UsersView({
   };
 
   return (
-    <div className="admin-view-container-v2">
-      <div className="section-header">
-        <h2 className="section-title">Users Management</h2>
-        <span className="title-count-v2">
+    <div className={tw.adminView}>
+      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Users Management</h2>
+        <span className={tw.titleCount}>
           {usersCount} Accounts
           {orphanCount > 0 ? ` · ${orphanCount} authors without account` : ''}
         </span>
       </div>
 
-      <div className="admin-grid-v2">
-        <div className="admin-card-v2 create-user-card">
-          <h3 className="card-title-v2">Create New User</h3>
-          <form onSubmit={handleSubmit} className="v2-form">
-            <div className="form-group-v2">
-              <label>Username</label>
+      <div className={tw.adminGrid}>
+        <div className={tw.card}>
+          <h3 className={tw.cardTitle}>Create New User</h3>
+          <form onSubmit={handleSubmit} className={tw.form}>
+            <div className={tw.formGroup}>
+              <label className={tw.formLabel}>Username</label>
               <input
-                type="text"
+                className={tw.formInput} type="text"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
                 placeholder="Enter username"
               />
             </div>
-            <div className="form-group-v2">
-              <label>Password</label>
+            <div className={tw.formGroup}>
+              <label className={tw.formLabel}>Password</label>
               <input
-                type="password"
+                className={tw.formInput} type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Min 8 characters"
               />
             </div>
-            <div className="form-group-v2">
-              <label>Role</label>
-              <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+            <div className={tw.formGroup}>
+              <label className={tw.formLabel}>Role</label>
+              <select className={tw.formSelect} value={newRole} onChange={(e) => setNewRole(e.target.value)}>
                 {ROLE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -421,23 +423,23 @@ export function UsersView({
                 ))}
               </select>
             </div>
-            {hint && <p className="form-hint-v2">{hint}</p>}
-            <button type="submit" className="primary-btn-v2">
+            {hint && <p className={tw.formHint}>{hint}</p>}
+            <button type="submit" className={tw.primaryBtn}>
               <PlusIcon /> Create User
             </button>
           </form>
         </div>
 
-        <div className="admin-card-v2 users-list-card">
-          <h3 className="card-title-v2">Login accounts</h3>
-          <div className="v2-table-wrapper">
-            <table className="v2-table">
+        <div className={tw.card}>
+          <h3 className={tw.cardTitle}>Login accounts</h3>
+          <div className={tw.tableWrap}>
+            <table className={tw.table}>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Posts</th>
-                  <th className="text-right">Actions</th>
+                  <th className={tw.th}>User</th>
+                  <th className={tw.th}>Role</th>
+                  <th className={tw.th}>Posts</th>
+                  <th className={cn(tw.th, tw.textRight)}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -451,39 +453,40 @@ export function UsersView({
                   accountUsers.map((user) => (
                     <tr key={user.id}>
                       <td>
-                        <div className="user-info-cell">
-                          <div className="user-avatar-v2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-line overflow-hidden flex items-center justify-center shrink-0 text-mint">
                             {user.avatarUrl && !failedAvatars.has(user.id) ? (
                               <img
                                 src={user.avatarUrl}
                                 alt={user.username}
+                                className="w-full h-full object-cover"
                                 onError={() => markAvatarFailed(user.id)}
                               />
                             ) : (
                               <UserAvatarIcon size={18} />
                             )}
                           </div>
-                          <div>
-                            <span className="username-text">{user.username}</span>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-white">{user.username}</span>
                             {user.displayName && user.displayName !== user.username ? (
-                              <div className="text-muted" style={{ fontSize: 12 }}>
+                              <div className={tw.textMuted} style={{ fontSize: 12 }}>
                                 {user.displayName}
                               </div>
                             ) : null}
                           </div>
                         </div>
                       </td>
-                      <td>
-                        <span className={`role-badge ${user.role}`}>{user.role}</span>
+                      <td className={tw.td}>
+                        <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>{user.role}</span>
                       </td>
-                      <td>
-                        <span className="text-muted">{Number(user.postCount) || 0}</span>
+                      <td className={tw.td}>
+                        <span className={tw.textMuted}>{Number(user.postCount) || 0}</span>
                       </td>
-                      <td className="text-right">
-                        <div className="action-group-v2">
+                      <td className={cn(tw.td, tw.textRight)}>
+                        <div className={tw.actionGroup}>
                           <button
                             type="button"
-                            className="edit-btn-v2"
+                            className={tw.iconBtn}
                             onClick={() => openRoleModal(user)}
                             title="Change role"
                             aria-label={`Change role for ${user.username}`}
@@ -492,7 +495,7 @@ export function UsersView({
                           </button>
                           <button
                             type="button"
-                            className="edit-btn-v2"
+                            className={tw.iconBtn}
                             onClick={() => openPasswordModal(user)}
                             title="Change password"
                             aria-label={`Change password for ${user.username}`}
@@ -501,7 +504,7 @@ export function UsersView({
                           </button>
                           <button
                             type="button"
-                            className="delete-btn-v2"
+                            className={tw.iconBtnDanger}
                             onClick={() => handleDeleteClick(user)}
                             title="Delete user"
                             aria-label={`Delete ${user.username}`}
@@ -519,51 +522,51 @@ export function UsersView({
         </div>
 
         {/* Post authors that appear on the site but have no users row */}
-        <div className="admin-card-v2 full-width">
-          <h3 className="card-title-v2">Post authors without an account</h3>
-          <p className="card-desc-v2">
+        <div className={tw.cardFull}>
+          <h3 className={tw.cardTitle}>Post authors without an account</h3>
+          <p className={tw.cardDesc}>
             These names appear as article authors (from <code>posts.creator</code>) but are not
             login accounts — e.g. Krishna, Reet, News Bot Engine. Create an account, move their
             posts to an existing user, or delete their posts.
           </p>
-          <div className="v2-table-wrapper">
+          <div className={tw.tableWrap}>
             {orphanAuthors.length === 0 ? (
               <EmptyState>All post authors have matching login accounts.</EmptyState>
             ) : (
-              <table className="v2-table">
+              <table className={tw.table}>
                 <thead>
                   <tr>
-                    <th>Author name on posts</th>
-                    <th>Posts</th>
-                    <th>Status</th>
-                    <th className="text-right">Actions</th>
+                    <th className={tw.th}>Author name on posts</th>
+                    <th className={tw.th}>Posts</th>
+                    <th className={tw.th}>Status</th>
+                    <th className={cn(tw.th, tw.textRight)}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orphanAuthors.map((author) => (
                     <tr key={`orphan-${author.username}`}>
                       <td>
-                        <div className="user-info-cell">
-                          <div className="user-avatar-v2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-line overflow-hidden flex items-center justify-center shrink-0 text-mint">
                             <UserAvatarIcon size={18} />
                           </div>
-                          <span className="username-text">{author.username}</span>
+                          <span className="font-semibold text-white">{author.username}</span>
                         </div>
                       </td>
-                      <td>
+                      <td className={tw.td}>
                         <strong>{Number(author.postCount) || 0}</strong>
                       </td>
-                      <td>
-                        <span className="role-badge author">no account</span>
+                      <td className={tw.td}>
+                        <span className={cn(tw.statusBadge, 'bg-[#e8b342]/15 text-[#e8b342] border border-[#e8b342]/30')}>no account</span>
                       </td>
-                      <td className="text-right">
+                      <td className={cn(tw.td, tw.textRight)}>
                         <div
-                          className="action-group-v2"
+                          className={tw.actionGroup}
                           style={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 6 }}
                         >
                           <button
                             type="button"
-                            className="secondary-btn-v2"
+                            className={tw.secondaryBtn}
                             style={{ padding: '6px 10px', fontSize: 12 }}
                             onClick={() => openClaim(author)}
                             title="Create login account"
@@ -572,7 +575,7 @@ export function UsersView({
                           </button>
                           <button
                             type="button"
-                            className="secondary-btn-v2"
+                            className={tw.secondaryBtn}
                             style={{ padding: '6px 10px', fontSize: 12 }}
                             onClick={() => openReassign(author)}
                             title="Move posts to existing user"
@@ -581,7 +584,7 @@ export function UsersView({
                           </button>
                           <button
                             type="button"
-                            className="delete-btn-v2"
+                            className={tw.iconBtnDanger}
                             onClick={() => {
                               setDeletePostsAuthor(author);
                               setDeletePostsHint('');
@@ -602,22 +605,25 @@ export function UsersView({
       </div>
 
       {userToDelete && (
-        <div className="modal-overlay" onClick={handleCancelDelete}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete User</h3>
+        <div className={tw.modalOverlay} onClick={handleCancelDelete}>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Delete User</h3>
             </div>
-            <div className="modal-body">
+            <div className={tw.modalBody}>
               <p>
                 Delete <strong>{userToDelete.username}</strong>? Choose what happens to
                 their posts.
               </p>
 
-              <div className="delete-options">
+              <div className="flex flex-col gap-2.5 mt-3">
                 <label
-                  className={`delete-option-card ${
-                    deletePostsAction === 'transfer' ? 'is-selected' : ''
-                  }`}
+                  className={cn(
+                    'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
+                    deletePostsAction === 'transfer'
+                      ? 'border-mint/40 bg-mint/[0.06]'
+                      : 'border-line bg-[#0a0a0a] hover:border-[#444]'
+                  )}
                 >
                   <input
                     type="radio"
@@ -626,19 +632,21 @@ export function UsersView({
                     checked={deletePostsAction === 'transfer'}
                     onChange={() => setDeletePostsAction('transfer')}
                     disabled={isDeleting}
+                    className="mt-1"
                   />
                   <span>
-                    <span className="option-title">Transfer posts</span>
-                    <span className="option-desc">
+                    <span className="block font-semibold text-white text-sm">Transfer posts</span>
+                    <span className="block text-xs text-[#888] mt-0.5">
                       Move this user’s posts to another account, then delete the user.
                     </span>
                   </span>
                 </label>
 
                 {deletePostsAction === 'transfer' ? (
-                  <div className="delete-transfer-box form-group-v2">
-                    <label htmlFor="transfer-to-user">Transfer posts to</label>
+                  <div className={tw.formGroup}>
+                    <label htmlFor="transfer-to-user" className={tw.formLabel}>Transfer posts to</label>
                     <select
+                      className={tw.formSelect}
                       id="transfer-to-user"
                       value={transferToUserId}
                       onChange={(e) => setTransferToUserId(e.target.value)}
@@ -659,9 +667,12 @@ export function UsersView({
                 ) : null}
 
                 <label
-                  className={`delete-option-card is-danger ${
-                    deletePostsAction === 'delete' ? 'is-selected' : ''
-                  }`}
+                  className={cn(
+                    'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
+                    deletePostsAction === 'delete'
+                      ? 'border-[#ff6b6b]/50 bg-red-500/10'
+                      : 'border-line bg-[#0a0a0a] hover:border-[#ff6b6b]/35'
+                  )}
                 >
                   <input
                     type="radio"
@@ -670,20 +681,21 @@ export function UsersView({
                     checked={deletePostsAction === 'delete'}
                     onChange={() => setDeletePostsAction('delete')}
                     disabled={isDeleting}
+                    className="mt-1"
                   />
                   <span>
-                    <span className="option-title">Delete posts too</span>
-                    <span className="option-desc">
+                    <span className="block font-semibold text-white text-sm">Delete posts too</span>
+                    <span className="block text-xs text-[#888] mt-0.5">
                       Permanently remove this user and all of their posts.
                     </span>
                   </span>
                 </label>
               </div>
 
-              {deleteHint ? <p className="form-hint-v2">{deleteHint}</p> : null}
-              <p className="modal-warning">This action cannot be undone.</p>
+              {deleteHint ? <p className={tw.formHint}>{deleteHint}</p> : null}
+              <p className={tw.modalWarning}>This action cannot be undone.</p>
             </div>
-            <div className="modal-actions">
+            <div className={tw.modalActions}>
               <ActionButton
                 type="button"
                 size="sm"
@@ -715,21 +727,21 @@ export function UsersView({
       )}
 
       {passwordUser && (
-        <div className="modal-overlay" onClick={closePasswordModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Change Password</h3>
+        <div className={tw.modalOverlay} onClick={closePasswordModal}>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Change Password</h3>
             </div>
             <form onSubmit={handleSavePassword}>
-              <div className="modal-body">
+              <div className={tw.modalBody}>
                 <p>
                   Set a new password for <strong>{passwordUser.username}</strong>. They can
                   sign in with this password immediately.
                 </p>
-                <div className="form-group-v2" style={{ marginTop: 16 }}>
-                  <label htmlFor="admin-new-password">New password</label>
+                <div className={tw.formGroup} style={{ marginTop: 16 }}>
+                  <label htmlFor="admin-new-password" className={tw.formLabel}>New password</label>
                   <input
-                    id="admin-new-password"
+                    className={tw.formInput} id="admin-new-password"
                     type="password"
                     autoComplete="new-password"
                     value={passwordValue}
@@ -738,10 +750,10 @@ export function UsersView({
                     disabled={isSavingPassword}
                   />
                 </div>
-                <div className="form-group-v2">
-                  <label htmlFor="admin-confirm-password">Confirm password</label>
+                <div className={tw.formGroup}>
+                  <label htmlFor="admin-confirm-password" className={tw.formLabel}>Confirm password</label>
                   <input
-                    id="admin-confirm-password"
+                    className={tw.formInput} id="admin-confirm-password"
                     type="password"
                     autoComplete="new-password"
                     value={passwordConfirm}
@@ -751,12 +763,12 @@ export function UsersView({
                   />
                 </div>
                 {passwordHint ? (
-                  <p className="form-hint-v2" style={{ marginTop: 8 }}>
+                  <p className={tw.formHint} style={{ marginTop: 8 }}>
                     {passwordHint}
                   </p>
                 ) : null}
               </div>
-              <div className="modal-actions">
+              <div className={tw.modalActions}>
                 <ActionButton
                   type="button"
                   size="sm"
@@ -775,21 +787,21 @@ export function UsersView({
       )}
 
       {roleUser && (
-        <div className="modal-overlay" onClick={closeRoleModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Change Role</h3>
+        <div className={tw.modalOverlay} onClick={closeRoleModal}>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Change Role</h3>
             </div>
             <form onSubmit={handleSaveRole}>
-              <div className="modal-body">
+              <div className={tw.modalBody}>
                 <p>
                   Update the role for <strong>{roleUser.username}</strong>. Current role:{' '}
-                  <span className={`role-badge ${roleUser.role}`}>{roleUser.role}</span>
+                  <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>{roleUser.role}</span>
                 </p>
-                <div className="form-group-v2" style={{ marginTop: 16 }}>
-                  <label htmlFor="admin-user-role">New role</label>
+                <div className={tw.formGroup} style={{ marginTop: 16 }}>
+                  <label htmlFor="admin-user-role" className={tw.formLabel}>New role</label>
                   <select
-                    id="admin-user-role"
+                    className={tw.formSelect} id="admin-user-role"
                     value={roleValue}
                     onChange={(e) => setRoleValue(e.target.value)}
                     disabled={isSavingRole}
@@ -802,12 +814,12 @@ export function UsersView({
                   </select>
                 </div>
                 {roleHint ? (
-                  <p className="form-hint-v2" style={{ marginTop: 8 }}>
+                  <p className={tw.formHint} style={{ marginTop: 8 }}>
                     {roleHint}
                   </p>
                 ) : null}
               </div>
-              <div className="modal-actions">
+              <div className={tw.modalActions}>
                 <ActionButton
                   type="button"
                   size="sm"
@@ -826,41 +838,41 @@ export function UsersView({
       )}
 
       {claimAuthor && (
-        <div className="modal-overlay" onClick={() => !isClaiming && setClaimAuthor(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Create account for author</h3>
+        <div className={tw.modalOverlay} onClick={() => !isClaiming && setClaimAuthor(null)}>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Create account for author</h3>
             </div>
             <form onSubmit={handleClaim}>
-              <div className="modal-body">
+              <div className={tw.modalBody}>
                 <p>
                   Create a login for <strong>{claimAuthor.username}</strong> (
                   {Number(claimAuthor.postCount) || 0} posts). They can then sign in and
                   appear in Users management.
                 </p>
-                <div className="form-group-v2" style={{ marginTop: 16 }}>
-                  <label>Login username</label>
+                <div className={tw.formGroup} style={{ marginTop: 16 }}>
+                  <label className={tw.formLabel}>Login username</label>
                   <input
-                    type="text"
+                    className={tw.formInput} type="text"
                     value={claimUsername}
                     onChange={(e) => setClaimUsername(e.target.value)}
                     disabled={isClaiming}
                   />
                 </div>
-                <div className="form-group-v2">
-                  <label>Password</label>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Password</label>
                   <input
-                    type="password"
+                    className={tw.formInput} type="password"
                     value={claimPassword}
                     onChange={(e) => setClaimPassword(e.target.value)}
                     placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
                     disabled={isClaiming}
                   />
                 </div>
-                <div className="form-group-v2">
-                  <label>Role</label>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Role</label>
                   <select
-                    value={claimRole}
+                    className={tw.formSelect} value={claimRole}
                     onChange={(e) => setClaimRole(e.target.value)}
                     disabled={isClaiming}
                   >
@@ -871,9 +883,9 @@ export function UsersView({
                     ))}
                   </select>
                 </div>
-                {claimHint ? <p className="form-hint-v2">{claimHint}</p> : null}
+                {claimHint ? <p className={tw.formHint}>{claimHint}</p> : null}
               </div>
-              <div className="modal-actions">
+              <div className={tw.modalActions}>
                 <ActionButton
                   type="button"
                   size="sm"
@@ -893,23 +905,23 @@ export function UsersView({
 
       {reassignAuthor && (
         <div
-          className="modal-overlay"
+          className={tw.modalOverlay}
           onClick={() => !isReassigning && setReassignAuthor(null)}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Transfer posts</h3>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Transfer posts</h3>
             </div>
             <form onSubmit={handleReassign}>
-              <div className="modal-body">
+              <div className={tw.modalBody}>
                 <p>
                   Move all posts by <strong>{reassignAuthor.username}</strong> (
                   {Number(reassignAuthor.postCount) || 0}) to an existing login account.
                 </p>
-                <div className="form-group-v2" style={{ marginTop: 16 }}>
-                  <label>Transfer to</label>
+                <div className={tw.formGroup} style={{ marginTop: 16 }}>
+                  <label className={tw.formLabel}>Transfer to</label>
                   <select
-                    value={reassignToUserId}
+                    className={tw.formSelect} value={reassignToUserId}
                     onChange={(e) => setReassignToUserId(e.target.value)}
                     disabled={isReassigning || accountUsers.length === 0}
                   >
@@ -925,9 +937,9 @@ export function UsersView({
                     )}
                   </select>
                 </div>
-                {reassignHint ? <p className="form-hint-v2">{reassignHint}</p> : null}
+                {reassignHint ? <p className={tw.formHint}>{reassignHint}</p> : null}
               </div>
-              <div className="modal-actions">
+              <div className={tw.modalActions}>
                 <ActionButton
                   type="button"
                   size="sm"
@@ -947,22 +959,22 @@ export function UsersView({
 
       {deletePostsAuthor && (
         <div
-          className="modal-overlay"
+          className={tw.modalOverlay}
           onClick={() => !isDeletingPosts && setDeletePostsAuthor(null)}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete author posts</h3>
+          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Delete author posts</h3>
             </div>
-            <div className="modal-body">
+            <div className={tw.modalBody}>
               <p>
                 Permanently delete all <strong>{Number(deletePostsAuthor.postCount) || 0}</strong>{' '}
                 post(s) by <strong>{deletePostsAuthor.username}</strong>? This cannot be undone.
               </p>
-              {deletePostsHint ? <p className="form-hint-v2">{deletePostsHint}</p> : null}
-              <p className="modal-warning">This action cannot be undone.</p>
+              {deletePostsHint ? <p className={tw.formHint}>{deletePostsHint}</p> : null}
+              <p className={tw.modalWarning}>This action cannot be undone.</p>
             </div>
-            <div className="modal-actions">
+            <div className={tw.modalActions}>
               <ActionButton
                 type="button"
                 size="sm"

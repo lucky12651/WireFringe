@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import StaticPage from '../components/StaticPage/StaticPage';
-import pageStyles from '../components/StaticPage/StaticPage.module.css';
 import { EDITORIAL_EMAIL, SITE_NAME } from '../lib/site';
 
 export default function TipUsPage() {
@@ -42,31 +41,46 @@ export default function TipUsPage() {
         passwords or illegal material.
       </p>
 
-      <form className={pageStyles.form} onSubmit={onSubmit}>
-        <div className={pageStyles.field}>
-          <label htmlFor="tip-message">Your tip</label>
+      <form className="flex flex-col gap-4 mt-2 max-w-[520px]" onSubmit={onSubmit}>
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="tip-message"
+            className="font-mono text-[11px] font-bold tracking-wide uppercase text-[#888]"
+          >
+            Your tip
+          </label>
           <textarea
             id="tip-message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="What should we know?"
             required
+            className="bg-[#111] border border-line rounded-sm text-white text-[15px] font-sans px-3.5 py-3 outline-none transition-colors min-h-[140px] resize-y focus:border-mint"
           />
         </div>
-        <div className={pageStyles.field}>
-          <label htmlFor="tip-contact">How can we reach you? (optional)</label>
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="tip-contact"
+            className="font-mono text-[11px] font-bold tracking-wide uppercase text-[#888]"
+          >
+            How can we reach you? (optional)
+          </label>
           <input
             id="tip-contact"
             type="text"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
             placeholder="Email or other contact"
+            className="bg-[#111] border border-line rounded-sm text-white text-[15px] font-sans px-3.5 py-3 outline-none transition-colors focus:border-mint"
           />
         </div>
-        <button type="submit" className={pageStyles.submit}>
+        <button
+          type="submit"
+          className="self-start mt-1 bg-mint text-black border-0 rounded-sm font-extrabold text-[13px] tracking-wide uppercase px-[22px] py-3 cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(60,255,208,0.2)]"
+        >
           Send tip
         </button>
-        {status ? <p className={pageStyles.formStatus}>{status}</p> : null}
+        {status ? <p className="text-sm text-mint mt-1">{status}</p> : null}
       </form>
 
       <h2>Confidentiality</h2>

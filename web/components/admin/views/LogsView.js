@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Icons } from '../Layout/icons';
 import { EmptyState } from '../shared/EmptyState';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 export function LogsView({ logs, onRefresh, isLoading }) {
   const [filter, setFilter] = useState('ALL');
@@ -19,10 +20,14 @@ export function LogsView({ logs, onRefresh, isLoading }) {
 
   const getLevelBadgeClass = (level) => {
     switch (level) {
-      case 'ERROR': return 'role-badge admin'; // reuse admin red
-      case 'WARNING': return 'role-badge author'; // reuse author orange
-      case 'INFO': return 'role-badge editor'; // reuse editor blue
-      default: return 'role-badge user';
+      case 'ERROR':
+        return 'bg-red-500/15 text-[#ff6b6b] border border-red-500/30';
+      case 'WARNING':
+        return 'bg-[#e8b342]/15 text-[#e8b342] border border-[#e8b342]/30';
+      case 'INFO':
+        return 'bg-[rgba(91,141,239,0.12)] text-[#8ab4ff] border border-[rgba(91,141,239,0.3)]';
+      default:
+        return 'bg-[#222] text-[#aaa] border border-line';
     }
   };
 
@@ -32,12 +37,12 @@ export function LogsView({ logs, onRefresh, isLoading }) {
   };
 
   return (
-    <div className="admin-view-container-v2">
-      <div className="section-header">
-        <h2 className="section-title">System & Bot Logs</h2>
-        <div className="header-actions-v2">
+    <div className={tw.adminView}>
+      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">System & Bot Logs</h2>
+        <div className={tw.headerActions}>
           <select 
-            className="v2-select" 
+            className={tw.formSelect} 
             value={filter} 
             onChange={(e) => setFilter(e.target.value)}
           >
@@ -47,7 +52,7 @@ export function LogsView({ logs, onRefresh, isLoading }) {
             <option value="ERROR">Error</option>
           </select>
           <button 
-            className="secondary-btn-v2" 
+            className={tw.secondaryBtn} 
             onClick={() => onRefresh()}
             disabled={isLoading}
           >
@@ -56,32 +61,32 @@ export function LogsView({ logs, onRefresh, isLoading }) {
         </div>
       </div>
 
-      <div className="admin-card-v2 full-width">
-        <div className="v2-table-wrapper">
+      <div className={tw.cardFull}>
+        <div className={tw.tableWrap}>
           {filteredLogs.length === 0 ? (
             <EmptyState>No logs found matching the criteria.</EmptyState>
           ) : (
-            <table className="v2-table">
+            <table className={tw.table}>
               <thead>
                 <tr>
-                  <th style={{ width: '180px' }}>Timestamp</th>
-                  <th style={{ width: '100px' }}>Level</th>
-                  <th style={{ width: '150px' }}>Module</th>
-                  <th>Message</th>
+                  <th className={tw.th} style={{ width: '180px' }}>Timestamp</th>
+                  <th className={tw.th} style={{ width: '100px' }}>Level</th>
+                  <th className={tw.th} style={{ width: '150px' }}>Module</th>
+                  <th className={tw.th}>Message</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLogs.map((log) => (
                   <tr key={log.id}>
-                    <td className="text-muted" style={{ fontSize: '12px', color: '#a0a0a0' }}>
+                    <td className={cn(tw.td, tw.textMuted)} style={{ fontSize: '12px', color: '#a0a0a0' }}>
                       {formatDate(log.createdAt)}
                     </td>
-                    <td>
-                      <span className={getLevelBadgeClass(log.level)}>
+                    <td className={tw.td}>
+                      <span className={cn(tw.statusBadge, getLevelBadgeClass(log.level))}>
                         {log.level}
                       </span>
                     </td>
-                    <td>
+                    <td className={tw.td}>
                       <code
                         style={{
                           fontSize: '12px',
@@ -94,7 +99,7 @@ export function LogsView({ logs, onRefresh, isLoading }) {
                         {log.module || 'root'}
                       </code>
                     </td>
-                    <td style={{ fontSize: '13px', lineHeight: '1.45', color: '#e8e8e8' }}>
+                    <td className={tw.td} style={{ fontSize: '13px', lineHeight: '1.45', color: '#e8e8e8' }}>
                       {log.message}
                     </td>
                   </tr>

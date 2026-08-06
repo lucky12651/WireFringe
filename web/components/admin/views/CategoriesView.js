@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
 import { PlusIcon, TrashIcon } from '../Layout/icons';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 export function CategoriesView({
   categoriesWithCounts,
@@ -66,29 +67,30 @@ export function CategoriesView({
   };
 
   return (
-    <div className="admin-view-container-v2">
-      <div className="section-header">
-        <h2 className="section-title">Categories Management</h2>
-        <span className="title-count-v2">{categoriesWithCounts.length} Buckets</span>
+    <div className={tw.adminView}>
+      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Categories Management</h2>
+        <span className={tw.titleCount}>{categoriesWithCounts.length} Buckets</span>
       </div>
 
-      <div className="admin-grid-v2">
+      <div className={tw.adminGrid}>
         {/* Add Category Card */}
         {canManageUsers && (
-          <div className="admin-card-v2 add-category-card">
-            <h3 className="card-title-v2">Create New Category</h3>
-            <form onSubmit={handleSubmit} className="v2-form">
-              <div className="form-group-v2">
-                <label>Category Name</label>
+          <div className={tw.card}>
+            <h3 className={tw.cardTitle}>Create New Category</h3>
+            <form onSubmit={handleSubmit} className={tw.form}>
+              <div className={tw.formGroup}>
+                <label className={tw.formLabel}>Category Name</label>
                 <input
                   type="text"
+                  className={tw.formInput}
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="e.g., Technology"
                 />
               </div>
-              {hint && <p className="form-hint-v2">{hint}</p>}
-              <button type="submit" className="primary-btn-v2">
+              {hint && <p className={tw.formHint}>{hint}</p>}
+              <button type="submit" className={tw.primaryBtn}>
                 <PlusIcon /> Create Category
               </button>
             </form>
@@ -96,33 +98,31 @@ export function CategoriesView({
         )}
 
         {/* Categories List Card */}
-        <div className="admin-card-v2 categories-list-card">
-          <h3 className="card-title-v2">Existing Categories</h3>
-          <div className="v2-table-wrapper">
-            <table className="v2-table">
+        <div className={tw.card}>
+          <h3 className={tw.cardTitle}>Existing Categories</h3>
+          <div className={tw.tableWrap}>
+            <table className={tw.table}>
               <thead>
                 <tr>
-                  <th>Category Name</th>
-                  <th>Article Count</th>
-                  <th className="text-right">Actions</th>
+                  <th className={tw.th}>Category Name</th>
+                  <th className={tw.th}>Article Count</th>
+                  <th className={cn(tw.th, tw.textRight)}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {categoriesWithCounts.length ? (
                   categoriesWithCounts.map((cat) => (
                     <tr key={cat.id}>
-                      <td>
-                        <div className="category-info-cell">
-                          <span className="category-name-v2">{cat.name}</span>
-                        </div>
+                      <td className={tw.td}>
+                        <span className="font-semibold text-white">{cat.name}</span>
                       </td>
-                      <td>
-                        <span className="count-badge-v2">{cat.count} Articles</span>
+                      <td className={tw.td}>
+                        <span className="font-mono text-xs text-mint">{cat.count} Articles</span>
                       </td>
-                      <td className="text-right">
+                      <td className={cn(tw.td, tw.textRight)}>
                         {canManageUsers && (
                           <button
-                            className="delete-btn-v2"
+                            className={tw.iconBtnDanger}
                             onClick={() => handleDeleteClick(cat)}
                             title="Delete category"
                           >
@@ -134,7 +134,7 @@ export function CategoriesView({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3}>
+                    <td colSpan={3} className={tw.td}>
                       <EmptyState>No categories created yet.</EmptyState>
                     </td>
                   </tr>

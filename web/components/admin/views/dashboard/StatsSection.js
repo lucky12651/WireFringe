@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatCard } from '../../shared/StatCard';
 import { Icons } from '../../Layout/icons';
+import { tw } from '../../../../lib/tw';
 
 export default function StatsSection({
   postsCount,
@@ -11,15 +12,14 @@ export default function StatsSection({
   categoriesCount,
 }) {
   return (
-    <section className="admin-stats-v2" aria-label="Stats">
-      <div className="admin-stat-row-v2">
+    <section className={tw.adminView} aria-label="Stats">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <StatCard
           title="Published Articles"
           value={postsCount}
           subtitle="Live Content"
           icon={Icons.posts}
           color="blue"
-      
         />
         <StatCard
           title="Pending Queue"
@@ -27,7 +27,6 @@ export default function StatsSection({
           subtitle="Processing"
           icon={Icons.clock}
           color="purple"
-         
         />
         <StatCard
           title="Pending Comments"
@@ -35,7 +34,6 @@ export default function StatsSection({
           subtitle="Awaiting Approval"
           icon={Icons.comments}
           color="red"
-         
         />
         <StatCard
           title="Total Categories"
@@ -43,7 +41,6 @@ export default function StatsSection({
           subtitle="Buckets Used"
           icon={Icons.categories}
           color="green"
-         
         />
       </div>
     </section>

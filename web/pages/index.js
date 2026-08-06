@@ -14,7 +14,6 @@ import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
 import SearchResults from '../components/SearchResults/SearchResults';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
-import styles from '../styles/Home.module.css';
 
 const CATEGORIES = [
   'All',
@@ -136,7 +135,6 @@ export default function HomePage({ initialPosts }) {
       .slice(0, 5);
   }, [filtered]);
 
-  // Package blocks themed to real site content (feature + up to 3 cards)
   const packageA = filtered
     .filter((p) =>
       ['AI & Future Tech', 'Future Tech', 'Tech', 'Technology'].includes(p.bucket)
@@ -173,16 +171,18 @@ export default function HomePage({ initialPosts }) {
       ) : searchQuery.trim() ? (
         <SearchResults results={filtered} query={searchQuery} />
       ) : (
-        <div className={styles.page}>
-          <div className={styles.homeGrid}>
-            {/* LEFT — Top stories + packages */}
-            <div className={styles.leftCol}>
-              <Reveal as="div" className={styles.heroReveal}>
+        <div className="pb-0 bg-transparent">
+          <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
+            <div
+              className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-dotted border-[#333] pointer-events-none z-[1]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-[#333] max-[1000px]:pb-7">
+              <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
 
-              {/* 1 — Leaderboard under hero */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
 
@@ -194,8 +194,7 @@ export default function HomePage({ initialPosts }) {
                 />
               )}
 
-              {/* 2 — Between AI frontline & Market pulse */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
               </div>
 
@@ -207,26 +206,33 @@ export default function HomePage({ initialPosts }) {
                 />
               )}
 
-              {/* 3 — Before Most Popular */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
 
               {mostRead.length > 0 && (
-                <Reveal as="section" className={styles.mostPopular} id="most-popular">
-                  <div className={styles.packageRule} />
-                  <h2>Most Popular</h2>
-                  <ol className={styles.rankList}>
+                <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
+                  <PackageRule />
+                  <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">Most Popular</h2>
+                  <ol className="list-none m-3 mt-3 p-0">
                     {mostRead.map((post, i) => (
-                      <li key={post.id} className={styles.rankItem}>
-                        <span className={styles.rankNum}>{i + 1}</span>
+                      <li
+                        key={post.id}
+                        className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-[#333]"
+                      >
+                        <span className="w-[38px] h-[38px] bg-gradient-to-br from-[#1a1a1a] to-[#101010] text-white flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-white/[0.06] transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent group-hover:shadow-[0_6px_20px_rgba(60,255,208,0.3)]">
+                          {i + 1}
+                        </span>
                         <div>
-                          <Link href={postUrl(post)} className={styles.rankTitle}>
+                          <Link
+                            href={postUrl(post)}
+                            className="text-lg font-extrabold leading-snug text-white block mb-2 tracking-tight transition-colors group-hover:text-mint"
+                          >
                             {post.title}
                           </Link>
-                          <div className={styles.metaRow}>
+                          <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
                             <AuthorByline post={post} size="sm" />
-                            <span style={{ color: '#666' }}>{formatDate(post.date)}</span>
+                            <span className="text-[#666]">{formatDate(post.date)}</span>
                           </div>
                         </div>
                       </li>
@@ -235,8 +241,7 @@ export default function HomePage({ initialPosts }) {
                 </Reveal>
               )}
 
-              {/* 4 — After Most Popular */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
               </div>
 
@@ -248,8 +253,7 @@ export default function HomePage({ initialPosts }) {
                 />
               )}
 
-              {/* 5 — Between India desk & Wallet watch */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
 
@@ -261,8 +265,7 @@ export default function HomePage({ initialPosts }) {
                 />
               )}
 
-              {/* 6 — Before category rows */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
               </div>
 
@@ -273,8 +276,7 @@ export default function HomePage({ initialPosts }) {
                 href="/?category=ai-future-tech"
               />
 
-              {/* 7 — Mid category stack */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
 
@@ -289,8 +291,7 @@ export default function HomePage({ initialPosts }) {
                 href="/?category=personal-finance"
               />
 
-              {/* 8 — Lower page rectangle */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
               </div>
 
@@ -301,14 +302,12 @@ export default function HomePage({ initialPosts }) {
               />
               <CategoryRow title="Latest from Sports" posts={catSports} href="/?category=sports" />
 
-              {/* 9 — Bottom of home feed */}
-              <div className={styles.homeAd}>
+              <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
             </div>
 
-            {/* RIGHT — polished LATEST stream */}
-            <div className={styles.rightCol}>
+            <div className="min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-black max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
               <StreamFeed
                 posts={feedPosts}
                 feedTab={feedTab}
@@ -324,49 +323,80 @@ export default function HomePage({ initialPosts }) {
   );
 }
 
+function PackageRule() {
+  return (
+    <div className="h-0.5 bg-gradient-to-r from-mint from-0% via-mint via-[12%] to-transparent to-[90%] w-full mb-3.5 origin-left" />
+  );
+}
+
 function PackageBlock({ title, subtitle, posts }) {
   if (!posts?.length) return null;
   const feature = posts[0];
   const rest = posts.slice(1, 4);
 
   return (
-    <Reveal as="section" className={styles.package}>
-      <div className={styles.packageRule} />
-      <h2 className={styles.packageHead}>
-        {title} <span>/ {subtitle}</span>
+    <Reveal as="section" className="mt-12 pt-0 animate-fade-up">
+      <PackageRule />
+      <h2 className="text-[22px] font-extrabold tracking-tight mb-[22px] text-white leading-tight">
+        {title} <span className="text-[#6e6e6e] font-medium tracking-tight">/ {subtitle}</span>
       </h2>
-      <div className={styles.packageLayout}>
-        <Link href={postUrl(feature)} className={styles.packageFeature}>
-          <div className={styles.packageFeatureImg}>
-            {feature.ogImg ? <img src={feature.ogImg} alt="" loading="lazy" /> : null}
+      <div className="grid grid-cols-1 min-[1001px]:grid-cols-[1.2fr_1fr] gap-7 items-start">
+        <Link
+          href={postUrl(feature)}
+          className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[3px]"
+        >
+          <div className="w-full aspect-[4/3] overflow-hidden bg-[#111] mb-4 rounded-md shadow-[0_12px_32px_rgba(0,0,0,0.4)] outline outline-1 outline-white/5 transition-all group-hover:shadow-lg group-hover:outline-mint/20">
+            {feature.ogImg ? (
+              <img
+                src={feature.ogImg}
+                alt=""
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              />
+            ) : null}
           </div>
-          <h3 className={styles.packageFeatureTitle}>{feature.title}</h3>
+          <h3 className="text-2xl font-extrabold leading-tight tracking-tight mb-2.5 text-white transition-colors group-hover:text-mint">
+            {feature.title}
+          </h3>
           {excerpt(feature, 120) ? (
-            <p className={styles.packageFeatureDek}>{excerpt(feature, 120)}</p>
+            <p className="text-[15px] text-[#9a9a9a] mb-3 leading-normal tracking-tight">
+              {excerpt(feature, 120)}
+            </p>
           ) : null}
-          <div className={styles.metaRow}>
+          <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
             <AuthorByline post={feature} size="sm" />
           </div>
         </Link>
 
-        <div className={styles.packageList}>
-          {rest.map((post) => (
-            <Link key={post.id} href={postUrl(post)} className={styles.packageItem}>
+        <div className="flex flex-col gap-0">
+          {rest.map((post, idx) => (
+            <Link
+              key={post.id}
+              href={postUrl(post)}
+              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b border-dotted border-[#2e2e2e] text-inherit rounded-sm transition-colors hover:bg-white/[0.02] ${idx === 0 ? 'pt-0' : ''}`}
+            >
               <div>
-                <h4 className={styles.packageItemTitle}>{post.title}</h4>
+                <h4 className="text-[16.5px] font-extrabold leading-snug text-white mb-1.5 transition-colors tracking-tight group-hover:text-mint">
+                  {post.title}
+                </h4>
                 {excerpt(post, 90) ? (
-                  <p className={styles.packageItemDek}>{excerpt(post, 90)}</p>
+                  <p className="text-[13.5px] text-[#888] mb-2 leading-snug">{excerpt(post, 90)}</p>
                 ) : null}
-                <div className={styles.metaRow}>
+                <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
                   <AuthorByline post={post} size="sm" />
                 </div>
               </div>
               {post.ogImg ? (
-                <div className={styles.packageThumb}>
-                  <img src={post.ogImg} alt="" loading="lazy" />
+                <div className="w-[84px] h-[84px] overflow-hidden bg-[#111] rounded-sm shadow-[0_4px_14px_rgba(0,0,0,0.35)] outline outline-1 outline-white/[0.04]">
+                  <img
+                    src={post.ogImg}
+                    alt=""
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  />
                 </div>
               ) : (
-                <div className={styles.packageThumb} />
+                <div className="w-[84px] h-[84px] overflow-hidden bg-[#111] rounded-sm" />
               )}
             </Link>
           ))}
@@ -379,21 +409,37 @@ function PackageBlock({ title, subtitle, posts }) {
 function CategoryRow({ title, posts, href }) {
   if (!posts?.length) return null;
   return (
-    <Reveal as="section" className={styles.catSection}>
-      <div className={styles.catHeader}>
-        <h2>{title}</h2>
-        <Link href={href} className={styles.catMore}>
+    <Reveal as="section" className="mt-14">
+      <div className="flex items-baseline justify-between mb-[22px] border-t-2 border-mint pt-4 shadow-[0_-8px_24px_rgba(60,255,208,0.04)]">
+        <h2 className="text-[22px] font-extrabold tracking-tight">{title}</h2>
+        <Link
+          href={href}
+          className="font-mono text-[10px] tracking-[0.12em] uppercase text-[#6a6a6a] font-bold transition-all py-1 hover:text-mint hover:tracking-[0.14em]"
+        >
           MORE
         </Link>
       </div>
-      <div className={styles.catGrid}>
+      <div className="grid grid-cols-1 max-sm:grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-4 gap-[22px]">
         {posts.map((post) => (
-          <Link key={post.id} href={postUrl(post)} className={styles.catCard}>
-            <div className={styles.catCardImg}>
-              {post.ogImg ? <img src={post.ogImg} alt="" loading="lazy" /> : null}
+          <Link
+            key={post.id}
+            href={postUrl(post)}
+            className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[5px]"
+          >
+            <div className="w-full aspect-[16/10] overflow-hidden bg-[#111] mb-3 rounded-md shadow-[0_8px_24px_rgba(0,0,0,0.35)] outline outline-1 outline-white/[0.04] transition-all group-hover:shadow-lg group-hover:outline-mint/15">
+              {post.ogImg ? (
+                <img
+                  src={post.ogImg}
+                  alt=""
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                />
+              ) : null}
             </div>
-            <h3 className={styles.catCardTitle}>{post.title}</h3>
-            <div className={styles.metaRow}>
+            <h3 className="text-[15.5px] font-extrabold leading-snug text-white mb-2.5 tracking-tight transition-colors group-hover:text-mint">
+              {post.title}
+            </h3>
+            <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
               <AuthorByline post={post} size="sm" />
             </div>
           </Link>

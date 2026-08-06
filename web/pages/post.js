@@ -8,7 +8,6 @@ import ArticleBody from '../components/ArticleBody/ArticleBody';
 import AdUnit from '../components/AdUnit/AdUnit';
 import Reveal from '../components/Reveal/Reveal';
 import { PostSkeleton } from '../components/Skeleton/Skeleton';
-import styles from '../styles/Post.module.css';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl, stripHtml, postExcerpt } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
@@ -31,7 +30,6 @@ export async function getServerSideProps(context) {
     return { props: { initialPost: null, initialLatest: [], isPreview: true } };
   }
 
-  // Prefer dynamic [slug] param, then path, then ?id=
   const path = String(asPath || '');
   const slugMatch = path.match(/^\/post\/([^/?#]+)/);
   const rawSlug = params?.slug || (slugMatch ? slugMatch[1] : null);
@@ -77,7 +75,12 @@ export async function getServerSideProps(context) {
   }
 }
 
-export default function PostPage({ initialPost, initialLatest, isPreview: initialIsPreview, error: initialError }) {
+export default function PostPage({
+  initialPost,
+  initialLatest,
+  isPreview: initialIsPreview,
+  error: initialError,
+}) {
   const router = useRouter();
   const [user, setUser] = useState(null);
 
@@ -102,7 +105,10 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
 
   const isPreview = useMemo(() => {
     if (!router.isReady) return initialIsPreview;
-    return router.query?.preview === 'true' || new URLSearchParams(String(router.asPath || '').split('?')[1] || '').get('preview') === 'true';
+    return (
+      router.query?.preview === 'true' ||
+      new URLSearchParams(String(router.asPath || '').split('?')[1] || '').get('preview') === 'true'
+    );
   }, [router.asPath, router.isReady, router.query?.preview, initialIsPreview]);
 
   const postUrlKey = useMemo(() => {
@@ -150,9 +156,9 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
   }, [latestData]);
 
   const loading = !post && !postError && !initialError;
-  const error = initialError || (postError ? 'Could not load this post. Please try again later.' : '');
+  const error =
+    initialError || (postError ? 'Could not load this post. Please try again later.' : '');
 
-  // Fetch user
   useEffect(() => {
     (async () => {
       try {
@@ -161,18 +167,14 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
           const data = await res.json();
           setUser(data);
         }
-      } catch (_) {
-        // Not logged in or error
-      }
+      } catch (_) {}
     })();
   }, []);
 
-  // Clean URL and metadata management
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!post?.id || isPreview) return;
 
-    // Track view for personalization
     fetch('/api/views/increment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -217,67 +219,77 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
       headerProps={{ user, activeCategory: post?.bucket || 'All' }}
       showInlineAd={false}
     >
-      <div className={styles.postPage}>
+      <div className="pt-10 pb-20 max-w-[1180px] mx-auto relative max-sm:pt-7 max-sm:pb-14">
         {loading ? (
           <PostSkeleton />
         ) : error ? (
-          <div className={styles.errorState}>
-            <h2>{error}</h2>
-            <Link href="/" className={styles.errorBack}>
+          <div className="text-center py-[100px] px-4">
+            <h2 className="mb-5 text-[1.4rem]">{error}</h2>
+            <Link
+              href="/"
+              className="text-mint font-bold font-mono text-xs tracking-wide uppercase hover:text-mint-hover"
+            >
               ← Back to Home
             </Link>
           </div>
         ) : post ? (
-          <article className={styles.post}>
-            {/* Magazine masthead */}
-            <header className={styles.header}>
-              <div className={styles.meta}>
-                <span className={styles.category}>{post.bucket || 'News'}</span>
-                <span className={styles.metaDot} aria-hidden="true">
+          <article className="relative z-[1]">
+            <header className="m-0 mb-5 max-w-none w-full text-left animate-fade-up max-sm:mb-5">
+              <div className="flex flex-wrap gap-2.5 mb-3 items-center font-mono text-[11px] tracking-wide uppercase text-[#777]">
+                <span className="font-bold text-mint">+ {post.bucket || 'News'}</span>
+                <span className="text-[#444]" aria-hidden="true">
                   •
                 </span>
                 <time dateTime={post.date?.toISOString()}>{formatDate(post.date)}</time>
                 {post.readMinutes ? (
                   <>
-                    <span className={styles.metaDot} aria-hidden="true">
+                    <span className="text-[#444]" aria-hidden="true">
                       •
                     </span>
-                    <span className={styles.readTime}>{post.readMinutes} min read</span>
+                    <span className="text-[#666]">{post.readMinutes} min read</span>
                   </>
                 ) : null}
               </div>
-              <h1 className={styles.title}>{post.title}</h1>
+              <h1 className="text-[clamp(1.75rem,3.6vw,2.65rem)] max-md:text-[clamp(1.55rem,6vw,2.1rem)] font-black leading-[1.12] max-md:leading-tight tracking-tight m-0 mb-3.5 text-white max-w-full w-full [text-wrap:pretty]">
+                {post.title}
+              </h1>
               {postExcerpt(post, 200) ? (
-                <p className={styles.dek}>{postExcerpt(post, 200)}</p>
+                <p className="text-[clamp(1.05rem,1.6vw,1.2rem)] text-[#b0b0b0] leading-snug m-0 mb-[18px] tracking-tight max-w-full w-full font-normal">
+                  <span className="text-[#555] font-semibold">/ </span>
+                  {postExcerpt(post, 200)}
+                </p>
               ) : null}
 
               {authorName ? (
-                <div className={styles.authorRow}>
+                <div className="flex items-center gap-3.5 mb-2 pt-1">
                   <AuthorByline
                     post={post}
                     name={authorName}
                     avatarUrl={authorAvatarUrl}
                     size="lg"
                     label="By"
-                    className={styles.authorByline}
+                    className="min-w-0"
                   />
                 </div>
               ) : null}
             </header>
 
-            {/* Full-bleed magazine hero */}
             {post.ogImg ? (
-              <figure className={styles.hero}>
-                <img src={post.ogImg} alt={post.title} />
-                <figcaption className={styles.heroCaption}>
+              <figure className="mt-1 mb-10 w-full max-w-full bg-bg-card overflow-hidden rounded-lg shadow-[0_24px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)] animate-fade-up max-sm:mb-7 max-sm:rounded-sm">
+                <img
+                  src={post.ogImg}
+                  alt={post.title}
+                  className="w-full h-auto block max-h-[480px] max-md:max-h-[360px] object-cover"
+                />
+                <figcaption className="font-mono text-[10px] tracking-wide uppercase text-[#666] px-4 py-3 border-t border-white/5 bg-[#0a0a0a]">
                   {post.bucket ? `${post.bucket} · ` : ''}
                   {formatDate(post.date)}
                 </figcaption>
               </figure>
             ) : null}
 
-            <div className={styles.layout}>
-              <div className={styles.contentWrapper}>
+            <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_300px] gap-12 items-start">
+              <div className="min-w-0 max-w-[720px] min-[1001px]:max-w-[720px] max-md:max-w-none">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
 
                 <ArticleBody
@@ -288,24 +300,42 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                 <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
 
                 {relatedPosts.length > 0 ? (
-                  <Reveal as="section" className={styles.related}>
-                    <div className={styles.relatedHead}>
-                      <h2 className={styles.relatedTitle}>More to read</h2>
-                      <span className={styles.relatedRule} aria-hidden="true" />
+                  <Reveal as="section" className="mt-14 pt-8 border-t border-line-dim">
+                    <div className="flex items-center gap-4 mb-[22px]">
+                      <h2 className="text-xl font-extrabold tracking-tight m-0 whitespace-nowrap">
+                        More to read
+                      </h2>
+                      <span
+                        className="flex-1 h-px bg-gradient-to-r from-mint/40 to-transparent"
+                        aria-hidden="true"
+                      />
                     </div>
-                    <div className={styles.relatedGrid}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
                       {relatedPosts.map((p) => (
-                        <Link key={p.id} href={postUrl(p)} className={styles.relatedCard}>
+                        <Link
+                          key={p.id}
+                          href={postUrl(p)}
+                          className="group flex gap-3.5 text-inherit p-3 -m-3 rounded-lg transition-colors hover:bg-white/[0.025]"
+                        >
                           {p.ogImg ? (
-                            <div className={styles.relatedThumb}>
-                              <img src={p.ogImg} alt="" loading="lazy" />
+                            <div className="w-[108px] h-20 overflow-hidden bg-bg-elevated shrink-0 rounded-sm shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+                              <img
+                                src={p.ogImg}
+                                alt=""
+                                loading="lazy"
+                                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                              />
                             </div>
                           ) : (
-                            <div className={styles.relatedThumbPh} />
+                            <div className="w-[108px] h-20 bg-bg-elevated shrink-0 rounded-sm" />
                           )}
-                          <div className={styles.relatedBody}>
-                            <span className={styles.relatedSource}>{p.bucket}</span>
-                            <h4>{p.title}</h4>
+                          <div>
+                            <span className="font-mono text-[10px] font-bold tracking-wide uppercase text-mint mb-1.5 block">
+                              {p.bucket}
+                            </span>
+                            <h4 className="text-[15px] font-bold leading-snug text-white tracking-tight transition-colors m-0 group-hover:text-mint">
+                              {p.title}
+                            </h4>
                           </div>
                         </Link>
                       ))}
@@ -316,27 +346,40 @@ export default function PostPage({ initialPost, initialLatest, isPreview: initia
                 <CommentSection postId={post.id} />
               </div>
 
-              <aside className={styles.sidebar}>
+              <aside className="flex flex-col gap-5 min-w-0">
                 <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
 
-                <div className={styles.sidebarCard}>
-                  <h3 className={styles.sidebarCardTitle}>Latest Headlines</h3>
-                  <div className={styles.sidebarList}>
+                <div className="bg-gradient-to-br from-bg-elevated to-bg-card border border-white/[0.07] rounded-lg p-[18px] shadow-[0_8px_28px_rgba(0,0,0,0.3)]">
+                  <h3 className="font-mono text-[11px] font-bold tracking-widest uppercase text-white m-0 mb-3.5 pb-2.5 border-b border-[#222]">
+                    Latest Headlines
+                  </h3>
+                  <div className="flex flex-col gap-3.5">
                     {sidebarPosts.map((p, index) => (
-                      <Link key={p.id} href={postUrl(p)} className={styles.sidebarItem}>
-                        <span className={styles.sidebarItemNum} aria-hidden="true">
+                      <Link
+                        key={p.id}
+                        href={postUrl(p)}
+                        className="group flex gap-3 no-underline text-inherit transition-colors"
+                      >
+                        <span
+                          className="font-extrabold text-mint min-w-[18px] text-sm font-mono"
+                          aria-hidden="true"
+                        >
                           {index + 1}
                         </span>
-                        <div className={styles.sidebarItemContent}>
-                          <span className={styles.relatedSource}>{p.bucket}</span>
-                          <h4>{p.title}</h4>
+                        <div>
+                          <span className="font-mono text-[10px] font-bold tracking-wide uppercase text-mint mb-1.5 block">
+                            {p.bucket}
+                          </span>
+                          <h4 className="text-sm font-bold leading-snug text-white m-1 mt-1 transition-colors tracking-tight group-hover:text-mint">
+                            {p.title}
+                          </h4>
                         </div>
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                <div className={styles.sidebarStickyAd}>
+                <div className="sticky top-[calc(var(--header-height,92px)+16px)] max-md:static">
                   <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
                 </div>
               </aside>

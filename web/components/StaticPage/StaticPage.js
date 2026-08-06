@@ -1,5 +1,4 @@
 import Layout from '../Layout/Layout';
-import styles from './StaticPage.module.css';
 import { LAST_UPDATED, SITE_NAME } from '../../lib/site';
 
 /**
@@ -24,14 +23,24 @@ export default function StaticPage({
       showAdRails={false}
       showInlineAd={false}
     >
-      <article className={styles.page}>
-        {kicker ? <p className={styles.kicker}>{kicker}</p> : null}
-        <h1 className={styles.title}>{title}</h1>
-        {showUpdated && updated ? (
-          <p className={styles.updated}>Last updated: {updated}</p>
+      <article className="max-w-[760px] mx-auto pt-10 pb-20 max-sm:pt-7 max-sm:pb-16">
+        {kicker ? (
+          <p className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-mint m-0 mb-3">
+            {kicker}
+          </p>
         ) : null}
-        {lead ? <p className={styles.lead}>{lead}</p> : null}
-        <div className={styles.content}>{children}</div>
+        <h1 className="text-[clamp(1.85rem,4vw,2.5rem)] font-black tracking-tight leading-tight text-white m-0 mb-3">
+          {title}
+        </h1>
+        {showUpdated && updated ? (
+          <p className="text-[13px] text-[#777] m-0 mb-7">Last updated: {updated}</p>
+        ) : null}
+        {lead ? (
+          <p className="text-[1.1rem] leading-relaxed text-ink-soft m-0 mb-8 pb-7 border-b border-[#222]">
+            {lead}
+          </p>
+        ) : null}
+        <div className="static-content">{children}</div>
       </article>
     </Layout>
   );

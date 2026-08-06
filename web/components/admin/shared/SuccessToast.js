@@ -1,15 +1,20 @@
 import React, { useEffect } from 'react';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
-export function SuccessToast({ message, onDismiss }) {
+export function SuccessToast({ message, onDismiss, onClose }) {
+  const dismiss = onDismiss || onClose;
+
   useEffect(() => {
-    const timer = setTimeout(onDismiss, 3000);
+    if (!dismiss) return;
+    const timer = setTimeout(dismiss, 3000);
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+  }, [dismiss]);
 
   return (
-    <div className="toast toast-success">
-      <span className="toast-icon">✓</span>
-      <span className="toast-message">{message}</span>
+    <div className={cn(tw.toast, tw.toastSuccess)}>
+      <span className={tw.toastIcon}>✓</span>
+      <span className={tw.toastMessage}>{message}</span>
     </div>
   );
 }

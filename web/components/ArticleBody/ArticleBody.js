@@ -7,7 +7,7 @@ import {
   IN_ARTICLE_MIN_PARAS_BEFORE,
   loadAdsenseConfig,
 } from '../../lib/ads';
-import styles from './ArticleBody.module.css';
+import { cn } from '../../lib/utils';
 
 /**
  * Normalize CMS / WordPress-style HTML into clean block paragraphs.
@@ -17,9 +17,7 @@ function normalizeContentHtml(html) {
   let raw = String(html || '').trim();
   if (!raw) return '';
 
-  // WordPress Gutenberg comment blocks → real <p> (and other blocks)
   if (/<!--\s*wp:/i.test(raw)) {
-    // Paragraph blocks
     raw = raw.replace(
       /<!--\s*wp:paragraph(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:paragraph\s*-->/gi,
       (_, inner) => {
@@ -29,32 +27,27 @@ function normalizeContentHtml(html) {
         return `<p>${t}</p>`;
       }
     );
-    // Heading blocks
     raw = raw.replace(
       /<!--\s*wp:heading(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:heading\s*-->/gi,
       (_, inner) => String(inner || '').trim()
     );
-    // Image / figure / list / quote — keep inner HTML, drop comments
     raw = raw.replace(
       /<!--\s*wp:(?:image|list|quote|embed|html|separator|spacer|group|columns|column)(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:\w+\s*-->/gi,
       (_, inner) => String(inner || '').trim()
     );
-    // Any remaining wp comments
     raw = raw.replace(/<!--\s*\/?wp:[^>]*-->/gi, '');
   }
 
-  // Multiple <br><br> → paragraph breaks for plain paste content
   if (!/<\/p>/i.test(raw) && /<br\s*\/?>\s*<br\s*\/?>/i.test(raw)) {
     const parts = raw
       .split(/<br\s*\/?>\s*<br\s*\/?>/i)
       .map((s) => s.replace(/<br\s*\/?>/gi, ' ').trim())
       .filter(Boolean);
     if (parts.length > 1) {
-      raw = parts.map((p) => ( /^<p[\s>]/i.test(p) ? p : `<p>${p}</p>` )).join('\n');
+      raw = parts.map((p) => (/^<p[\s>]/i.test(p) ? p : `<p>${p}</p>`)).join('\n');
     }
   }
 
-  // Plain text with newlines, no HTML tags at all
   if (!/<[a-z][\s\S]*>/i.test(raw)) {
     const paras = raw
       .split(/\n\s*\n+/)
@@ -68,15 +61,10 @@ function normalizeContentHtml(html) {
   return raw.trim();
 }
 
-/**
- * Split HTML into block chunks for mid-article ad injection
- * (modern news pattern: first ad after ~2 paras, then every N).
- */
 function splitHtmlBlocks(html) {
   const raw = normalizeContentHtml(html);
   if (!raw) return [];
 
-  // 1) Split on closing </p>
   if (/<\/p>/i.test(raw)) {
     const chunks = raw
       .split(/(<\/p>)/i)
@@ -92,14 +80,12 @@ function splitHtmlBlocks(html) {
     if (chunks.length === 1) return chunks;
   }
 
-  // 2) Split on other block-level open tags
   const parts = raw
     .split(/(?=<(?:p|h[1-6]|blockquote|ul|ol|figure|div|hr|pre|table)\b)/i)
     .map((s) => s.trim())
     .filter(Boolean);
   if (parts.length > 1) return parts;
 
-  // 3) Fallback: wrap plain text / long run-on as sentence groups (~2–3 sentences each)
   const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   if (!plain) return [raw];
   const sentences = plain.split(/(?<=[.!?])\s+/).filter((s) => s.length > 20);
@@ -168,7 +154,7 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
       out.push(
         <div
           key={`b-${idx}`}
-          className={`${styles.block} ${isFirstPara && magazine ? styles.dropCap : ''}`.trim()}
+          className={cn(isFirstPara && magazine && 'drop-cap')}
           dangerouslySetInnerHTML={{ __html: block }}
         />
       );
@@ -184,18 +170,14 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
         (adsPlaced === 0
           ? parasSinceAd >= adCfg.minBefore
           : parasSinceAd >= adCfg.everyN) &&
-        idx < blocks.length - 1; // never after last block
+        idx < blocks.length - 1;
 
       if (canInsert) {
         adsPlaced += 1;
         parasSinceAd = 0;
         out.push(
-          <div key={`ad-inline-${adsPlaced}`} className={styles.inlineAdWrap}>
-            <AdUnit
-              variant="inArticle"
-              slot={adCfg.slot}
-              label="Advertisement"
-            />
+          <div key={`ad-inline-${adsPlaced}`} className="w-full my-2 mb-3 clear-both">
+            <AdUnit variant="inArticle" slot={adCfg.slot} label="Advertisement" />
           </div>
         );
       }
@@ -204,21 +186,19 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
     return out;
   }, [blocks, magazine, adCfg]);
 
+  const bodyClass = cn(
+    'article-body',
+    magazine && 'article-body--magazine',
+    className
+  );
+
   if (!nodes.length) {
     return (
-      <div
-        className={`${styles.content} ${magazine ? styles.magazine : ''} ${className}`.trim()}
-      >
+      <div className={bodyClass}>
         <p>No content available.</p>
       </div>
     );
   }
 
-  return (
-    <div
-      className={`${styles.content} ${magazine ? styles.magazine : ''} ${className}`.trim()}
-    >
-      {nodes}
-    </div>
-  );
+  return <div className={bodyClass}>{nodes}</div>;
 }

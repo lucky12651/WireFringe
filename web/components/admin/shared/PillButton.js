@@ -1,4 +1,6 @@
 import React from 'react';
+import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 export function PillButton({
   children,
@@ -11,23 +13,23 @@ export function PillButton({
   title,
   ...props
 }) {
-  const baseClass = 'pill-btn';
-  const variantClass = variant === 'danger' ? 'danger' : '';
-  const combinedClass = `${baseClass} ${variantClass} ${className}`.trim();
-
   const defaultDotColor = variant === 'danger' ? 'var(--danger)' : 'var(--accent)';
   const finalDotColor = dotColor || defaultDotColor;
 
   return (
     <button
       type={type}
-      className={combinedClass}
+      className={cn(
+        tw.pillBtn,
+        variant === 'danger' && 'border-[rgba(255,107,107,0.35)] text-[#ff6b6b] hover:border-[#ff6b6b] hover:text-[#ff6b6b]',
+        className
+      )}
       onClick={onClick}
       disabled={disabled}
       title={title}
       {...props}
     >
-      <span className="dot" style={{ background: finalDotColor }}></span>
+      <span className={tw.dot} style={{ background: finalDotColor }}></span>
       {children}
     </button>
   );

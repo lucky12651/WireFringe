@@ -1,17 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
-import { formatDateShort } from '../../../lib/utils';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../shared/Table';
+import { formatDateShort, cn } from '../../../lib/utils';
 import { CheckIcon, TrashIcon } from '../Layout/icons';
-import styles from './CommentsView.module.css';
+import { tw } from '../../../lib/tw';
 
 export function CommentsView({
   comments,
@@ -71,54 +62,59 @@ export function CommentsView({
   };
 
   return (
-    <div className="admin-view-container-v2">
-      <div className="section-header">
-        <h2 className="section-title">Comments Moderation</h2>
-        <span className="title-count-v2">{Array.isArray(comments) ? comments.length : 0} Total</span>
+    <div className={tw.adminView}>
+      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Comments Moderation</h2>
+        <span className={tw.titleCount}>{Array.isArray(comments) ? comments.length : 0} Total</span>
       </div>
 
-      <div className="admin-card-v2">
-        {hint && <p className="form-hint-v2 error">{hint}</p>}
+      <div className={tw.card}>
+        {hint && <p className={cn(tw.formHint, 'text-[#ff8a8a]')}>{hint}</p>}
         
-        <div className="v2-table-wrapper">
-          <table className="v2-table">
+        <div className={tw.tableWrap}>
+          <table className={tw.table}>
             <thead>
               <tr>
-                <th>Commenter</th>
-                <th>Message</th>
-                <th>Post</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <th className={tw.th}>Commenter</th>
+                <th className={tw.th}>Message</th>
+                <th className={tw.th}>Post</th>
+                <th className={tw.th}>Status</th>
+                <th className={cn(tw.th, tw.textRight)}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {Array.isArray(comments) && comments.length ? (
                 comments.map((c) => (
                   <tr key={c.id}>
-                    <td>
-                      <div className="commenter-info">
-                        <span className="commenter-name">{c.name || 'Guest'}</span>
-                        <span className="comment-date">{formatDateShort(c.createdAt)}</span>
+                    <td className={tw.td}>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-white">{c.name || 'Guest'}</span>
+                        <span className="text-xs text-[#888]">{formatDateShort(c.createdAt)}</span>
                       </div>
                     </td>
-                    <td>
-                      <div className="comment-content-cell">
-                        <p className="comment-text-v2">{c.comment}</p>
-                      </div>
+                    <td className={tw.td}>
+                      <p className="m-0 text-sm text-[#e0e0e0] line-clamp-2">{c.comment}</p>
                     </td>
-                    <td>
-                      <span className="post-link-v2">{c.postTitle || 'View Post'}</span>
+                    <td className={tw.td}>
+                      <span className="text-sm text-mint">{c.postTitle || 'View Post'}</span>
                     </td>
-                    <td>
-                      <span className={`status-badge ${c.approved ? 'active' : 'pending'}`}>
+                    <td className={tw.td}>
+                      <span
+                        className={cn(
+                          tw.statusBadge,
+                          c.approved
+                            ? 'bg-mint/15 text-mint border border-mint/30'
+                            : 'bg-[#e8b342]/15 text-[#e8b342] border border-[#e8b342]/30'
+                        )}
+                      >
                         {c.approved ? 'Approved' : 'Pending'}
                       </span>
                     </td>
-                    <td className="text-right">
-                      <div className="action-group-v2">
+                    <td className={cn(tw.td, tw.textRight)}>
+                      <div className={tw.actionGroup}>
                         {!c.approved && (
                           <button
-                            className="approve-btn-v2"
+                            className={tw.iconBtnApprove}
                             onClick={() => handleApprove(c.id)}
                             title="Approve"
                           >
@@ -126,7 +122,7 @@ export function CommentsView({
                           </button>
                         )}
                         <button
-                          className="delete-btn-v2"
+                          className={tw.iconBtnDanger}
                           onClick={() => c.approved ? handleDelete(c.id) : handleDisapprove(c.id)}
                           title="Delete"
                         >
@@ -138,7 +134,7 @@ export function CommentsView({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={5} className={tw.td}>
                     <EmptyState>No comments to moderate.</EmptyState>
                   </td>
                 </tr>

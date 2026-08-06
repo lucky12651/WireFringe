@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
-import styles from './ActionButton.module.css';
+import { cn } from '../../../lib/utils';
 
 /**
  * ActionButton - A standardized button for admin actions.
  * Supports both button and link behaviors.
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.icon - Icon component or element to display
  * @param {React.ReactNode} props.children - Button label text
@@ -16,22 +16,32 @@ import styles from './ActionButton.module.css';
  * @param {string} [props.variant] - Button variant: "default" or "danger"
  * @param {string} [props.size] - Button size: "md" or "sm"
  */
-export function ActionButton({ 
-  icon: Icon, 
-  children, 
-  href, 
-  onClick, 
-  type = 'button', 
+export function ActionButton({
+  icon: Icon,
+  children,
+  href,
+  onClick,
+  type = 'button',
   className = '',
   variant = 'default',
   size = 'md',
   grow = false,
-  ...props 
+  ...props
 }) {
-  const variantClass = variant === 'danger' ? styles.danger : '';
-  const sizeClass = size === 'sm' ? styles.sm : '';
-  const growClass = grow ? styles.grow : '';
-  const combinedClassName = `${styles.actionButton} ${variantClass} ${sizeClass} ${growClass} ${className}`.trim();
+  const combinedClassName = cn(
+    'inline-flex items-center justify-center gap-2 flex-none py-2.5 px-4',
+    'border border-line rounded bg-bg-elevated text-[#ccc] text-xs font-semibold font-mono',
+    'tracking-[0.03em] no-underline cursor-pointer whitespace-nowrap',
+    'transition-all duration-200 ease-out',
+    'enabled:hover:bg-[#1a1a1a] enabled:hover:border-mint enabled:hover:text-mint enabled:hover:-translate-y-px',
+    'enabled:active:translate-y-0',
+    'disabled:opacity-45 disabled:cursor-not-allowed disabled:bg-[#111] disabled:border-[#222] disabled:text-[#666] disabled:shadow-none',
+    size === 'sm' && 'flex-none py-2 px-3.5 text-[11px] gap-1.5',
+    grow && 'flex-auto w-full',
+    variant === 'danger' &&
+      'border-[rgba(255,107,107,0.35)] text-[#ff6b6b] bg-[rgba(255,107,107,0.08)] enabled:hover:bg-[rgba(255,107,107,0.16)] enabled:hover:border-[#ff6b6b] enabled:hover:text-[#ff6b6b]',
+    className
+  );
 
   const content = (
     <>

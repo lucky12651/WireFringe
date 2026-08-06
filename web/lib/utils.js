@@ -2,6 +2,13 @@
  * Shared utility functions for Wirefringe
  * DRY: Common formatting and calculation logic
  */
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/** Merge Tailwind classes (GridWork-style `cn` helper). */
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
 
 export function formatDateShort(date) {
   if (!date) return '';

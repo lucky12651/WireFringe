@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import styles from './CommentSection.module.css';
+import { cn } from '../../lib/utils';
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -16,13 +16,29 @@ function formatDate(dateString) {
 function VoteIcon({ direction, filled }) {
   if (direction === 'like') {
     return (
-      <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        className="w-3.5 h-3.5"
+        viewBox="0 0 24 24"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
       </svg>
     );
   }
   return (
-    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className="w-3.5 h-3.5"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
     </svg>
   );
@@ -98,7 +114,7 @@ export default function CommentSection({ postId }) {
 
       if (res.ok) {
         const updatedComment = await res.json();
-        setComments(prev => prev.map(c => c.id === commentId ? updatedComment : c));
+        setComments((prev) => prev.map((c) => (c.id === commentId ? updatedComment : c)));
       }
     } catch (err) {
       console.error('Failed to vote:', err);
@@ -106,18 +122,29 @@ export default function CommentSection({ postId }) {
   };
 
   return (
-    <section className={styles.commentSection}>
-      <h3 className={styles.title}>
+    <section className="mt-12 pt-7 border-t border-line">
+      <h3 className="flex items-center gap-2.5 mb-5 text-xl font-extrabold text-white">
         Comments ({comments.length})
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className="w-[18px] h-[18px] text-mint"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M9 18l6-6-6-6" />
         </svg>
       </h3>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.formGrid}>
+      <form
+        className="flex flex-col gap-3 mb-7 p-[18px] bg-bg-elevated border border-line"
+        onSubmit={handleSubmit}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
-            className={styles.input}
+            className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full focus:border-mint"
             type="text"
             placeholder="Name"
             value={name}
@@ -126,7 +153,7 @@ export default function CommentSection({ postId }) {
             maxLength={60}
           />
           <input
-            className={styles.input}
+            className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full focus:border-mint"
             type="email"
             placeholder="Email (private)"
             value={email}
@@ -136,48 +163,58 @@ export default function CommentSection({ postId }) {
           />
         </div>
         <textarea
-          className={styles.textarea}
+          className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full min-h-[110px] resize-y leading-normal focus:border-mint"
           placeholder="Join the conversation..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           required
           maxLength={5000}
         />
-        {error && <p className={styles.error}>{error}</p>}
-        {notice && <p className={styles.notice}>{notice}</p>}
-        <button 
-          className={styles.submitBtn} 
-          type="submit" 
+        {error && <p className="text-[#ff6b6b] text-sm">{error}</p>}
+        {notice && <p className="text-mint text-sm">{notice}</p>}
+        <button
+          className="self-start bg-mint text-black border-0 rounded-sm px-4 py-2.5 font-mono text-[11px] font-bold tracking-wide uppercase cursor-pointer hover:bg-mint-hover disabled:opacity-60"
+          type="submit"
           disabled={submitting}
         >
           {submitting ? 'Posting...' : 'Post Comment'}
         </button>
       </form>
 
-      <div className={styles.list}>
+      <div className="flex flex-col">
         {loading ? (
-          <p className={styles.empty}>Loading comments...</p>
+          <p className="text-[#888] text-sm py-3">Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className={styles.empty}>No comments yet. Be the first to join the conversation!</p>
+          <p className="text-[#888] text-sm py-3">
+            No comments yet. Be the first to join the conversation!
+          </p>
         ) : (
           comments.map((c) => (
-            <div key={c.id} className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentName}>{c.name}</span>
-                <span className={styles.commentDate}>{formatDate(c.createdAt)}</span>
+            <div key={c.id} className="py-[18px] border-b border-[#222]">
+              <div className="flex justify-between gap-3 mb-2">
+                <span className="font-bold text-[13px] text-mint tracking-wide uppercase">
+                  {c.name}
+                </span>
+                <span className="text-xs text-[#666]">{formatDate(c.createdAt)}</span>
               </div>
-              <p className={styles.commentBody}>{c.comment}</p>
-              <div className={styles.commentFooter}>
-                <button 
-                  className={`${styles.voteBtn} ${c.myVote === 'like' ? styles.active : ''}`}
+              <p className="text-[15px] leading-relaxed text-[#ddd] mb-2.5">{c.comment}</p>
+              <div className="flex gap-2">
+                <button
+                  className={cn(
+                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-[#888] px-2.5 py-1 text-xs cursor-pointer hover:text-white hover:border-[#444]',
+                    c.myVote === 'like' && 'text-mint border-mint/40'
+                  )}
                   onClick={() => handleVote(c.id, 'like')}
                   title="Like"
                 >
                   <VoteIcon direction="like" filled={c.myVote === 'like'} />
                   {c.likes || 0}
                 </button>
-                <button 
-                  className={`${styles.voteBtn} ${c.myVote === 'dislike' ? styles.active : ''}`}
+                <button
+                  className={cn(
+                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-[#888] px-2.5 py-1 text-xs cursor-pointer hover:text-white hover:border-[#444]',
+                    c.myVote === 'dislike' && 'text-mint border-mint/40'
+                  )}
                   onClick={() => handleVote(c.id, 'dislike')}
                   title="Dislike"
                 >

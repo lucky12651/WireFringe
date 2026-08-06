@@ -5,7 +5,7 @@ import {
   isBrandBylineAuthor,
 } from '../../lib/author';
 import AuthorAvatar from '../AuthorAvatar/AuthorAvatar';
-import styles from './AuthorByline.module.css';
+import { cn } from '../../lib/utils';
 
 /**
  * Public author credit on posts/feeds.
@@ -26,38 +26,63 @@ export default function AuthorByline({
   const brand = isBrandBylineAuthor(post);
   const logoSrc = brandLogoUrl(post) || String(post?.creatorBrandLogoUrl || '').trim();
   const resolvedAvatar = String(avatarUrl || authorAvatarUrl(post) || '').trim();
-  const sizeClass = size === 'lg' ? styles.lg : size === 'sm' ? styles.sm : styles.md;
+
+  const nameSize =
+    size === 'lg' ? 'text-xs' : size === 'sm' ? 'text-[10px]' : 'text-[11px]';
+  const wordmarkSize =
+    size === 'lg'
+      ? 'h-[26px] max-w-[234px]'
+      : size === 'sm'
+        ? 'h-[18px] max-w-[156px]'
+        : 'h-[21px] max-w-[195px]';
+  const labelSize = size === 'lg' ? 'text-[11px] mr-1' : 'text-[10px]';
 
   if (brand && logoSrc) {
     return (
       <span
-        className={`${styles.byline} ${styles.brand} ${sizeClass} ${className}`.trim()}
+        className={cn(
+          'inline-flex items-center gap-2 min-w-0 max-w-full align-middle',
+          time ? 'flex-col items-start gap-[5px]' : '',
+          className
+        )}
         title={displayName || 'Brand'}
       >
-        {label ? <span className={styles.label}>{label}</span> : null}
-        <span className={styles.logoWrap}>
+        {label ? (
+          <span
+            className={cn(
+              'font-mono tracking-wide uppercase text-[#888] shrink-0',
+              labelSize
+            )}
+          >
+            {label}
+          </span>
+        ) : null}
+        <span className="inline-flex items-center justify-center leading-none bg-transparent border-0 p-0 shadow-none">
           <img
             src={logoSrc}
             alt={displayName || 'Brand'}
-            className={styles.wordmark}
+            className={cn('block w-auto object-contain bg-transparent border-0', wordmarkSize)}
             loading="lazy"
             decoding="async"
             onError={(e) => {
               const el = e.currentTarget;
               if (el.dataset.fallback === '1') return;
               el.dataset.fallback = '1';
-              // Prefer profile avatar, then default public wordmark
               el.src = resolvedAvatar || '/wirefringe.png';
             }}
           />
         </span>
-        {time ? <span className={styles.time}>{time}</span> : null}
+        {time ? (
+          <span className="font-mono text-[10px] tracking-wide uppercase text-[#777]">
+            {time}
+          </span>
+        ) : null}
       </span>
     );
   }
 
   return (
-    <span className={`${styles.byline} ${sizeClass} ${className}`.trim()}>
+    <span className={cn('inline-flex items-center gap-2.5 min-w-0 max-w-full align-middle', className)}>
       {showAvatar ? (
         <AuthorAvatar
           name={displayName}
@@ -65,10 +90,30 @@ export default function AuthorByline({
           size={size === 'lg' ? 'md' : 'sm'}
         />
       ) : null}
-      <span className={styles.textBlock}>
-        {label ? <span className={styles.label}>{label}</span> : null}
-        <span className={styles.name}>{displayName || 'Staff'}</span>
-        {time ? <span className={styles.time}>{time}</span> : null}
+      <span className="inline-flex flex-col gap-0.5 min-w-0">
+        {label ? (
+          <span
+            className={cn(
+              'font-mono tracking-wide uppercase text-[#888] shrink-0',
+              labelSize
+            )}
+          >
+            {label}
+          </span>
+        ) : null}
+        <span
+          className={cn(
+            'font-mono font-bold tracking-wide uppercase text-mint whitespace-nowrap overflow-hidden text-ellipsis',
+            nameSize
+          )}
+        >
+          {displayName || 'Staff'}
+        </span>
+        {time ? (
+          <span className="font-mono text-[10px] tracking-wide uppercase text-[#777]">
+            {time}
+          </span>
+        ) : null}
       </span>
     </span>
   );

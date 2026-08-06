@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { cn } from '../../../lib/utils';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarNav } from './SidebarNav';
 import { SidebarFooter } from './SidebarFooter';
-import styles from './Sidebar.module.css';
 
 const STORAGE_KEY = 'wf_admin_sidebar_collapsed';
 
@@ -41,7 +41,15 @@ export function Sidebar({
 
   return (
     <aside
-      className={`${styles.sidebar} ${collapsed ? styles.collapsed : styles.expanded}`}
+      className={cn(
+        'sticky top-0 self-start flex flex-col h-screen overflow-hidden bg-black border-r border-line-dim font-sans z-[100]',
+        'transition-[width] duration-[220ms] ease-out',
+        collapsed ? 'w-[84px]' : 'w-60',
+        'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:left-0 max-[980px]:top-auto',
+        'max-[980px]:w-full max-[980px]:h-16 max-[980px]:flex-row',
+        'max-[980px]:border-r-0 max-[980px]:border-t max-[980px]:border-line-dim',
+        'max-[980px]:bg-black/95 max-[980px]:backdrop-blur-[10px]'
+      )}
       aria-label="Admin navigation"
       data-collapsed={collapsed ? 'true' : 'false'}
     >
