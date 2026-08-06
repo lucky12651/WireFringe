@@ -22,8 +22,18 @@ venv/
 ENV/
 .env/
 
-# Local environment / secrets
-
+# Local environment / secrets (never commit these)
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+server/.env
+web/.env
+web/.env.local
+web/.env*.local
 
 *.key
 *.pem
