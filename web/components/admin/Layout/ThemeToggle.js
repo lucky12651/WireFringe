@@ -25,7 +25,7 @@ export function ThemeToggle() {
         className={cn(
           'flex items-center justify-center w-8 h-8 border-none rounded-full cursor-pointer transition-all duration-200',
           themeMode === 'light'
-            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(60,255,208,0.3)]'
+            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(255,255,255,0.3)]'
             : 'bg-transparent text-[#777] hover:text-white'
         )}
         onClick={() => handleSetTheme('light')}
@@ -48,7 +48,7 @@ export function ThemeToggle() {
         className={cn(
           'flex items-center justify-center w-8 h-8 border-none rounded-full cursor-pointer transition-all duration-200',
           themeMode === 'dark'
-            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(60,255,208,0.3)]'
+            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(255,255,255,0.3)]'
             : 'bg-transparent text-[#777] hover:text-white'
         )}
         onClick={() => handleSetTheme('dark')}

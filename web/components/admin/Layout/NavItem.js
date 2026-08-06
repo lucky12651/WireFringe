@@ -25,11 +25,11 @@ export function NavItem({
         'relative border-none cursor-pointer transition-all duration-200 ease-out text-left',
         'flex items-center',
         collapsed
-          ? 'w-12 h-12 min-h-12 rounded-xl justify-center p-0 gap-0'
-          : 'w-full min-h-11 h-auto rounded-[10px] justify-start gap-3 py-2.5 px-3',
+          ? 'w-11 h-11 min-h-11 rounded-xl justify-center p-0 gap-0'
+          : 'w-full min-h-10 h-auto rounded-xl justify-start gap-3 py-2.5 px-3',
         isActive
-          ? 'bg-mint text-black shadow-[0_4px_18px_rgba(60,255,208,0.3)] font-semibold'
-          : 'bg-transparent text-[#999] hover:bg-bg-elevated hover:text-white',
+          ? 'bg-white text-black font-semibold shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_8px_28px_rgba(255,255,255,0.08)]'
+          : 'bg-transparent text-[#8a8a8a] hover:bg-white/[0.06] hover:text-white',
         (isDisabled || isUserNavDisabled) && 'opacity-40 cursor-not-allowed',
         'max-[980px]:w-12 max-[980px]:h-12 max-[980px]:min-h-12 max-[980px]:justify-center max-[980px]:p-0'
       )}
@@ -37,12 +37,12 @@ export function NavItem({
       disabled={isDisabled || isUserNavDisabled}
       title={isUserNavDisabled ? 'Admins only' : collapsed ? item.label : ''}
     >
-      <span className="flex items-center justify-center shrink-0 w-5 h-5 [&>svg]:w-5 [&>svg]:h-5">
+      <span className="flex items-center justify-center shrink-0 w-5 h-5 [&>svg]:w-[18px] [&>svg]:h-[18px]">
         <IconComponent />
       </span>
       <span
         className={cn(
-          'text-[13.5px] font-medium whitespace-nowrap overflow-hidden text-ellipsis',
+          'text-[13px] font-medium whitespace-nowrap overflow-hidden text-ellipsis',
           collapsed && 'hidden',
           'max-[980px]:hidden'
         )}
@@ -52,11 +52,14 @@ export function NavItem({
       {item.id === 'comments' && pendingCommentsCount > 0 && (
         <span
           className={cn(
-            'bg-[#ff6b6b] text-white font-bold text-center shrink-0 rounded-full',
+            'font-bold text-center shrink-0 rounded-full',
+            isActive
+              ? 'bg-black text-white'
+              : 'bg-white text-black',
             collapsed
-              ? 'absolute top-1.5 right-1.5 ml-0 text-[9px] py-0.5 px-1.5 border-2 border-black min-w-4'
+              ? 'absolute top-1 right-1 ml-0 text-[9px] py-0.5 px-1.5 min-w-4'
               : 'ml-auto text-[10px] py-0.5 px-1.5 min-w-[18px]',
-            'max-[980px]:absolute max-[980px]:top-1.5 max-[980px]:right-1.5 max-[980px]:ml-0 max-[980px]:text-[9px] max-[980px]:py-0.5 max-[980px]:px-1.5 max-[980px]:border-2 max-[980px]:border-black max-[980px]:min-w-4'
+            'max-[980px]:absolute max-[980px]:top-1.5 max-[980px]:right-1.5 max-[980px]:ml-0 max-[980px]:text-[9px] max-[980px]:py-0.5 max-[980px]:px-1.5 max-[980px]:min-w-4'
           )}
         >
           {pendingCommentsCount}

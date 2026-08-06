@@ -125,6 +125,164 @@
   }
 }
 
+/* =========================================================
+   Admin — x.ai inspired theme (scoped; public site unchanged)
+   Pure black, white CTAs, soft monochrome borders, premium glow
+   ========================================================= */
+.admin-xai {
+  /* Surfaces */
+  --bg: #000000;
+  --bg-primary: #000000;
+  --bg-secondary: #050505;
+  --bg-elevated: #0c0c0c;
+  --bg-tertiary: #111111;
+  --bg-hover: #141414;
+  --bg-card: #090909;
+  --bg-highlight: #1a1a1a;
+
+  /* Ink */
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+  --text-muted: #525252;
+  --text-soft: #d4d4d4;
+  --text-dek: #e5e5e5;
+
+  /* Accent = white (x.ai primary CTA language) */
+  --mint: #ffffff;
+  --mint-hover: #e5e5e5;
+  --mint-dim: rgba(255, 255, 255, 0.08);
+  --purple: #a3a3a3;
+  --purple-deep: #737373;
+
+  /* Borders — hairline white translucency */
+  --border: rgba(255, 255, 255, 0.09);
+  --border-dim: rgba(255, 255, 255, 0.05);
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.65);
+  --shadow-xl: 0 28px 72px rgba(0, 0, 0, 0.7);
+  --glow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+
+  color-scheme: dark;
+  font-feature-settings: 'ss01' on, 'cv11' on;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient space glow behind admin chrome */
+.admin-xai::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 255, 255, 0.06), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(255, 255, 255, 0.035), transparent 50%),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(255, 255, 255, 0.03), transparent 55%);
+}
+
+.admin-xai > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Refined scrollbars inside admin */
+.admin-xai,
+.admin-xai * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.admin-xai ::selection {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* Soft noise texture (premium feel) */
+.admin-xai-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Content pipeline connectors — flowing dashes */
+@keyframes pipeline-flow {
+  from { background-position: 0 0; }
+  to { background-position: 28px 0; }
+}
+
+@keyframes pipeline-pulse-glow {
+  0%, 100% { opacity: 0.55; box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.15); }
+  50% { opacity: 1; box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.25); }
+}
+
+.pipeline-connector {
+  flex: 1 1 auto;
+  position: relative;
+  top: -19px;
+  margin-left: -10px;
+  margin-right: -10px;
+  min-width: 24px;
+  height: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pipeline-connector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.85) 0,
+    rgba(255, 255, 255, 0.85) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  background-size: 28px 100%;
+  /* Static dashes when idle / bot off — animate only when .is-active */
+  opacity: 0.22;
+  animation: none;
+}
+
+.pipeline-connector.is-active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pipeline-connector.is-active::after {
+  opacity: 1;
+  animation: pipeline-flow 0.55s linear infinite;
+}
+
+.pipeline-node-active {
+  animation: pipeline-pulse-glow 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pipeline-connector::after,
+  .pipeline-connector.is-active::after {
+    animation: none;
+    opacity: 0.55;
+  }
+  .pipeline-node-active {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* CMS / static HTML only — needs descendant selectors, not JSX */
 @layer components {
   .article-body {

@@ -3,7 +3,7 @@ import { cn } from '../../../lib/utils';
 
 export function Table({ children, className = '', ...props }) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-line bg-bg-elevated shadow-[0_8px_28px_rgba(0,0,0,0.25)]">
+    <div className="w-full overflow-x-auto rounded-xl border border-white/[0.08] bg-white/[0.03] shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-sm">
       <table className={cn('w-full border-collapse text-sm text-left', className)} {...props}>
         {children}
       </table>
@@ -13,7 +13,7 @@ export function Table({ children, className = '', ...props }) {
 
 export function TableHeader({ children, className = '', ...props }) {
   return (
-    <thead className={cn('bg-[#101010] border-b border-line', className)} {...props}>
+    <thead className={cn('bg-white/[0.03] border-b border-white/[0.07]', className)} {...props}>
       {children}
     </thead>
   );
@@ -31,7 +31,7 @@ export function TableRow({ children, className = '', ...props }) {
   return (
     <tr
       className={cn(
-        'border-b border-line-dim transition-colors duration-200 last:border-b-0 hover:bg-mint/[0.04]',
+        'border-b border-white/[0.04] transition-colors duration-200 last:border-b-0 hover:bg-white/[0.04]',
         className
       )}
       {...props}
@@ -45,7 +45,7 @@ export function TableHead({ children, className = '', ...props }) {
   return (
     <th
       className={cn(
-        'py-3 px-4 font-bold text-[#888] uppercase text-[10px] tracking-[0.08em] font-mono',
+        'py-3 px-4 font-semibold text-white/40 uppercase text-[10px] tracking-[0.1em]',
         className
       )}
       {...props}

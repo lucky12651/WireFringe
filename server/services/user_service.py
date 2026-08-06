@@ -346,8 +346,22 @@ class UserService:
         return self._build_me_out(updated)
 
     def update_avatar(self, user: User, avatar_url: str) -> MeOut:
-        """Update user avatar URL."""
+        """Update user avatar URL (legacy path-based). Prefer set_avatar_bytes."""
         user.avatar_url = avatar_url
+        updated = self.user_repo.update(user)
+        return self._build_me_out(updated)
+
+    def set_avatar_bytes(self, user: User, data: bytes, content_type: str) -> MeOut:
+        """Store avatar image in the database (survives redeploys)."""
+        import hashlib
+
+        if not data:
+            raise HTTPException(status_code=400, detail="Empty image")
+        user.avatar_data = data
+        user.avatar_content_type = (content_type or "image/jpeg").split(";")[0].strip()
+        ver = hashlib.sha256(data).hexdigest()[:10]
+        # Stable API URL — not filesystem — so deploys cannot orphan the file
+        user.avatar_url = f"/api/avatars/{user.id}?v={ver}"
         updated = self.user_repo.update(user)
         return self._build_me_out(updated)
 
@@ -369,6 +383,19 @@ class UserService:
             raise HTTPException(status_code=400, detail="Logo URL is required")
         user.brand_logo_url = url
         # Uploading a logo implies they want the feature available; keep current toggle state
+        updated = self.user_repo.update(user)
+        return self._build_me_out(updated)
+
+    def set_brand_logo_bytes(self, user: User, data: bytes, content_type: str) -> MeOut:
+        """Store brand logo image in the database (survives redeploys)."""
+        import hashlib
+
+        if not data:
+            raise HTTPException(status_code=400, detail="Empty image")
+        user.brand_logo_data = data
+        user.brand_logo_content_type = (content_type or "image/png").split(";")[0].strip()
+        ver = hashlib.sha256(data).hexdigest()[:10]
+        user.brand_logo_url = f"/api/brand-logos/{user.id}?v={ver}"
         updated = self.user_repo.update(user)
         return self._build_me_out(updated)
 

@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 const SYSTEM_ITEMS = [
   { id: 'adsense', label: 'AdSense', adminOnly: true, icon: 'adsense' },
   { id: 'bot', label: 'News Bot', adminOnly: true, icon: 'bot' },
-  { id: 'logs', label: 'System Logs', adminOnly: true, icon: 'logs' },
+  // System Logs lives as a tab inside News Bot (like Posts → Published / Queue)
 ];
 
 export function SidebarNav({
@@ -70,7 +70,7 @@ export function SidebarNav({
 
       <div
         className={cn(
-          'h-px bg-line-dim',
+          'h-px bg-white/[0.06]',
           collapsed ? 'w-9 my-2 mx-0' : 'my-2.5 mx-2 w-auto',
           'max-[980px]:hidden'
         )}
@@ -85,7 +85,7 @@ export function SidebarNav({
         )}
       >
         {!collapsed ? (
-          <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-ink-muted px-3 pt-3 pb-1.5 max-[980px]:hidden">
+          <div className="text-[10px] font-medium tracking-[0.14em] uppercase text-white/30 px-3 pt-3 pb-1.5 max-[980px]:hidden">
             System
           </div>
         ) : null}

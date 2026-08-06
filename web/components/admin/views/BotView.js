@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '../shared/EmptyState';
+import { ContentPipeline } from '../shared/ContentPipeline';
+import { LogsView } from './LogsView';
 import { cn } from '../../../lib/utils';
+import { tw } from '../../../lib/tw';
 
 const EMPTY_FORM = {
   enabled: true,
@@ -81,7 +84,7 @@ function SwitchKnob({ on }) {
         className={cn(
           'absolute top-[3px] left-[3px] w-4 h-4 rounded-full transition-all duration-200',
           on
-            ? 'translate-x-[18px] bg-mint shadow-[0_0_8px_rgba(60,255,208,0.35)]'
+            ? 'translate-x-[18px] bg-mint shadow-[0_0_8px_rgba(255,255,255,0.35)]'
             : 'bg-[#888]'
         )}
       />
@@ -92,7 +95,7 @@ function SwitchKnob({ on }) {
 const fieldLabel =
   'block font-mono text-xs tracking-[0.06em] text-[#aaa] mb-2 uppercase font-semibold';
 const fieldInput =
-  'w-full bg-[#0a0a0a] border border-line text-white font-mono text-[15px] py-3 px-3.5 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug focus:border-mint focus:shadow-[0_0_0_3px_rgba(60,255,208,0.2)]';
+  'w-full bg-[#0a0a0a] border border-line text-white font-mono text-[15px] py-3 px-3.5 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug focus:border-mint focus:shadow-[0_0_0_3px_rgba(255,255,255,0.2)]';
 const cardClass =
   'bg-bg-elevated border border-line rounded-lg py-6 px-[26px] pb-[26px] min-w-0 max-[720px]:p-5';
 
@@ -107,7 +110,7 @@ function LoopNode({ live, position, icon, title, value }) {
       <div
         className={cn(
           'w-[54px] h-[54px] rounded-full border-[1.5px] bg-[#0a0a0a] flex items-center justify-center transition-all',
-          live ? 'border-mint shadow-[0_0_14px_rgba(60,255,208,0.3)] text-mint' : 'border-line text-[#666]'
+          live ? 'border-mint shadow-[0_0_14px_rgba(255,255,255,0.3)] text-mint' : 'border-line text-[#666]'
         )}
       >
         {icon}
@@ -125,7 +128,16 @@ export function BotView({
   onSave,
   onHideArticles,
   onUnhideArticles,
+  queueCount = 0,
+  recentCache = [],
+  logs = [],
+  onRefreshLogs,
+  logsLoading = false,
+  initialTab = 'engine',
 }) {
+  const [activeTab, setActiveTab] = useState(
+    initialTab === 'logs' ? 'logs' : 'engine'
+  );
   const [form, setForm] = useState(EMPTY_FORM);
   const [hint, setHint] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -156,6 +168,11 @@ export function BotView({
     onRefresh?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Allow parent to open Logs tab (e.g. legacy /admin logs nav)
+  useEffect(() => {
+    if (initialTab === 'logs') setActiveTab('logs');
+  }, [initialTab]);
 
   const setField = (key, value) => {
     dirtyRef.current = true;
@@ -267,7 +284,7 @@ export function BotView({
       hint.toLowerCase().includes('hidden') ||
       hint.toLowerCase().includes('unhid'));
 
-  if (isLoading && !settings) {
+  if (isLoading && !settings && activeTab === 'engine') {
     return (
       <div className="flex flex-col w-full animate-fade-up">
         <div className="border border-line rounded-lg bg-bg-elevated py-12 px-6 text-center text-[#b0b0b0] text-[15px]">
@@ -278,9 +295,45 @@ export function BotView({
   }
 
   return (
-    <div className="flex flex-col w-full animate-fade-up motion-reduce:animate-none">
+    <div className="flex flex-col w-full gap-5 animate-fade-up motion-reduce:animate-none">
+      {/* Tabs — same pattern as Posts (Published / Queue); page title is in TopBar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className={tw.tabs} role="tablist" aria-label="News bot sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'engine'}
+            className={cn(tw.tab, activeTab === 'engine' && tw.tabActive)}
+            onClick={() => setActiveTab('engine')}
+          >
+            Engine
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'logs'}
+            className={cn(tw.tab, activeTab === 'logs' && tw.tabActive)}
+            onClick={() => setActiveTab('logs')}
+          >
+            System Logs
+            {Array.isArray(logs) && logs.length > 0 ? (
+              <span className="ml-1 opacity-80">{logs.length}</span>
+            ) : null}
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'logs' ? (
+        <LogsView
+          embedded
+          logs={logs}
+          onRefresh={onRefreshLogs}
+          isLoading={logsLoading}
+        />
+      ) : (
+        <>
       <section
-        className="grid grid-cols-1 min-[1051px]:grid-cols-2 gap-0 bg-bg-elevated border border-line rounded-lg overflow-hidden mb-5"
+        className="grid grid-cols-1 min-[1051px]:grid-cols-2 gap-0 bg-bg-elevated border border-line rounded-lg overflow-hidden mb-0"
         aria-label="Bot engine console"
       >
         <div className="py-[26px] px-[30px] max-[720px]:p-5 min-[1051px]:border-r border-line max-[1050px]:border-b border-line">
@@ -293,7 +346,7 @@ export function BotView({
               className={cn(
                 'w-[58px] h-[58px] rounded-full shrink-0 border-2 bg-[#0a0a0a] flex items-center justify-center cursor-pointer transition-all duration-300 p-0',
                 botOn
-                  ? 'border-mint bg-mint/10 shadow-[0_0_20px_rgba(60,255,208,0.28)] text-mint'
+                  ? 'border-mint bg-mint/10 shadow-[0_0_20px_rgba(255,255,255,0.28)] text-mint'
                   : 'border-line text-[#666]'
               )}
               role="switch"
@@ -312,22 +365,6 @@ export function BotView({
                   ? 'Saving power state…'
                   : 'Turn automated article publishing on or off. Saves immediately.'}
               </span>
-              <div
-                className={cn(
-                  'font-mono text-xs tracking-[0.08em] py-1.5 px-3 rounded-full border inline-flex items-center gap-2 mt-3 font-semibold',
-                  botOn ? 'text-mint border-mint' : 'text-[#888] border-line'
-                )}
-              >
-                <span
-                  className={cn(
-                    'w-2 h-2 rounded-full inline-block shrink-0',
-                    botOn
-                      ? 'bg-mint shadow-[0_0_6px_rgba(60,255,208,0.5)] animate-pulse motion-reduce:animate-none'
-                      : 'bg-[#666]'
-                  )}
-                />
-                <span>{botOn ? 'BOT ON' : 'BOT OFF'}</span>
-              </div>
             </div>
           </div>
           <p className="text-[13.5px] text-[#888] leading-relaxed mt-[18px] mb-0 max-w-[48ch]">
@@ -366,6 +403,14 @@ export function BotView({
         </div>
       </section>
 
+      <ContentPipeline
+        className="mb-5"
+        queueCount={queueCount}
+        cacheCount={Array.isArray(recentCache) ? recentCache.length : 0}
+        botPublishedCount={stats.totalBotPosts}
+        botOn={botOn}
+      />
+
       <section className="bg-bg-elevated border border-line rounded-lg py-7 px-[30px] pb-8 mb-5 max-[720px]:p-5" aria-label="Cycle loop">
         <div className="flex justify-between items-baseline mb-1 gap-3 flex-wrap">
           <h2 className="text-lg m-0 font-bold text-white tracking-tight">Cycle loop</h2>
@@ -387,7 +432,7 @@ export function BotView({
                 cy="160"
                 r="128"
                 fill="none"
-                stroke="#3cffd0"
+                stroke="#ffffff"
                 strokeWidth="1.5"
                 strokeDasharray="6 10"
                 className={cn(
@@ -563,7 +608,7 @@ export function BotView({
         <div className={cn(cardClass, 'col-span-full flex items-center gap-3.5 flex-wrap')}>
           <button
             type="submit"
-            className="font-mono font-bold text-sm tracking-[0.03em] bg-mint text-black border-none rounded-md py-3.5 px-[22px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:bg-[#2ee6b8] enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
+            className="font-mono font-bold text-sm tracking-[0.03em] bg-mint text-black border-none rounded-md py-3.5 px-[22px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:bg-white/90 enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
             disabled={isSaving || isTogglingVisibility || isTogglingPower}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14" aria-hidden>
@@ -591,6 +636,8 @@ export function BotView({
           ) : null}
         </div>
       </form>
+        </>
+      )}
     </div>
   );
 }

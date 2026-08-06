@@ -228,22 +228,22 @@ export default function AdminPostPage() {
       </Head>
 
       <div className={tw.pageShellAdmin}>
-        <header className="border-b border-line bg-black/80">
-          <div className="flex items-center justify-between gap-4 px-6 py-3 max-w-[1280px] mx-auto w-full">
+        <div className="admin-xai-noise" aria-hidden="true" />
+        <header className="border-b border-white/[0.07] bg-black/60 backdrop-blur-xl sticky top-0 z-50">
+          <div className="flex items-center justify-between gap-4 px-6 py-3.5 max-w-[1280px] mx-auto w-full">
             <Link className="flex items-center gap-3 no-underline text-white" href="/admin" aria-label="Back to admin">
               <BrandLogo size="sm" />
               <div>
-                <h1 className="m-0 text-base font-extrabold">Editor</h1>
-                <span id="editorMode" className="text-xs text-[#888]">{modeLabel}</span>
+                <h1 className="m-0 text-base font-semibold tracking-tight">Editor</h1>
+                <span id="editorMode" className="text-xs text-white/40">{modeLabel}</span>
               </div>
             </Link>
 
-            <div className={tw.adminTopbar}>
+            <div className="flex items-center gap-3">
               <div className={tw.adminMe} id="meLine">
                 {me ? `Signed in as ${me.username} (${me.role})` : ''}
               </div>
               <button className={tw.pillBtn} id="logoutBtn" type="button" onClick={onLogout}>
-                <span className={tw.dot} style={{ background: 'var(--accent)' }}></span>
                 Logout
               </button>
             </div>

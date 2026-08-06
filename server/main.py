@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI):
         _ensure_post_visibility_columns()
         _seed_default_categories()
         settings.uploads_dir.mkdir(parents=True, exist_ok=True)
+        _migrate_disk_avatars_into_db()
         logger.info("Schema upgrades / seed complete.")
     except Exception as e:
         logger.error(f"Error during schema upgrade/seed: {e}")
@@ -169,6 +170,10 @@ def _ensure_user_profile_columns() -> None:
             conn.execute(text("ALTER TABLE users ADD COLUMN display_name VARCHAR"))
         if "avatar_url" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR"))
+        if "avatar_data" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_data BYTEA"))
+        if "avatar_content_type" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_content_type VARCHAR"))
         added_brand_byline = False
         if "brand_byline_enabled" not in existing:
             conn.execute(
@@ -179,6 +184,10 @@ def _ensure_user_profile_columns() -> None:
             added_brand_byline = True
         if "brand_logo_url" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN brand_logo_url VARCHAR"))
+        if "brand_logo_data" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN brand_logo_data BYTEA"))
+        if "brand_logo_content_type" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN brand_logo_content_type VARCHAR"))
 
         # One-time default for Wirefringe when feature columns are first introduced
         if added_brand_byline:
@@ -207,6 +216,70 @@ def _ensure_user_profile_columns() -> None:
                     """
                 )
             )
+
+
+def _migrate_disk_avatars_into_db() -> None:
+    """If profile/brand images still exist on disk, copy them into DB columns.
+
+    Redeploys wipe the filesystem but keep PostgreSQL, so new uploads go to DB.
+    This one-time backfill rescues any remaining on-disk files before the next deploy.
+    """
+    import hashlib
+    from pathlib import Path
+
+    from .models import User
+
+    def _guess_type(path: Path) -> str:
+        ext = path.suffix.lower()
+        return {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+        }.get(ext, "image/jpeg")
+
+    def _disk_file(url: str | None) -> Path | None:
+        if not url:
+            return None
+        raw = str(url).split("?", 1)[0].strip()
+        if not raw.startswith("/static/uploads/"):
+            return None
+        name = Path(raw).name
+        if not name or name in (".", ".."):
+            return None
+        path = settings.uploads_dir / name
+        return path if path.is_file() else None
+
+    migrated = 0
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            # Avatar
+            if not getattr(user, "avatar_data", None):
+                path = _disk_file(getattr(user, "avatar_url", None))
+                if path is not None:
+                    data = path.read_bytes()
+                    user.avatar_data = data
+                    user.avatar_content_type = _guess_type(path)
+                    ver = hashlib.sha256(data).hexdigest()[:10]
+                    user.avatar_url = f"/api/avatars/{user.id}?v={ver}"
+                    migrated += 1
+
+            # Brand logo
+            if not getattr(user, "brand_logo_data", None):
+                path = _disk_file(getattr(user, "brand_logo_url", None))
+                if path is not None:
+                    data = path.read_bytes()
+                    user.brand_logo_data = data
+                    user.brand_logo_content_type = _guess_type(path)
+                    ver = hashlib.sha256(data).hexdigest()[:10]
+                    user.brand_logo_url = f"/api/brand-logos/{user.id}?v={ver}"
+                    migrated += 1
+
+        if migrated:
+            db.commit()
+            logger.info("Migrated %s disk profile/brand image(s) into database.", migrated)
 
 
 def _ensure_comment_moderation_columns() -> None:

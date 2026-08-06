@@ -49,10 +49,10 @@ async def admin_upload_profile_photo(
     user_service: UserService = Depends(get_user_service),
     media_service: MediaService = Depends(get_media_service),
 ) -> MeOut:
-    """Upload profile photo for current user."""
+    """Upload profile photo for current user (stored in DB — survives redeploys)."""
     user = require_user(request, db)
-    url = await media_service.store_uploaded_image(file)
-    return user_service.update_avatar(user, url)
+    data, content_type, _suffix = await media_service.read_validated_image(file)
+    return user_service.set_avatar_bytes(user, data, content_type)
 
 
 @router.put("/profile/brand-byline", response_model=MeOut)
@@ -75,7 +75,7 @@ async def admin_upload_brand_logo(
     user_service: UserService = Depends(get_user_service),
     media_service: MediaService = Depends(get_media_service),
 ) -> MeOut:
-    """Upload post-only brand logo (does not change site header/footer logo)."""
+    """Upload post-only brand logo (stored in DB — survives redeploys)."""
     user = require_user(request, db)
-    url = await media_service.store_uploaded_image(file)
-    return user_service.update_brand_logo(user, url)
+    data, content_type, _suffix = await media_service.read_validated_image(file)
+    return user_service.set_brand_logo_bytes(user, data, content_type)

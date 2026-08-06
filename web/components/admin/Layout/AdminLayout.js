@@ -2,7 +2,6 @@ import React from 'react';
 import Head from 'next/head';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
 
 export function AdminLayout({
@@ -21,6 +20,7 @@ export function AdminLayout({
       </Head>
 
       <div className={tw.pageShellAdmin}>
+        <div className="admin-xai-noise" aria-hidden="true" />
         <div className={tw.adminShell}>
           <Sidebar
             me={me}
@@ -31,19 +31,8 @@ export function AdminLayout({
             pendingCommentsCount={pendingCommentsCount}
           />
 
-          <main
-            className={cn(
-              tw.adminContent,
-              activeView === 'adsense' && 'max-w-none'
-            )}
-            aria-label="Admin content"
-          >
-            <div
-              className={cn(
-                tw.adminContentInner,
-                activeView === 'adsense' && 'max-w-none'
-              )}
-            >
+          <main className={tw.adminContent} aria-label="Admin content">
+            <div className={tw.adminContentInner}>
               <TopBar activeView={activeView} />
               {children}
             </div>

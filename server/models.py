@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Float
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, Float
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -51,11 +51,16 @@ class User(Base):
     # Public-facing profile fields
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Binary image stored in DB so redeploys do not wipe profile photos
+    avatar_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    avatar_content_type: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # Post byline brand treatment (does NOT change site-wide header/footer logo)
     # When enabled, public posts show brand_logo_url instead of the username text.
     brand_byline_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     brand_logo_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    brand_logo_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    brand_logo_content_type: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 

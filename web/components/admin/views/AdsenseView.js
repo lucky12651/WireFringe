@@ -45,12 +45,6 @@ const ChevronRight = () => (
   </svg>
 );
 
-const RefreshIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden className="w-3.5 h-3.5 shrink-0">
-    <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
-  </svg>
-);
-
 function defaultAdsTxt(publisherId) {
   const pub = String(publisherId || '').trim() || 'pub-XXXXXXXXXXXXXXXX';
   return `google.com, ${pub}, DIRECT, f08c47fec0942fa0`;
@@ -68,7 +62,7 @@ function SwitchKnob({ on }) {
         className={cn(
           'absolute top-[3px] left-[3px] w-4 h-4 rounded-full transition-all duration-200',
           on
-            ? 'translate-x-[18px] bg-mint shadow-[0_0_8px_rgba(60,255,208,0.35)]'
+            ? 'translate-x-[18px] bg-mint shadow-[0_0_8px_rgba(255,255,255,0.35)]'
             : 'bg-[#888]'
         )}
       />
@@ -87,7 +81,7 @@ function StatusPill({ on, children }) {
       <span
         className={cn(
           'w-2 h-2 rounded-full inline-block shrink-0',
-          on ? 'bg-mint shadow-[0_0_6px_rgba(60,255,208,0.5)]' : 'bg-[#666]'
+          on ? 'bg-mint shadow-[0_0_6px_rgba(255,255,255,0.5)]' : 'bg-[#666]'
         )}
       />
       <span>{children}</span>
@@ -98,13 +92,13 @@ function StatusPill({ on, children }) {
 const fieldLabel =
   'block font-mono text-xs tracking-[0.06em] text-[#aaa] mb-2 uppercase font-semibold';
 const fieldControl =
-  'w-full bg-[#0a0a0a] border border-line text-white font-mono text-sm py-2.5 px-3 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug placeholder:text-[#666] focus:border-mint focus:shadow-[0_0_0_3px_rgba(60,255,208,0.2)]';
+  'w-full bg-[#0a0a0a] border border-line text-white font-mono text-sm py-2.5 px-3 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug placeholder:text-[#666] focus:border-mint focus:shadow-[0_0_0_3px_rgba(255,255,255,0.2)]';
 const tagClass =
   'font-mono bg-[#1a1a1a] border border-line rounded px-1.5 py-0.5 text-[13px] text-mint';
 const btnGhost =
   'inline-flex items-center gap-2 font-mono text-[13px] tracking-[0.04em] text-[#c8c8c8] bg-transparent border border-line rounded-md py-2.5 px-4 cursor-pointer transition-colors whitespace-nowrap enabled:hover:border-mint/35 enabled:hover:text-white disabled:opacity-45 disabled:cursor-not-allowed';
 const btnPrimary =
-  'font-mono font-bold text-[13px] tracking-[0.03em] bg-mint text-black border-none rounded-md py-2.5 px-[18px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:bg-[#2ee6b8] enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed';
+  'font-mono font-bold text-[13px] tracking-[0.03em] bg-mint text-black border-none rounded-md py-2.5 px-[18px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:bg-white/90 enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed';
 const btnDanger =
   'font-mono font-semibold text-[13px] tracking-[0.03em] bg-transparent text-[#ff6b6b] border border-[rgba(255,107,107,0.35)] rounded-md py-2.5 px-4 cursor-pointer transition-colors enabled:hover:bg-[rgba(255,107,107,0.12)] enabled:hover:border-[#ff6b6b] disabled:opacity-50 disabled:cursor-not-allowed';
 const btnDangerSolid =
@@ -291,10 +285,10 @@ export function AdsenseView({
     'flex items-start gap-3.5 bg-[#0a0a0a] border border-line rounded-lg py-3 px-3.5 mb-3.5 cursor-pointer select-none hover:border-mint/20';
 
   return (
-    <div className="flex flex-col gap-0 w-full max-w-none flex-auto min-h-0 h-auto max-h-[calc(100vh-108px)] max-[720px]:max-h-none max-[720px]:min-h-0 animate-fade-up motion-reduce:animate-none">
+    <div className="flex flex-col gap-0 w-full flex-auto min-h-0 h-auto max-h-[calc(100vh-108px)] max-[720px]:max-h-none max-[720px]:min-h-0 animate-fade-up motion-reduce:animate-none">
       <div
         className={cn(
-          'grid gap-0 border border-line rounded-lg overflow-hidden bg-bg-elevated flex-auto w-full max-w-none',
+          'grid gap-0 border border-line rounded-lg overflow-hidden bg-bg-elevated flex-auto w-full',
           'min-h-[360px] h-[calc(100vh-230px)] max-h-[calc(100vh-210px)] items-stretch box-border',
           'grid-cols-1 min-[721px]:grid-cols-[200px_1fr] min-[1101px]:grid-cols-[minmax(200px,240px)_minmax(0,1fr)_minmax(280px,340px)]',
           'max-[720px]:min-h-[320px] max-[720px]:h-auto max-[720px]:max-h-none'
@@ -303,58 +297,98 @@ export function AdsenseView({
         {/* Step rail */}
         <nav
           className={cn(
-            'border-r border-line p-2 bg-[#101010] h-full min-h-0 overflow-y-auto',
-            'max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:flex max-[720px]:overflow-x-auto max-[720px]:gap-1'
+            'border-r border-line p-2 bg-[#101010] h-full min-h-0 flex flex-col overflow-hidden',
+            'max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:block max-[720px]:overflow-x-auto'
           )}
           aria-label="AdSense setup steps"
         >
-          {STEPS.map((s) => {
-            const active = step === s.id;
-            const complete = isComplete(s.id);
-            return (
-              <button
-                key={s.id}
-                type="button"
-                className={cn(
-                  'flex items-center gap-3 py-2.5 px-2.5 rounded-md cursor-pointer mb-0.5 border w-full text-left font-inherit transition-colors',
-                  active
-                    ? 'bg-[#0a0a0a] border-line'
-                    : 'bg-transparent border-transparent hover:bg-[#1a1a1a]',
-                  'max-[720px]:flex-none max-[720px]:mb-0'
-                )}
-                onClick={() => goToStep(s.id)}
-                aria-current={active ? 'step' : undefined}
-              >
-                <div
+          <div
+            className={cn(
+              'flex-1 min-h-0 overflow-y-auto',
+              'max-[720px]:flex max-[720px]:overflow-x-auto max-[720px]:gap-1'
+            )}
+          >
+            {STEPS.map((s) => {
+              const active = step === s.id;
+              const complete = isComplete(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
                   className={cn(
-                    'font-mono text-xs font-bold w-6 h-6 border rounded-full flex items-center justify-center shrink-0',
-                    complete
-                      ? 'bg-mint/10 border-mint text-mint'
-                      : active
-                        ? 'text-mint border-mint'
-                        : 'text-[#888] border-line'
+                    'flex items-center gap-3 py-2.5 px-2.5 rounded-md cursor-pointer mb-0.5 border w-full text-left font-inherit transition-colors',
+                    active
+                      ? 'bg-[#0a0a0a] border-line'
+                      : 'bg-transparent border-transparent hover:bg-[#1a1a1a]',
+                    'max-[720px]:flex-none max-[720px]:mb-0'
                   )}
+                  onClick={() => goToStep(s.id)}
+                  aria-current={active ? 'step' : undefined}
                 >
-                  {complete ? <CheckIcon /> : <span>{s.id + 1}</span>}
-                </div>
-                <div>
-                  <strong
+                  <div
                     className={cn(
-                      'block text-sm font-semibold leading-snug',
-                      active ? 'text-mint' : 'text-[#f0f0f0]'
+                      'font-mono text-xs font-bold w-6 h-6 border rounded-full flex items-center justify-center shrink-0',
+                      complete
+                        ? 'bg-mint/10 border-mint text-mint'
+                        : active
+                          ? 'text-mint border-mint'
+                          : 'text-[#888] border-line'
                     )}
                   >
-                    {s.label}
-                  </strong>
-                  <span className="text-xs text-[#888] font-mono mt-0.5 block">{s.hint}</span>
-                </div>
+                    {complete ? <CheckIcon /> : <span>{s.id + 1}</span>}
+                  </div>
+                  <div>
+                    <strong
+                      className={cn(
+                        'block text-sm font-semibold leading-snug',
+                        active ? 'text-mint' : 'text-[#f0f0f0]'
+                      )}
+                    >
+                      {s.label}
+                    </strong>
+                    <span className="text-xs text-[#888] font-mono mt-0.5 block">{s.hint}</span>
+                  </div>
+                </button>
+              );
+            })}
+            <div className="h-px bg-line my-3 mx-1 max-[720px]:hidden" />
+            <div className="text-[12.5px] text-[#888] py-2.5 px-3 leading-snug max-[720px]:hidden">
+              Steps auto-mark complete once required fields are filled. Nothing is written until you
+              save.
+            </div>
+          </div>
+
+          {/* Delete lives at bottom of the step rail card */}
+          <div className="shrink-0 pt-2 mt-auto border-t border-line max-[720px]:mt-2">
+            {!confirmClear ? (
+              <button
+                type="button"
+                className={cn(btnDanger, 'w-full justify-center')}
+                onClick={() => setConfirmClear(true)}
+                disabled={isSaving || isClearing}
+              >
+                Delete credentials
               </button>
-            );
-          })}
-          <div className="h-px bg-line my-3 mx-1 max-[720px]:hidden" />
-          <div className="text-[12.5px] text-[#888] py-2.5 px-3 leading-snug max-[720px]:hidden">
-            Steps auto-mark complete once required fields are filled. Nothing is written until you
-            save.
+            ) : (
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  className={cn(btnDangerSolid, 'w-full justify-center')}
+                  onClick={handleClear}
+                  disabled={isClearing}
+                >
+                  {isClearing ? 'Deleting…' : 'Confirm delete'}
+                </button>
+                <button
+                  type="button"
+                  className={cn(btnGhost, 'w-full justify-center')}
+                  onClick={() => setConfirmClear(false)}
+                  disabled={isClearing}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </nav>
 
@@ -693,7 +727,7 @@ export function AdsenseView({
                   className={cn(
                     'w-[22px] h-[22px] rounded-full border-[1.5px] flex items-center justify-center shrink-0 z-[1] transition-all',
                     row.lit
-                      ? 'border-mint bg-mint shadow-[0_0_10px_rgba(60,255,208,0.35)] text-[#04120d]'
+                      ? 'border-mint bg-mint shadow-[0_0_10px_rgba(255,255,255,0.35)] text-black'
                       : 'border-line bg-[#0a0a0a] text-transparent'
                   )}
                 >
@@ -734,87 +768,70 @@ export function AdsenseView({
               {adsTxtPreview}
             </div>
           </div>
+
+          {/* Save lives at bottom of delivery pipeline card */}
+          <div className="mt-auto pt-2 border-t border-line flex flex-col gap-2">
+            <button
+              type="button"
+              className={cn(btnPrimary, 'w-full justify-center')}
+              onClick={handleSave}
+              disabled={isSaving || isClearing}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                width="14"
+                height="14"
+                aria-hidden
+              >
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+              {isSaving ? 'Saving…' : 'Save AdSense settings'}
+            </button>
+            <span
+              className={cn(
+                'text-[12px] text-[#888] font-mono font-medium text-center',
+                hint &&
+                  (hint.toLowerCase().includes('saved') || hint.toLowerCase().includes('deleted')) &&
+                  'text-mint',
+                hint &&
+                  !hint.toLowerCase().includes('saved') &&
+                  !hint.toLowerCase().includes('deleted') &&
+                  'text-[#ff6b6b]'
+              )}
+            >
+              {hint || lastSaved || 'Not saved yet'}
+            </span>
+          </div>
         </aside>
       </div>
 
-      {/* Sticky action bar */}
-      <div className="sticky bottom-0 mt-2.5 shrink-0 bg-gradient-to-t from-[#0a0a0a] from-65% to-transparent pt-2.5 z-[5] w-full">
-        <div className="flex gap-2.5 bg-bg-elevated border border-line rounded-lg py-2.5 px-3.5 items-center flex-wrap">
-          <button
-            type="button"
-            className={btnPrimary}
-            onClick={handleSave}
-            disabled={isSaving || isClearing}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              width="14"
-              height="14"
-              aria-hidden
-            >
-              <path d="M5 13l4 4L19 7" />
-            </svg>
-            {isSaving ? 'Saving…' : 'Save AdSense settings'}
-          </button>
-
-          {!confirmClear ? (
-            <button
-              type="button"
-              className={btnDanger}
-              onClick={() => setConfirmClear(true)}
-              disabled={isSaving || isClearing}
-            >
-              Delete credentials
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                className={btnDangerSolid}
-                onClick={handleClear}
-                disabled={isClearing}
-              >
-                {isClearing ? 'Deleting…' : 'Confirm delete'}
-              </button>
-              <button
-                type="button"
-                className={btnGhost}
-                onClick={() => setConfirmClear(false)}
-                disabled={isClearing}
-              >
-                Cancel
-              </button>
-            </>
+      {/* Mobile-only actions (delivery pipeline is hidden below 1100px) */}
+      <div className="hidden max-[1100px]:flex flex-col gap-2.5 mt-3">
+        <button
+          type="button"
+          className={cn(btnPrimary, 'w-full justify-center')}
+          onClick={handleSave}
+          disabled={isSaving || isClearing}
+        >
+          {isSaving ? 'Saving…' : 'Save AdSense settings'}
+        </button>
+        <span
+          className={cn(
+            'text-[12px] text-[#888] font-mono font-medium text-center',
+            hint &&
+              (hint.toLowerCase().includes('saved') || hint.toLowerCase().includes('deleted')) &&
+              'text-mint',
+            hint &&
+              !hint.toLowerCase().includes('saved') &&
+              !hint.toLowerCase().includes('deleted') &&
+              'text-[#ff6b6b]'
           )}
-
-          <button
-            type="button"
-            className={btnGhost}
-            onClick={() => onRefresh?.()}
-            disabled={isLoading || isSaving || isClearing}
-          >
-            {isLoading ? 'Refreshing…' : 'Refresh'}
-            <RefreshIcon />
-          </button>
-
-          <span
-            className={cn(
-              'text-[13px] text-[#888] ml-auto max-[720px]:ml-0 max-[720px]:w-full font-mono font-medium',
-              hint &&
-                (hint.toLowerCase().includes('saved') || hint.toLowerCase().includes('deleted')) &&
-                'text-mint',
-              hint &&
-                !hint.toLowerCase().includes('saved') &&
-                !hint.toLowerCase().includes('deleted') &&
-                'text-[#ff6b6b]'
-            )}
-          >
-            {hint || lastSaved || 'Not saved yet'}
-          </span>
-        </div>
+        >
+          {hint || lastSaved || 'Not saved yet'}
+        </span>
       </div>
     </div>
   );

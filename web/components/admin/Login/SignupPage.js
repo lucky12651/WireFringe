@@ -10,20 +10,8 @@ const signupSchema = z.object({
   displayName: z.string().min(1, 'Display name is required'),
 });
 
-const COLLAGE = [
-  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=70',
-];
-
 const inputClass =
-  'w-full h-[46px] px-3 border border-line-strong rounded-sm bg-bg-elevated text-white text-[15px] outline-none transition-[border-color,box-shadow] duration-150 focus:border-mint focus:shadow-[0_0_0_3px_rgba(60,255,208,0.12)]';
+  'w-full h-12 px-4 border border-white/12 rounded-xl bg-white/[0.04] text-white text-[15px] outline-none transition-all duration-200 placeholder:text-white/25 focus:border-white/35 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]';
 
 export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
   const [username, setUsername] = useState('');
@@ -66,51 +54,49 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
   };
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] overflow-hidden bg-black text-white font-sans">
+    <div className="admin-xai relative min-h-screen min-h-[100dvh] overflow-hidden bg-black text-white font-sans">
+      <div className="admin-xai-noise" aria-hidden="true" />
       <div
-        className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-[3px] z-0 max-sm:grid-cols-2 max-sm:grid-rows-4"
+        className="pointer-events-none absolute inset-0 z-0"
         aria-hidden="true"
-      >
-        {COLLAGE.map((src, i) => (
-          <div
-            key={i}
-            className={cn(
-              'relative overflow-hidden bg-[#111]',
-              i >= 8 && 'max-sm:hidden'
-            )}
-          >
-            <img
-              src={src}
-              alt=""
-              loading="lazy"
-              className="w-full h-full object-cover block saturate-[0.85] brightness-[0.55]"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="absolute inset-0 z-[1] bg-black/55 backdrop-blur-[1px]" aria-hidden="true" />
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 50% at 50% -5%, rgba(255,255,255,0.09), transparent 55%), radial-gradient(ellipse 40% 30% at 15% 80%, rgba(255,255,255,0.04), transparent 50%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.035]"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+          maskImage: 'radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent)',
+        }}
+      />
 
       <div className="relative z-[2] min-h-screen min-h-[100dvh] flex flex-col items-center justify-center pt-12 px-4 pb-[100px] max-sm:pt-8 max-sm:px-3 max-sm:pb-[110px]">
-        <div className="mb-[22px] max-sm:mb-4 [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
+        <div className="mb-8 max-sm:mb-5">
           <BrandLogo size="lg" />
         </div>
 
-        <div className="w-[min(440px,100%)] bg-bg-card border border-line rounded p-9 px-8 pb-7 shadow-xl max-sm:p-7 max-sm:px-5 max-sm:pb-[22px]">
-          <h1 className="m-0 mb-3 text-center text-[26px] max-sm:text-[22px] font-extrabold leading-tight tracking-tight text-white">
-            Create an
-            <br />
-            account
+        <div className="w-[min(420px,100%)] rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-9 px-8 pb-7 shadow-[0_24px_80px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04)] max-sm:p-7 max-sm:px-5 max-sm:pb-[22px]">
+          <p className="m-0 mb-2 text-center text-[11px] font-medium tracking-[0.16em] uppercase text-white/40">
+            Get started
+          </p>
+          <h1 className="m-0 mb-2 text-center text-[26px] max-sm:text-[22px] font-semibold leading-tight tracking-[-0.03em] text-white">
+            Create account
           </h1>
-          <p className="m-0 mb-6 text-center text-xs leading-normal text-[#888] [&_a]:text-mint [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-mint-hover">
+          <p className="m-0 mb-7 text-center text-[13px] leading-relaxed text-white/40 [&_a]:text-white/70 [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-white">
             Join Wirefringe to follow stories and join the conversation. By signing up you agree
             to our <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link>.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="signup-display"
-                className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#aaa]"
+                className="text-[11px] font-medium tracking-[0.08em] uppercase text-white/45"
               >
                 Display name
               </label>
@@ -120,7 +106,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 autoComplete="name"
-                className={cn(inputClass, errors.displayName && 'border-[#ff6b6b]')}
+                className={cn(inputClass, errors.displayName && 'border-[#ff6b6b]/60')}
               />
               {errors.displayName ? (
                 <span className="text-xs text-[#ff8a8a]">{errors.displayName}</span>
@@ -130,7 +116,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="signup-username"
-                className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#aaa]"
+                className="text-[11px] font-medium tracking-[0.08em] uppercase text-white/45"
               >
                 Username
               </label>
@@ -140,7 +126,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
-                className={cn(inputClass, errors.username && 'border-[#ff6b6b]')}
+                className={cn(inputClass, errors.username && 'border-[#ff6b6b]/60')}
               />
               {errors.username ? (
                 <span className="text-xs text-[#ff8a8a]">{errors.username}</span>
@@ -150,7 +136,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="signup-password"
-                className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#aaa]"
+                className="text-[11px] font-medium tracking-[0.08em] uppercase text-white/45"
               >
                 Password
               </label>
@@ -161,11 +147,11 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
-                  className={cn(inputClass, 'pr-16', errors.password && 'border-[#ff6b6b]')}
+                  className={cn(inputClass, 'pr-16', errors.password && 'border-[#ff6b6b]/60')}
                 />
                 <button
                   type="button"
-                  className="absolute right-2 h-8 px-2.5 border-none bg-transparent text-[#888] font-mono text-[11px] font-bold tracking-[0.04em] uppercase cursor-pointer hover:text-mint"
+                  className="absolute right-2 h-8 px-2.5 border-none bg-transparent text-white/40 text-[11px] font-medium tracking-[0.04em] uppercase cursor-pointer hover:text-white transition-colors"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -178,25 +164,25 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
             </div>
 
             {(errors.form || serverError) && (
-              <div className="bg-[rgba(255,107,107,0.1)] border border-[rgba(255,107,107,0.3)] text-[#ff8a8a] py-2.5 px-3 rounded-sm text-[13px]">
+              <div className="bg-[rgba(255,107,107,0.1)] border border-[rgba(255,107,107,0.3)] text-[#ff8a8a] py-2.5 px-3.5 rounded-xl text-[13px]">
                 {errors.form || serverError}
               </div>
             )}
 
             <button
               type="submit"
-              className="mt-1 h-12 w-full border-none rounded-sm bg-mint text-black font-mono text-xs font-extrabold tracking-[0.1em] uppercase cursor-pointer transition-all duration-150 enabled:hover:bg-mint-hover enabled:hover:shadow-[0_8px_24px_rgba(60,255,208,0.25)] enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
+              className="mt-1 h-12 w-full border-none rounded-xl bg-white text-black text-[13px] font-semibold tracking-wide cursor-pointer transition-all duration-200 enabled:hover:bg-white/90 enabled:hover:shadow-[0_0_32px_rgba(255,255,255,0.18)] enabled:hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? 'Creating…' : 'Create account'}
             </button>
           </form>
 
-          <p className="mt-[18px] mb-0 text-center text-sm text-[#888]">
+          <p className="mt-6 mb-0 text-center text-sm text-white/40">
             Already have an account?{' '}
             <button
               type="button"
-              className="border-none bg-transparent p-0 text-mint font-bold cursor-pointer underline underline-offset-2 hover:text-mint-hover"
+              className="border-none bg-transparent p-0 text-white font-medium cursor-pointer underline underline-offset-2 hover:text-white/80 transition-colors"
               onClick={onToggleMode}
             >
               Sign in
@@ -207,7 +193,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
 
       <footer className="absolute left-0 right-0 bottom-0 z-[2] pt-4 px-5 pb-5 text-center">
         <nav
-          className="flex flex-wrap justify-center gap-x-3.5 gap-y-2 mb-2 [&_a]:text-white/55 [&_a]:text-[11px] [&_a]:no-underline [&_a]:font-mono [&_a]:tracking-wide hover:[&_a]:text-mint"
+          className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-2 [&_a]:text-white/40 [&_a]:text-[11px] [&_a]:no-underline [&_a]:tracking-wide hover:[&_a]:text-white"
           aria-label="Legal"
         >
           <Link href="/terms">Terms of Use</Link>
@@ -216,7 +202,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
           <Link href="/contact">Contact</Link>
           <Link href="/about">About</Link>
         </nav>
-        <p className="m-0 text-[11px] text-white/35 font-mono">
+        <p className="m-0 text-[11px] text-white/25">
           © {new Date().getFullYear()} Wirefringe. All rights reserved.
         </p>
       </footer>

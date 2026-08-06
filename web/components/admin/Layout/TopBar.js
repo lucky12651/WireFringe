@@ -8,7 +8,7 @@ const VIEW_TITLES = {
   comments: 'Comments',
   users: 'Users',
   settings: 'Settings',
-  logs: 'System Logs',
+  logs: 'News Bot',
   adsense: 'AdSense',
   bot: 'News Bot',
 };
@@ -21,18 +21,18 @@ export function TopBar({ activeView }) {
   );
 
   return (
-    <header className="flex items-end justify-between gap-4 mb-7 pb-4 border-b border-line-dim">
+    <header className="flex items-end justify-between gap-4 mb-8 pb-5 border-b border-white/[0.06]">
       <div>
-        <p className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-mint m-0 mb-1.5">
-          Admin
+        <p className="text-[11px] font-medium tracking-[0.16em] uppercase text-white/40 m-0 mb-2">
+          Control center
         </p>
-        <h1 className="text-[28px] max-[600px]:text-[22px] font-extrabold tracking-tight text-white m-0 leading-tight">
+        <h1 className="text-[30px] max-[600px]:text-[22px] font-semibold tracking-[-0.03em] text-white m-0 leading-none">
           {title}
         </h1>
       </div>
       <a
         href="/"
-        className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-[#888] no-underline py-2 px-3 border border-line rounded-sm whitespace-nowrap transition-colors duration-200 hover:text-mint hover:border-mint hover:bg-mint/10"
+        className="text-[12px] font-medium tracking-wide text-white/55 no-underline py-2.5 px-4 border border-white/12 rounded-full whitespace-nowrap transition-all duration-200 hover:text-black hover:bg-white hover:border-white"
         target="_blank"
         rel="noreferrer"
       >

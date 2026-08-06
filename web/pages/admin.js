@@ -25,7 +25,6 @@ import {
   CommentsView,
   UsersView,
   SettingsView,
-  LogsView,
   AdsenseView,
   BotView,
 } from '../components/admin/views';
@@ -152,6 +151,13 @@ export default function AdminPage() {
       comments.refreshPendingCount();
       categories.refreshCategoriesWithCounts();
       posts.refreshRecentCache();
+      posts.refreshQueue();
+    }
+    if (activeView === 'bot' || activeView === 'logs') {
+      posts.refreshQueue();
+      posts.refreshRecentCache();
+      bot.refresh();
+      logs.refreshLogs();
     }
     if (activeView === 'comments') {
       comments.refreshComments();
@@ -208,8 +214,8 @@ export default function AdminPage() {
   const renderView = () => {
     if (isInitialLoading) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div className="loader">Loading...</div>
+        <div className="flex justify-center items-center min-h-[40vh]">
+          <div className="w-7 h-7 rounded-full border-2 border-white/15 border-t-white animate-spin" aria-label="Loading" />
         </div>
       );
     }
@@ -230,6 +236,7 @@ export default function AdminPage() {
             memberStats={users.memberStats}
             latestPosts={posts.latestPosts}
             recentCache={posts.recentCache}
+            mediaCount={media.mediaCount}
             me={me}
             onNavigate={setActiveView}
           />
@@ -318,11 +325,22 @@ export default function AdminPage() {
         );
 
       case 'logs':
+        // System Logs is a tab inside News Bot (legacy nav / deep links)
+        if (me?.role !== 'admin') return null;
         return (
-          <LogsView
+          <BotView
+            settings={bot.settings}
+            isLoading={bot.isLoading}
+            onRefresh={bot.refresh}
+            onSave={bot.save}
+            onHideArticles={bot.hideArticles}
+            onUnhideArticles={bot.unhideArticles}
+            queueCount={posts.queue.length}
+            recentCache={posts.recentCache}
             logs={logs.logs}
-            onRefresh={logs.refreshLogs}
-            isLoading={logs.isLoading}
+            onRefreshLogs={logs.refreshLogs}
+            logsLoading={logs.isLoading}
+            initialTab="logs"
           />
         );
 
@@ -348,6 +366,12 @@ export default function AdminPage() {
             onSave={bot.save}
             onHideArticles={bot.hideArticles}
             onUnhideArticles={bot.unhideArticles}
+            queueCount={posts.queue.length}
+            recentCache={posts.recentCache}
+            logs={logs.logs}
+            onRefreshLogs={logs.refreshLogs}
+            logsLoading={logs.isLoading}
+            initialTab="engine"
           />
         );
 
@@ -367,8 +391,8 @@ export default function AdminPage() {
   // Show loading state while checking auth
   if (isInitialLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#111' }}>
-        <div className="loader"></div>
+      <div className="admin-xai flex justify-center items-center h-screen bg-black">
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-white animate-spin" aria-label="Loading" />
       </div>
     );
   }

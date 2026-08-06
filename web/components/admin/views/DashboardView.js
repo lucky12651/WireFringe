@@ -9,12 +9,12 @@ import {
 
 function categoryTint(bucket) {
   const s = String(bucket || '').toLowerCase();
-  if (s.includes('sport')) return 'bg-gradient-to-br from-[#e8b342] to-transparent';
+  if (s.includes('sport')) return 'bg-gradient-to-br from-white/50 to-transparent';
   if (s.includes('financ') || s.includes('money') || s.includes('market')) {
-    return 'bg-gradient-to-br from-mint to-transparent';
+    return 'bg-gradient-to-br from-white/60 to-transparent';
   }
-  if (s.includes('tech') || s.includes('scien')) return 'bg-gradient-to-br from-purple to-transparent';
-  return 'bg-gradient-to-br from-[#5b8def] to-transparent';
+  if (s.includes('tech') || s.includes('scien')) return 'bg-gradient-to-br from-white/40 to-transparent';
+  return 'bg-gradient-to-br from-white/35 to-transparent';
 }
 
 function shortMonth(label) {
@@ -38,12 +38,6 @@ const IconClock = () => (
 const IconShield = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
     <path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" />
-  </svg>
-);
-
-const IconCheck = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-    <path d="M5 13l4 4L19 7" />
   </svg>
 );
 
@@ -87,18 +81,23 @@ export function DashboardView({
   pendingCommentsCount,
   canViewPendingCommentsCount,
   postsByMonth,
+  postGrowth30,
   trendingComments,
   trendingHint,
   latestPosts,
   recentCache,
+  mediaCount,
+  memberStats,
+  me,
   onNavigate,
 }) {
   const [filter, setFilter] = useState('all');
 
-  const cacheCount = Array.isArray(recentCache) ? recentCache.length : 0;
   const published = Number(postsCount) || 0;
   const pending = Number(queueCount) || 0;
-  const isProcessing = pending > 0;
+  const media = Number(mediaCount) || 0;
+  const growthDelta = postGrowth30?.delta;
+  const teamCount = Array.isArray(memberStats) ? memberStats.length : 0;
 
   const feedItems = useMemo(() => {
     const live = (Array.isArray(latestPosts) ? latestPosts : []).map((p) => ({
@@ -145,112 +144,143 @@ export function DashboardView({
 
   return (
     <div className="flex flex-col gap-0 animate-fade-up motion-reduce:animate-none">
-      {/* Content pipeline */}
+      {/* Overview stats */}
       <section
-        className="bg-bg-elevated border border-line rounded-lg py-5 px-[26px] mb-[22px] max-[720px]:p-4"
-        aria-label="Content pipeline"
+        className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-3 mb-6"
+        aria-label="Overview stats"
       >
-        <div className="flex justify-between items-baseline mb-[18px] gap-3 flex-wrap">
-          <span className="font-mono text-[9.5px] tracking-[0.16em] text-[#666] uppercase">
-            Content pipeline — news bot
-          </span>
-          <span
-            className={cn(
-              'font-mono text-[10px] flex items-center gap-1.5 tracking-[0.06em]',
-              isProcessing ? 'text-mint' : 'text-[#888]'
-            )}
+        {[
+          {
+            label: 'Published',
+            value: published,
+            sub: 'All live articles',
+            go: 'posts',
+          },
+          {
+            label: 'Pending comments',
+            value: pendingComments,
+            sub: 'Awaiting review',
+            go: 'comments',
+            warn: pendingComments > 0,
+          },
+          {
+            label: 'Categories',
+            value: Number(categoriesCount) || 0,
+            sub: 'Taxonomy buckets',
+            go: 'categories',
+          },
+          {
+            label: 'Media library',
+            value: media,
+            sub: 'Uploaded assets',
+            go: 'media',
+          },
+        ].map((card) => (
+          <button
+            key={card.label}
+            type="button"
+            onClick={() => onNavigate?.(card.go)}
+            className="text-left bg-white/[0.03] border border-white/[0.08] rounded-2xl py-4 px-4 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/[0.05] cursor-pointer"
           >
-            <span
-              className={cn(
-                'w-1.5 h-1.5 rounded-full',
-                isProcessing
-                  ? 'bg-mint shadow-[0_0_6px_rgba(60,255,208,0.5)] animate-pulse'
-                  : 'bg-[#555]'
-              )}
-            />
-            {isProcessing ? 'PROCESSING' : 'STANDBY'}
-          </span>
+            <div className="text-[10px] tracking-[0.12em] uppercase text-white/35 font-medium mb-2">
+              {card.label}
+            </div>
+            <div
+              className={
+                'text-[28px] font-semibold tracking-tight leading-none ' +
+                (card.warn ? 'text-[#e8b342]' : 'text-white')
+              }
+            >
+              {card.value}
+            </div>
+            <div className="text-[11px] text-white/35 mt-2">{card.sub}</div>
+          </button>
+        ))}
+      </section>
+
+      {/* Quick actions + growth */}
+      <section
+        className="grid grid-cols-1 min-[901px]:grid-cols-[1.4fr_1fr] gap-3 mb-6"
+        aria-label="Quick actions"
+      >
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl py-5 px-5 backdrop-blur-sm">
+          <div className="text-[10px] tracking-[0.14em] uppercase text-white/35 font-medium mb-3">
+            Quick actions
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'posts', label: 'Manage posts', hint: 'Edit & publish' },
+              { id: 'comments', label: 'Moderate', hint: pendingComments ? `${pendingComments} waiting` : 'Inbox clear' },
+              me?.role === 'admin'
+                ? { id: 'bot', label: 'News bot', hint: pending ? `${pending} in queue` : 'Pipeline' }
+                : null,
+              { id: 'media', label: 'Upload media', hint: 'Library' },
+              { id: 'settings', label: 'Settings', hint: me?.username ? `@${me.username}` : 'Profile' },
+              me?.role === 'admin' ? { id: 'users', label: 'Team', hint: teamCount ? `${teamCount} members` : 'Users' } : null,
+            ]
+              .filter(Boolean)
+              .map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => onNavigate?.(a.id)}
+                  className="group flex flex-col items-start gap-0.5 min-w-[132px] flex-1 py-3 px-3.5 rounded-xl border border-white/10 bg-black/30 text-left cursor-pointer transition-all hover:bg-white hover:border-white hover:text-black"
+                >
+                  <span className="text-[13px] font-semibold text-white group-hover:text-black">
+                    {a.label}
+                  </span>
+                  <span className="text-[10px] text-white/40 group-hover:text-black/50">{a.hint}</span>
+                </button>
+              ))}
+          </div>
         </div>
 
-        <div className="flex items-center overflow-x-auto pb-1">
-          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
-            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-line bg-[#0a0a0a] flex flex-col items-center justify-center">
-              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-white leading-none">
-                {pending}
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl py-5 px-5 backdrop-blur-sm flex flex-col justify-between">
+          <div>
+            <div className="text-[10px] tracking-[0.14em] uppercase text-white/35 font-medium mb-3">
+              30-day growth
+            </div>
+            <div className="flex items-end gap-3 flex-wrap">
+              <span className="text-[32px] font-semibold tracking-tight text-white leading-none">
+                {postGrowth30?.current != null ? postGrowth30.current : '—'}
               </span>
-              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-line flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-[#666]">
-                <IconClock />
-              </div>
+              {growthDelta != null && Number.isFinite(growthDelta) ? (
+                <span
+                  className={
+                    'text-[13px] font-semibold mb-1 ' +
+                    (growthDelta >= 0 ? 'text-white' : 'text-[#ff6b6b]')
+                  }
+                >
+                  {growthDelta > 0 ? '↑' : growthDelta < 0 ? '↓' : '·'} {Math.abs(growthDelta)}%
+                </span>
+              ) : null}
             </div>
-            <div className="text-center">
-              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Pending queue</strong>
-              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">Processing</span>
-            </div>
+            <p className="m-0 mt-2 text-[12px] text-white/35 leading-snug">
+              Articles published in the last 30 days
+              {postGrowth30?.prev != null ? ` · prev period ${postGrowth30.prev}` : ''}.
+            </p>
           </div>
-
-          <div
-            className={cn(
-              'flex-auto h-[1.5px] min-w-6 bg-line relative -top-[19px] -mx-2.5 overflow-hidden',
-              isProcessing
-                ? "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-85 after:animate-pulse"
-                : "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-25"
-            )}
-          />
-
-          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
-            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-mint bg-[#0a0a0a] shadow-[0_0_18px_rgba(60,255,208,0.25)] flex flex-col items-center justify-center">
-              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-mint leading-none">
-                {cacheCount}
-              </span>
-              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-mint flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-mint">
-                <IconShield />
-              </div>
-            </div>
-            <div className="text-center">
-              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Cache</strong>
-              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">
-                Last {cacheCount || 50} handled
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              'flex-auto h-[1.5px] min-w-6 bg-line relative -top-[19px] -mx-2.5 overflow-hidden',
-              isProcessing
-                ? "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-85 after:animate-pulse"
-                : "after:content-[''] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(to_right,#3cffd0_0_6px,transparent_6px_14px)] after:opacity-25"
-            )}
-          />
-
-          <div className="flex-none flex flex-col items-center gap-2.5 w-[150px] max-[720px]:w-[120px]">
-            <div className="relative w-16 h-16 max-[720px]:w-14 max-[720px]:h-14 rounded-full border-[1.5px] border-line bg-[#0a0a0a] flex flex-col items-center justify-center">
-              <span className="font-mono font-extrabold text-[19px] max-[720px]:text-base text-white leading-none">
-                {published}
-              </span>
-              <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-elevated border border-line flex items-center justify-center [&>svg]:w-2.5 [&>svg]:h-2.5 [&>svg]:text-[#666]">
-                <IconCheck />
-              </div>
-            </div>
-            <div className="text-center">
-              <strong className="block text-[11.5px] font-semibold text-[#e8e8e8]">Published</strong>
-              <span className="text-[9.5px] text-[#555] font-mono uppercase tracking-wide">Live content</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('posts')}
+            className="mt-4 self-start text-[12px] font-medium text-white/50 bg-transparent border-none cursor-pointer hover:text-white transition-colors p-0"
+          >
+            View all posts →
+          </button>
         </div>
       </section>
 
       {/* Workspace: activity + signals */}
       <div className="grid grid-cols-1 min-[1151px]:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
-        <section className="bg-bg-elevated border border-line rounded-lg overflow-hidden min-w-0" aria-label="Activity">
-          <div className="flex justify-between items-center py-5 px-[22px] pb-4 border-b border-line gap-3.5 flex-wrap max-[720px]:p-4">
+        <section className="bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden min-w-0 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-sm" aria-label="Activity">
+          <div className="flex justify-between items-center py-5 px-[22px] pb-4 border-b border-white/[0.06] gap-3.5 flex-wrap max-[720px]:p-4">
             <div>
-              <h2 className="text-[15.5px] m-0 mb-1 font-bold text-white tracking-tight">Activity</h2>
-              <p className="m-0 text-[11.5px] text-[#666]">
+              <h2 className="text-[15.5px] m-0 mb-1 font-semibold text-white tracking-tight">Activity</h2>
+              <p className="m-0 text-[11.5px] text-white/35">
                 Bot output and published articles, most recent first.
               </p>
             </div>
-            <div className="flex gap-1.5 flex-wrap" role="tablist" aria-label="Activity filters">
+            <div className="flex gap-1 p-0.5 rounded-full bg-white/[0.04] border border-white/[0.06]" role="tablist" aria-label="Activity filters">
               {[
                 { id: 'all', label: 'All' },
                 { id: 'active', label: 'Live' },
@@ -262,10 +292,10 @@ export function DashboardView({
                   role="tab"
                   aria-selected={filter === f.id}
                   className={cn(
-                    'font-mono text-[10px] tracking-wide rounded-full py-1.5 px-3 cursor-pointer transition-colors border',
+                    'text-[10px] tracking-wide rounded-full py-1.5 px-3 cursor-pointer transition-all border-0',
                     filter === f.id
-                      ? 'text-black bg-mint border-mint font-bold'
-                      : 'text-[#a0a0a0] bg-[#0a0a0a] border-line hover:text-white hover:border-[#444]'
+                      ? 'text-black bg-white font-semibold shadow-[0_0_16px_rgba(255,255,255,0.12)]'
+                      : 'text-white/50 bg-transparent hover:text-white'
                   )}
                   onClick={() => setFilter(f.id)}
                 >
@@ -277,7 +307,7 @@ export function DashboardView({
 
           <div className="flex flex-col max-h-[min(640px,70vh)] overflow-y-auto">
             {visible.length === 0 ? (
-              <div className="py-10 px-[22px] text-center text-[#666] text-[12.5px]">
+              <div className="py-10 px-[22px] text-center text-white/30 text-[12.5px]">
                 No activity items for this filter.
               </div>
             ) : (
@@ -286,9 +316,9 @@ export function DashboardView({
                 return (
                   <article
                     key={item.key}
-                    className="flex gap-3.5 py-4 px-[22px] border-b border-line last:border-b-0 items-start transition-colors hover:bg-[#1a1a1a] max-[720px]:flex-wrap max-[720px]:py-3.5 max-[720px]:px-4"
+                    className="flex gap-3.5 py-4 px-[22px] border-b border-white/[0.05] last:border-b-0 items-start transition-colors hover:bg-white/[0.03] max-[720px]:flex-wrap max-[720px]:py-3.5 max-[720px]:px-4"
                   >
-                    <div className="w-[52px] h-[52px] rounded-md shrink-0 bg-[#0a0a0a] border border-line flex items-center justify-center overflow-hidden relative">
+                    <div className="w-[52px] h-[52px] rounded-xl shrink-0 bg-black/50 border border-white/10 flex items-center justify-center overflow-hidden relative">
                       {item.ogImg ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.ogImg} alt="" className="w-full h-full object-cover block" />
@@ -297,10 +327,10 @@ export function DashboardView({
                           <span
                             className={cn(
                               'absolute inset-0 opacity-45 pointer-events-none',
-                              isLive ? categoryTint(item.bucket) : 'bg-gradient-to-br from-mint to-transparent'
+                              isLive ? categoryTint(item.bucket) : 'bg-gradient-to-br from-white/50 to-transparent'
                             )}
                           />
-                          <span className="relative z-[1] w-[18px] h-[18px] text-[#666] flex items-center justify-center [&>svg]:w-[18px] [&>svg]:h-[18px]">
+                          <span className="relative z-[1] w-[18px] h-[18px] text-white/40 flex items-center justify-center [&>svg]:w-[18px] [&>svg]:h-[18px]">
                             {isLive ? <IconArticle /> : <IconShield />}
                           </span>
                         </>
@@ -309,16 +339,16 @@ export function DashboardView({
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-[13px] font-semibold text-white leading-snug">{item.title}</span>
+                        <span className="text-[13px] font-medium text-white leading-snug">{item.title}</span>
                         {isLive && item.bucket ? (
-                          <span className="font-mono text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-sm uppercase font-bold whitespace-nowrap text-[#8ab4ff] bg-[rgba(91,141,239,0.12)] border border-[rgba(91,141,239,0.3)]">
+                          <span className="text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-md uppercase font-semibold whitespace-nowrap text-white/70 bg-white/[0.06] border border-white/12">
                             {item.bucket}
                           </span>
                         ) : null}
                         <span
                           className={cn(
-                            'font-mono text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-sm uppercase font-bold whitespace-nowrap border bg-transparent',
-                            isLive ? 'text-mint border-mint' : 'text-[#a0a0a0] border-line'
+                            'text-[8.5px] tracking-wide py-0.5 px-1.5 rounded-md uppercase font-semibold whitespace-nowrap border bg-transparent',
+                            isLive ? 'text-white border-white/40' : 'text-white/45 border-white/12'
                           )}
                         >
                           {isLive ? 'Active' : 'Cached'}
@@ -326,12 +356,12 @@ export function DashboardView({
                       </div>
 
                       {item.excerpt ? (
-                        <p className="text-[11.5px] text-[#666] leading-normal m-0 mb-1.5 line-clamp-1">
+                        <p className="text-[11.5px] text-white/35 leading-normal m-0 mb-1.5 line-clamp-1">
                           {item.excerpt}
                         </p>
                       ) : null}
 
-                      <div className="flex items-center gap-3 text-[10.5px] text-[#555] font-mono flex-wrap [&_span]:flex [&_span]:items-center [&_span]:gap-1 [&>span>svg]:w-2.5 [&>span>svg]:h-2.5 [&>span>svg]:shrink-0">
+                      <div className="flex items-center gap-3 text-[10.5px] text-white/30 flex-wrap [&_span]:flex [&_span]:items-center [&_span]:gap-1 [&>span>svg]:w-2.5 [&>span>svg]:h-2.5 [&>span>svg]:shrink-0">
                         {isLive ? (
                           <>
                             <span>By {item.author}</span>
@@ -355,14 +385,14 @@ export function DashboardView({
                     {isLive && item.id ? (
                       <div className="flex gap-1.5 shrink-0 self-center max-[720px]:ml-[66px] max-[720px]:w-full">
                         <a
-                          className="font-mono text-[10px] text-[#a0a0a0] bg-[#0a0a0a] border border-line rounded-md py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-colors hover:text-white hover:border-mint/35 [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
+                          className="text-[10px] text-white/50 bg-white/[0.03] border border-white/10 rounded-lg py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-all hover:text-black hover:bg-white hover:border-white [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
                           href={`/admin/post?id=${encodeURIComponent(item.id)}`}
                         >
                           <IconEdit />
                           Update
                         </a>
                         <a
-                          className="font-mono text-[10px] text-[#a0a0a0] bg-[#0a0a0a] border border-line rounded-md py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-colors hover:text-white hover:border-mint/35 [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
+                          className="text-[10px] text-white/50 bg-white/[0.03] border border-white/10 rounded-lg py-1.5 px-2.5 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap no-underline transition-all hover:text-black hover:bg-white hover:border-white [&>svg]:w-[11px] [&>svg]:h-[11px] [&>svg]:shrink-0"
                           href={postUrl({ id: item.id, title: item.title })}
                           target="_blank"
                           rel="noreferrer"
@@ -378,10 +408,10 @@ export function DashboardView({
             )}
           </div>
 
-          <div className="py-3.5 px-[22px] text-center border-t border-line">
+          <div className="py-3.5 px-[22px] text-center border-t border-white/[0.06]">
             <button
               type="button"
-              className="font-mono text-[11px] text-[#a0a0a0] bg-transparent border-none cursor-pointer tracking-wide hover:text-mint"
+              className="text-[11px] text-white/45 bg-transparent border-none cursor-pointer tracking-wide hover:text-white transition-colors"
               onClick={() => onNavigate?.('posts')}
             >
               View all articles →
@@ -390,83 +420,83 @@ export function DashboardView({
         </section>
 
         <aside className="flex flex-col gap-3.5 sticky top-7 max-[1150px]:static max-[1150px]:flex-row max-[1150px]:flex-wrap" aria-label="Signals">
-          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
-            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px] backdrop-blur-sm">
+            <div className="text-[10px] tracking-[0.14em] text-white/35 mb-3 uppercase font-medium">
               Moderation &amp; taxonomy
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-[#0a0a0a] border border-line rounded-md py-3 px-3">
-                <div className="font-mono font-extrabold text-xl text-white leading-none">
+              <div className="bg-black/40 border border-white/[0.07] rounded-xl py-3 px-3">
+                <div className="font-semibold text-xl text-white leading-none tracking-tight">
                   {Number(categoriesCount) || 0}
                 </div>
-                <div className="text-[10px] text-[#a0a0a0] mt-1.5">Categories</div>
-                <div className="text-[9px] text-[#555] font-mono mt-px uppercase tracking-wide">Buckets used</div>
+                <div className="text-[10px] text-white/50 mt-1.5">Categories</div>
+                <div className="text-[9px] text-white/25 mt-px uppercase tracking-wide">Buckets used</div>
               </div>
-              <div className="bg-[#0a0a0a] border border-line rounded-md py-3 px-3">
+              <div className="bg-black/40 border border-white/[0.07] rounded-xl py-3 px-3">
                 <div
                   className={cn(
-                    'font-mono font-extrabold text-xl leading-none',
+                    'font-semibold text-xl leading-none tracking-tight',
                     pendingComments > 0 ? 'text-[#e8b342]' : 'text-white'
                   )}
                 >
                   {pendingComments}
                 </div>
-                <div className="text-[10px] text-[#a0a0a0] mt-1.5">Pending comments</div>
-                <div className="text-[9px] text-[#555] font-mono mt-px uppercase tracking-wide">
+                <div className="text-[10px] text-white/50 mt-1.5">Pending comments</div>
+                <div className="text-[9px] text-white/25 mt-px uppercase tracking-wide">
                   Awaiting approval
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
-            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px] backdrop-blur-sm">
+            <div className="text-[10px] tracking-[0.14em] text-white/35 mb-3 uppercase font-medium">
               Comments trend
             </div>
-            <p className="text-[10.5px] text-[#666] m-0 mb-2.5 leading-snug">
+            <p className="text-[10.5px] text-white/35 m-0 mb-2.5 leading-snug">
               Top liked comments from the last 15 days.
             </p>
 
             {trendingHint ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-[#555]">
+              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-white/25">
                 <IconChat />
-                <p className="m-0 text-[11px] text-[#555]">{trendingHint}</p>
+                <p className="m-0 text-[11px] text-white/30">{trendingHint}</p>
               </div>
             ) : trends.length ? (
               <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto">
                 {trends.map((c) => (
-                  <div key={c.id} className="bg-[#0a0a0a] border border-line rounded-md py-2.5 px-2.5">
+                  <div key={c.id} className="bg-black/40 border border-white/[0.07] rounded-xl py-2.5 px-2.5">
                     <div className="flex justify-between gap-2 mb-1">
-                      <span className="text-[10.5px] font-semibold text-[#e8e8e8] overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+                      <span className="text-[10.5px] font-medium text-white/90 overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
                         {c.postTitle || c.postId}
                       </span>
-                      <span className="font-mono text-[9.5px] text-mint shrink-0">+{c.likes || 0} likes</span>
+                      <span className="text-[9.5px] text-white shrink-0 font-medium">+{c.likes || 0} likes</span>
                     </div>
-                    <p className="m-0 text-[10.5px] text-[#666] leading-snug line-clamp-2">
-                      <strong>{c.name || 'Anonymous'}:</strong> {c.commentPreview || ''}
+                    <p className="m-0 text-[10.5px] text-white/35 leading-snug line-clamp-2">
+                      <strong className="text-white/70">{c.name || 'Anonymous'}:</strong> {c.commentPreview || ''}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-[#555]">
+              <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center [&>svg]:w-[22px] [&>svg]:h-[22px] [&>svg]:text-white/25">
                 <IconChat />
-                <p className="m-0 text-[11px] text-[#555]">No trending comments found.</p>
+                <p className="m-0 text-[11px] text-white/30">No trending comments found.</p>
               </div>
             )}
           </div>
 
-          <div className="bg-bg-elevated border border-line rounded-lg py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px]">
-            <div className="font-mono text-[9.5px] tracking-[0.14em] text-[#666] mb-3 uppercase">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl py-[18px] px-5 max-[1150px]:flex-1 max-[1150px]:min-w-[260px] backdrop-blur-sm">
+            <div className="text-[10px] tracking-[0.14em] text-white/35 mb-3 uppercase font-medium">
               Post growth
             </div>
-            <p className="text-[10.5px] text-[#666] m-0 mb-2.5 leading-snug">
+            <p className="text-[10.5px] text-white/35 m-0 mb-2.5 leading-snug">
               Articles published over the last 6 months.
             </p>
 
             {months.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-[22px] px-2.5 text-center">
-                <p className="m-0 text-[11px] text-[#555]">No growth data available yet.</p>
+                <p className="m-0 text-[11px] text-white/30">No growth data available yet.</p>
               </div>
             ) : (
               <div className="flex items-end gap-2 h-[110px] mt-3.5" role="img" aria-label="Post growth by month">
@@ -479,17 +509,17 @@ export function DashboardView({
                       className="group flex-1 flex flex-col items-center gap-2 h-full justify-end min-w-0"
                       title={`${m.label}: ${count}`}
                     >
-                      <div className="w-full h-full bg-[#0a0a0a] border border-line rounded-t-sm relative flex items-end justify-center overflow-visible">
+                      <div className="w-full h-full bg-black/40 border border-white/[0.07] rounded-t-lg relative flex items-end justify-center overflow-visible">
                         <div
-                          className="w-full bg-line rounded-t-sm relative min-h-1 transition-all duration-200 group-hover:bg-mint group-hover:shadow-[0_0_10px_rgba(60,255,208,0.35)]"
+                          className="w-full bg-white/20 rounded-t-lg relative min-h-1 transition-all duration-200 group-hover:bg-white group-hover:shadow-[0_0_14px_rgba(255,255,255,0.35)]"
                           style={{ height: `${Math.max(count > 0 ? 8 : 2, pct)}%` }}
                         >
-                          <span className="absolute -top-4 left-0 right-0 text-center font-mono text-[8.5px] text-[#555] transition-colors group-hover:text-mint group-hover:font-bold">
+                          <span className="absolute -top-4 left-0 right-0 text-center text-[8.5px] text-white/30 transition-colors group-hover:text-white group-hover:font-semibold">
                             {count}
                           </span>
                         </div>
                       </div>
-                      <span className="font-mono text-[9px] text-[#555] tracking-wide uppercase">
+                      <span className="text-[9px] text-white/30 tracking-wide uppercase">
                         {shortMonth(m.label)}
                       </span>
                     </div>
