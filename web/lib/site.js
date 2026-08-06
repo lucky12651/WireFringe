@@ -11,7 +11,7 @@ export const SITE_DESCRIPTION =
 /** Public site URL (no trailing slash). Override with NEXT_PUBLIC_SITE_URL in production. */
 export const SITE_URL =
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL) ||
-  'https://wirefringe.gridwork.me';
+  'https://wirefringe.com';
 
 /** Public contact — use a real inbox you monitor */
 export const CONTACT_EMAIL =

@@ -38,7 +38,7 @@ function buildUrl(loc, lastmod, changefreq, priority) {
 }
 
 export async function getServerSideProps({ res }) {
-  const base = String(SITE_URL || 'https://wirefringe.gridwork.me').replace(/\/$/, '');
+  const base = String(SITE_URL || 'https://wirefringe.com').replace(/\/$/, '');
   const today = new Date().toISOString().slice(0, 10);
 
   let postUrls = [];
