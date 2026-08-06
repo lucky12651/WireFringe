@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ..models import AppSetting, Post
+
+logger = logging.getLogger(__name__)
+
+# Creators that are always treated as bot-authored (even if is_bot flag was missed)
+BOT_CREATOR_KEYS = (
+    "wirefringe",
+    "wire fringe",
+    "news bot engine",
+    "newsbot",
+    "news bot",
+)
 
 
 # Empty defaults: credentials live only in admin settings (DB).
@@ -222,9 +235,15 @@ class SettingsService:
                     val = DEFAULT_BOT[k]
                 val = max(lo, min(hi, val))
             current[k] = val
-        return self._save_json(BOT_KEY, current)
+        saved = self._save_json(BOT_KEY, current)
+        # Apply hide/unhide to posts whenever hideArticles is set in the payload
+        if "hideArticles" in payload:
+            self.set_bot_articles_hidden(bool(saved.get("hideArticles")), sync_setting=False)
+            saved = self.get_bot()
+        return saved
 
     def get_bot_stats(self) -> dict[str, Any]:
+        self._retag_bot_posts_from_creators()
         total_bot = (
             self.db.query(Post).filter(Post.is_bot.is_(True)).count()
         )
@@ -240,22 +259,69 @@ class SettingsService:
             "visibleBotPosts": visible_bot,
         }
 
-    def set_bot_articles_hidden(self, hidden: bool) -> dict[str, Any]:
+    def _retag_bot_posts_from_creators(self) -> int:
+        """Mark posts as is_bot when creator is a known bot/brand author.
+
+        Fixes posts that were published as Wirefringe / News Bot Engine but
+        never got is_bot=True, so hide-all missed them.
+        """
+        creator_key = func.lower(func.trim(Post.creator))
+        result = (
+            self.db.query(Post)
+            .filter(
+                Post.is_bot.is_(False),
+                or_(*[creator_key == key for key in BOT_CREATOR_KEYS]),
+            )
+            .update({Post.is_bot: True}, synchronize_session=False)
+        )
+        if result:
+            self.db.commit()
+            logger.info("Retagged %s legacy bot-creator posts as is_bot=True", result)
+        return int(result or 0)
+
+    def set_bot_articles_hidden(
+        self, hidden: bool, *, sync_setting: bool = True
+    ) -> dict[str, Any]:
+        # Catch untagged bot posts first (e.g. creator=Wirefringe, is_bot=false)
+        self._retag_bot_posts_from_creators()
+
         updated = (
             self.db.query(Post)
             .filter(Post.is_bot.is_(True))
-            .update({Post.is_hidden: hidden}, synchronize_session=False)
+            .update({Post.is_hidden: bool(hidden)}, synchronize_session=False)
         )
-        # Sync hideArticles preference + persist in one commit
-        bot = self.get_bot()
-        bot["hideArticles"] = bool(hidden)
-        row = self.db.get(AppSetting, BOT_KEY)
-        now = datetime.now(timezone.utc)
-        payload = json.dumps(bot, ensure_ascii=False)
-        if row is None:
-            self.db.add(AppSetting(key=BOT_KEY, value=payload, updated_at=now))
-        else:
-            row.value = payload
-            row.updated_at = now
+
+        if sync_setting:
+            bot = self.get_bot()
+            bot["hideArticles"] = bool(hidden)
+            row = self.db.get(AppSetting, BOT_KEY)
+            now = datetime.now(timezone.utc)
+            payload = json.dumps(bot, ensure_ascii=False)
+            if row is None:
+                self.db.add(AppSetting(key=BOT_KEY, value=payload, updated_at=now))
+            else:
+                row.value = payload
+                row.updated_at = now
+
         self.db.commit()
-        return {"updated": int(updated or 0), "hidden": bool(hidden), **self.get_bot_stats()}
+        self._trigger_site_revalidate()
+        return {
+            "updated": int(updated or 0),
+            "hidden": bool(hidden),
+            **self.get_bot_stats(),
+        }
+
+    def _trigger_site_revalidate(self) -> None:
+        """Best-effort Next.js ISR revalidate so homepage drops hidden posts."""
+        try:
+            import httpx
+            from ..config import settings
+
+            url = f"{settings.ui_url.rstrip('/')}/api/revalidate"
+            httpx.post(
+                url,
+                json={"secret": settings.revalidate_secret},
+                timeout=3.0,
+            )
+        except Exception as e:
+            logger.warning("Could not revalidate UI after bot hide/unhide: %s", e)

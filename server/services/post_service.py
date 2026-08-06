@@ -21,7 +21,7 @@ from ..schemas import (
     PostOut,
     PostUpsert,
 )
-from .settings_service import SettingsService
+from .settings_service import BOT_CREATOR_KEYS, SettingsService
 
 
 class PostService:
@@ -204,12 +204,15 @@ class PostService:
     def _is_publicly_visible(self, post: Post) -> bool:
         if getattr(post, "is_hidden", False):
             return False
-        if getattr(post, "is_bot", False):
-            try:
-                if SettingsService(self.db).get_bot().get("hideArticles"):
+        try:
+            if SettingsService(self.db).get_bot().get("hideArticles"):
+                if getattr(post, "is_bot", False):
                     return False
-            except Exception:
-                pass
+                creator = (post.creator or "").strip().lower()
+                if creator in BOT_CREATOR_KEYS:
+                    return False
+        except Exception:
+            pass
         return True
 
     def get_post(self, post_id: str, *, public: bool = True) -> PostOut:

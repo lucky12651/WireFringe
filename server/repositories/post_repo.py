@@ -31,14 +31,34 @@ class PostRepository(BaseRepository[Post]):
         """List posts ordered by published date.
 
         When public_only=True, excludes is_hidden posts.
-        When hide_bot=True, also excludes is_bot posts.
+        When hide_bot=True, also excludes is_bot posts and known bot creators.
         """
         query = select(Post)
         if public_only:
-            # Treat missing columns gracefully via coalesce-style filters
+            # Never show explicitly hidden posts
             query = query.where(Post.is_hidden.is_(False))
             if hide_bot:
+                # Exclude flagged bot posts
                 query = query.where(Post.is_bot.is_(False))
+                # Belt-and-suspenders: exclude known bot author names even if
+                # is_bot flag was never set (legacy / missed tags)
+                from sqlalchemy import not_, or_
+
+                creator_key = func.lower(func.trim(Post.creator))
+                bot_keys = (
+                    "wirefringe",
+                    "wire fringe",
+                    "news bot engine",
+                    "newsbot",
+                    "news bot",
+                )
+                query = query.where(
+                    or_(
+                        Post.creator.is_(None),
+                        Post.creator == "",
+                        not_(or_(*[creator_key == k for k in bot_keys])),
+                    )
+                )
         return (
             self.db.execute(
                 query.order_by(Post.published_at.desc().nullslast())
