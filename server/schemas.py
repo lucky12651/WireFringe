@@ -73,6 +73,7 @@ class TokenOut(BaseModel):
 
 
 class UserOut(BaseModel):
+    # Real accounts: positive id. Orphan authors (no login): negative synthetic id.
     id: int
     username: str
     role: str
@@ -80,12 +81,48 @@ class UserOut(BaseModel):
     displayName: str | None = None
     brandBylineEnabled: bool = False
     brandLogoUrl: str | None = None
+    # Extended for admin user management
+    postCount: int = 0
+    isOrphan: bool = False  # True when posts.creator has no matching users row
 
 
 class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8)
     role: str = "editor"
+
+
+class OrphanClaimRequest(BaseModel):
+    """Create a real login account for a post-creator name (orphan author)."""
+
+    creatorName: str = Field(..., min_length=1, max_length=80)
+    # Optional login username (defaults to creatorName)
+    username: str | None = Field(None, min_length=3, max_length=50)
+    password: str = Field(..., min_length=8, max_length=200)
+    role: str = "author"
+    displayName: str | None = Field(None, max_length=80)
+    # If True, rewrite posts.creator to the new username when it differs
+    reassignPosts: bool = True
+
+
+class OrphanReassignRequest(BaseModel):
+    """Move all posts from an orphan creator name to an existing user."""
+
+    creatorName: str = Field(..., min_length=1, max_length=80)
+    transferToUserId: int
+
+
+class OrphanDeletePostsRequest(BaseModel):
+    """Delete every post attributed to a creator string (orphan or any)."""
+
+    creatorName: str = Field(..., min_length=1, max_length=80)
+
+
+class OrphanActionOut(BaseModel):
+    ok: bool = True
+    creatorName: str
+    postsAffected: int = 0
+    user: UserOut | None = None
 
 
 class UserSignup(BaseModel):

@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AdUnit from '../AdUnit/AdUnit';
 import {
   AD_SLOTS,
   IN_ARTICLE_EVERY_N_PARAS,
   IN_ARTICLE_MAX_ADS,
   IN_ARTICLE_MIN_PARAS_BEFORE,
+  loadAdsenseConfig,
 } from '../../lib/ads';
 import styles from './ArticleBody.module.css';
 
@@ -123,6 +124,32 @@ function isParagraphBlock(html) {
 
 export default function ArticleBody({ html, className = '', magazine = false }) {
   const blocks = useMemo(() => splitHtmlBlocks(html), [html]);
+  const [adCfg, setAdCfg] = useState({
+    enabled: true,
+    inArticleEnabled: true,
+    everyN: IN_ARTICLE_EVERY_N_PARAS,
+    minBefore: IN_ARTICLE_MIN_PARAS_BEFORE,
+    maxAds: IN_ARTICLE_MAX_ADS,
+    slot: AD_SLOTS.inArticle,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAdsenseConfig().then((cfg) => {
+      if (cancelled) return;
+      setAdCfg({
+        enabled: !!cfg.enabled && !!cfg.clientId,
+        inArticleEnabled: cfg.inArticleEnabled !== false,
+        everyN: Number(cfg.inArticleEveryN) || IN_ARTICLE_EVERY_N_PARAS,
+        minBefore: Number(cfg.inArticleMinBefore) || IN_ARTICLE_MIN_PARAS_BEFORE,
+        maxAds: Number(cfg.inArticleMax) || IN_ARTICLE_MAX_ADS,
+        slot: cfg.slots?.inArticle || AD_SLOTS.inArticle,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const nodes = useMemo(() => {
     if (!blocks.length) return [];
@@ -132,6 +159,7 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
     let adsPlaced = 0;
     let parasSinceAd = 0;
     let firstParaDone = false;
+    const insertAds = adCfg.enabled && adCfg.inArticleEnabled && adCfg.maxAds > 0;
 
     blocks.forEach((block, idx) => {
       const isFirstPara = !firstParaDone && isParagraphBlock(block);
@@ -145,17 +173,17 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
         />
       );
 
-      if (!isParagraphBlock(block)) return;
+      if (!insertAds || !isParagraphBlock(block)) return;
 
       paraCount += 1;
       parasSinceAd += 1;
 
       const canInsert =
-        adsPlaced < IN_ARTICLE_MAX_ADS &&
-        paraCount >= IN_ARTICLE_MIN_PARAS_BEFORE &&
+        adsPlaced < adCfg.maxAds &&
+        paraCount >= adCfg.minBefore &&
         (adsPlaced === 0
-          ? parasSinceAd >= IN_ARTICLE_MIN_PARAS_BEFORE
-          : parasSinceAd >= IN_ARTICLE_EVERY_N_PARAS) &&
+          ? parasSinceAd >= adCfg.minBefore
+          : parasSinceAd >= adCfg.everyN) &&
         idx < blocks.length - 1; // never after last block
 
       if (canInsert) {
@@ -165,7 +193,7 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
           <div key={`ad-inline-${adsPlaced}`} className={styles.inlineAdWrap}>
             <AdUnit
               variant="inArticle"
-              slot={AD_SLOTS.inArticle}
+              slot={adCfg.slot}
               label="Advertisement"
             />
           </div>
@@ -174,7 +202,7 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
     });
 
     return out;
-  }, [blocks, magazine]);
+  }, [blocks, magazine, adCfg]);
 
   if (!nodes.length) {
     return (

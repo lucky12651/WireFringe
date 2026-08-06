@@ -4,10 +4,9 @@ import { useRouter } from 'next/router';
 // which left /admin unstyled in production while CSS modules still loaded.
 import '../styles/globals.css';
 import { initTheme } from '../lib/theme';
+import { loadAdsenseConfig } from '../lib/ads';
 
 import Head from 'next/head';
-
-const DEFAULT_ADSENSE_CLIENT = 'ca-pub-9036526646235532';
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -15,8 +14,9 @@ export default function App({ Component, pageProps }) {
     (typeof router.pathname === 'string' && router.pathname.startsWith('/admin')) ||
     (typeof router.asPath === 'string' && router.asPath.startsWith('/admin'));
   const [adsScriptLoaded, setAdsScriptLoaded] = useState(false);
-
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || DEFAULT_ADSENSE_CLIENT;
+  // Only from Admin → AdSense (API). Never hardcode / env pub IDs.
+  const [adsenseClient, setAdsenseClient] = useState('');
+  const [adsEnabled, setAdsEnabled] = useState(false);
 
   useEffect(() => {
     // Screenshots show dark Verge; lock dark.
@@ -26,6 +26,19 @@ export default function App({ Component, pageProps }) {
       localStorage.setItem('cnb_theme_mode', 'manual');
       document.documentElement.dataset.theme = 'dark';
     } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAdsenseConfig().then((cfg) => {
+      if (cancelled) return;
+      const client = String(cfg.clientId || '').trim();
+      setAdsEnabled(!!cfg.enabled && !!client);
+      setAdsenseClient(client);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const refreshAds = useCallback(() => {
@@ -60,6 +73,7 @@ export default function App({ Component, pageProps }) {
     // Load AdSense without Next's <Script> so AdSense doesn't warn about data-nscript.
     if (typeof window === 'undefined') return;
     if (isAdminRoute) return;
+    if (!adsEnabled || !adsenseClient) return;
 
     const existing = document.getElementById('adsbygoogle-script');
     if (existing) {
@@ -103,11 +117,12 @@ export default function App({ Component, pageProps }) {
 
     document.head.appendChild(script);
     // Intentionally do not remove the script on unmount; it should persist across navigations.
-  }, [isAdminRoute, refreshAds, adsenseClient]);
+  }, [isAdminRoute, refreshAds, adsenseClient, adsEnabled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isAdminRoute) return;
+    if (!adsEnabled) return;
     if (!adsScriptLoaded) return;
 
     // Initial load (after script is loaded)
@@ -139,7 +154,7 @@ export default function App({ Component, pageProps }) {
       router.events.off('routeChangeComplete', handleRouteChange);
       window.removeEventListener('resize', handleResize);
     };
-  }, [router.events, isAdminRoute, adsScriptLoaded, refreshAds]);
+  }, [router.events, isAdminRoute, adsScriptLoaded, refreshAds, adsEnabled]);
 
   return (
     <>

@@ -4,7 +4,17 @@ import useSWR from 'swr';
 import { initTheme } from '../lib/theme';
 import { fetcher } from '../lib/api';
 import { pctChange } from '../lib/utils';
-import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia, useLogs } from '../hooks';
+import {
+  useAuth,
+  usePosts,
+  useCategories,
+  useUsers,
+  useComments,
+  useMedia,
+  useLogs,
+  useAdsenseSettings,
+  useBotSettings,
+} from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
 import { LoginPage, SignupPage } from '../components/admin/Login';
 import {
@@ -16,6 +26,8 @@ import {
   UsersView,
   SettingsView,
   LogsView,
+  AdsenseView,
+  BotView,
 } from '../components/admin/views';
 
 export default function AdminPage() {
@@ -40,6 +52,8 @@ export default function AdminPage() {
   const comments = useComments();
   const media = useMedia();
   const logs = useLogs();
+  const adsense = useAdsenseSettings();
+  const bot = useBotSettings();
   const { me, isAuthed, isLoading, isInitialLoading, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
 
   // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
@@ -141,6 +155,9 @@ export default function AdminPage() {
     }
     if (activeView === 'comments') {
       comments.refreshComments();
+    }
+    if (activeView === 'users' && me?.role === 'admin') {
+      users.refreshUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, isAuthed]);
@@ -280,6 +297,9 @@ export default function AdminPage() {
             onDelete={users.deleteUser}
             onSetPassword={users.setUserPassword}
             onSetRole={users.setUserRole}
+            onClaimOrphan={users.claimOrphan}
+            onReassignOrphan={users.reassignOrphan}
+            onDeleteOrphanPosts={users.deleteOrphanPosts}
             canManageUsers={canManageUsers}
           />
         );
@@ -302,6 +322,31 @@ export default function AdminPage() {
             logs={logs.logs}
             onRefresh={logs.refreshLogs}
             isLoading={logs.isLoading}
+          />
+        );
+
+      case 'adsense':
+        if (me?.role !== 'admin') return null;
+        return (
+          <AdsenseView
+            settings={adsense.settings}
+            isLoading={adsense.isLoading}
+            onRefresh={adsense.refresh}
+            onSave={adsense.save}
+            onClear={adsense.clear}
+          />
+        );
+
+      case 'bot':
+        if (me?.role !== 'admin') return null;
+        return (
+          <BotView
+            settings={bot.settings}
+            isLoading={bot.isLoading}
+            onRefresh={bot.refresh}
+            onSave={bot.save}
+            onHideArticles={bot.hideArticles}
+            onUnhideArticles={bot.unhideArticles}
           />
         );
 

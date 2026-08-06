@@ -27,6 +27,11 @@ const nextConfig = {
         source: '/static/:path*',
         destination: `${backend}/static/:path*`,
       },
+      // Dynamic ads.txt from admin AdSense settings (not static public file)
+      {
+        source: '/ads.txt',
+        destination: `${backend}/api/adsense/ads.txt`,
+      },
     ];
   },
 };

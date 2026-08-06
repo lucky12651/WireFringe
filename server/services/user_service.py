@@ -14,7 +14,13 @@ from ..models import (
     UserInteraction,
 )
 from ..repositories import UserRepository
-from ..schemas import AdminUserDeleteOut, MeOut, UserCreate, UserOut
+from ..schemas import (
+    AdminUserDeleteOut,
+    MeOut,
+    OrphanActionOut,
+    UserCreate,
+    UserOut,
+)
 
 
 class UserService:
@@ -37,9 +43,31 @@ class UserService:
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
         )
 
-    @staticmethod
-    def _build_user_out(user: User) -> UserOut:
+    def _post_counts_by_creator_key(self) -> dict[str, tuple[str, int]]:
+        """Map lower(trim(creator)) -> (original display label, count)."""
+        rows = self.db.execute(
+            select(
+                Post.creator,
+                func.count(Post.id),
+            ).group_by(Post.creator)
+        ).all()
+        out: dict[str, tuple[str, int]] = {}
+        for raw_creator, count in rows:
+            label = (raw_creator or "").strip() or "Unknown"
+            key = label.lower()
+            prev = out.get(key)
+            if prev:
+                out[key] = (prev[0], prev[1] + int(count or 0))
+            else:
+                out[key] = (label, int(count or 0))
+        return out
+
+    def _build_user_out(self, user: User, post_count: int | None = None) -> UserOut:
         """Convert User model to UserOut schema."""
+        if post_count is None:
+            keys = self._creator_keys_for_user(user)
+            counts = self._post_counts_by_creator_key()
+            post_count = sum(counts.get(k, ("", 0))[1] for k in keys)
         return UserOut(
             id=user.id,
             username=user.username,
@@ -48,6 +76,8 @@ class UserService:
             displayName=(user.display_name or None),
             brandBylineEnabled=bool(getattr(user, "brand_byline_enabled", False)),
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
+            postCount=int(post_count or 0),
+            isOrphan=False,
         )
 
     def authenticate_user(self, username: str, password: str) -> User | None:
@@ -67,9 +97,211 @@ class UserService:
         return self.user_repo.get_by_username(username)
 
     def list_users(self) -> list[UserOut]:
-        """List all users."""
+        """List all login accounts plus orphan post-creators (no account)."""
+        counts = self._post_counts_by_creator_key()
         users = self.user_repo.list_ordered()
-        return [self._build_user_out(u) for u in users]
+
+        # Keys claimed by real accounts (username + display name)
+        claimed: set[str] = set()
+        result: list[UserOut] = []
+        for u in users:
+            keys = self._creator_keys_for_user(u)
+            for k in keys:
+                claimed.add(k)
+            post_count = sum(counts.get(k, ("", 0))[1] for k in keys)
+            # Also count exact username match even if keys empty edge case
+            uname = (u.username or "").strip().lower()
+            if uname and uname not in keys:
+                post_count += counts.get(uname, ("", 0))[1]
+            result.append(self._build_user_out(u, post_count=post_count))
+
+        # Orphan creators: appear on posts but have no matching user account
+        for key, (label, count) in sorted(
+            counts.items(), key=lambda item: (-item[1][1], item[1][0].lower())
+        ):
+            if key in claimed or key == "unknown":
+                continue
+            if count <= 0:
+                continue
+            # Stable negative id so JSON always has a numeric id (null can be dropped
+            # by some clients / serializers). Never collides with real autoincrement ids.
+            synthetic_id = -abs(hash(key) % 1_000_000_000) or -1
+            result.append(
+                UserOut(
+                    id=synthetic_id,
+                    username=label,
+                    role="orphan",
+                    avatarUrl=None,
+                    displayName=label,
+                    brandBylineEnabled=False,
+                    brandLogoUrl=None,
+                    postCount=count,
+                    isOrphan=True,
+                )
+            )
+
+        return result
+
+    def claim_orphan_author(
+        self,
+        creator_name: str,
+        password: str,
+        role: str = "author",
+        username: str | None = None,
+        display_name: str | None = None,
+        reassign_posts: bool = True,
+        admin: User | None = None,
+    ) -> OrphanActionOut:
+        """Create a login account for a post creator that has no users row."""
+        if admin is not None and (admin.role or "").strip().lower() != "admin":
+            raise HTTPException(status_code=403, detail="Admin required")
+
+        creator = (creator_name or "").strip()
+        if not creator:
+            raise HTTPException(status_code=400, detail="creatorName is required")
+
+        login_username = (username or creator).strip()
+        if len(login_username) < 3:
+            raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+
+        role_norm = (role or "author").strip().lower()
+        if role_norm not in {"admin", "editor", "author", "user"}:
+            raise HTTPException(
+                status_code=400, detail="role must be admin, editor, author, or user"
+            )
+
+        existing = self.user_repo.get_by_username(login_username)
+        if existing is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=f'Username "{login_username}" already exists. Use reassign instead.',
+            )
+
+        # Case-insensitive username collision
+        collision = self.db.execute(
+            select(User).where(func.lower(User.username) == login_username.lower())
+        ).scalar_one_or_none()
+        if collision is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=f'Username "{login_username}" already exists. Use reassign instead.',
+            )
+
+        password_hash, password_salt = hash_password(password)
+        disp = (display_name or creator).strip() or None
+        new_user = User(
+            username=login_username,
+            password_hash=password_hash,
+            password_salt=password_salt,
+            role=role_norm,
+            display_name=disp,
+        )
+        created = self.user_repo.create(new_user)
+
+        posts_affected = 0
+        creator_key = creator.lower()
+        if reassign_posts and login_username.lower() != creator_key:
+            result = self.db.execute(
+                update(Post)
+                .where(func.lower(func.trim(Post.creator)) == creator_key)
+                .values(creator=login_username)
+            )
+            posts_affected = int(result.rowcount or 0)
+            self.db.commit()
+        else:
+            # Count posts already under this creator label
+            posts_affected = int(
+                self.db.execute(
+                    select(func.count(Post.id)).where(
+                        func.lower(func.trim(Post.creator)) == creator_key
+                    )
+                ).scalar()
+                or 0
+            )
+
+        return OrphanActionOut(
+            ok=True,
+            creatorName=creator,
+            postsAffected=posts_affected,
+            user=self._build_user_out(created),
+        )
+
+    def reassign_orphan_posts(
+        self, creator_name: str, transfer_to_user_id: int, admin: User
+    ) -> OrphanActionOut:
+        """Move all posts from a creator string to an existing user account."""
+        if (admin.role or "").strip().lower() != "admin":
+            raise HTTPException(status_code=403, detail="Admin required")
+
+        creator = (creator_name or "").strip()
+        if not creator:
+            raise HTTPException(status_code=400, detail="creatorName is required")
+
+        recipient = self.user_repo.get(transfer_to_user_id)
+        if recipient is None:
+            raise HTTPException(status_code=404, detail="Transfer target user not found")
+
+        transfer_username = (recipient.username or "").strip()
+        if not transfer_username:
+            raise HTTPException(status_code=400, detail="Transfer target has no username")
+
+        creator_key = creator.lower()
+        result = self.db.execute(
+            update(Post)
+            .where(func.lower(func.trim(Post.creator)) == creator_key)
+            .values(creator=transfer_username)
+        )
+        posts_affected = int(result.rowcount or 0)
+        self.db.commit()
+
+        return OrphanActionOut(
+            ok=True,
+            creatorName=creator,
+            postsAffected=posts_affected,
+            user=self._build_user_out(recipient),
+        )
+
+    def delete_posts_by_creator(self, creator_name: str, admin: User) -> OrphanActionOut:
+        """Delete all posts attributed to a creator name (orphan cleanup)."""
+        if (admin.role or "").strip().lower() != "admin":
+            raise HTTPException(status_code=403, detail="Admin required")
+
+        creator = (creator_name or "").strip()
+        if not creator:
+            raise HTTPException(status_code=400, detail="creatorName is required")
+
+        creator_key = creator.lower()
+        post_ids = [
+            str(r[0])
+            for r in self.db.execute(
+                select(Post.id).where(func.lower(func.trim(Post.creator)) == creator_key)
+            ).all()
+            if r and r[0] is not None
+        ]
+
+        posts_deleted = 0
+        if post_ids:
+            comment_ids_stmt = select(Comment.id).where(Comment.post_id.in_(post_ids))
+            self.db.execute(
+                delete(CommentVote).where(CommentVote.comment_id.in_(comment_ids_stmt))
+            )
+            self.db.execute(delete(Comment).where(Comment.post_id.in_(post_ids)))
+            self.db.execute(
+                delete(UserInteraction).where(UserInteraction.post_id.in_(post_ids))
+            )
+            self.db.execute(
+                delete(PersonalizedFeed).where(PersonalizedFeed.post_id.in_(post_ids))
+            )
+            result = self.db.execute(delete(Post).where(Post.id.in_(post_ids)))
+            posts_deleted = int(result.rowcount or 0)
+            self.db.commit()
+
+        return OrphanActionOut(
+            ok=True,
+            creatorName=creator,
+            postsAffected=posts_deleted,
+            user=None,
+        )
 
     def create_user(self, payload: UserCreate) -> User:
         """Create a new user."""

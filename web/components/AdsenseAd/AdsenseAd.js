@@ -1,5 +1,5 @@
-import { useMemo, useRef } from 'react';
-import { ADSENSE_CLIENT } from '../../lib/ads';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { loadAdsenseConfig } from '../../lib/ads';
 
 export default function AdsenseAd({
   slot,
@@ -11,10 +11,28 @@ export default function AdsenseAd({
   layoutKey,
 }) {
   const insRef = useRef(null);
+  const [client, setClient] = useState('');
+  const [enabled, setEnabled] = useState(false);
+  const [resolvedSlot, setResolvedSlot] = useState(slot || '');
 
-  const client = useMemo(() => {
-    return process.env.NEXT_PUBLIC_ADSENSE_CLIENT || ADSENSE_CLIENT;
-  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    loadAdsenseConfig().then((cfg) => {
+      if (cancelled) return;
+      setEnabled(!!cfg.enabled && !!cfg.clientId);
+      setClient(cfg.clientId || '');
+      if (slot) {
+        setResolvedSlot(slot);
+      } else if (cfg.slots?.default) {
+        setResolvedSlot(cfg.slots.default);
+      } else {
+        setResolvedSlot('');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slot]);
 
   // data-adtest only in dev so you can still see test inventory locally
   const adTest = process.env.NODE_ENV !== 'production' ? 'on' : undefined;
@@ -27,13 +45,17 @@ export default function AdsenseAd({
     return { ...base, ...(style || {}) };
   }, [fullWidthResponsive, style]);
 
+  if (!enabled || !client || !resolvedSlot) {
+    return null;
+  }
+
   return (
     <ins
       ref={insRef}
       className={className ? `adsbygoogle ${className}` : 'adsbygoogle'}
       style={resolvedStyle}
       data-ad-client={client}
-      data-ad-slot={slot}
+      data-ad-slot={resolvedSlot}
       data-ad-format={format || 'auto'}
       data-full-width-responsive={fullWidthResponsive ? 'true' : 'false'}
       {...(layout ? { 'data-ad-layout': layout } : {})}

@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import AdsenseAd from '../AdsenseAd/AdsenseAd';
-import { AD_SLOTS } from '../../lib/ads';
+import { AD_SLOTS, loadAdsenseConfig } from '../../lib/ads';
 import styles from './AdUnit.module.css';
 
 /**
@@ -17,7 +17,31 @@ export default function AdUnit({
 }) {
   const unitRef = useRef(null);
   const reactId = useId();
-  const adSlot = slot || AD_SLOTS.default;
+  const [adSlot, setAdSlot] = useState(slot || AD_SLOTS.default || '');
+  const [adsEnabled, setAdsEnabled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAdsenseConfig().then((cfg) => {
+      if (cancelled) return;
+      setAdsEnabled(!!cfg.enabled && !!cfg.clientId);
+      if (slot) {
+        setAdSlot(slot);
+        return;
+      }
+      const map = {
+        banner: cfg.slots?.leaderboard,
+        multipath: cfg.slots?.multipath || cfg.slots?.default,
+        inArticle: cfg.slots?.inArticle,
+        sidebar: cfg.slots?.sidebar,
+        rail: cfg.slots?.rail,
+      };
+      setAdSlot(map[variant] || cfg.slots?.default || AD_SLOTS.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slot, variant]);
 
   const variantConfig = {
     banner: {
@@ -86,6 +110,10 @@ export default function AdUnit({
       window.clearTimeout(t3);
     };
   }, [adSlot, variant, reactId]);
+
+  if (!adsEnabled || !adSlot) {
+    return null;
+  }
 
   return (
     <aside

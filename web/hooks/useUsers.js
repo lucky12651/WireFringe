@@ -80,7 +80,69 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
     }
   }, [refreshUsers]);
 
-  // Derived stats
+  const claimOrphan = useCallback(
+    async (payload) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await usersApi.claimOrphan(payload);
+        await refreshUsers();
+        return { success: true, result };
+      } catch (err) {
+        setError(err?.message || 'Failed to create account for author');
+        return { success: false, error: err?.message };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshUsers]
+  );
+
+  const reassignOrphan = useCallback(
+    async (creatorName, transferToUserId) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await usersApi.reassignOrphan(creatorName, transferToUserId);
+        await refreshUsers();
+        return { success: true, result };
+      } catch (err) {
+        setError(err?.message || 'Failed to reassign posts');
+        return { success: false, error: err?.message };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshUsers]
+  );
+
+  const deleteOrphanPosts = useCallback(
+    async (creatorName) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await usersApi.deleteOrphanPosts(creatorName);
+        await refreshUsers();
+        return { success: true, result };
+      } catch (err) {
+        setError(err?.message || 'Failed to delete posts');
+        return { success: false, error: err?.message };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshUsers]
+  );
+
+  // Derived stats — accounts only for member charts; orphans still appear in users list
+  const accountUsers = useMemo(
+    () =>
+      (users || []).filter(
+        (u) => !u.isOrphan && u.role !== 'orphan' && Number(u.id) > 0
+      ),
+    [users]
+  );
+
   const creatorCounts = useMemo(() => {
     if (creatorCountsOverride instanceof Map) {
       return creatorCountsOverride;
@@ -90,12 +152,13 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
 
   const memberStats = useMemo(() => {
     const canManageUsers = true; // Admin context
-    return calculateMemberStats(users, creatorCounts, canManageUsers);
-  }, [users, creatorCounts]);
+    return calculateMemberStats(accountUsers, creatorCounts, canManageUsers);
+  }, [accountUsers, creatorCounts]);
 
   return useMemo(
     () => ({
       users,
+      accountUsers,
       isLoading,
       error,
       refreshUsers,
@@ -104,12 +167,16 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      claimOrphan,
+      reassignOrphan,
+      deleteOrphanPosts,
       creatorCounts,
       memberStats,
       setError,
     }),
     [
       users,
+      accountUsers,
       isLoading,
       error,
       refreshUsers,
@@ -118,6 +185,9 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      claimOrphan,
+      reassignOrphan,
+      deleteOrphanPosts,
       creatorCounts,
       memberStats,
     ]

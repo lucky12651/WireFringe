@@ -6,3 +6,5 @@ export { CommentsView } from './CommentsView';
 export { UsersView } from './UsersView';
 export { SettingsView } from './SettingsView';
 export { LogsView } from './LogsView';
+export { AdsenseView } from './AdsenseView';
+export { BotView } from './BotView';

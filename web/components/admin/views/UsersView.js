@@ -13,6 +13,9 @@ export function UsersView({
   onDelete,
   onSetPassword,
   onSetRole,
+  onClaimOrphan,
+  onReassignOrphan,
+  onDeleteOrphanPosts,
   canManageUsers,
 }) {
   const [newUsername, setNewUsername] = useState('');
@@ -38,15 +41,53 @@ export function UsersView({
   const [roleHint, setRoleHint] = useState('');
   const [isSavingRole, setIsSavingRole] = useState(false);
 
-  const usersCount = Array.isArray(users) ? users.length : 0;
+  // Orphan author management
+  const [claimAuthor, setClaimAuthor] = useState(null);
+  const [claimUsername, setClaimUsername] = useState('');
+  const [claimPassword, setClaimPassword] = useState('');
+  const [claimRole, setClaimRole] = useState('author');
+  const [claimHint, setClaimHint] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const [reassignAuthor, setReassignAuthor] = useState(null);
+  const [reassignToUserId, setReassignToUserId] = useState('');
+  const [reassignHint, setReassignHint] = useState('');
+  const [isReassigning, setIsReassigning] = useState(false);
+
+  const [deletePostsAuthor, setDeletePostsAuthor] = useState(null);
+  const [deletePostsHint, setDeletePostsHint] = useState('');
+  const [isDeletingPosts, setIsDeletingPosts] = useState(false);
+
+  const accountUsers = useMemo(
+    () =>
+      (users || []).filter(
+        (u) => !u.isOrphan && u.role !== 'orphan' && Number(u.id) > 0
+      ),
+    [users]
+  );
+  const orphanAuthors = useMemo(() => {
+    const list = users || [];
+    // Prefer API-flagged orphans
+    const flagged = list.filter(
+      (u) => u.isOrphan === true || u.role === 'orphan' || Number(u.id) < 0
+    );
+    if (flagged.length > 0) return flagged;
+
+    // Fallback: if backend is older / missed isOrphan, still show authors from list
+    // that look like non-accounts (no positive id).
+    return list.filter((u) => u.id == null || Number(u.id) <= 0);
+  }, [users]);
+
+  const usersCount = accountUsers.length;
+  const orphanCount = orphanAuthors.length;
   const UserAvatarIcon = Icons.users;
   const KeyIcon = Icons.key;
   const ShieldIcon = Icons.shield;
 
   const transferCandidates = useMemo(() => {
-    if (!userToDelete) return users || [];
-    return (users || []).filter((u) => u.id !== userToDelete.id);
-  }, [users, userToDelete]);
+    if (!userToDelete) return accountUsers;
+    return accountUsers.filter((u) => u.id !== userToDelete.id);
+  }, [accountUsers, userToDelete]);
 
   const markAvatarFailed = (userId) => {
     setFailedAvatars((prev) => {
@@ -98,8 +139,7 @@ export function UsersView({
     setUserToDelete(user);
     setDeletePostsAction('transfer');
     setDeleteHint('');
-    const others = (users || []).filter((u) => u.id !== user.id);
-    // Prefer admin/editor as default transfer target
+    const others = accountUsers.filter((u) => u.id !== user.id);
     const preferred =
       others.find((u) => String(u.role).toLowerCase() === 'admin') ||
       others.find((u) => String(u.role).toLowerCase() === 'editor') ||
@@ -239,11 +279,114 @@ export function UsersView({
     }
   };
 
+  const openClaim = (author) => {
+    setClaimAuthor(author);
+    setClaimUsername(author.username || '');
+    setClaimPassword('');
+    setClaimRole('author');
+    setClaimHint('');
+  };
+
+  const handleClaim = async (e) => {
+    e.preventDefault();
+    if (!claimAuthor || !onClaimOrphan) return;
+    if (!claimPassword || claimPassword.length < MIN_PASSWORD_LENGTH) {
+      setClaimHint(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    const uname = (claimUsername || claimAuthor.username || '').trim();
+    if (uname.length < 3) {
+      setClaimHint('Username must be at least 3 characters.');
+      return;
+    }
+
+    setIsClaiming(true);
+    setClaimHint('');
+    try {
+      const result = await onClaimOrphan({
+        creatorName: claimAuthor.username,
+        username: uname,
+        password: claimPassword,
+        role: claimRole,
+        displayName: claimAuthor.displayName || claimAuthor.username,
+        reassignPosts: true,
+      });
+      if (result.success) {
+        const n = result.result?.postsAffected ?? claimAuthor.postCount ?? 0;
+        setSuccessMessage(
+          `Created account "${uname}" for author "${claimAuthor.username}" (${n} post(s)).`
+        );
+        setClaimAuthor(null);
+      } else {
+        setClaimHint(result.error || 'Failed to create account.');
+      }
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  const openReassign = (author) => {
+    setReassignAuthor(author);
+    setReassignHint('');
+    const preferred =
+      accountUsers.find((u) => String(u.role).toLowerCase() === 'admin') ||
+      accountUsers.find((u) => String(u.role).toLowerCase() === 'editor') ||
+      accountUsers[0];
+    setReassignToUserId(preferred ? String(preferred.id) : '');
+  };
+
+  const handleReassign = async (e) => {
+    e.preventDefault();
+    if (!reassignAuthor || !onReassignOrphan) return;
+    if (!reassignToUserId) {
+      setReassignHint('Select a user to receive the posts.');
+      return;
+    }
+    setIsReassigning(true);
+    setReassignHint('');
+    try {
+      const result = await onReassignOrphan(reassignAuthor.username, Number(reassignToUserId));
+      if (result.success) {
+        const n = result.result?.postsAffected ?? 0;
+        const to = result.result?.user?.username || 'selected user';
+        setSuccessMessage(
+          `Moved ${n} post(s) from "${reassignAuthor.username}" → "${to}".`
+        );
+        setReassignAuthor(null);
+      } else {
+        setReassignHint(result.error || 'Failed to reassign posts.');
+      }
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
+  const handleDeleteOrphanPosts = async () => {
+    if (!deletePostsAuthor || !onDeleteOrphanPosts) return;
+    setIsDeletingPosts(true);
+    setDeletePostsHint('');
+    try {
+      const result = await onDeleteOrphanPosts(deletePostsAuthor.username);
+      if (result.success) {
+        const n = result.result?.postsAffected ?? 0;
+        setSuccessMessage(`Deleted ${n} post(s) by "${deletePostsAuthor.username}".`);
+        setDeletePostsAuthor(null);
+      } else {
+        setDeletePostsHint(result.error || 'Failed to delete posts.');
+      }
+    } finally {
+      setIsDeletingPosts(false);
+    }
+  };
+
   return (
     <div className="admin-view-container-v2">
       <div className="section-header">
         <h2 className="section-title">Users Management</h2>
-        <span className="title-count-v2">{usersCount} Users</span>
+        <span className="title-count-v2">
+          {usersCount} Accounts
+          {orphanCount > 0 ? ` · ${orphanCount} authors without account` : ''}
+        </span>
       </div>
 
       <div className="admin-grid-v2">
@@ -286,77 +429,174 @@ export function UsersView({
         </div>
 
         <div className="admin-card-v2 users-list-card">
-          <h3 className="card-title-v2">Existing Users</h3>
+          <h3 className="card-title-v2">Login accounts</h3>
           <div className="v2-table-wrapper">
             <table className="v2-table">
               <thead>
                 <tr>
                   <th>User</th>
                   <th>Role</th>
-                  <th>Status</th>
+                  <th>Posts</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="user-info-cell">
-                        <div className="user-avatar-v2">
-                          {user.avatarUrl && !failedAvatars.has(user.id) ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.username}
-                              onError={() => markAvatarFailed(user.id)}
-                            />
-                          ) : (
-                            <UserAvatarIcon size={18} />
-                          )}
-                        </div>
-                        <span className="username-text">{user.username}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`role-badge ${user.role}`}>{user.role}</span>
-                    </td>
-                    <td>
-                      <span className="status-dot-active">Active</span>
-                    </td>
-                    <td className="text-right">
-                      <div className="action-group-v2">
-                        <button
-                          type="button"
-                          className="edit-btn-v2"
-                          onClick={() => openRoleModal(user)}
-                          title="Change role"
-                          aria-label={`Change role for ${user.username}`}
-                        >
-                          <ShieldIcon size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="edit-btn-v2"
-                          onClick={() => openPasswordModal(user)}
-                          title="Change password"
-                          aria-label={`Change password for ${user.username}`}
-                        >
-                          <KeyIcon size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="delete-btn-v2"
-                          onClick={() => handleDeleteClick(user)}
-                          title="Delete user"
-                          aria-label={`Delete ${user.username}`}
-                        >
-                          <TrashIcon size={16} />
-                        </button>
-                      </div>
+                {accountUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4}>
+                      <EmptyState>No login accounts yet.</EmptyState>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  accountUsers.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <div className="user-info-cell">
+                          <div className="user-avatar-v2">
+                            {user.avatarUrl && !failedAvatars.has(user.id) ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.username}
+                                onError={() => markAvatarFailed(user.id)}
+                              />
+                            ) : (
+                              <UserAvatarIcon size={18} />
+                            )}
+                          </div>
+                          <div>
+                            <span className="username-text">{user.username}</span>
+                            {user.displayName && user.displayName !== user.username ? (
+                              <div className="text-muted" style={{ fontSize: 12 }}>
+                                {user.displayName}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`role-badge ${user.role}`}>{user.role}</span>
+                      </td>
+                      <td>
+                        <span className="text-muted">{Number(user.postCount) || 0}</span>
+                      </td>
+                      <td className="text-right">
+                        <div className="action-group-v2">
+                          <button
+                            type="button"
+                            className="edit-btn-v2"
+                            onClick={() => openRoleModal(user)}
+                            title="Change role"
+                            aria-label={`Change role for ${user.username}`}
+                          >
+                            <ShieldIcon size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="edit-btn-v2"
+                            onClick={() => openPasswordModal(user)}
+                            title="Change password"
+                            aria-label={`Change password for ${user.username}`}
+                          >
+                            <KeyIcon size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="delete-btn-v2"
+                            onClick={() => handleDeleteClick(user)}
+                            title="Delete user"
+                            aria-label={`Delete ${user.username}`}
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Post authors that appear on the site but have no users row */}
+        <div className="admin-card-v2 full-width">
+          <h3 className="card-title-v2">Post authors without an account</h3>
+          <p className="card-desc-v2">
+            These names appear as article authors (from <code>posts.creator</code>) but are not
+            login accounts — e.g. Krishna, Reet, News Bot Engine. Create an account, move their
+            posts to an existing user, or delete their posts.
+          </p>
+          <div className="v2-table-wrapper">
+            {orphanAuthors.length === 0 ? (
+              <EmptyState>All post authors have matching login accounts.</EmptyState>
+            ) : (
+              <table className="v2-table">
+                <thead>
+                  <tr>
+                    <th>Author name on posts</th>
+                    <th>Posts</th>
+                    <th>Status</th>
+                    <th className="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orphanAuthors.map((author) => (
+                    <tr key={`orphan-${author.username}`}>
+                      <td>
+                        <div className="user-info-cell">
+                          <div className="user-avatar-v2">
+                            <UserAvatarIcon size={18} />
+                          </div>
+                          <span className="username-text">{author.username}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{Number(author.postCount) || 0}</strong>
+                      </td>
+                      <td>
+                        <span className="role-badge author">no account</span>
+                      </td>
+                      <td className="text-right">
+                        <div
+                          className="action-group-v2"
+                          style={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 6 }}
+                        >
+                          <button
+                            type="button"
+                            className="secondary-btn-v2"
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            onClick={() => openClaim(author)}
+                            title="Create login account"
+                          >
+                            Create account
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary-btn-v2"
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            onClick={() => openReassign(author)}
+                            title="Move posts to existing user"
+                          >
+                            Transfer posts
+                          </button>
+                          <button
+                            type="button"
+                            className="delete-btn-v2"
+                            onClick={() => {
+                              setDeletePostsAuthor(author);
+                              setDeletePostsHint('');
+                            }}
+                            title="Delete all posts by this author"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
@@ -581,6 +821,166 @@ export function UsersView({
                 </ActionButton>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {claimAuthor && (
+        <div className="modal-overlay" onClick={() => !isClaiming && setClaimAuthor(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create account for author</h3>
+            </div>
+            <form onSubmit={handleClaim}>
+              <div className="modal-body">
+                <p>
+                  Create a login for <strong>{claimAuthor.username}</strong> (
+                  {Number(claimAuthor.postCount) || 0} posts). They can then sign in and
+                  appear in Users management.
+                </p>
+                <div className="form-group-v2" style={{ marginTop: 16 }}>
+                  <label>Login username</label>
+                  <input
+                    type="text"
+                    value={claimUsername}
+                    onChange={(e) => setClaimUsername(e.target.value)}
+                    disabled={isClaiming}
+                  />
+                </div>
+                <div className="form-group-v2">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    value={claimPassword}
+                    onChange={(e) => setClaimPassword(e.target.value)}
+                    placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+                    disabled={isClaiming}
+                  />
+                </div>
+                <div className="form-group-v2">
+                  <label>Role</label>
+                  <select
+                    value={claimRole}
+                    onChange={(e) => setClaimRole(e.target.value)}
+                    disabled={isClaiming}
+                  >
+                    {ROLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {claimHint ? <p className="form-hint-v2">{claimHint}</p> : null}
+              </div>
+              <div className="modal-actions">
+                <ActionButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setClaimAuthor(null)}
+                  disabled={isClaiming}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton type="submit" size="sm" disabled={isClaiming}>
+                  {isClaiming ? 'Creating…' : 'Create account'}
+                </ActionButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {reassignAuthor && (
+        <div
+          className="modal-overlay"
+          onClick={() => !isReassigning && setReassignAuthor(null)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Transfer posts</h3>
+            </div>
+            <form onSubmit={handleReassign}>
+              <div className="modal-body">
+                <p>
+                  Move all posts by <strong>{reassignAuthor.username}</strong> (
+                  {Number(reassignAuthor.postCount) || 0}) to an existing login account.
+                </p>
+                <div className="form-group-v2" style={{ marginTop: 16 }}>
+                  <label>Transfer to</label>
+                  <select
+                    value={reassignToUserId}
+                    onChange={(e) => setReassignToUserId(e.target.value)}
+                    disabled={isReassigning || accountUsers.length === 0}
+                  >
+                    {accountUsers.length === 0 ? (
+                      <option value="">No accounts available</option>
+                    ) : (
+                      accountUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                          {u.displayName ? ` (${u.displayName})` : ''} — {u.role}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+                {reassignHint ? <p className="form-hint-v2">{reassignHint}</p> : null}
+              </div>
+              <div className="modal-actions">
+                <ActionButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setReassignAuthor(null)}
+                  disabled={isReassigning}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton type="submit" size="sm" disabled={isReassigning}>
+                  {isReassigning ? 'Transferring…' : 'Transfer posts'}
+                </ActionButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deletePostsAuthor && (
+        <div
+          className="modal-overlay"
+          onClick={() => !isDeletingPosts && setDeletePostsAuthor(null)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete author posts</h3>
+            </div>
+            <div className="modal-body">
+              <p>
+                Permanently delete all <strong>{Number(deletePostsAuthor.postCount) || 0}</strong>{' '}
+                post(s) by <strong>{deletePostsAuthor.username}</strong>? This cannot be undone.
+              </p>
+              {deletePostsHint ? <p className="form-hint-v2">{deletePostsHint}</p> : null}
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <ActionButton
+                type="button"
+                size="sm"
+                onClick={() => setDeletePostsAuthor(null)}
+                disabled={isDeletingPosts}
+              >
+                Cancel
+              </ActionButton>
+              <ActionButton
+                type="button"
+                size="sm"
+                variant="danger"
+                onClick={handleDeleteOrphanPosts}
+                disabled={isDeletingPosts}
+              >
+                {isDeletingPosts ? 'Deleting…' : 'Delete all posts'}
+              </ActionButton>
+            </div>
           </div>
         </div>
       )}

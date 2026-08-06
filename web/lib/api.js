@@ -205,6 +205,24 @@ export const usersApi = {
             : Number(options.transferToUserId),
       }),
     }),
+  /** Create login account for post-creator with no users row (Krishna, Reet, etc.) */
+  claimOrphan: (payload) =>
+    api('/api/admin/users/orphans/claim', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  /** Move all posts from orphan creator name → existing user */
+  reassignOrphan: (creatorName, transferToUserId) =>
+    api('/api/admin/users/orphans/reassign', {
+      method: 'POST',
+      body: JSON.stringify({ creatorName, transferToUserId: Number(transferToUserId) }),
+    }),
+  /** Delete all posts by a creator name */
+  deleteOrphanPosts: (creatorName) =>
+    api('/api/admin/users/orphans/delete-posts', {
+      method: 'POST',
+      body: JSON.stringify({ creatorName }),
+    }),
 };
 
 // Comments API
@@ -231,4 +249,28 @@ export const mediaApi = {
 export const logsApi = {
   list: (skip = 0, limit = 100) => api(`/api/admin/logs?skip=${skip}&limit=${limit}`, { method: 'GET' }),
   clear: () => api('/api/admin/logs', { method: 'DELETE' }),
+};
+
+// AdSense settings API
+export const adsenseApi = {
+  public: () => api('/api/adsense/public', { method: 'GET' }),
+  get: () => api('/api/admin/adsense', { method: 'GET' }),
+  update: (payload) =>
+    api('/api/admin/adsense', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  clear: () => api('/api/admin/adsense', { method: 'DELETE' }),
+};
+
+// News bot settings API
+export const botApi = {
+  get: () => api('/api/admin/bot', { method: 'GET' }),
+  update: (payload) =>
+    api('/api/admin/bot', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  hideArticles: () => api('/api/admin/bot/hide-articles', { method: 'POST' }),
+  unhideArticles: () => api('/api/admin/bot/unhide-articles', { method: 'POST' }),
 };

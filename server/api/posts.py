@@ -50,8 +50,8 @@ async def get_for_you_posts(
 
 @router.get("/posts", response_model=list[PostOut])
 def list_posts(service: PostService = Depends(get_post_service)) -> list[PostOut]:
-    """List all published posts."""
-    return service.list_posts()
+    """List all published posts (public visibility rules applied)."""
+    return service.list_posts(public=True)
 
 
 @router.get("/posts/{post_id}", response_model=PostOut)
@@ -59,7 +59,7 @@ def get_post(
     post_id: str, service: PostService = Depends(get_post_service)
 ) -> PostOut:
     """Get a single post by ID."""
-    return service.get_post(post_id)
+    return service.get_post(post_id, public=True)
 
 
 @router.get("/post", response_model=PostOut)
@@ -67,7 +67,7 @@ def get_post_by_query(
     id: str, service: PostService = Depends(get_post_service)
 ) -> PostOut:
     """Get a post by ID (query param version)."""
-    return service.get_post(id)
+    return service.get_post(id, public=True)
 
 
 @router.get("/post/by-slug", response_model=PostOut)
@@ -75,7 +75,7 @@ def get_post_by_slug(
     slug: str, service: PostService = Depends(get_post_service)
 ) -> PostOut:
     """Get a post by its URL slug."""
-    return service.get_post_by_slug(slug)
+    return service.get_post_by_slug(slug, public=True)
 
 
 # Admin post endpoints
@@ -94,8 +94,11 @@ def admin_list_posts(
     creator = user.username if user.role == "author" else None
     
     if limit is None or limit <= 0:
-        # Fetch all posts if limit is not provided
-        posts = service.list_posts_by_creator(creator) if creator else service.list_posts()
+        # Fetch all posts if limit is not provided (admin: include hidden/bot)
+        if creator:
+            posts = service.list_posts_by_creator(creator)
+        else:
+            posts = service.list_posts(public=False)
         return PaginatedPostsOut(posts=posts, total=len(posts))
         
     posts, total = service.list_posts_paginated(offset, limit, creator)

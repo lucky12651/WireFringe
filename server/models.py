@@ -31,6 +31,10 @@ class Post(Base):
 
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Bot-generated posts + visibility controls
+    is_bot: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -157,3 +161,15 @@ class BotLog(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     module: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+
+class AppSetting(Base):
+    """Key/value app settings (AdSense, news bot, etc.)."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )

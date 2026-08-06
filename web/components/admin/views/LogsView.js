@@ -73,7 +73,7 @@ export function LogsView({ logs, onRefresh, isLoading }) {
               <tbody>
                 {filteredLogs.map((log) => (
                   <tr key={log.id}>
-                    <td className="text-muted" style={{ fontSize: '12px' }}>
+                    <td className="text-muted" style={{ fontSize: '12px', color: '#a0a0a0' }}>
                       {formatDate(log.createdAt)}
                     </td>
                     <td>
@@ -82,11 +82,19 @@ export function LogsView({ logs, onRefresh, isLoading }) {
                       </span>
                     </td>
                     <td>
-                      <code style={{ fontSize: '12px', background: 'rgba(255,255,255,0.05)', padding: '2px 4px', borderRadius: '4px' ,color:"#111"}}>
+                      <code
+                        style={{
+                          fontSize: '12px',
+                          background: 'rgba(255,255,255,0.06)',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          color: '#3cffd0',
+                        }}
+                      >
                         {log.module || 'root'}
                       </code>
                     </td>
-                    <td style={{ fontSize: '13px', lineHeight: '1.4',color:"#111" }}>
+                    <td style={{ fontSize: '13px', lineHeight: '1.45', color: '#e8e8e8' }}>
                       {log.message}
                     </td>
                   </tr>

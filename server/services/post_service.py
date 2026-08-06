@@ -21,6 +21,7 @@ from ..schemas import (
     PostOut,
     PostUpsert,
 )
+from .settings_service import SettingsService
 
 
 class PostService:
@@ -115,9 +116,22 @@ class PostService:
         ids = [str(p.id) for p in posts if getattr(p, "id", None) is not None]
         return self.comment_repo.count_approved_by_post_ids(ids)
 
-    def list_posts(self) -> list[PostOut]:
-        """List all posts."""
-        posts = self.post_repo.list_published()
+    def _public_list_flags(self) -> tuple[bool, bool]:
+        """Return (public_only, hide_bot) for public feed filtering."""
+        try:
+            bot = SettingsService(self.db).get_bot()
+            hide_bot = bool(bot.get("hideArticles"))
+        except Exception:
+            hide_bot = False
+        return True, hide_bot
+
+    def list_posts(self, *, public: bool = True) -> list[PostOut]:
+        """List posts. Public listing respects hidden/bot visibility settings."""
+        if public:
+            public_only, hide_bot = self._public_list_flags()
+            posts = self.post_repo.list_published(public_only=public_only, hide_bot=hide_bot)
+        else:
+            posts = self.post_repo.list_published()
         author_lookup = self.user_repo.build_author_lookup()
         comment_counts = self._comment_counts_for_posts(posts)
         return [self._build_post_out(p, author_lookup, comment_counts) for p in posts]
@@ -187,14 +201,27 @@ class PostService:
         count_by_key = {k: int(c) for k, c in rows}
         return [MonthCountOut(key=k, count=int(count_by_key.get(k, 0))) for k in keys]
 
-    def get_post(self, post_id: str) -> PostOut:
+    def _is_publicly_visible(self, post: Post) -> bool:
+        if getattr(post, "is_hidden", False):
+            return False
+        if getattr(post, "is_bot", False):
+            try:
+                if SettingsService(self.db).get_bot().get("hideArticles"):
+                    return False
+            except Exception:
+                pass
+        return True
+
+    def get_post(self, post_id: str, *, public: bool = True) -> PostOut:
         """Get a single post by ID."""
         post = self.post_repo.get(post_id)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
+        if public and not self._is_publicly_visible(post):
+            raise HTTPException(status_code=404, detail="Post not found")
         return self._build_post_out(post)
 
-    def get_post_by_slug(self, slug: str) -> PostOut:
+    def get_post_by_slug(self, slug: str, *, public: bool = True) -> PostOut:
         """Get a post by its slug."""
         slug = (slug or "").strip().lower()
         if not slug:
@@ -204,6 +231,8 @@ class PostService:
         author_lookup = self.user_repo.build_author_lookup()
         for p in posts:
             if self._slugify_title(p.title) == slug:
+                if public and not self._is_publicly_visible(p):
+                    raise HTTPException(status_code=404, detail="Post not found")
                 return self._build_post_out(p, author_lookup)
 
         raise HTTPException(status_code=404, detail="Post not found")
@@ -255,12 +284,20 @@ class PostService:
 
     def get_personalized_feed(self, user_id: int, limit: int = 20) -> list[PostOut]:
         """Fetch pre-calculated personalized feed for the user."""
-        # 1. Try to get pre-calculated recommendations
-        recs = (
+        # 1. Try to get pre-calculated recommendations (respect public visibility)
+        q = (
             self.db.query(Post)
             .join(PersonalizedFeed, Post.id == PersonalizedFeed.post_id)
             .filter(PersonalizedFeed.user_id == user_id)
-            .order_by(PersonalizedFeed.score.desc(), Post.published_at.desc())
+            .filter(Post.is_hidden.is_(False))
+        )
+        try:
+            if SettingsService(self.db).get_bot().get("hideArticles"):
+                q = q.filter(Post.is_bot.is_(False))
+        except Exception:
+            pass
+        recs = (
+            q.order_by(PersonalizedFeed.score.desc(), Post.published_at.desc())
             .limit(limit)
             .all()
         )
@@ -271,7 +308,7 @@ class PostService:
 
         # 2. Fallback: if no pre-calculated recs, return latest posts
         # (This handles new users or cases where the background task hasn't run yet)
-        return self.list_posts()[:limit]
+        return self.list_posts(public=True)[:limit]
 
     def get_news_queue(self) -> list[NewsQueueItem]:
         """Get all pending or failed news from the database queue."""

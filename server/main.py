@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI):
     try:
         _ensure_user_profile_columns()
         _ensure_comment_moderation_columns()
+        _ensure_post_visibility_columns()
         _seed_default_categories()
         settings.uploads_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Schema upgrades / seed complete.")
@@ -233,22 +234,46 @@ def _seed_default_categories() -> None:
         service.seed_defaults()
 
 
+def _ensure_post_visibility_columns() -> None:
+    """Add is_bot / is_hidden on posts and backfill known bot authors."""
+    from sqlalchemy import inspect, text
+
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+        tables = inspector.get_table_names()
+        if "posts" not in tables:
+            return
+
+        existing = {c["name"] for c in inspector.get_columns("posts")}
+        added_is_bot = False
+        if "is_bot" not in existing:
+            conn.execute(
+                text("ALTER TABLE posts ADD COLUMN is_bot BOOLEAN NOT NULL DEFAULT FALSE")
+            )
+            added_is_bot = True
+        if "is_hidden" not in existing:
+            conn.execute(
+                text("ALTER TABLE posts ADD COLUMN is_hidden BOOLEAN NOT NULL DEFAULT FALSE")
+            )
+
+        # One-time: mark historical Wirefringe bot posts
+        if added_is_bot:
+            conn.execute(
+                text(
+                    """
+                    UPDATE posts
+                    SET is_bot = TRUE
+                    WHERE lower(trim(coalesce(creator, ''))) IN ('wirefringe', 'wire fringe')
+                    """
+                )
+            )
+
+    # Ensure app_settings table exists (create_all should handle it; no-op if present)
+    try:
+        Base.metadata.create_all(bind=engine, tables=[models.AppSetting.__table__])
+    except Exception:
+        pass
+
+
 # Create the application instance
 app = create_app()
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    """Startup event handler."""
-    # Create tables
-    Base.metadata.create_all(bind=engine)
-
-    # Schema migrations
-    _ensure_user_profile_columns()
-    _ensure_comment_moderation_columns()
-
-    # Seed data
-    _seed_default_categories()
-
-    # Ensure uploads directory exists
-    settings.uploads_dir.mkdir(parents=True, exist_ok=True)

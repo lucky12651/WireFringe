@@ -7,3 +7,5 @@ export { useComments } from './useComments';
 export { useMedia } from './useMedia';
 export { useLogs } from './useLogs';
 export { useReveal } from './useReveal';
+export { useAdsenseSettings } from './useAdsenseSettings';
+export { useBotSettings } from './useBotSettings';

@@ -1,14 +1,23 @@
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import StaticPage from '../components/StaticPage/StaticPage';
-import {
-  ADSENSE_PUB_ID,
-  CONTACT_EMAIL,
-  PRIVACY_EMAIL,
-  SITE_NAME,
-  SITE_URL,
-} from '../lib/site';
+import { CONTACT_EMAIL, PRIVACY_EMAIL, SITE_NAME, SITE_URL } from '../lib/site';
+import { loadAdsenseConfig } from '../lib/ads';
 
 export default function PrivacyPage() {
+  // Publisher ID comes only from Admin → AdSense (API), never hardcoded.
+  const [publisherId, setPublisherId] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAdsenseConfig().then((cfg) => {
+      if (!cancelled) setPublisherId(String(cfg.publisherId || '').trim());
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <StaticPage
       title="Privacy Notice"
@@ -50,9 +59,15 @@ export default function PrivacyPage() {
 
       <h2>4. Advertising and Google AdSense</h2>
       <p>
-        We use third-party advertising services, including <strong>Google AdSense</strong>{' '}
-        (publisher ID: <code>{ADSENSE_PUB_ID}</code>), to display ads. Google and its partners may
-        use cookies and similar technologies to:
+        We may use third-party advertising services, including <strong>Google AdSense</strong>
+        {publisherId ? (
+          <>
+            {' '}
+            (publisher ID: <code>{publisherId}</code>)
+          </>
+        ) : null}
+        , to display ads when advertising is enabled. Google and its partners may use cookies and
+        similar technologies to:
       </p>
       <ul>
         <li>Serve ads based on your prior visits to this site or other sites</li>

@@ -26,6 +26,7 @@ from .news_bot_modules.queue_ops import (
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
 from .services.recommendation_service import RecommendationService
+from .services.settings_service import SettingsService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +106,7 @@ class NewsBot:
         if db.query(Post).filter(Post.id == slug).first():
             slug = f"{slug}-{str(uuid.uuid4())[:8]}"
 
+        bot_cfg = SettingsService(db).get_bot()
         new_post = Post(
             id=slug,
             title=article_data.title,
@@ -117,7 +119,9 @@ class NewsBot:
             og_img=article_data.ogImg,
             meta_description=article_data.metaDescription,
             keywords=article_data.keywords,
-            published_at=datetime.now(timezone.utc)
+            published_at=datetime.now(timezone.utc),
+            is_bot=True,
+            is_hidden=bool(bot_cfg.get("hideArticles")),
         )
 
         try:
@@ -142,68 +146,104 @@ class NewsBot:
 
         db = SessionLocal()
         try:
+            bot_cfg = SettingsService(db).get_bot()
+            if not bot_cfg.get("enabled", True):
+                logger.info("NewsBot is disabled in admin settings. Skipping cycle.")
+                return
+
+            daily_limit = int(bot_cfg.get("dailyLimit") or 12)
+            gap_minutes = int(bot_cfg.get("gapMinutes") or 120)
+            gap_seconds = max(0, gap_minutes * 60)
+            queue_cleanup_hours = int(bot_cfg.get("queueCleanupHours") or 24)
+            recent_cache_hours = int(bot_cfg.get("recentCacheHours") or 2)
+            max_items_per_feed = int(bot_cfg.get("maxItemsPerFeed") or 5)
+            process_per_cycle = int(bot_cfg.get("processPerCycle") or 1)
+
             # Step 0: Cleanup old items
-            cleanup_old_queue_items(db, hours=24)
-            cleanup_recent_cache(db, hours=2)
+            cleanup_old_queue_items(db, hours=queue_cleanup_hours)
+            cleanup_recent_cache(db, hours=recent_cache_hours)
 
             all_items = []
             for category, url in FEEDS.items():
                 items = await self.fetch_rss_items(category, url)
-                all_items.extend(items[:5])
+                all_items.extend(items[:max_items_per_feed])
 
             logger.info("Syncing discovered items into the staging database queue...")
             self.save_to_queue(db, all_items)
 
-            # Check daily post limit (max 4 per day)
+            # Check daily post limit
             now = datetime.now(timezone.utc)
             start_of_day = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
-            posts_today = db.query(Post).filter(Post.published_at >= start_of_day).count()
-            remaining_slots = max(0, 12 - posts_today)
-            
-            # Enforce constant gap of 2 hours (7200 seconds) between publications
-            last_post = db.query(Post).order_by(Post.published_at.desc()).first()
-            time_gap_ok = True
-            if last_post and last_post.published_at:
-                elapsed = now - last_post.published_at
-                if elapsed.total_seconds() < 7200:
-                    time_gap_ok = False
-                    remaining_minutes = int((7200 - elapsed.total_seconds()) / 60)
-                    logger.info(f"Time gap restriction: Only {elapsed.total_seconds() / 60:.1f} minutes elapsed since last post. Need to wait another {remaining_minutes} minutes.")
+            posts_today = (
+                db.query(Post)
+                .filter(Post.published_at >= start_of_day, Post.is_bot.is_(True))
+                .count()
+            )
+            remaining_slots = max(0, daily_limit - posts_today)
 
-            logger.info(f"Daily limit status: {posts_today}/12 posts published today. Remaining slots: {remaining_slots}")
+            # Enforce gap between bot publications
+            last_post = (
+                db.query(Post)
+                .filter(Post.is_bot.is_(True))
+                .order_by(Post.published_at.desc())
+                .first()
+            )
+            time_gap_ok = True
+            if gap_seconds > 0 and last_post and last_post.published_at:
+                last_at = last_post.published_at
+                if last_at.tzinfo is None:
+                    last_at = last_at.replace(tzinfo=timezone.utc)
+                elapsed = now - last_at
+                if elapsed.total_seconds() < gap_seconds:
+                    time_gap_ok = False
+                    remaining_minutes = int((gap_seconds - elapsed.total_seconds()) / 60)
+                    logger.info(
+                        f"Time gap restriction: Only {elapsed.total_seconds() / 60:.1f} minutes "
+                        f"elapsed since last bot post. Need to wait another {remaining_minutes} minutes."
+                    )
+
+            logger.info(
+                f"Daily limit status: {posts_today}/{daily_limit} bot posts published today. "
+                f"Remaining slots: {remaining_slots}"
+            )
 
             pending = get_pending_from_queue(db)
             if pending and remaining_slots > 0 and time_gap_ok:
-                logger.info(f"🚀 Stage 2 - Initiating sequential extraction for up to 1 article (slots: {remaining_slots})...")
-                
+                logger.info(
+                    f"🚀 Stage 2 - Initiating sequential extraction for up to "
+                    f"{process_per_cycle} article(s) (slots: {remaining_slots})..."
+                )
+
                 success_count = 0
                 for item in pending:
+                    if success_count >= process_per_cycle or success_count >= remaining_slots:
+                        break
                     success = await self.process_item(db, item)
                     if success:
                         success_count += 1
-                        break  # Only process 1 item per run to respect the gap
                     else:
-                        # Small delay before trying next item in queue if it fails
                         await asyncio.sleep(2)
-                
+
                 logger.info(f"✨ Successfully finished processing {success_count} items in this cycle.")
             elif not pending:
                 logger.info("ℹ️ No pending news items to process in this cycle.")
             elif not time_gap_ok:
-                logger.info("ℹ️ Skipping news extraction due to 2-hour constant gap restriction.")
+                logger.info(f"ℹ️ Skipping news extraction due to {gap_minutes}-minute gap restriction.")
             else:
-                logger.info("ℹ️ Daily limit of 12 posts already reached. Skipping news extraction.")
+                logger.info(f"ℹ️ Daily limit of {daily_limit} bot posts already reached. Skipping news extraction.")
 
             # Step 3: Update personalized recommendations once per day at 2 AM IST (20:30 UTC)
             now_utc = datetime.now(timezone.utc)
-            # We run it if the hour is 20 (UTC) which is 1:30 AM - 2:30 AM IST
             if now_utc.hour == 20:
                 logger.info("🚀 Stage 3 - Scheduled Time (2 AM IST): Updating personalized recommendations...")
                 rec_service = RecommendationService(db)
                 rec_service.update_all_recommendations()
             else:
-                logger.info(f"ℹ️ Skipping Stage 3 - Current time {now_utc.strftime('%H:%M')} UTC is not the scheduled 20:30 UTC (2 AM IST).")
-            
+                logger.info(
+                    f"ℹ️ Skipping Stage 3 - Current time {now_utc.strftime('%H:%M')} UTC "
+                    f"is not the scheduled 20:30 UTC (2 AM IST)."
+                )
+
         finally:
             db.close()
         logger.info("NewsBot loop segment complete.")
@@ -217,8 +257,19 @@ async def start_news_bot_loop():
     try:
         while True:
             await bot.run_cycle()
-            logger.info("Sleeping for 1 hour...")
-            await asyncio.sleep(3600)
+            # Read sleep interval from settings each cycle
+            sleep_seconds = 3600
+            try:
+                db = SessionLocal()
+                try:
+                    sleep_seconds = int(SettingsService(db).get_bot().get("sleepSeconds") or 3600)
+                finally:
+                    db.close()
+            except Exception as e:
+                logger.warning(f"Could not read bot sleepSeconds; using 3600: {e}")
+            sleep_seconds = max(60, sleep_seconds)
+            logger.info(f"Sleeping for {sleep_seconds} seconds...")
+            await asyncio.sleep(sleep_seconds)
     except asyncio.CancelledError:
         logger.info("NewsBot engine routine safely interrupted.")
     finally:

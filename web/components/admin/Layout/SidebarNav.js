@@ -14,6 +14,8 @@ const NAV_ITEMS = [
 ];
 
 const SYSTEM_ITEMS = [
+  { id: 'adsense', label: 'AdSense', adminOnly: true, icon: 'adsense' },
+  { id: 'bot', label: 'News Bot', adminOnly: true, icon: 'bot' },
   { id: 'logs', label: 'System Logs', adminOnly: true, icon: 'logs' },
 ];
 
@@ -23,10 +25,8 @@ export function SidebarNav({
   activeView,
   onNavigate,
   pendingCommentsCount,
+  collapsed,
 }) {
-  const canManageUsers = me?.role === 'admin';
-  const isAuthor = me?.role === 'author';
-
   const renderNavItem = (item) => {
     const isActive = activeView === item.id;
     const isDisabled = !isAuthed;
@@ -41,6 +41,7 @@ export function SidebarNav({
         isHidden={isHidden}
         pendingCommentsCount={pendingCommentsCount}
         onNavigate={onNavigate}
+        collapsed={collapsed}
       />
     );
   };
@@ -54,7 +55,7 @@ export function SidebarNav({
       <div className={styles.navDivider} aria-hidden="true" />
 
       <div className={styles.navSection}>
-        <div className={styles.sectionLabel}>System</div>
+        {!collapsed ? <div className={styles.sectionLabel}>System</div> : null}
         {SYSTEM_ITEMS.map(renderNavItem)}
       </div>
     </nav>

@@ -26,7 +26,10 @@ export const PRIVACY_EMAIL =
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_PRIVACY_EMAIL) ||
   'privacy@wirefringe.com';
 
-/** AdSense publisher ID (without ca- prefix in ads.txt style) */
-export const ADSENSE_PUB_ID = 'pub-9036526646235532';
+/**
+ * AdSense publisher ID is NOT hardcoded here.
+ * It is managed only in Admin → AdSense (GET /api/adsense/public).
+ * Use loadAdsenseConfig() from lib/ads.js on any public page that needs it.
+ */
 
 export const LAST_UPDATED = 'August 4, 2026';

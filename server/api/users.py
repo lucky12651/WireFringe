@@ -14,6 +14,10 @@ from ..schemas import (
     AdminUserDeleteRequest,
     LoginRequest,
     MeOut,
+    OrphanActionOut,
+    OrphanClaimRequest,
+    OrphanDeletePostsRequest,
+    OrphanReassignRequest,
     PasswordChangeRequest,
     ProfileUpdateRequest,
     TokenOut,
@@ -153,7 +157,7 @@ def admin_list_users(
     db: Session = Depends(get_db),
     service: UserService = Depends(get_user_service),
 ) -> list[UserOut]:
-    """List all users."""
+    """List all login accounts and orphan post-creators (no account yet)."""
     user = require_user(request, db)
     # Allow admins and editors to see the user list
     if user.role not in ["admin", "editor"]:
@@ -173,6 +177,57 @@ def admin_create_user(
     require_admin(user)
     user_model = service.create_user(payload)
     return service._build_user_out(user_model)
+
+
+@router.post("/users/orphans/claim", response_model=OrphanActionOut)
+def admin_claim_orphan(
+    payload: OrphanClaimRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> OrphanActionOut:
+    """Create a login account for a post author who has no users row (e.g. Krishna, Reet)."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.claim_orphan_author(
+        creator_name=payload.creatorName,
+        password=payload.password,
+        role=payload.role,
+        username=payload.username,
+        display_name=payload.displayName,
+        reassign_posts=payload.reassignPosts,
+        admin=user,
+    )
+
+
+@router.post("/users/orphans/reassign", response_model=OrphanActionOut)
+def admin_reassign_orphan(
+    payload: OrphanReassignRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> OrphanActionOut:
+    """Transfer all posts from an orphan creator name to an existing user."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.reassign_orphan_posts(
+        creator_name=payload.creatorName,
+        transfer_to_user_id=payload.transferToUserId,
+        admin=user,
+    )
+
+
+@router.post("/users/orphans/delete-posts", response_model=OrphanActionOut)
+def admin_delete_orphan_posts(
+    payload: OrphanDeletePostsRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> OrphanActionOut:
+    """Delete all posts attributed to a creator name (orphan cleanup)."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.delete_posts_by_creator(payload.creatorName, user)
 
 
 @router.put("/users/{user_id}/password")

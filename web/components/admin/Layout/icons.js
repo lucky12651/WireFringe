@@ -125,6 +125,24 @@ export const Icons = {
        <line x1="14" y1="11" x2="14" y2="17" />
      </svg>
    ),
+  adsense: ({ size = 20 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 8h6M9 12h6M9 16h4" />
+      <path d="M7 3v18" opacity="0.4" />
+    </svg>
+  ),
+  bot: ({ size = 20 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="8" width="16" height="12" rx="2" />
+      <path d="M12 8V5" />
+      <circle cx="12" cy="4" r="1" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" />
+      <path d="M9 17h6" />
+      <path d="M2 14h2M20 14h2" />
+    </svg>
+  ),
 };
 
 // Individual icon exports for action buttons

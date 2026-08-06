@@ -11,6 +11,7 @@ export function NavItem({
   isHidden,
   pendingCommentsCount,
   onNavigate,
+  collapsed,
 }) {
   if (isHidden) return null;
 
@@ -20,10 +21,12 @@ export function NavItem({
   return (
     <button
       type="button"
-      className={`${styles.navItem} ${isActive ? styles.active : ''} ${isUserNavDisabled ? styles.disabled : ''}`}
+      className={`${styles.navItem} ${isActive ? styles.active : ''} ${
+        isUserNavDisabled ? styles.disabled : ''
+      }`}
       onClick={() => onNavigate(item.id)}
       disabled={isDisabled || isUserNavDisabled}
-      title={isUserNavDisabled ? 'Admins only' : ''}
+      title={isUserNavDisabled ? 'Admins only' : collapsed ? item.label : ''}
     >
       <span className={styles.navIcon}>
         <IconComponent />

@@ -27,11 +27,21 @@ class PostRepository(BaseRepository[Post]):
             .all()
         )
 
-    def list_published(self) -> list[Post]:
-        """List all posts ordered by published date."""
+    def list_published(self, *, public_only: bool = False, hide_bot: bool = False) -> list[Post]:
+        """List posts ordered by published date.
+
+        When public_only=True, excludes is_hidden posts.
+        When hide_bot=True, also excludes is_bot posts.
+        """
+        query = select(Post)
+        if public_only:
+            # Treat missing columns gracefully via coalesce-style filters
+            query = query.where(Post.is_hidden.is_(False))
+            if hide_bot:
+                query = query.where(Post.is_bot.is_(False))
         return (
             self.db.execute(
-                select(Post).order_by(Post.published_at.desc().nullslast())
+                query.order_by(Post.published_at.desc().nullslast())
             )
             .scalars()
             .all()
