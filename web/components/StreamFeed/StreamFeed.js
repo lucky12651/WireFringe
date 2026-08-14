@@ -31,17 +31,17 @@ export default function StreamFeed({
 }) {
   return (
     <aside
-      className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pr-2.5 pb-5 pl-[22px] overflow-hidden bg-black max-md:h-auto max-md:max-h-none max-md:overflow-visible max-md:pt-7 max-md:px-0 max-md:pb-0"
+      className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pr-2.5 pb-5 pl-[22px] overflow-hidden bg-bg max-md:h-auto max-md:max-h-none max-md:overflow-visible max-md:pt-7 max-md:px-0 max-md:pb-0"
       aria-label="Latest stream"
     >
-      <div className="flex gap-0 mx-auto mb-4 bg-gradient-to-b from-[#161616] to-[#0e0e0e] rounded-pill p-[3px] w-fit shrink-0 z-[5] justify-center border border-white/[0.06] shadow-[0_8px_28px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex gap-0 mx-auto mb-4 bg-bg-secondary rounded-pill p-[3px] w-fit shrink-0 z-[5] justify-center border border-line shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.04)]">
         <button
           type="button"
           className={cn(
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'latest'
               ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
-              : 'bg-transparent text-[#6a6a6a] hover:text-[#ccc]'
+              : 'bg-transparent text-ink-muted hover:text-ink'
           )}
           onClick={() => onTabChange?.('latest')}
         >
@@ -53,7 +53,7 @@ export default function StreamFeed({
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'following'
               ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
-              : 'bg-transparent text-[#6a6a6a] hover:text-[#ccc]'
+              : 'bg-transparent text-ink-muted hover:text-ink'
           )}
           onClick={() => onTabChange?.('following')}
         >
@@ -62,7 +62,7 @@ export default function StreamFeed({
       </div>
 
       {feedTab === 'following' && !user ? (
-        <div className="text-center px-3 py-10 text-[#888] text-sm flex-1">
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
           <p>Sign in to follow writers and topics.</p>
           <Link
             href="/login"
@@ -72,7 +72,7 @@ export default function StreamFeed({
           </Link>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center px-3 py-10 text-[#888] text-sm flex-1">No posts yet.</div>
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">No posts yet.</div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1.5 -mr-0.5 max-md:overflow-visible max-md:max-h-none">
           {posts.map((post, idx) => {
@@ -82,7 +82,7 @@ export default function StreamFeed({
             return (
               <article
                 key={post.id}
-                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-[#333] animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.055),transparent)] hover:rounded-sm"
+                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-line animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.055),transparent)] hover:rounded-sm"
               >
                 <div className="flex items-center gap-2.5 mb-3">
                   <AuthorByline
@@ -98,12 +98,12 @@ export default function StreamFeed({
                     <div className="flex-1 min-w-0">
                       <Link
                         href={postUrl(post)}
-                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-ink mb-2 transition-colors hover:text-mint"
                       >
                         {post.title}
                       </Link>
                       {body ? (
-                        <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                        <p className="text-sm leading-relaxed text-ink-secondary mb-2 tracking-tight group-hover:text-ink-soft">
                           {body}
                         </p>
                       ) : null}
@@ -111,7 +111,7 @@ export default function StreamFeed({
                     {post.ogImg ? (
                       <Link
                         href={postUrl(post)}
-                        className="w-20 h-20 shrink-0 overflow-hidden bg-[#111]"
+                        className="w-20 h-20 shrink-0 overflow-hidden bg-bg-card"
                       >
                         <img
                           src={post.ogImg}
@@ -126,8 +126,8 @@ export default function StreamFeed({
 
                 {mode === 1 && (
                   <div>
-                    <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
-                      <strong className="text-white font-extrabold tracking-tight">{post.title}.</strong>{' '}
+                    <p className="text-sm leading-relaxed text-ink-secondary mb-2 tracking-tight group-hover:text-ink-soft">
+                      <strong className="text-ink font-extrabold tracking-tight">{post.title}.</strong>{' '}
                       {body}
                     </p>
                     {post.link ? (
@@ -148,7 +148,7 @@ export default function StreamFeed({
                       </Link>
                     )}
                     {body.length > 80 ? (
-                      <blockquote className="mt-3 mb-1 py-2 pl-3.5 border-l-2 border-[#3a3a3a] text-[#888] text-[13.5px] leading-normal italic transition-colors group-hover:border-mint/50">
+                      <blockquote className="mt-3 mb-1 py-2 pl-3.5 border-l-2 border-line-strong text-ink-tertiary text-[13.5px] leading-normal italic transition-colors group-hover:border-mint/50">
                         {body.slice(0, 120)}
                         {body.length > 120 ? '…' : ''}
                       </blockquote>
@@ -160,14 +160,14 @@ export default function StreamFeed({
                   <>
                     <Link
                       href={postUrl(post)}
-                      className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                      className="block text-base font-extrabold leading-[1.28] tracking-tight text-ink mb-2 transition-colors hover:text-mint"
                     >
                       {post.title}
                     </Link>
                     {post.ogImg ? (
                       <Link
                         href={postUrl(post)}
-                        className="block w-full aspect-video overflow-hidden bg-[#1a1a1a] my-2.5 mb-3 rounded-sm"
+                        className="block w-full aspect-video overflow-hidden bg-bg-card my-2.5 mb-3 rounded-sm"
                       >
                         <img
                           src={post.ogImg}
@@ -178,7 +178,7 @@ export default function StreamFeed({
                       </Link>
                     ) : null}
                     {body ? (
-                      <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                      <p className="text-sm leading-relaxed text-ink-secondary mb-2 tracking-tight group-hover:text-ink-soft">
                         {body}
                       </p>
                     ) : null}
@@ -190,12 +190,12 @@ export default function StreamFeed({
                     <div className="flex-1 min-w-0">
                       <Link
                         href={postUrl(post)}
-                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-white mb-2 transition-colors hover:text-mint"
+                        className="block text-base font-extrabold leading-[1.28] tracking-tight text-ink mb-2 transition-colors hover:text-mint"
                       >
                         {post.title}
                       </Link>
                       {body ? (
-                        <p className="text-sm leading-relaxed text-[#a0a0a0] mb-2 tracking-tight group-hover:text-[#c4c4c4]">
+                        <p className="text-sm leading-relaxed text-ink-secondary mb-2 tracking-tight group-hover:text-ink-soft">
                           {body}
                         </p>
                       ) : null}
@@ -213,7 +213,7 @@ export default function StreamFeed({
                     {post.ogImg ? (
                       <Link
                         href={postUrl(post)}
-                        className="w-20 h-20 shrink-0 overflow-hidden bg-[#111]"
+                        className="w-20 h-20 shrink-0 overflow-hidden bg-bg-card"
                       >
                         <img
                           src={post.ogImg}
@@ -226,15 +226,15 @@ export default function StreamFeed({
                   </div>
                 )}
 
-                <div className="flex items-center gap-3.5 mt-3 text-[#555]">
+                <div className="flex items-center gap-3.5 mt-3 text-ink-muted">
                   <span
-                    className="inline-flex items-center gap-1 text-xs text-[#555] transition-colors group-hover:text-[#888] hover:!text-mint"
+                    className="inline-flex items-center gap-1 text-xs text-ink-muted transition-colors group-hover:text-ink-tertiary hover:!text-mint"
                     title="Comments"
                   >
                     <ChatIcon /> {Number(post.commentCount) || 0}
                   </span>
                   <span
-                    className="inline-flex items-center gap-1 text-xs text-[#555] transition-colors group-hover:text-[#888] hover:!text-mint"
+                    className="inline-flex items-center gap-1 text-xs text-ink-muted transition-colors group-hover:text-ink-tertiary hover:!text-mint"
                     title="Share"
                   >
                     <ShareIcon />
@@ -247,7 +247,7 @@ export default function StreamFeed({
       )}
 
       {showNewsletter && NewsletterComponent ? (
-        <div id="newsletter" className="mt-3 pt-3.5 border-t border-dotted border-[#333] shrink-0">
+        <div id="newsletter" className="mt-3 pt-3.5 border-t border-dotted border-line shrink-0">
           {NewsletterComponent}
         </div>
       ) : null}

@@ -13,27 +13,14 @@ function excerpt(post, max = 110) {
   return postExcerpt(post, max);
 }
 
-/** Purple highlight only on hover */
+/** Purple highlight on the full title, only on hover */
 function HighlightTitle({ title, className }) {
   const t = String(title || '');
-  const hlClass =
-    'bg-transparent [box-decoration-break:clone] px-[0.07em] transition-all duration-300 group-hover:bg-bg-highlight group-hover:shadow-[0_0_0_3px_var(--bg-highlight),0_8px_24px_rgba(91,75,255,0.35)]';
-  if (t.length < 24) {
-    return (
-      <h1 className={className}>
-        <span className={hlClass}>{t}</span>
-      </h1>
-    );
-  }
-  const mid = Math.floor(t.length * 0.42);
-  let split = t.indexOf(' ', mid);
-  if (split < 0) split = mid;
-  const first = t.slice(0, split).trimEnd();
-  const second = t.slice(split).trimStart();
   return (
     <h1 className={className}>
-      {first}{' '}
-      <span className={hlClass}>{second}</span>
+      <span className="bg-transparent [box-decoration-break:clone] px-[0.07em] transition-all duration-300 group-hover:bg-bg-highlight group-hover:shadow-[0_0_0_3px_var(--bg-highlight),0_8px_24px_rgba(91,75,255,0.35)]">
+        {t}
+      </span>
     </h1>
   );
 }
@@ -42,7 +29,7 @@ export default function HeroSection({ posts = [] }) {
   if (!posts.length) {
     return (
       <section className="w-full animate-fade-up">
-        <div className="py-[52px] text-center text-[15px] text-[#777]">No stories available</div>
+        <div className="py-[52px] text-center text-[15px] text-ink-tertiary">No stories available</div>
       </section>
     );
   }
@@ -68,25 +55,25 @@ export default function HeroSection({ posts = [] }) {
             <div className="w-full h-full min-h-[120px] bg-[radial-gradient(circle_at_30%_40%,rgba(60,255,208,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
           )}
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
-          <div className="absolute left-0 right-0 bottom-0 z-[3] p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
+          <div className="on-media absolute left-0 right-0 bottom-0 z-[3] p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
             <HighlightTitle
               title={featured.title}
-              className="text-hero font-black leading-[1.02] tracking-[-0.038em] text-white mb-3.5 max-w-[22ch] max-md:max-w-none shadow-black/50 [text-shadow:0_2px_32px_rgba(0,0,0,0.55)]"
+              className="on-media text-hero font-black leading-[1.02] tracking-[-0.038em] text-white mb-3.5 max-w-[22ch] max-md:max-w-none shadow-black/50 [text-shadow:0_2px_32px_rgba(0,0,0,0.55)]"
             />
             {excerpt(featured) ? (
-              <p className="text-[15px] md:text-[17.5px] font-normal text-[#e4e4e4] mb-4 max-w-[38em] leading-[1.42] tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
+              <p className="on-media text-[15px] md:text-[17.5px] font-normal text-white mb-4 max-w-[38em] leading-[1.42] tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
                 {excerpt(featured)}
               </p>
             ) : null}
-            <div className="flex items-center gap-3 flex-wrap text-xs text-[#999]">
+            <div className="flex items-center gap-3 flex-wrap text-xs text-white/70">
               <AuthorByline post={featured} size="sm" />
               {featured.date ? (
-                <span className="font-mono text-[10px] text-[#7a7a7a] tracking-wide uppercase">
+                <span className="font-mono text-[10px] text-white/65 tracking-wide uppercase">
                   {formatDate(featured.date)}
                 </span>
               ) : null}
               <span
-                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-[#777] px-2 py-[3px] rounded-pill bg-white/5 border border-white/[0.06]"
+                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-white/70 px-2 py-[3px] rounded-pill bg-white/10 border border-white/15"
                 title="Comments"
               >
                 <CommentIcon /> {Number(featured.commentCount) || 0}
@@ -97,21 +84,21 @@ export default function HeroSection({ posts = [] }) {
       </Link>
 
       {grid.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-dotted border-[#2e2e2e] mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-dotted border-line mt-2">
           {grid.map((post, i) => (
             <article
               key={post.id}
               className={cn(
-                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b border-dotted border-[#2e2e2e] transition-colors hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.03),transparent)]',
+                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b border-dotted border-line transition-colors hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.03),transparent)]',
                 i % 2 === 0
-                  ? 'md:pr-[22px] md:border-r md:border-dotted md:border-[#2e2e2e] md:pl-0'
+                  ? 'md:pr-[22px] md:border-r md:border-dotted md:border-line md:pl-0'
                   : 'md:pl-[22px] md:pr-0',
                 'px-0'
               )}
             >
               <Link
                 href={postUrl(post)}
-                className="w-[92px] h-[70px] md:w-[104px] md:h-[78px] overflow-hidden bg-[#111] shrink-0 rounded-sm shadow-[0_4px_16px_rgba(0,0,0,0.35)] outline outline-1 outline-white/[0.04]"
+                className="w-[92px] h-[70px] md:w-[104px] md:h-[78px] overflow-hidden bg-bg-card shrink-0 rounded-sm outline outline-1 outline-line"
               >
                 {post.ogImg ? (
                   <img
@@ -127,14 +114,14 @@ export default function HeroSection({ posts = [] }) {
               <div className="min-w-0 pt-0.5">
                 <Link
                   href={postUrl(post)}
-                  className="block text-[17.5px] font-extrabold leading-[1.22] tracking-tight text-white mb-2.5 transition-colors group-hover:text-mint"
+                  className="block text-[17.5px] font-extrabold leading-[1.22] tracking-tight text-ink mb-2.5 transition-colors group-hover:text-mint"
                 >
                   {post.title}
                 </Link>
                 <div className="flex items-center gap-3 text-[11px]">
                   <AuthorByline post={post} size="sm" />
                   <span
-                    className="inline-flex items-center gap-1 font-mono text-[9px] tracking-wide text-[#777] px-1.5 py-0.5 rounded-pill bg-white/5 border border-white/[0.06]"
+                    className="inline-flex items-center gap-1 font-mono text-[9px] tracking-wide text-ink-muted px-1.5 py-0.5 rounded-pill bg-bg-hover border border-line"
                     title="Comments"
                   >
                     <CommentIcon /> {Number(post.commentCount) || 0}

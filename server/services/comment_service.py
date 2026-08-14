@@ -14,6 +14,7 @@ from ..schemas import (
     CommentCreateRequest,
     CommentOut,
     CommentTrendOut,
+    MyCommentOut,
     PendingCountOut,
 )
 
@@ -69,33 +70,30 @@ class CommentService:
         ]
 
     def create_comment(self, post_id: str, payload: CommentCreateRequest) -> CommentOut:
-        """Create a new comment (pending approval)."""
+        """Create a new comment (pending approval). Guests are not allowed — pass a user."""
+        raise HTTPException(status_code=401, detail="Sign in to comment")
+
+    def create_comment_as_user(self, post_id: str, body: str, user) -> CommentOut:
+        """Create a comment as a signed-in user."""
         post = self.post_repo.get(post_id)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
 
-        name = (payload.name or "").strip()
-        email = (payload.email or "").strip()
-        body = (payload.comment or "").strip()
-
+        name = (getattr(user, "display_name", None) or getattr(user, "username", "") or "").strip()
         if not name:
-            raise HTTPException(status_code=400, detail="Name is required")
+            raise HTTPException(status_code=400, detail="Account name is required")
         if len(name) > 60:
-            raise HTTPException(status_code=400, detail="Name too long (max 60 chars)")
+            name = name[:60]
 
-        if not email:
-            raise HTTPException(status_code=400, detail="Email is required")
-        if len(email) > 160:
-            raise HTTPException(status_code=400, detail="Email too long (max 160 chars)")
-        if "@" not in email or "." not in email:
-            raise HTTPException(status_code=400, detail="Email looks invalid")
+        real_email = (getattr(user, "email", None) or "").strip()
+        email = real_email or f"{getattr(user, 'username', 'user')}@users.local"
 
+        body = (body or "").strip()
         if not body:
             raise HTTPException(status_code=400, detail="Comment is required")
         if len(body) > 5000:
             raise HTTPException(status_code=400, detail="Comment too long (max 5000 chars)")
 
-        # Sanitize body to prevent XSS
         body = bleach.clean(body, tags=[], attributes={}, strip=True)
 
         comment = Comment(
@@ -106,9 +104,27 @@ class CommentService:
             likes=0,
             dislikes=0,
             approved=False,
+            user_id=getattr(user, "id", None),
         )
         created = self.comment_repo.create(comment)
         return self._build_comment_out(created)
+
+    def list_my_comments(self, user) -> list[MyCommentOut]:
+        """Comments the signed-in user posted, with post titles."""
+        rows = self.comment_repo.list_for_user(user)
+        out: list[MyCommentOut] = []
+        for comment, post_title in rows:
+            out.append(
+                MyCommentOut(
+                    id=comment.id,
+                    postId=comment.post_id,
+                    postTitle=post_title,
+                    comment=comment.body,
+                    approved=bool(getattr(comment, "approved", False)),
+                    createdAt=comment.created_at,
+                )
+            )
+        return out
 
     def vote_comment(
         self, comment_id: int, direction: str, request: Request

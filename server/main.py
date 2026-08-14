@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
         _ensure_user_profile_columns()
         _ensure_comment_moderation_columns()
         _ensure_post_visibility_columns()
+        _ensure_post_accent_column()
         _seed_default_categories()
         settings.uploads_dir.mkdir(parents=True, exist_ok=True)
         _migrate_disk_avatars_into_db()
@@ -168,6 +169,8 @@ def _ensure_user_profile_columns() -> None:
 
         if "display_name" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN display_name VARCHAR"))
+        if "email" not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR"))
         if "avatar_url" not in existing:
             conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR"))
         if "avatar_data" not in existing:
@@ -298,6 +301,8 @@ def _ensure_comment_moderation_columns() -> None:
                 text("ALTER TABLE comments ADD COLUMN approved BOOLEAN NOT NULL DEFAULT FALSE")
             )
             conn.execute(text("UPDATE comments SET approved = TRUE"))
+        if "user_id" not in existing:
+            conn.execute(text("ALTER TABLE comments ADD COLUMN user_id INTEGER"))
 
 
 def _seed_default_categories() -> None:
@@ -346,6 +351,19 @@ def _ensure_post_visibility_columns() -> None:
         Base.metadata.create_all(bind=engine, tables=[models.AppSetting.__table__])
     except Exception:
         pass
+
+
+def _ensure_post_accent_column() -> None:
+    """Add posts.accent_color for per-article hero/header band."""
+    from sqlalchemy import inspect, text
+
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+        if "posts" not in inspector.get_table_names():
+            return
+        existing = {c["name"] for c in inspector.get_columns("posts")}
+        if "accent_color" not in existing:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN accent_color VARCHAR"))
 
 
 # Create the application instance

@@ -4,9 +4,9 @@ import StaticPage from '../components/StaticPage/StaticPage';
 import { CONTACT_EMAIL, EDITORIAL_EMAIL, SITE_NAME } from '../lib/site';
 
 const fieldLabel =
-  'font-mono text-[11px] font-bold tracking-wide uppercase text-[#888]';
+  'font-mono text-[11px] font-bold tracking-wide uppercase text-ink-tertiary';
 const fieldInput =
-  'bg-[#111] border border-line rounded-sm text-white text-[15px] font-sans px-3.5 py-3 outline-none transition-colors focus:border-mint';
+  'bg-bg-elevated border border-line rounded-sm text-ink text-[15px] font-sans px-3.5 py-3 outline-none transition-colors focus:border-mint';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -157,7 +157,7 @@ export default function ContactPage() {
         </li>
       </ul>
 
-      <div className="mt-9 p-4 px-[18px] bg-[#121212] border border-[#262626] rounded-md text-sm text-[#999] leading-relaxed">
+      <div className="mt-9 p-4 px-[18px] bg-bg-secondary border border-line rounded-md text-sm text-ink-tertiary leading-relaxed">
         We typically respond within a few business days. Messages about privacy or legal requests
         may take longer. Do not send passwords or sensitive personal data through this form.
       </div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
-import { initTheme } from '../lib/theme';
 import { fetcher } from '../lib/api';
 import { pctChange } from '../lib/utils';
 import {
@@ -33,16 +32,6 @@ export default function AdminPage() {
   const router = useRouter();
   const [activeView, setActiveView] = useState('dashboard');
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
-
-  // Match public site: force dark Verge admin theme
-  useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
-    try {
-      localStorage.setItem('cnb_theme', 'dark');
-      localStorage.setItem('cnb_theme_mode', 'manual');
-      document.documentElement.dataset.theme = 'dark';
-    } catch (_) {}
-  }, []);
 
   // Initialize hooks
   const auth = useAuth();

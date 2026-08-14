@@ -9,8 +9,7 @@
 @layer base {
   :root,
   html,
-  html[data-theme='dark'],
-  html[data-theme='light'] {
+  html[data-theme='dark'] {
     --bg: #000000;
     --bg-primary: #000000;
     --bg-secondary: #050505;
@@ -43,9 +42,11 @@
 
     --font-sans: 'Inter', Helvetica, Arial, sans-serif;
     --font-heading: 'Inter', Helvetica, Arial, sans-serif;
+    --font-display: 'Archivo Black', 'Inter', Helvetica, Arial, sans-serif;
     --font-body: 'Inter', Helvetica, Arial, sans-serif;
-    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-    --font-serif: Georgia, 'Times New Roman', serif;
+    --font-mono: 'Space Mono', 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+    --header-accent: #def23a;
 
     --fs-hero: clamp(1.9rem, 4.4vw, 3.15rem);
     --fs-h1: clamp(1.8rem, 3.6vw, 2.85rem);
@@ -65,6 +66,43 @@
     color-scheme: dark;
   }
 
+  html[data-theme='light'] {
+    --bg: #f3f1eb;
+    --bg-primary: #f3f1eb;
+    --bg-secondary: #ebe8e0;
+    --bg-elevated: #ffffff;
+    --bg-tertiary: #e4e0d6;
+    --bg-hover: #ddd8cc;
+    --bg-card: #ffffff;
+    --bg-highlight: #5b4bff;
+
+    --text-primary: #141414;
+    --text-secondary: #4a4a4a;
+    --text-tertiary: #6a6a6a;
+    --text-muted: #8a857c;
+    --text-soft: #2a2a2a;
+    --text-dek: #2c2c2c;
+
+    --mint: #0b8f72;
+    --mint-hover: #087a61;
+    --mint-dim: rgba(11, 143, 114, 0.12);
+    --purple: #5b4bff;
+    --purple-deep: #5200ff;
+
+    --border: #d8d3c8;
+    --border-dim: #e4e0d6;
+    --border-light: #ece8df;
+    --border-strong: #c4beb2;
+
+    --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.06);
+    --shadow-md: 0 8px 24px rgba(20, 20, 20, 0.08);
+    --shadow-lg: 0 16px 40px rgba(20, 20, 20, 0.1);
+    --shadow-xl: 0 24px 60px rgba(20, 20, 20, 0.12);
+
+    --glow: 0 0 0 3px rgba(11, 143, 114, 0.18);
+    color-scheme: light;
+  }
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -75,12 +113,15 @@
 
   html {
     background: var(--bg);
+    transition: background-color 0.2s ease;
+    --header-height: 96px;
   }
 
   body {
     font-family: var(--font-body);
     background: var(--bg);
     color: var(--text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -94,6 +135,17 @@
     color: var(--text-primary);
     font-weight: 800;
     letter-spacing: -0.03em;
+  }
+
+  /* Light surfaces (lime header, mint "More in") keep dark type in both themes. */
+  .on-accent,
+  .on-accent h1,
+  .on-accent h2,
+  .on-accent h3,
+  .on-accent h4,
+  .on-accent h5,
+  .on-accent h6 {
+    color: #111111;
   }
 
   a {
@@ -116,6 +168,91 @@
     color: #fff;
   }
 
+  html[data-theme='light'] * {
+    scrollbar-color: #c8c4bc transparent;
+  }
+
+  html[data-theme='light'] ::selection {
+    background: rgba(11, 143, 114, 0.22);
+    color: #141414;
+  }
+
+  /* Hardcoded dark utilities on the public site become readable in light mode.
+     Overlay copy (hero image text) opts out with .on-media. */
+  html[data-theme='light'] .text-white {
+    color: var(--text-primary);
+  }
+  html[data-theme='light'] .on-media,
+  html[data-theme='light'] .on-media .text-white,
+  html[data-theme='light'] .on-media.text-white,
+  html[data-theme='light'] .on-media .text-white\/70,
+  html[data-theme='light'] .on-media .text-white\/65,
+  html[data-theme='light'] .on-media .text-ink,
+  html[data-theme='light'] .on-media .text-ink-secondary,
+  html[data-theme='light'] .on-media .text-ink-tertiary,
+  html[data-theme='light'] .on-media .text-ink-muted,
+  html[data-theme='light'] .on-media .text-\[\#e4e4e4\],
+  html[data-theme='light'] .on-media .text-\[\#999\],
+  html[data-theme='light'] .on-media .text-\[\#7a7a7a\],
+  html[data-theme='light'] .on-media .text-\[\#777\] {
+    color: #fff;
+  }
+  html[data-theme='light'] .bg-black {
+    background-color: var(--bg);
+  }
+  html[data-theme='light'] .text-\[\#e8e8e8\],
+  html[data-theme='light'] .text-\[\#e0e0e0\],
+  html[data-theme='light'] .text-\[\#ddd\],
+  html[data-theme='light'] .text-\[\#ccc\],
+  html[data-theme='light'] .text-\[\#bbb\],
+  html[data-theme='light'] .text-\[\#c4c4c4\],
+  html[data-theme='light'] .text-\[\#b0b0b0\],
+  html[data-theme='light'] .text-\[\#e4e4e4\] {
+    color: var(--text-soft);
+  }
+  html[data-theme='light'] .text-\[\#a0a0a0\],
+  html[data-theme='light'] .text-\[\#9a9a9a\],
+  html[data-theme='light'] .text-\[\#999\],
+  html[data-theme='light'] .text-\[\#888\],
+  html[data-theme='light'] .text-\[\#777\] {
+    color: var(--text-secondary);
+  }
+  html[data-theme='light'] .text-\[\#6e6e6e\],
+  html[data-theme='light'] .text-\[\#6a6a6a\],
+  html[data-theme='light'] .text-\[\#666\],
+  html[data-theme='light'] .text-\[\#5a5a5a\],
+  html[data-theme='light'] .text-\[\#555\],
+  html[data-theme='light'] .text-\[\#4a4a4a\],
+  html[data-theme='light'] .text-\[\#444\] {
+    color: var(--text-muted);
+  }
+  html[data-theme='light'] .bg-\[\#111\],
+  html[data-theme='light'] .bg-\[\#0a0a0a\],
+  html[data-theme='light'] .bg-\[\#0c0c0c\],
+  html[data-theme='light'] .bg-\[\#080808\],
+  html[data-theme='light'] .bg-\[\#0f0f0f\],
+  html[data-theme='light'] .bg-\[\#121212\],
+  html[data-theme='light'] .bg-\[\#141414\],
+  html[data-theme='light'] .bg-\[\#1a1a1a\] {
+    background-color: var(--bg-elevated);
+  }
+  html[data-theme='light'] .border-\[\#222\],
+  html[data-theme='light'] .border-\[\#262626\],
+  html[data-theme='light'] .border-\[\#2e2e2e\],
+  html[data-theme='light'] .border-\[\#333\],
+  html[data-theme='light'] .border-\[\#3a3a3a\] {
+    border-color: var(--border);
+  }
+  html[data-theme='light'] .hover\:bg-\[\#1a1a1a\]:hover {
+    background-color: var(--bg-hover);
+  }
+  html[data-theme='light'] .hover\:text-white:hover {
+    color: var(--text-primary);
+  }
+  html[data-theme='light'] .bg-\[\#e8e8e8\] {
+    background-color: var(--text-primary);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -123,6 +260,65 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Dark mint fill in light mode needs white type (Subscribe, Latest, Following). */
+html[data-theme='light'] .bg-mint,
+html[data-theme='light'] .bg-mint.text-black,
+html[data-theme='light'] .hover\:bg-mint-hover:hover,
+html[data-theme='light'] .hover\:text-black:hover {
+  color: #ffffff;
+}
+
+/* Lime/mint bands stay dark green. Regular header follows the theme (light mint on black). */
+.on-accent {
+  --mint: #0b8f72;
+  --mint-hover: #087a61;
+  --mint-dim: rgba(11, 143, 114, 0.12);
+}
+
+/* Photo overlays always use neon mint + light type, even in light theme. */
+.on-media {
+  --mint: #3cffd0;
+  --mint-hover: #5fffe0;
+}
+.on-media .text-ink,
+.on-media .text-ink-secondary {
+  color: #ffffff;
+}
+
+/* Unlayered so it beats Tailwind text-ink utilities on lime/mint surfaces. */
+.on-accent,
+.on-accent h1,
+.on-accent h2,
+.on-accent h3,
+.on-accent h4,
+.on-accent h5,
+.on-accent h6,
+.on-accent .text-ink,
+.on-accent .text-ink-secondary,
+.on-accent .text-ink-tertiary,
+.on-accent .text-ink-muted,
+.on-accent .text-ink-soft,
+.on-accent .text-ink-dek {
+  color: #111111;
+}
+.on-accent .bg-ink {
+  background-color: #111111;
+}
+.on-accent [data-theme-panel],
+.on-accent [data-theme-panel] .text-ink-secondary {
+  color: var(--text-secondary);
+}
+
+/* Verge-style comments drawer stays white with purple CTAs in both themes. */
+html[data-theme='light'] [data-comment-drawer] .text-white,
+html[data-theme='dark'] [data-comment-drawer] .text-white {
+  color: #fff;
+}
+html[data-theme='light'] [data-comment-drawer] .bg-white,
+html[data-theme='dark'] [data-comment-drawer] .bg-white {
+  background-color: #fff;
 }
 
 /* =========================================================
@@ -177,6 +373,68 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Brand F keeps site mint. Dark admin remaps --mint to white; light needs forest mint. */
+.admin-xai .admin-brand-f {
+  color: #3cffd0;
+  text-shadow: 0 0 18px rgba(60, 255, 208, 0.35);
+}
+
+html[data-theme='light'] .admin-xai .admin-brand-f {
+  color: #0b8f72;
+  text-shadow: none;
+}
+
+html[data-theme='light'] .admin-xai {
+  --bg: #f3f1eb;
+  --bg-primary: #f3f1eb;
+  --bg-secondary: #ebe8e0;
+  --bg-elevated: #ffffff;
+  --bg-tertiary: #e4e0d6;
+  --bg-hover: #ddd8cc;
+  --bg-card: #ffffff;
+  --bg-highlight: #ece8df;
+
+  --text-primary: #141414;
+  --text-secondary: #4a4a4a;
+  --text-tertiary: #6a6a6a;
+  --text-muted: #8a857c;
+  --text-soft: #2a2a2a;
+  --text-dek: #2c2c2c;
+
+  --mint: #0b8f72;
+  --mint-hover: #087a61;
+  --mint-dim: rgba(11, 143, 114, 0.12);
+
+  --border: #d8d3c8;
+  --border-dim: #e4e0d6;
+  --border-light: #ece8df;
+  --border-strong: #c4beb2;
+
+  --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.06);
+  --shadow-md: 0 8px 24px rgba(20, 20, 20, 0.08);
+  --shadow-lg: 0 16px 40px rgba(20, 20, 20, 0.1);
+  --shadow-xl: 0 24px 60px rgba(20, 20, 20, 0.12);
+  --glow: 0 0 0 3px rgba(11, 143, 114, 0.16);
+
+  color-scheme: light;
+}
+
+html[data-theme='light'] .admin-xai::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(11, 143, 114, 0.05), transparent 55%),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(20, 20, 20, 0.03), transparent 55%);
+}
+
+html[data-theme='light'] .admin-xai,
+html[data-theme='light'] .admin-xai * {
+  scrollbar-color: #c8c4bc transparent;
+}
+
+html[data-theme='light'] .admin-xai ::selection {
+  background: rgba(11, 143, 114, 0.22);
+  color: #141414;
+}
+
 /* Ambient space glow behind admin chrome */
 .admin-xai::before {
   content: '';
@@ -190,9 +448,60 @@
     radial-gradient(ellipse 50% 30% at 50% 100%, rgba(255, 255, 255, 0.03), transparent 55%);
 }
 
-.admin-xai > * {
+.admin-xai > *:not(.admin-modal-overlay) {
   position: relative;
   z-index: 1;
+}
+
+/* Admin dialogs sit on top of a frosted panel — not a black wash. */
+body.admin-modal-open {
+  overflow: hidden;
+}
+
+body.admin-modal-open .admin-shell,
+body.admin-modal-open .admin-xai-noise,
+body.admin-modal-open .admin-xai::before {
+  filter: blur(16px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme='light'] .admin-modal-overlay {
+  background: rgba(243, 241, 235, 0.38);
+}
+
+.admin-modal-dialog {
+  width: min(520px, 100%);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  animation: admin-modal-in 0.2s ease-out;
+}
+
+@keyframes admin-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Refined scrollbars inside admin */
@@ -205,6 +514,51 @@
 .admin-xai ::selection {
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
+}
+
+/* Post editor — formatted content follows admin theme tokens */
+.admin-xai #editor h1,
+.admin-xai #editor h2,
+.admin-xai #editor h3,
+.admin-xai #editor h4 {
+  color: var(--text-primary);
+  line-height: 1.25;
+  margin: 0.85em 0 0.4em;
+}
+
+.admin-xai #editor p {
+  margin: 0.6em 0;
+}
+
+.admin-xai #editor a {
+  color: var(--mint);
+}
+
+.admin-xai #editor blockquote {
+  margin: 0.85em 0;
+  padding: 0.15em 0 0.15em 1rem;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.admin-xai #editor pre {
+  margin: 0.85em 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  overflow-x: auto;
+}
+
+.admin-xai #editor img {
+  max-width: 100%;
+  height: auto;
+}
+
+.admin-xai #editor ul,
+.admin-xai #editor ol {
+  margin: 0.6em 0;
+  padding-left: 1.4em;
 }
 
 /* Soft noise texture (premium feel) */
@@ -238,7 +592,7 @@
   height: 2px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
 }
 
 .pipeline-connector::after {
@@ -247,19 +601,19 @@
   inset: 0;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(255, 255, 255, 0.85) 0,
-    rgba(255, 255, 255, 0.85) 6px,
+    var(--text-primary) 0,
+    var(--text-primary) 6px,
     transparent 6px,
     transparent 14px
   );
   background-size: 28px 100%;
   /* Static dashes when idle / bot off — animate only when .is-active */
-  opacity: 0.22;
+  opacity: 0.28;
   animation: none;
 }
 
 .pipeline-connector.is-active {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--border-strong);
 }
 
 .pipeline-connector.is-active::after {
@@ -308,12 +662,33 @@
   .article-body code {
     @apply font-mono text-sm bg-bg-elevated px-1.5 py-0.5 rounded-sm;
   }
-  .article-body.article-body--magazine {
+  .article-body.article-body--magazine,
+  .article-body.article-body--verge {
     font-family: var(--font-serif);
-    font-size: 1.125rem;
-    line-height: 1.82;
+    font-size: 1.1875rem;
+    line-height: 1.68;
     max-width: 42rem;
-    color: #e6e6e6;
+    color: var(--text-dek);
+  }
+  .article-body.article-body--verge p { @apply mb-[26px]; }
+  .article-body.article-body--verge p:first-of-type { font-style: italic; }
+  .article-body.article-body--verge h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    letter-spacing: -0.01em;
+    padding: 14px 0 22px;
+    color: var(--text-primary);
+  }
+  .article-body.article-body--verge a {
+    color: #463ac9;
+    text-underline-offset: 3px;
+    text-decoration: underline;
+    text-decoration-color: rgba(70, 58, 201, 0.45);
+  }
+  html[data-theme='dark'] .article-body.article-body--verge a {
+    color: #9d96ff;
+    text-decoration-color: rgba(157, 150, 255, 0.45);
   }
   .article-body .drop-cap p::first-letter {
     float: left;
@@ -326,10 +701,10 @@
   }
 
   .static-content {
-    @apply text-base leading-[1.75] text-[#d8d8d8];
+    @apply text-base leading-[1.75] text-ink-dek;
   }
-  .static-content h2 { @apply text-[1.25rem] font-extrabold text-white mt-8 mb-3 tracking-tight; }
-  .static-content h3 { @apply text-[1.05rem] font-bold text-[#eee] mt-6 mb-2; }
+  .static-content h2 { @apply text-[1.25rem] font-extrabold text-ink mt-8 mb-3 tracking-tight; }
+  .static-content h3 { @apply text-[1.05rem] font-bold text-ink-soft mt-6 mb-2; }
   .static-content p { @apply mb-[1.1em]; }
   .static-content ul, .static-content ol { @apply mb-[1.2em] pl-[1.35em]; }
   .static-content ul { list-style: disc; }
@@ -337,10 +712,10 @@
   .static-content li { @apply mb-[0.45em]; }
   .static-content a {
     @apply text-mint underline underline-offset-[3px];
-    text-decoration-color: rgba(60, 255, 208, 0.35);
+    text-decoration-color: var(--mint-dim);
   }
   .static-content a:hover { text-decoration-color: var(--mint); }
-  .static-content strong { @apply text-white font-bold; }
+  .static-content strong { @apply text-ink font-bold; }
 
   @keyframes ticker-scroll {
     0% { transform: translateX(0%); }

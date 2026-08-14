@@ -26,7 +26,7 @@ function Card({ post }) {
       {post.ogImg ? (
         <Link
           href={postUrl(post)}
-          className="w-[100px] aspect-[4/3] overflow-hidden bg-[#141414] block"
+          className="w-[100px] aspect-[4/3] overflow-hidden bg-bg-card block"
         >
           <img
             src={post.ogImg}
@@ -36,11 +36,11 @@ function Card({ post }) {
           />
         </Link>
       ) : (
-        <div className="w-[100px] aspect-[4/3] overflow-hidden bg-[#141414]" />
+        <div className="w-[100px] aspect-[4/3] overflow-hidden bg-bg-card" />
       )}
       <div className="min-w-0">
         <Link href={postUrl(post)}>
-          <h3 className="text-[15px] font-bold leading-snug mb-2 text-white line-clamp-3 hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
+          <h3 className="text-[15px] font-bold leading-snug mb-2 text-ink line-clamp-3 hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
             {post.title}
           </h3>
         </Link>
@@ -67,7 +67,7 @@ export default function CategoryCluster({ title, posts = [] }) {
     <section className="mb-9">
       <header className="flex items-baseline justify-between gap-4 mb-4 pb-2.5 border-b border-line">
         <Link href={`/?category=${slugifyCategory(title)}`}>
-          <h2 className="text-lg font-extrabold tracking-wide text-white hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
+          <h2 className="text-lg font-extrabold tracking-wide text-ink hover:shadow-[inset_0_-0.12em_0_0_var(--mint)]">
             {title}
           </h2>
         </Link>

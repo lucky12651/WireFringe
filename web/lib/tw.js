@@ -5,9 +5,9 @@
 export const tw = {
   // Brand logo
   logoLink: 'inline-flex items-center no-underline text-inherit leading-none',
-  logo: 'inline-block font-black whitespace-nowrap text-white leading-none tracking-[-0.065em] font-heading',
+  logo: 'inline-block font-black whitespace-nowrap text-ink leading-none tracking-[-0.065em] font-heading',
   logoF:
-    'text-mint italic font-extrabold inline-block [transform:skewX(-6deg)] [text-shadow:0_0_18px_rgba(60,255,208,0.25)]',
+    'admin-brand-f text-mint italic font-extrabold inline-block [transform:skewX(-6deg)]',
   logoSm: 'text-lg',
   logoMd: 'text-[26px]',
   logoLg: 'text-[32px]',
@@ -17,15 +17,15 @@ export const tw = {
   btnAccent:
     'inline-flex items-center justify-center px-4 py-2.5 rounded-md border-0 bg-white text-black text-xs font-bold tracking-wide cursor-pointer no-underline transition-all duration-200 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.35)] hover:bg-mint-hover hover:shadow-[0_0_24px_rgba(255,255,255,0.12)] hover:-translate-y-px',
   pillBtn:
-    'inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-line bg-white/[0.03] text-[#ddd] text-xs font-semibold tracking-wide cursor-pointer no-underline transition-all duration-200 hover:bg-white/[0.08] hover:border-white/25 hover:text-white',
+    'inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-line bg-bg-elevated text-ink text-xs font-semibold tracking-wide cursor-pointer no-underline transition-all duration-200 hover:bg-bg-hover hover:border-line-strong',
   heroCta:
-    'inline-flex items-center justify-center px-[18px] py-2.5 rounded-md border-0 bg-white text-black text-xs font-bold tracking-wide cursor-pointer no-underline transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:bg-mint-hover hover:-translate-y-px',
+    'inline-flex items-center justify-center px-[18px] py-2.5 rounded-md border-0 bg-ink text-[var(--bg)] text-xs font-bold tracking-wide cursor-pointer no-underline transition-all duration-200 hover:opacity-90 hover:-translate-y-px',
   primaryBtn:
-    'inline-flex items-center justify-center gap-2 h-[42px] px-[18px] border-0 rounded-md bg-white text-black text-xs font-bold tracking-[0.04em] cursor-pointer no-underline transition-all hover:bg-mint-hover hover:-translate-y-px hover:shadow-[0_0_28px_rgba(255,255,255,0.14)]',
+    'inline-flex items-center justify-center gap-2 h-[42px] px-[18px] border-0 rounded-md bg-ink text-[var(--bg)] text-xs font-bold tracking-[0.04em] cursor-pointer no-underline transition-all hover:opacity-90 hover:-translate-y-px',
   secondaryBtn:
-    'inline-flex items-center justify-center gap-2 h-[42px] px-4 border border-line rounded-md bg-transparent text-[#ddd] text-[11px] font-semibold tracking-wide cursor-pointer no-underline transition-all hover:text-white hover:border-white/30 hover:bg-white/[0.05] disabled:opacity-50 disabled:cursor-not-allowed',
+    'inline-flex items-center justify-center gap-2 h-[42px] px-4 border border-line rounded-md bg-transparent text-ink-secondary text-[11px] font-semibold tracking-wide cursor-pointer no-underline transition-all hover:text-ink hover:border-line-strong hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed',
   iconBtn:
-    'inline-flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-white/[0.03] text-[#aaa] cursor-pointer no-underline transition-all hover:text-white hover:border-white/25 hover:bg-white/[0.08]',
+    'inline-flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-bg-elevated text-ink-secondary cursor-pointer no-underline transition-all hover:text-ink hover:border-line-strong hover:bg-bg-hover',
   iconBtnDanger:
     'inline-flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-white/[0.03] text-[#aaa] cursor-pointer transition-all hover:text-[#ff6b6b] hover:border-[#ff6b6b]/40 hover:bg-red-500/10',
   iconBtnApprove:
@@ -33,14 +33,17 @@ export const tw = {
 
   // Layout shells
   pageShell: 'w-full min-h-screen bg-black text-white m-0 mx-auto',
-  pageShellAdmin: 'admin-xai w-full min-h-screen bg-black text-white m-0 p-0 max-w-none relative',
-  adminShell: 'flex min-h-screen w-full bg-transparent m-0 p-0 max-md:flex-col max-md:pb-[72px]',
+  pageShellAdmin: 'admin-xai w-full min-h-screen bg-bg text-ink m-0 p-0 max-w-none relative',
+  adminShell: 'admin-shell flex min-h-screen w-full bg-transparent m-0 p-0 max-md:flex-col max-md:pb-[72px]',
   adminContent: 'flex-1 py-8 px-9 pb-14 w-full min-w-0 bg-transparent m-0 max-w-none max-md:px-4 max-md:py-5',
   adminContentInner: 'max-w-[1280px] mx-auto animate-fade-up',
-  adminView: 'flex flex-col gap-5 animate-fade-up',
+  adminView: 'flex flex-col gap-0 animate-fade-up',
+  adminSection: 'py-7 border-b border-line last:border-b-0 last:pb-0',
+  adminSectionTitle: 'm-0 mb-1 text-[15px] font-semibold tracking-tight text-ink',
+  adminSectionDesc: 'm-0 mb-5 text-[13px] leading-relaxed text-ink-secondary max-w-[62ch]',
   adminGrid: 'grid grid-cols-1 min-[901px]:grid-cols-[1fr_1.4fr] gap-4 items-start',
   adminGrid2: 'grid grid-cols-1 min-[901px]:grid-cols-2 gap-4',
-  adminTopbar: 'flex items-center justify-between gap-4 px-6 py-4 border-b border-line bg-black/60 backdrop-blur-xl',
+  adminTopbar: 'flex items-center justify-between gap-4 px-6 py-4 border-b border-line bg-bg',
   adminMe: 'text-sm text-ink-secondary',
   adminTitleRow: 'flex flex-col gap-2 mb-5',
   accentLine: 'h-px w-12 bg-white/40 rounded-full',
@@ -62,15 +65,15 @@ export const tw = {
   // Forms
   form: 'flex flex-col gap-3.5',
   formGroup: 'flex flex-col gap-1.5',
-  formLabel: 'text-[11px] font-medium tracking-wide uppercase text-[#888]',
+  formLabel: 'text-[11px] font-medium tracking-wide uppercase text-ink-tertiary',
   formInput:
-    'h-[42px] px-3.5 border border-line rounded-lg bg-black/50 text-white text-sm outline-none w-full transition-all placeholder:text-[#555] focus:border-white/35 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)] focus:bg-black/70',
+    'h-[42px] px-3.5 border border-line rounded-lg bg-bg-elevated text-ink text-sm outline-none w-full transition-all placeholder:text-ink-muted focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]',
   formTextarea:
-    'min-h-[100px] p-3.5 border border-line rounded-lg bg-black/50 text-white text-sm outline-none w-full resize-y transition-all focus:border-white/35 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]',
+    'min-h-[100px] p-3.5 border border-line rounded-lg bg-bg-elevated text-ink text-sm outline-none w-full resize-y transition-all placeholder:text-ink-muted focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]',
   formSelect:
-    'h-[42px] px-3.5 border border-line rounded-lg bg-black/50 text-white text-sm outline-none w-full transition-all focus:border-white/35 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]',
-  formHint: 'text-xs text-[#666] mt-1',
-  formHintSuccess: 'text-[13px] text-white m-0',
+    'h-[42px] px-3.5 border border-line rounded-lg bg-bg-elevated text-ink text-sm outline-none w-full transition-all focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]',
+  formHint: 'text-xs text-ink-tertiary mt-1',
+  formHintSuccess: 'text-[13px] text-mint m-0',
   disabledInput: 'opacity-55 cursor-not-allowed',
 
   // Tables
@@ -83,23 +86,21 @@ export const tw = {
   textRight: 'text-right',
 
   // Tabs + pagination
-  tabs: 'flex gap-1 bg-white/[0.04] border border-line rounded-full p-0.5 w-fit',
-  tab: 'appearance-none border-0 bg-transparent text-[#888] text-[11px] font-semibold tracking-wide uppercase px-4 py-2 rounded-full cursor-pointer transition-all',
-  tabActive: 'bg-white text-black shadow-[0_0_16px_rgba(255,255,255,0.12)]',
+  tabs: 'flex gap-1 bg-bg-hover border border-line rounded-full p-0.5 w-fit',
+  tab: 'appearance-none border-0 bg-transparent text-ink-tertiary text-[11px] font-semibold tracking-wide uppercase px-4 py-2 rounded-full cursor-pointer transition-all',
+  tabActive: 'bg-ink text-[var(--bg)]',
   pagination: 'flex items-center justify-center gap-3 mt-5 pt-4 border-t border-line',
   pageBtn:
     'inline-flex items-center justify-center min-w-9 h-9 px-3 border border-line rounded-lg bg-white/[0.03] text-[#ddd] cursor-pointer transition-all hover:border-white/30 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed',
   pageInfo: 'text-xs text-[#888]',
 
   // Modal + toast
-  modalOverlay:
-    'fixed inset-0 z-[1200] flex items-center justify-center p-6 bg-black/75 backdrop-blur-xl',
-  modalContent:
-    'w-[min(520px,100%)] max-h-[min(88vh,760px)] overflow-auto bg-[#0c0c0c] border border-white/10 text-white rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.75),0_0_0_1px_rgba(255,255,255,0.04)]',
+  modalOverlay: 'admin-modal-overlay',
+  modalContent: 'admin-modal-dialog',
   modalHeader: 'flex items-center justify-between gap-3 px-5 pt-5',
-  modalTitle: 'm-0 text-[17px] font-semibold tracking-tight text-white',
-  modalBody: 'px-5 pt-3.5 pb-1.5 text-[#c8c8c8] leading-relaxed text-sm',
-  modalWarning: 'text-[#ff9b9b] text-xs mt-2.5',
+  modalTitle: 'm-0 text-[17px] font-semibold tracking-tight text-ink',
+  modalBody: 'px-5 pt-3.5 pb-1.5 text-ink-secondary leading-relaxed text-sm',
+  modalWarning: 'text-[#c44848] text-xs mt-2.5',
   modalActions:
     'flex justify-end items-center flex-wrap gap-2.5 px-5 py-4 border-t border-line mt-2',
   toast:
@@ -110,13 +111,15 @@ export const tw = {
   emptyState: 'text-[#888] text-center py-8 px-4 text-[13px]',
 
   // Editor
-  editorShell: 'flex gap-4 items-start max-w-[1280px] mx-auto my-5 mb-10 px-5 w-full max-md:flex-col',
+  editorShell: 'flex gap-6 items-start max-w-[1280px] mx-auto my-5 mb-10 px-5 w-full max-md:flex-col',
   editorCard: 'flex-1 min-w-0',
-  editorToolbar: 'flex flex-wrap gap-2 mb-4 p-2 border border-line rounded-xl bg-white/[0.03]',
+  editorToolbar: 'flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-line',
+  editorToolBtn:
+    'inline-flex items-center justify-center min-w-9 h-9 px-2 rounded-lg border border-line bg-transparent text-ink text-xs font-semibold cursor-pointer transition-all hover:bg-bg-hover hover:border-line-strong',
   editor:
-    'min-h-[420px] w-full rounded-xl border border-line bg-black/50 text-white p-4 text-base leading-relaxed outline-none focus:border-white/30',
-  editorSidebar: 'w-[300px] shrink-0 sticky top-4 max-md:w-full max-md:static',
-  editorSidebarHeader: 'font-semibold text-sm uppercase tracking-wide text-ink-secondary mb-3',
+    'min-h-[420px] w-full rounded-lg border border-line bg-bg-elevated text-ink p-4 text-base leading-relaxed outline-none focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]',
+  editorSidebar: 'w-[300px] shrink-0 sticky top-[72px] max-md:w-full max-md:static',
+  editorSidebarHeader: 'font-semibold text-sm uppercase tracking-wide text-ink-secondary',
   editorSidebarContent: 'space-y-4',
 
   // Dashboard widgets

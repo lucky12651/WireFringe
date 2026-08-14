@@ -1,7 +1,7 @@
 function Bone({ className = '', style }) {
   return (
     <div
-      className={`block rounded-sm bg-[linear-gradient(90deg,#121212_0%,#1a1a1a_40%,#222_50%,#1a1a1a_60%,#121212_100%)] bg-[length:200%_100%] animate-shimmer motion-reduce:animate-none motion-reduce:bg-[#161616] ${className}`.trim()}
+      className={`block rounded-sm bg-[linear-gradient(90deg,var(--bg-secondary)_0%,var(--bg-elevated)_40%,var(--border)_50%,var(--bg-elevated)_60%,var(--bg-secondary)_100%)] bg-[length:200%_100%] animate-shimmer motion-reduce:animate-none motion-reduce:bg-bg-elevated ${className}`.trim()}
       style={style}
     />
   );
@@ -15,7 +15,7 @@ export function HomeSkeleton() {
       aria-label="Loading homepage"
     >
       <div
-        className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] border-l border-dotted border-[#2e2e2e] pointer-events-none"
+        className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] border-l border-dotted border-line pointer-events-none"
         aria-hidden="true"
       />
       <div className="min-w-0 pr-0 min-[1001px]:pr-9">

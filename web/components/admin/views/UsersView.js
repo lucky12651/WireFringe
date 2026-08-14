@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ROLE_OPTIONS } from '../../../lib/constants';
-import { SuccessToast } from '../shared';
+import { SuccessToast, AdminModal } from '../shared';
 import { ActionButton } from '../shared/ActionButton';
 import { EmptyState } from '../shared/EmptyState';
 import { Icons, PlusIcon, TrashIcon } from '../Layout/icons';
@@ -383,55 +383,52 @@ export function UsersView({
 
   return (
     <div className={tw.adminView}>
-      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
-        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Users Management</h2>
-        <span className={tw.titleCount}>
-          {usersCount} Accounts
-          {orphanCount > 0 ? ` · ${orphanCount} authors without account` : ''}
-        </span>
-      </div>
-
-      <div className={tw.adminGrid}>
-        <div className={tw.card}>
-          <h3 className={tw.cardTitle}>Create New User</h3>
-          <form onSubmit={handleSubmit} className={tw.form}>
-            <div className={tw.formGroup}>
-              <label className={tw.formLabel}>Username</label>
-              <input
-                className={tw.formInput} type="text"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="Enter username"
-              />
-            </div>
-            <div className={tw.formGroup}>
-              <label className={tw.formLabel}>Password</label>
-              <input
-                className={tw.formInput} type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 8 characters"
-              />
-            </div>
-            <div className={tw.formGroup}>
-              <label className={tw.formLabel}>Role</label>
-              <select className={tw.formSelect} value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {hint && <p className={tw.formHint}>{hint}</p>}
+      <section className={tw.adminSection}>
+        <h3 className={tw.adminSectionTitle}>Create user</h3>
+        <p className={tw.adminSectionDesc}>Add a login account for editors, authors, or admins.</p>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end max-w-[900px]">
+          <div className={tw.formGroup}>
+            <label className={tw.formLabel}>Username</label>
+            <input
+              className={tw.formInput} type="text"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="Username"
+            />
+          </div>
+          <div className={tw.formGroup}>
+            <label className={tw.formLabel}>Password</label>
+            <input
+              className={tw.formInput} type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Min 8 characters"
+            />
+          </div>
+          <div className={tw.formGroup}>
+            <label className={tw.formLabel}>Role</label>
+            <select className={tw.formSelect} value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+              {ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-3">
             <button type="submit" className={tw.primaryBtn}>
-              <PlusIcon /> Create User
+              <PlusIcon /> Create
             </button>
-          </form>
-        </div>
+            {hint ? <p className={tw.formHint}>{hint}</p> : null}
+          </div>
+        </form>
+      </section>
 
-        <div className={tw.card}>
-          <h3 className={tw.cardTitle}>Login accounts</h3>
+      <section className={tw.adminSection}>
+        <div className="flex items-baseline justify-between gap-3 mb-4">
+          <h3 className={cn(tw.adminSectionTitle, 'mb-0')}>Login accounts</h3>
+          <span className="text-[12px] text-ink-tertiary">{usersCount}</span>
+        </div>
           <div className={tw.tableWrap}>
             <table className={tw.table}>
               <thead>
@@ -467,7 +464,7 @@ export function UsersView({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className="font-semibold text-white">{user.username}</span>
+                            <span className="font-semibold text-ink">{user.username}</span>
                             {user.displayName && user.displayName !== user.username ? (
                               <div className={tw.textMuted} style={{ fontSize: 12 }}>
                                 {user.displayName}
@@ -519,15 +516,12 @@ export function UsersView({
               </tbody>
             </table>
           </div>
-        </div>
+      </section>
 
-        {/* Post authors that appear on the site but have no users row */}
-        <div className={tw.cardFull}>
-          <h3 className={tw.cardTitle}>Post authors without an account</h3>
-          <p className={tw.cardDesc}>
-            These names appear as article authors (from <code>posts.creator</code>) but are not
-            login accounts — e.g. Krishna, Reet, News Bot Engine. Create an account, move their
-            posts to an existing user, or delete their posts.
+      <section className={tw.adminSection}>
+          <h3 className={tw.adminSectionTitle}>Authors without an account</h3>
+          <p className={tw.adminSectionDesc}>
+            These names appear on posts but have no login. Create an account, transfer posts, or delete them.
           </p>
           <div className={tw.tableWrap}>
             {orphanAuthors.length === 0 ? (
@@ -550,7 +544,7 @@ export function UsersView({
                           <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-line overflow-hidden flex items-center justify-center shrink-0 text-mint">
                             <UserAvatarIcon size={18} />
                           </div>
-                          <span className="font-semibold text-white">{author.username}</span>
+                          <span className="font-semibold text-ink">{author.username}</span>
                         </div>
                       </td>
                       <td className={tw.td}>
@@ -601,18 +595,16 @@ export function UsersView({
               </table>
             )}
           </div>
-        </div>
-      </div>
+      </section>
 
-      {userToDelete && (
-        <div className={tw.modalOverlay} onClick={handleCancelDelete}>
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {userToDelete ? (
+      <AdminModal open onClose={isDeleting ? undefined : handleCancelDelete}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Delete User</h3>
             </div>
             <div className={tw.modalBody}>
               <p>
-                Delete <strong>{userToDelete.username}</strong>? Choose what happens to
+                Delete <strong className="text-ink">{userToDelete?.username}</strong>? Choose what happens to
                 their posts.
               </p>
 
@@ -622,7 +614,7 @@ export function UsersView({
                     'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
                     deletePostsAction === 'transfer'
                       ? 'border-mint/40 bg-mint/[0.06]'
-                      : 'border-line bg-[#0a0a0a] hover:border-[#444]'
+                      : 'border-line bg-bg-hover hover:border-line-strong'
                   )}
                 >
                   <input
@@ -635,8 +627,8 @@ export function UsersView({
                     className="mt-1"
                   />
                   <span>
-                    <span className="block font-semibold text-white text-sm">Transfer posts</span>
-                    <span className="block text-xs text-[#888] mt-0.5">
+                    <span className="block font-semibold text-ink text-sm">Transfer posts</span>
+                    <span className="block text-xs text-ink-tertiary mt-0.5">
                       Move this user’s posts to another account, then delete the user.
                     </span>
                   </span>
@@ -671,7 +663,7 @@ export function UsersView({
                     'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
                     deletePostsAction === 'delete'
                       ? 'border-[#ff6b6b]/50 bg-red-500/10'
-                      : 'border-line bg-[#0a0a0a] hover:border-[#ff6b6b]/35'
+                      : 'border-line bg-bg-hover hover:border-[#ff6b6b]/35'
                   )}
                 >
                   <input
@@ -684,8 +676,8 @@ export function UsersView({
                     className="mt-1"
                   />
                   <span>
-                    <span className="block font-semibold text-white text-sm">Delete posts too</span>
-                    <span className="block text-xs text-[#888] mt-0.5">
+                    <span className="block font-semibold text-ink text-sm">Delete posts too</span>
+                    <span className="block text-xs text-ink-tertiary mt-0.5">
                       Permanently remove this user and all of their posts.
                     </span>
                   </span>
@@ -722,20 +714,18 @@ export function UsersView({
                     : 'Transfer & delete'}
               </ActionButton>
             </div>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
-      {passwordUser && (
-        <div className={tw.modalOverlay} onClick={closePasswordModal}>
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {passwordUser ? (
+      <AdminModal open onClose={isSavingPassword ? undefined : closePasswordModal}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Change Password</h3>
             </div>
             <form onSubmit={handleSavePassword}>
               <div className={tw.modalBody}>
                 <p>
-                  Set a new password for <strong>{passwordUser.username}</strong>. They can
+                  Set a new password for <strong className="text-ink">{passwordUser?.username}</strong>. They can
                   sign in with this password immediately.
                 </p>
                 <div className={tw.formGroup} style={{ marginTop: 16 }}>
@@ -782,20 +772,18 @@ export function UsersView({
                 </ActionButton>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
-      {roleUser && (
-        <div className={tw.modalOverlay} onClick={closeRoleModal}>
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {roleUser ? (
+      <AdminModal open onClose={isSavingRole ? undefined : closeRoleModal}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Change Role</h3>
             </div>
             <form onSubmit={handleSaveRole}>
               <div className={tw.modalBody}>
                 <p>
-                  Update the role for <strong>{roleUser.username}</strong>. Current role:{' '}
+                  Update the role for <strong className="text-ink">{roleUser.username}</strong>. Current role:{' '}
                   <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>{roleUser.role}</span>
                 </p>
                 <div className={tw.formGroup} style={{ marginTop: 16 }}>
@@ -833,21 +821,19 @@ export function UsersView({
                 </ActionButton>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
-      {claimAuthor && (
-        <div className={tw.modalOverlay} onClick={() => !isClaiming && setClaimAuthor(null)}>
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {claimAuthor ? (
+      <AdminModal open onClose={isClaiming ? undefined : () => setClaimAuthor(null)}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Create account for author</h3>
             </div>
             <form onSubmit={handleClaim}>
               <div className={tw.modalBody}>
                 <p>
-                  Create a login for <strong>{claimAuthor.username}</strong> (
-                  {Number(claimAuthor.postCount) || 0} posts). They can then sign in and
+                  Create a login for <strong className="text-ink">{claimAuthor?.username}</strong> (
+                  {Number(claimAuthor?.postCount) || 0} posts). They can then sign in and
                   appear in Users management.
                 </p>
                 <div className={tw.formGroup} style={{ marginTop: 16 }}>
@@ -899,24 +885,19 @@ export function UsersView({
                 </ActionButton>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
-      {reassignAuthor && (
-        <div
-          className={tw.modalOverlay}
-          onClick={() => !isReassigning && setReassignAuthor(null)}
-        >
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {reassignAuthor ? (
+      <AdminModal open onClose={isReassigning ? undefined : () => setReassignAuthor(null)}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Transfer posts</h3>
             </div>
             <form onSubmit={handleReassign}>
               <div className={tw.modalBody}>
                 <p>
-                  Move all posts by <strong>{reassignAuthor.username}</strong> (
-                  {Number(reassignAuthor.postCount) || 0}) to an existing login account.
+                  Move all posts by <strong className="text-ink">{reassignAuthor?.username}</strong> (
+                  {Number(reassignAuthor?.postCount) || 0}) to an existing login account.
                 </p>
                 <div className={tw.formGroup} style={{ marginTop: 16 }}>
                   <label className={tw.formLabel}>Transfer to</label>
@@ -953,23 +934,18 @@ export function UsersView({
                 </ActionButton>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
-      {deletePostsAuthor && (
-        <div
-          className={tw.modalOverlay}
-          onClick={() => !isDeletingPosts && setDeletePostsAuthor(null)}
-        >
-          <div className={tw.modalContent} onClick={(e) => e.stopPropagation()}>
+      {deletePostsAuthor ? (
+      <AdminModal open onClose={isDeletingPosts ? undefined : () => setDeletePostsAuthor(null)}>
             <div className={tw.modalHeader}>
               <h3 className={tw.modalTitle}>Delete author posts</h3>
             </div>
             <div className={tw.modalBody}>
               <p>
-                Permanently delete all <strong>{Number(deletePostsAuthor.postCount) || 0}</strong>{' '}
-                post(s) by <strong>{deletePostsAuthor.username}</strong>? This cannot be undone.
+                Permanently delete all <strong className="text-ink">{Number(deletePostsAuthor?.postCount) || 0}</strong>{' '}
+                post(s) by <strong className="text-ink">{deletePostsAuthor?.username}</strong>? This cannot be undone.
               </p>
               {deletePostsHint ? <p className={tw.formHint}>{deletePostsHint}</p> : null}
               <p className={tw.modalWarning}>This action cannot be undone.</p>
@@ -993,9 +969,8 @@ export function UsersView({
                 {isDeletingPosts ? 'Deleting…' : 'Delete all posts'}
               </ActionButton>
             </div>
-          </div>
-        </div>
-      )}
+      </AdminModal>
+      ) : null}
 
       {successMessage && (
         <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />

@@ -45,8 +45,9 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-sans)', 'Inter', 'Helvetica', 'Arial', 'sans-serif'],
         heading: ['var(--font-heading)', 'Inter', 'Helvetica', 'Arial', 'sans-serif'],
-        mono: ['var(--font-mono)', 'IBM Plex Mono', 'SF Mono', 'Consolas', 'monospace'],
-        serif: ['var(--font-serif)', 'Georgia', 'Times New Roman', 'serif'],
+        display: ['var(--font-display)', 'Archivo Black', 'Inter', 'sans-serif'],
+        mono: ['var(--font-mono)', 'Space Mono', 'IBM Plex Mono', 'Consolas', 'monospace'],
+        serif: ['var(--font-serif)', 'Lora', 'Georgia', 'Times New Roman', 'serif'],
       },
       fontSize: {
         hero: ['var(--fs-hero)', { lineHeight: '1.12', letterSpacing: '-0.03em', fontWeight: '800' }],

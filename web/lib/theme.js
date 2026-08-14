@@ -1,5 +1,8 @@
 export const THEME_KEY = 'cnb_theme';
 export const THEME_MODE_KEY = 'cnb_theme_mode';
+export const THEME_CHANGE_EVENT = 'wirefringe-theme';
+
+const THEME_COLOR = { dark: '#000000', light: '#f3f1eb' };
 
 export const DEFAULT_LIGHT_START_HOUR = 6;
 export const DEFAULT_DARK_START_HOUR = 18;
@@ -19,6 +22,13 @@ function applyThemeToDocument(theme) {
   if (typeof document === 'undefined') return 'dark';
   const normalized = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = normalized;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLOR[normalized]);
+  try {
+    window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: { theme: normalized } }));
+  } catch {
+    // ignore
+  }
   return normalized;
 }
 

@@ -14,6 +14,7 @@ import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
 import SearchResults from '../components/SearchResults/SearchResults';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
+import { useAuth } from '../hooks';
 
 const CATEGORIES = [
   'All',
@@ -80,9 +81,9 @@ export default function HomePage({ initialPosts }) {
     [postsData]
   );
 
+  const { me: user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState(null);
   const [feedTab, setFeedTab] = useState('latest');
 
   useEffect(() => {
@@ -103,15 +104,6 @@ export default function HomePage({ initialPosts }) {
       );
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/admin/me', { headers: { Accept: 'application/json' } });
-        if (res.ok) setUser(await res.json());
-      } catch (_) {}
-    })();
-  }, []);
 
   const loading = !postsData && !postsError;
 
@@ -174,10 +166,10 @@ export default function HomePage({ initialPosts }) {
         <div className="pb-0 bg-transparent">
           <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
             <div
-              className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-dotted border-[#333] pointer-events-none z-[1]"
+              className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-dotted border-line pointer-events-none z-[1]"
               aria-hidden="true"
             />
-            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-[#333] max-[1000px]:pb-7">
+            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-line max-[1000px]:pb-7">
               <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
@@ -218,21 +210,21 @@ export default function HomePage({ initialPosts }) {
                     {mostRead.map((post, i) => (
                       <li
                         key={post.id}
-                        className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-[#333]"
+                        className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-line"
                       >
-                        <span className="w-[38px] h-[38px] bg-gradient-to-br from-[#1a1a1a] to-[#101010] text-white flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-white/[0.06] transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent group-hover:shadow-[0_6px_20px_rgba(60,255,208,0.3)]">
+                        <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent group-hover:shadow-[0_6px_20px_rgba(60,255,208,0.3)]">
                           {i + 1}
                         </span>
                         <div>
                           <Link
                             href={postUrl(post)}
-                            className="text-lg font-extrabold leading-snug text-white block mb-2 tracking-tight transition-colors group-hover:text-mint"
+                            className="text-lg font-extrabold leading-snug text-ink block mb-2 tracking-tight transition-colors group-hover:text-mint"
                           >
                             {post.title}
                           </Link>
                           <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
                             <AuthorByline post={post} size="sm" />
-                            <span className="text-[#666]">{formatDate(post.date)}</span>
+                            <span className="text-ink-muted">{formatDate(post.date)}</span>
                           </div>
                         </div>
                       </li>
@@ -307,7 +299,7 @@ export default function HomePage({ initialPosts }) {
               </div>
             </div>
 
-            <div className="min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-black max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
+            <div className="min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-bg max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
               <StreamFeed
                 posts={feedPosts}
                 feedTab={feedTab}
@@ -337,15 +329,15 @@ function PackageBlock({ title, subtitle, posts }) {
   return (
     <Reveal as="section" className="mt-12 pt-0 animate-fade-up">
       <PackageRule />
-      <h2 className="text-[22px] font-extrabold tracking-tight mb-[22px] text-white leading-tight">
-        {title} <span className="text-[#6e6e6e] font-medium tracking-tight">/ {subtitle}</span>
+      <h2 className="text-[22px] font-extrabold tracking-tight mb-[22px] text-ink leading-tight">
+        {title} <span className="text-ink-tertiary font-medium tracking-tight">/ {subtitle}</span>
       </h2>
       <div className="grid grid-cols-1 min-[1001px]:grid-cols-[1.2fr_1fr] gap-7 items-start">
         <Link
           href={postUrl(feature)}
           className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[3px]"
         >
-          <div className="w-full aspect-[4/3] overflow-hidden bg-[#111] mb-4 rounded-md shadow-[0_12px_32px_rgba(0,0,0,0.4)] outline outline-1 outline-white/5 transition-all group-hover:shadow-lg group-hover:outline-mint/20">
+          <div className="w-full aspect-[4/3] overflow-hidden bg-bg-card mb-4 rounded-md shadow-md outline outline-1 outline-line transition-all group-hover:shadow-lg group-hover:outline-mint/20">
             {feature.ogImg ? (
               <img
                 src={feature.ogImg}
@@ -355,11 +347,11 @@ function PackageBlock({ title, subtitle, posts }) {
               />
             ) : null}
           </div>
-          <h3 className="text-2xl font-extrabold leading-tight tracking-tight mb-2.5 text-white transition-colors group-hover:text-mint">
+          <h3 className="text-2xl font-extrabold leading-tight tracking-tight mb-2.5 text-ink transition-colors group-hover:text-mint">
             {feature.title}
           </h3>
           {excerpt(feature, 120) ? (
-            <p className="text-[15px] text-[#9a9a9a] mb-3 leading-normal tracking-tight">
+            <p className="text-[15px] text-ink-secondary mb-3 leading-normal tracking-tight">
               {excerpt(feature, 120)}
             </p>
           ) : null}
@@ -373,21 +365,21 @@ function PackageBlock({ title, subtitle, posts }) {
             <Link
               key={post.id}
               href={postUrl(post)}
-              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b border-dotted border-[#2e2e2e] text-inherit rounded-sm transition-colors hover:bg-white/[0.02] ${idx === 0 ? 'pt-0' : ''}`}
+              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b border-dotted border-line text-inherit rounded-sm transition-colors hover:bg-bg-hover/60 ${idx === 0 ? 'pt-0' : ''}`}
             >
               <div>
-                <h4 className="text-[16.5px] font-extrabold leading-snug text-white mb-1.5 transition-colors tracking-tight group-hover:text-mint">
+                <h4 className="text-[16.5px] font-extrabold leading-snug text-ink mb-1.5 transition-colors tracking-tight group-hover:text-mint">
                   {post.title}
                 </h4>
                 {excerpt(post, 90) ? (
-                  <p className="text-[13.5px] text-[#888] mb-2 leading-snug">{excerpt(post, 90)}</p>
+                  <p className="text-[13.5px] text-ink-tertiary mb-2 leading-snug">{excerpt(post, 90)}</p>
                 ) : null}
                 <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
                   <AuthorByline post={post} size="sm" />
                 </div>
               </div>
               {post.ogImg ? (
-                <div className="w-[84px] h-[84px] overflow-hidden bg-[#111] rounded-sm shadow-[0_4px_14px_rgba(0,0,0,0.35)] outline outline-1 outline-white/[0.04]">
+                <div className="w-[84px] h-[84px] overflow-hidden bg-bg-card rounded-sm shadow-sm outline outline-1 outline-line">
                   <img
                     src={post.ogImg}
                     alt=""
@@ -396,7 +388,7 @@ function PackageBlock({ title, subtitle, posts }) {
                   />
                 </div>
               ) : (
-                <div className="w-[84px] h-[84px] overflow-hidden bg-[#111] rounded-sm" />
+                <div className="w-[84px] h-[84px] overflow-hidden bg-bg-card rounded-sm" />
               )}
             </Link>
           ))}
@@ -414,7 +406,7 @@ function CategoryRow({ title, posts, href }) {
         <h2 className="text-[22px] font-extrabold tracking-tight">{title}</h2>
         <Link
           href={href}
-          className="font-mono text-[10px] tracking-[0.12em] uppercase text-[#6a6a6a] font-bold transition-all py-1 hover:text-mint hover:tracking-[0.14em]"
+          className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-muted font-bold transition-all py-1 hover:text-mint hover:tracking-[0.14em]"
         >
           MORE
         </Link>
@@ -426,7 +418,7 @@ function CategoryRow({ title, posts, href }) {
             href={postUrl(post)}
             className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[5px]"
           >
-            <div className="w-full aspect-[16/10] overflow-hidden bg-[#111] mb-3 rounded-md shadow-[0_8px_24px_rgba(0,0,0,0.35)] outline outline-1 outline-white/[0.04] transition-all group-hover:shadow-lg group-hover:outline-mint/15">
+            <div className="w-full aspect-[16/10] overflow-hidden bg-bg-card mb-3 rounded-md shadow-sm outline outline-1 outline-line transition-all group-hover:shadow-lg group-hover:outline-mint/15">
               {post.ogImg ? (
                 <img
                   src={post.ogImg}
@@ -436,7 +428,7 @@ function CategoryRow({ title, posts, href }) {
                 />
               ) : null}
             </div>
-            <h3 className="text-[15.5px] font-extrabold leading-snug text-white mb-2.5 tracking-tight transition-colors group-hover:text-mint">
+            <h3 className="text-[15.5px] font-extrabold leading-snug text-ink mb-2.5 tracking-tight transition-colors group-hover:text-mint">
               {post.title}
             </h3>
             <div className="flex items-center gap-2.5 text-[11px] flex-wrap">

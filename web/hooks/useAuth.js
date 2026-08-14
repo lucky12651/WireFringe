@@ -1,7 +1,9 @@
-import { useState,useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../lib/api';
 
-export function useAuth() {
+const AuthContext = createContext(null);
+
+function useAuthState() {
   const [me, setMe] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -16,19 +18,18 @@ export function useAuth() {
 
   const refreshMe = useCallback(async () => {
     let token = null;
-    // Try to load from localStorage first for instant UI
     if (typeof window !== 'undefined') {
       token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
-      if (storedUser) {
+      if (token && storedUser) {
         try {
           setMe(JSON.parse(storedUser));
         } catch (_) {}
       }
     }
 
-    // If no token, don't even try to fetch me
     if (!token) {
+      setMe(null);
       setIsInitialLoading(false);
       return null;
     }
@@ -107,15 +108,16 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    setMe(null);
+    setError(null);
     try {
       await authApi.logout();
-    } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-      setMe(null);
-      setError(null);
+    } catch {
+      // Session clear is best-effort; local credentials are already gone.
     }
   }, []);
 
@@ -124,12 +126,15 @@ export function useAuth() {
     refreshMe();
   }, [refreshMe]);
 
-  const updateProfile = useCallback(async (displayName) => {
+  const updateProfile = useCallback(async (displayNameOrPayload) => {
     try {
       setIsLoading(true);
       setError(null);
-      const user = await authApi.updateProfile(displayName);
+      const user = await authApi.updateProfile(displayNameOrPayload);
       setMe(user);
+      if (typeof window !== 'undefined' && user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       return { success: true, user };
     } catch (err) {
       setError(err?.message || 'Failed to update profile');
@@ -241,4 +246,17 @@ export function useAuth() {
       changePassword,
     ]
   );
+}
+
+export function AuthProvider({ children }) {
+  const value = useAuthState();
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return ctx;
 }

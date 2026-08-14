@@ -3,24 +3,17 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout/Layout';
-import CommentSection from '../components/CommentSection/CommentSection';
+import CommentDrawer, { CommentsCta } from '../components/CommentDrawer/CommentDrawer';
 import ArticleBody from '../components/ArticleBody/ArticleBody';
 import AdUnit from '../components/AdUnit/AdUnit';
-import Reveal from '../components/Reveal/Reveal';
 import { PostSkeleton } from '../components/Skeleton/Skeleton';
+import PostHero from '../components/PostHero/PostHero';
 import { fetcher, api } from '../lib/api';
-import { slugifyTitle, postUrl, stripHtml, postExcerpt } from '../lib/utils';
+import { slugifyTitle, postUrl, stripHtml } from '../lib/utils';
 import { AD_SLOTS } from '../lib/ads';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
-
-function formatDate(date) {
-  if (!date || Number.isNaN(date.getTime?.())) return '';
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
+import { useAuth } from '../hooks';
 
 export async function getServerSideProps(context) {
   const { query, params, asPath } = context;
@@ -82,7 +75,8 @@ export default function PostPage({
   error: initialError,
 }) {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const { me } = useAuth();
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   const slugFromPath = useMemo(() => {
     if (!router.isReady) return '';
@@ -160,16 +154,13 @@ export default function PostPage({
     initialError || (postError ? 'Could not load this post. Please try again later.' : '');
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/admin/me', { headers: { Accept: 'application/json' } });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
-      } catch (_) {}
-    })();
-  }, []);
+    if (!router.isReady) return;
+    const q = router.query?.comments;
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (q === '1' || q === 'true' || hash === '#comments') {
+      setCommentsOpen(true);
+    }
+  }, [router.isReady, router.query?.comments]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -196,11 +187,6 @@ export default function PostPage({
     return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 6);
   }, [latest, id, post]);
 
-  const relatedPosts = useMemo(() => {
-    const currentId = String(post?.id || id || '');
-    return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 4);
-  }, [latest, id, post]);
-
   const authorName = useMemo(() => {
     const name = String(post?.creatorName || post?.creator || '').trim();
     return name || '';
@@ -211,17 +197,47 @@ export default function PostPage({
     return url || '';
   }, [post]);
 
+  const authorInitials = useMemo(() => {
+    const parts = authorName.split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'W';
+    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+  }, [authorName]);
+
+  const moreInBucket = useMemo(() => {
+    const currentId = String(post?.id || id || '');
+    const bucket = post?.bucket;
+    const same = (latest || []).filter(
+      (p) => String(p?.id || '') !== currentId && p?.bucket && p.bucket === bucket
+    );
+    const rest = (latest || []).filter((p) => String(p?.id || '') !== currentId);
+    return (same.length ? same : rest).slice(0, 6);
+  }, [latest, id, post]);
+
+  const accent = normalizeAccentColor(post?.accentColor, DEFAULT_ACCENT);
+
   return (
     <Layout
       title={post?.title ? `${post.title} – Wirefringe` : undefined}
       description={post?.metaDescription || post?.excerpt || undefined}
       keywords={post?.keywords || undefined}
-      headerProps={{ user, activeCategory: post?.bucket || 'All' }}
-      showInlineAd={false}
+      headerProps={{ user: me, activeCategory: post?.bucket || 'All' }}
+      accentColor={accent}
+      fullWidth
+      headerHero={
+        !loading && !error && post ? (
+          <PostHero
+            post={post}
+            commentCount={post.commentCount}
+            onOpenComments={() => setCommentsOpen(true)}
+          />
+        ) : null
+      }
     >
-      <div className="pt-10 pb-20 max-w-[1180px] mx-auto relative max-sm:pt-7 max-sm:pb-14">
+      <div className="relative">
         {loading ? (
-          <PostSkeleton />
+          <div className="max-w-[1360px] mx-auto px-5 md:px-10 py-16">
+            <PostSkeleton />
+          </div>
         ) : error ? (
           <div className="text-center py-[100px] px-4">
             <h2 className="mb-5 text-[1.4rem]">{error}</h2>
@@ -233,158 +249,178 @@ export default function PostPage({
             </Link>
           </div>
         ) : post ? (
-          <article className="relative z-[1]">
-            <header className="m-0 mb-5 max-w-none w-full text-left animate-fade-up max-sm:mb-5">
-              <div className="flex flex-wrap gap-2.5 mb-3 items-center font-mono text-[11px] tracking-wide uppercase text-[#777]">
-                <span className="font-bold text-mint">+ {post.bucket || 'News'}</span>
-                <span className="text-[#444]" aria-hidden="true">
-                  •
-                </span>
-                <time dateTime={post.date?.toISOString()}>{formatDate(post.date)}</time>
-                {post.readMinutes ? (
-                  <>
-                    <span className="text-[#444]" aria-hidden="true">
-                      •
-                    </span>
-                    <span className="text-[#666]">{post.readMinutes} min read</span>
-                  </>
-                ) : null}
-              </div>
-              <h1 className="text-[clamp(1.75rem,3.6vw,2.65rem)] max-md:text-[clamp(1.55rem,6vw,2.1rem)] font-black leading-[1.12] max-md:leading-tight tracking-tight m-0 mb-3.5 text-white max-w-full w-full [text-wrap:pretty]">
-                {post.title}
-              </h1>
-              {postExcerpt(post, 200) ? (
-                <p className="text-[clamp(1.05rem,1.6vw,1.2rem)] text-[#b0b0b0] leading-snug m-0 mb-[18px] tracking-tight max-w-full w-full font-normal">
-                  <span className="text-[#555] font-semibold">/ </span>
-                  {postExcerpt(post, 200)}
-                </p>
-              ) : null}
-
-              {authorName ? (
-                <div className="flex items-center gap-3.5 mb-2 pt-1">
-                  <AuthorByline
-                    post={post}
-                    name={authorName}
-                    avatarUrl={authorAvatarUrl}
-                    size="lg"
-                    label="By"
-                    className="min-w-0"
-                  />
-                </div>
-              ) : null}
-            </header>
-
-            {post.ogImg ? (
-              <figure className="mt-1 mb-10 w-full max-w-full bg-bg-card overflow-hidden rounded-lg shadow-[0_24px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)] animate-fade-up max-sm:mb-7 max-sm:rounded-sm">
-                <img
-                  src={post.ogImg}
-                  alt={post.title}
-                  className="w-full h-auto block max-h-[480px] max-md:max-h-[360px] object-cover"
-                />
-                <figcaption className="font-mono text-[10px] tracking-wide uppercase text-[#666] px-4 py-3 border-t border-white/5 bg-[#0a0a0a]">
-                  {post.bucket ? `${post.bucket} · ` : ''}
-                  {formatDate(post.date)}
-                </figcaption>
-              </figure>
-            ) : null}
-
-            <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_300px] gap-12 items-start">
-              <div className="min-w-0 max-w-[720px] min-[1001px]:max-w-[720px] max-md:max-w-none">
-                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
-
-                <ArticleBody
-                  html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
-                  magazine
-                />
-
-                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-
-                {relatedPosts.length > 0 ? (
-                  <Reveal as="section" className="mt-14 pt-8 border-t border-line-dim">
-                    <div className="flex items-center gap-4 mb-[22px]">
-                      <h2 className="text-xl font-extrabold tracking-tight m-0 whitespace-nowrap">
-                        More to read
-                      </h2>
-                      <span
-                        className="flex-1 h-px bg-gradient-to-r from-mint/40 to-transparent"
-                        aria-hidden="true"
-                      />
+          <>
+            <div className="max-w-[1360px] mx-auto px-5 md:px-10 pt-12 md:pt-14 pb-6">
+              <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_320px] gap-12 min-[1001px]:gap-[70px] items-start">
+                <article className="min-w-0">
+                  {authorName ? (
+                    <div className="flex gap-3.5 items-start mb-8">
+                      {authorAvatarUrl ? (
+                        <img
+                          src={authorAvatarUrl}
+                          alt=""
+                          className="w-10 h-10 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[#ff8fc8] to-[#5B4FE8] text-white font-display text-sm flex items-center justify-center">
+                          {authorInitials}
+                        </div>
+                      )}
+                      <p className="m-0 text-[15.5px] leading-relaxed text-ink-dek">
+                        <AuthorByline
+                          post={post}
+                          name={authorName}
+                          avatarUrl={authorAvatarUrl}
+                          size="md"
+                          label=""
+                          className="inline-flex"
+                        />{' '}
+                        covers {post.bucket || 'the news'} at Wirefringe.
+                      </p>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-[18px]">
-                      {relatedPosts.map((p) => (
+                  ) : null}
+
+                  <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
+
+                  <ArticleBody
+                    html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+                    magazine
+                    className="article-body--verge"
+                  />
+
+                  <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
+
+                  <CommentsCta
+                    count={post.commentCount}
+                    onClick={() => setCommentsOpen(true)}
+                  />
+
+                  <div className="on-accent bg-[#ECE7FC] text-[#1c1c1c] rounded-[14px] px-7 py-[26px] mt-1 mb-2">
+                    <p className="m-0 mb-4 text-[15.5px] leading-relaxed">
+                      <strong>Follow topics and authors</strong> from this story to see more like
+                      it in your personalized homepage feed.
+                    </p>
+                    <Link
+                      href={`/?category=${encodeURIComponent(
+                        String(post.bucket || 'tech')
+                          .toLowerCase()
+                          .replace(/ & /g, '-')
+                          .replace(/ /g, '-')
+                      )}`}
+                      className="inline-flex items-center gap-1.5 font-mono font-bold text-[12.5px] tracking-wide uppercase text-[#463AC9] py-1"
+                    >
+                      <span className="inline-flex items-center justify-center w-[17px] h-[17px] rounded-full border-[1.4px] border-current text-xs leading-none">
+                        +
+                      </span>
+                      {post.bucket || 'News'}
+                    </Link>
+                  </div>
+                </article>
+
+                <aside className="relative min-w-0">
+                  <span
+                    className="hidden min-[1200px]:block absolute -right-2 top-8 font-display text-[160px] leading-none text-[#5FF2C0]/35 pointer-events-none select-none tracking-[-0.04em] [writing-mode:vertical-rl]"
+                    aria-hidden="true"
+                  >
+                    WF
+                  </span>
+                  <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
+                  <h3 className="relative font-mono text-[13px] tracking-[0.06em] uppercase text-[#463AC9] font-bold mt-6 mb-1.5">
+                    Most Popular
+                  </h3>
+                  <ol className="relative list-none m-0 p-0">
+                    {sidebarPosts.map((p, index) => (
+                      <li key={p.id} className="border-t border-line py-[18px] last:border-b">
                         <Link
-                          key={p.id}
                           href={postUrl(p)}
-                          className="group flex gap-3.5 text-inherit p-3 -m-3 rounded-lg transition-colors hover:bg-white/[0.025]"
+                          className="flex gap-3 no-underline text-ink font-sans font-bold text-base leading-snug hover:text-[#463AC9]"
                         >
-                          {p.ogImg ? (
-                            <div className="w-[108px] h-20 overflow-hidden bg-bg-elevated shrink-0 rounded-sm shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+                          <span className="font-mono text-[#5B4FE8] font-bold shrink-0">
+                            {index + 1}.
+                          </span>
+                          <span>{p.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                </aside>
+              </div>
+            </div>
+
+            {moreInBucket.length > 0 ? (
+              <section className="on-accent bg-[#5FF2C0] text-[#111] py-8 mt-6">
+                <div className="max-w-[1360px] mx-auto px-5 md:px-10 grid grid-cols-1 min-[1001px]:grid-cols-[1fr_280px] gap-8 min-[1001px]:gap-12">
+                  <div>
+                    <h3 className="text-[14px] font-semibold mb-3.5 text-[#111]">
+                      More in{' '}
+                      <Link
+                        href={`/?category=${encodeURIComponent(
+                          String(post.bucket || '')
+                            .toLowerCase()
+                            .replace(/ & /g, '-')
+                            .replace(/ /g, '-')
+                        )}`}
+                        className="underline"
+                      >
+                        {post.bucket || 'News'}
+                      </Link>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-3 gap-x-5 gap-y-4">
+                      {moreInBucket.slice(0, 3).map((p) => (
+                        <Link key={p.id} href={postUrl(p)} className="group block text-inherit">
+                          <div className="aspect-[16/9] rounded-md mb-2 overflow-hidden bg-[#111]/10">
+                            {p.ogImg ? (
                               <img
                                 src={p.ogImg}
                                 alt=""
                                 loading="lazy"
-                                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
-                            </div>
-                          ) : (
-                            <div className="w-[108px] h-20 bg-bg-elevated shrink-0 rounded-sm" />
-                          )}
-                          <div>
-                            <span className="font-mono text-[10px] font-bold tracking-wide uppercase text-mint mb-1.5 block">
-                              {p.bucket}
-                            </span>
-                            <h4 className="text-[15px] font-bold leading-snug text-white tracking-tight transition-colors m-0 group-hover:text-mint">
-                              {p.title}
-                            </h4>
+                            ) : null}
                           </div>
+                          <h4 className="m-0 font-sans font-extrabold text-sm leading-snug line-clamp-2 text-[#111] group-hover:text-[#463AC9]">
+                            {p.title}
+                          </h4>
                         </Link>
                       ))}
                     </div>
-                  </Reveal>
-                ) : null}
-
-                <CommentSection postId={post.id} />
-              </div>
-
-              <aside className="flex flex-col gap-5 min-w-0">
-                <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
-
-                <div className="bg-gradient-to-br from-bg-elevated to-bg-card border border-white/[0.07] rounded-lg p-[18px] shadow-[0_8px_28px_rgba(0,0,0,0.3)]">
-                  <h3 className="font-mono text-[11px] font-bold tracking-widest uppercase text-white m-0 mb-3.5 pb-2.5 border-b border-[#222]">
-                    Latest Headlines
-                  </h3>
-                  <div className="flex flex-col gap-3.5">
-                    {sidebarPosts.map((p, index) => (
-                      <Link
-                        key={p.id}
-                        href={postUrl(p)}
-                        className="group flex gap-3 no-underline text-inherit transition-colors"
-                      >
-                        <span
-                          className="font-extrabold text-mint min-w-[18px] text-sm font-mono"
-                          aria-hidden="true"
-                        >
-                          {index + 1}
-                        </span>
-                        <div>
-                          <span className="font-mono text-[10px] font-bold tracking-wide uppercase text-mint mb-1.5 block">
-                            {p.bucket}
-                          </span>
-                          <h4 className="text-sm font-bold leading-snug text-white m-1 mt-1 transition-colors tracking-tight group-hover:text-mint">
-                            {p.title}
-                          </h4>
-                        </div>
-                      </Link>
-                    ))}
                   </div>
+                  <aside>
+                    <h3 className="text-[14px] font-extrabold mb-1 text-[#111]">Top Stories</h3>
+                    <ul className="list-none m-0 p-0">
+                      {sidebarPosts.slice(0, 3).map((p) => (
+                        <li key={p.id} className="border-t border-black/15 py-2.5">
+                          {p.date ? (
+                            <span className="block font-mono text-[10.5px] text-black/55 mb-0.5">
+                              {p.date.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              }).toUpperCase()}
+                            </span>
+                          ) : null}
+                          <Link
+                            href={postUrl(p)}
+                            className="font-sans font-extrabold text-sm leading-snug line-clamp-2 hover:text-[#463AC9]"
+                          >
+                            {p.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </aside>
                 </div>
+              </section>
+            ) : null}
 
-                <div className="sticky top-[calc(var(--header-height,92px)+16px)] max-md:static">
-                  <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
-                </div>
-              </aside>
-            </div>
-          </article>
+            <CommentDrawer
+              open={commentsOpen}
+              onClose={() => setCommentsOpen(false)}
+              postId={post.id}
+              commentCount={post.commentCount}
+              user={me}
+              nextPath={`${postUrl(post)}#comments`}
+            />
+          </>
         ) : null}
       </div>
     </Layout>

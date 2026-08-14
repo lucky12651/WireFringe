@@ -1,5 +1,5 @@
 // Export all hooks for easy importing
-export { useAuth } from './useAuth';
+export { useAuth, AuthProvider } from './useAuth';
 export { usePosts } from './usePosts';
 export { useCategories } from './useCategories';
 export { useUsers } from './useUsers';

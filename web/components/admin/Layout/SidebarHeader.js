@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
 
-/** Original site mint — admin theme remaps --mint to white, so brand F must use this hex. */
+/** Brand F: neon mint on dark admin, forest mint on light (admin remaps --mint). */
 const BRAND_F =
-  'text-[#3cffd0] italic font-extrabold inline-block [transform:skewX(-6deg)] [text-shadow:0_0_18px_rgba(60,255,208,0.35)]';
+  'admin-brand-f italic font-extrabold inline-block [transform:skewX(-6deg)]';
 
 export function SidebarHeader({ isAuthed, me, collapsed }) {
   return (
     <div
       className={cn(
-        'flex items-center shrink-0 border-b border-white/[0.06]',
+        'flex items-center shrink-0 border-b border-line',
         collapsed ? 'px-0 pt-[22px] pb-4 justify-center' : 'px-3.5 pt-5 pb-4',
         'max-[980px]:hidden'
       )}

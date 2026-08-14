@@ -42,8 +42,8 @@ export default function AuthorAvatar({
         'relative shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center border transition-all duration-200',
         sizeClass,
         isBrand
-          ? 'bg-[#f2f2f2] border-mint/45 shadow-[0_0_0_1px_rgba(60,255,208,0.2),0_0_14px_rgba(60,255,208,0.12),0_4px_12px_rgba(0,0,0,0.35)]'
-          : 'bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border-white/10 shadow-[0_0_0_1px_rgba(0,0,0,0.4),0_4px_14px_rgba(0,0,0,0.35)]',
+          ? 'bg-bg-elevated border-mint/45'
+          : 'bg-bg-card border-line',
         className
       )}
       title={label}

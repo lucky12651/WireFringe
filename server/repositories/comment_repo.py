@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Comment, CommentVote, Post
+from ..models import Comment, CommentVote, Post, User
 from .base import BaseRepository
 
 
@@ -96,6 +96,28 @@ class CommentRepository(BaseRepository[Comment]):
             delete(CommentVote).where(CommentVote.comment_id == comment_id)
         )
         self.db.commit()
+
+    def list_for_user(self, user: User) -> list[tuple[Comment, str | None]]:
+        """Comments posted by this signed-in user, newest first."""
+        username = (getattr(user, "username", "") or "").strip()
+        synthetic = f"{username}@users.local" if username else ""
+        real_email = (getattr(user, "email", None) or "").strip()
+        clauses = []
+        if getattr(user, "id", None) is not None:
+            clauses.append(Comment.user_id == user.id)
+        if synthetic:
+            clauses.append(Comment.email == synthetic)
+        if real_email:
+            clauses.append(Comment.email == real_email)
+        if not clauses:
+            return []
+        stmt = (
+            select(Comment, Post.title)
+            .outerjoin(Post, Post.id == Comment.post_id)
+            .where(or_(*clauses))
+            .order_by(Comment.created_at.desc(), Comment.id.desc())
+        )
+        return list(self.db.execute(stmt).all())
 
     def list_with_post_titles(
         self, creator: str | None = None

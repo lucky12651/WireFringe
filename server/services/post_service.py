@@ -23,6 +23,20 @@ from ..schemas import (
 )
 from .settings_service import BOT_CREATOR_KEYS, SettingsService
 
+_ACCENT_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def normalize_accent_color(value: str | None) -> str | None:
+    """Accept #RRGGBB only. Empty/invalid → None (site default on the frontend)."""
+    if value is None:
+        return None
+    v = str(value).strip()
+    if not v:
+        return None
+    if _ACCENT_RE.fullmatch(v):
+        return v.upper()
+    return None
+
 
 class PostService:
     """Service layer for Post operations."""
@@ -106,6 +120,7 @@ class PostService:
             bucket=post.bucket,
             readMinutes=post.read_minutes,
             ogImg=post.og_img,
+            accentColor=getattr(post, "accent_color", None) or None,
             metaDescription=post.meta_description,
             keywords=post.keywords,
             commentCount=comment_count,
@@ -257,6 +272,7 @@ class PostService:
             bucket=payload.bucket or "Tech",
             read_minutes=payload.readMinutes or 1,
             og_img=payload.ogImg,
+            accent_color=normalize_accent_color(payload.accentColor),
             meta_description=payload.metaDescription,
             keywords=payload.keywords,
             published_at=None,
@@ -278,6 +294,8 @@ class PostService:
         post.content = payload.content or post.content
         post.excerpt = payload.excerpt or post.excerpt
         post.og_img = payload.ogImg or post.og_img
+        if "accentColor" in payload.model_fields_set:
+            post.accent_color = normalize_accent_color(payload.accentColor)
         post.read_minutes = payload.readMinutes or post.read_minutes
         post.meta_description = payload.metaDescription or post.meta_description
         post.keywords = payload.keywords or post.keywords

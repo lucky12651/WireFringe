@@ -70,7 +70,7 @@ export function SidebarNav({
 
       <div
         className={cn(
-          'h-px bg-white/[0.06]',
+          'h-px bg-line',
           collapsed ? 'w-9 my-2 mx-0' : 'my-2.5 mx-2 w-auto',
           'max-[980px]:hidden'
         )}

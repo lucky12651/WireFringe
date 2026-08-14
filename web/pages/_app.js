@@ -6,6 +6,7 @@ import { initTheme } from '../lib/theme';
 import { loadAdsenseConfig } from '../lib/ads';
 
 import Head from 'next/head';
+import { AuthProvider } from '../hooks';
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -18,13 +19,7 @@ export default function App({ Component, pageProps }) {
   const [adsEnabled, setAdsEnabled] = useState(false);
 
   useEffect(() => {
-    // Screenshots show dark Verge; lock dark.
     initTheme({ defaultTheme: 'dark' });
-    try {
-      localStorage.setItem('cnb_theme', 'dark');
-      localStorage.setItem('cnb_theme_mode', 'manual');
-      document.documentElement.dataset.theme = 'dark';
-    } catch (_) {}
   }, []);
 
   useEffect(() => {
@@ -156,12 +151,12 @@ export default function App({ Component, pageProps }) {
   }, [router.events, isAdminRoute, adsScriptLoaded, refreshAds, adsEnabled]);
 
   return (
-    <>
+    <AuthProvider>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 }

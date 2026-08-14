@@ -45,7 +45,7 @@ export default function TipUsPage() {
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="tip-message"
-            className="font-mono text-[11px] font-bold tracking-wide uppercase text-[#888]"
+            className="font-mono text-[11px] font-bold tracking-wide uppercase text-ink-tertiary"
           >
             Your tip
           </label>
@@ -55,13 +55,13 @@ export default function TipUsPage() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="What should we know?"
             required
-            className="bg-[#111] border border-line rounded-sm text-white text-[15px] font-sans px-3.5 py-3 outline-none transition-colors min-h-[140px] resize-y focus:border-mint"
+            className="bg-bg-elevated border border-line rounded-sm text-ink text-[15px] font-sans px-3.5 py-3 outline-none transition-colors min-h-[140px] resize-y focus:border-mint"
           />
         </div>
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="tip-contact"
-            className="font-mono text-[11px] font-bold tracking-wide uppercase text-[#888]"
+            className="font-mono text-[11px] font-bold tracking-wide uppercase text-ink-tertiary"
           >
             How can we reach you? (optional)
           </label>
@@ -71,7 +71,7 @@ export default function TipUsPage() {
             value={contact}
             onChange={(e) => setContact(e.target.value)}
             placeholder="Email or other contact"
-            className="bg-[#111] border border-line rounded-sm text-white text-[15px] font-sans px-3.5 py-3 outline-none transition-colors focus:border-mint"
+            className="bg-bg-elevated border border-line rounded-sm text-ink text-[15px] font-sans px-3.5 py-3 outline-none transition-colors focus:border-mint"
           />
         </div>
         <button

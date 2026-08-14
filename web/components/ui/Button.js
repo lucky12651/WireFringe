@@ -10,9 +10,9 @@ const buttonVariants = cva(
         default:
           'rounded-sm bg-mint text-black border-transparent font-mono text-[10px] font-bold uppercase tracking-[0.08em] shadow-mint hover:bg-mint-hover hover:-translate-y-px',
         secondary:
-          'rounded-sm bg-bg-elevated text-[#ddd] border-line font-mono text-xs font-semibold uppercase tracking-wide hover:border-mint hover:text-mint hover:-translate-y-px',
+          'rounded-sm bg-bg-elevated text-ink-secondary border-line font-mono text-xs font-semibold uppercase tracking-wide hover:border-mint hover:text-mint hover:-translate-y-px',
         outline:
-          'rounded-sm bg-transparent text-white border-line hover:border-mint hover:text-mint',
+          'rounded-sm bg-transparent text-ink border-line hover:border-mint hover:text-mint',
         ghost:
           'rounded-md border-transparent bg-transparent text-ink-secondary hover:text-mint hover:bg-mint/10',
         destructive:

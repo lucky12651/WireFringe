@@ -38,6 +38,7 @@ class UserService:
             username=user.username,
             role=user.role,
             displayName=(user.display_name or None),
+            email=(getattr(user, "email", None) or None),
             avatarUrl=(user.avatar_url or None),
             brandBylineEnabled=bool(getattr(user, "brand_byline_enabled", False)),
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
@@ -329,7 +330,12 @@ class UserService:
         )
         return self.user_repo.create(new_user)
 
-    def update_profile(self, user: User, display_name: str | None) -> MeOut:
+    def update_profile(
+        self,
+        user: User,
+        display_name: str | None = None,
+        email: str | None = None,
+    ) -> MeOut:
         """Update user profile."""
         if display_name is not None:
             name = (display_name or "").strip()
@@ -341,6 +347,17 @@ class UserService:
                         status_code=400, detail="Display name too long (max 80 chars)"
                     )
                 user.display_name = name
+
+        if email is not None:
+            cleaned = (email or "").strip()
+            if not cleaned:
+                user.email = None
+            else:
+                if len(cleaned) > 160:
+                    raise HTTPException(status_code=400, detail="Email too long")
+                if "@" not in cleaned or "." not in cleaned.split("@")[-1]:
+                    raise HTTPException(status_code=400, detail="Enter a valid email")
+                user.email = cleaned
 
         updated = self.user_repo.update(user)
         return self._build_me_out(updated)

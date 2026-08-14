@@ -184,9 +184,8 @@ export function PostsView({
 
   return (
     <div className={tw.adminView}>
-      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
-        <div className={tw.titleGroup}>
-          <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Articles</h2>
+      <section className={tw.adminSection}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className={tw.tabs}>
             <button
               className={cn(tw.tab, activeTab === 'published' && tw.tabActive)}
@@ -201,20 +200,20 @@ export function PostsView({
               Queue <span className="ml-1 opacity-80">{queue.length}</span>
             </button>
           </div>
+          <div className={tw.headerActions}>
+            {activeTab === 'queue' && (
+              <button className={tw.secondaryBtn} onClick={onRefreshFeeds}>
+                <RefreshIcon size={16} /> Refresh feeds
+              </button>
+            )}
+            <a href="/admin/post" className={tw.primaryBtn}>
+              <PlusIcon /> New article
+            </a>
+          </div>
         </div>
-        <div className={tw.headerActions}>
-          {activeTab === 'queue' && (
-            <button className={tw.secondaryBtn} onClick={onRefreshFeeds}>
-              <RefreshIcon size={16} /> Refresh Feeds
-            </button>
-          )}
-          <a href="/admin/post" className={tw.primaryBtn}>
-            <PlusIcon /> New Article
-          </a>
-        </div>
-      </div>
+      </section>
 
-      <div className={tw.card}>
+      <section className={tw.adminSection}>
         {activeTab === 'published' ? (
           <>
             <div className={tw.tableWrap}>
@@ -236,18 +235,18 @@ export function PostsView({
                             <img src={p.ogImg || '/placeholder-post.jpg'} alt="" className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0">
-                            <Link href={postUrl(p)} className="no-underline text-white hover:text-mint">
+                            <Link href={postUrl(p)} className="no-underline text-ink hover:text-mint">
                               <span className="font-semibold text-sm block truncate">{p.title}</span>
                             </Link>
-                            <span className="text-xs text-[#888]">By {p.creatorName || 'Admin'}</span>
+                            <span className="text-xs text-ink-tertiary">By {p.creatorName || 'Admin'}</span>
                           </div>
                         </div>
                       </td>
                       <td className={tw.td}>
-                        <span className="font-mono text-xs text-mint">{p.bucket}</span>
+                        <span className="font-mono text-xs text-ink-secondary">{p.bucket}</span>
                       </td>
                       <td className={tw.td}>
-                        <span className="text-[#e0e0e0]">{formatDateShort(p.date)}</span>
+                        <span className="text-ink-secondary">{formatDateShort(p.date)}</span>
                       </td>
                       <td className={cn(tw.td, tw.textRight)}>
                         <div className={tw.actionGroup}>
@@ -279,85 +278,84 @@ export function PostsView({
           </>
         ) : (
           <div className={tw.tableWrap}>
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="mb-4 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-[13px] text-ink-secondary cursor-pointer">
                 <input
                   type="checkbox"
                   checked={queue.length > 0 && selectedQueueLinks.size === queue.length}
                   onChange={toggleSelectAllQueue}
                   id="select-all-queue"
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
-              </div>
+                Select all
+              </label>
               {selectedQueueLinks.size > 0 && (
-                <div className="m-0 py-2 px-4 rounded-xl flex items-center gap-3 bg-bg-elevated border border-line">
+                <div className="flex items-center gap-3 text-[13px] text-ink-secondary">
                   <span>{selectedQueueLinks.size} selected</span>
-                  <div className="flex gap-2">
-                    <button
-                      className={tw.iconBtnApprove}
-                      onClick={handleBulkProcessClick}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Processing...' : 'Process'}
-                    </button>
-                    <button className={tw.iconBtnDanger} onClick={handleBulkDeleteClick}>
-                      Remove
-                    </button>
-                  </div>
+                  <button
+                    className={tw.secondaryBtn}
+                    onClick={handleBulkProcessClick}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Processing…' : 'Process'}
+                  </button>
+                  <button className={tw.iconBtnDanger} onClick={handleBulkDeleteClick}>
+                    Remove
+                  </button>
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {queue.map((q) => (
-                <div
-                  key={q.link}
-                  className={cn(
-                    'rounded-lg border border-line bg-[#101010] p-3 cursor-pointer transition-colors hover:border-mint/30',
-                    selectedQueueLinks.has(q.link) && 'border-mint/50 bg-mint/[0.04]'
-                  )}
-                  onClick={() => toggleSelectQueueItem(q.link)}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedQueueLinks.has(q.link)}
-                        onChange={() => toggleSelectQueueItem(q.link)}
-                      />
-                    </div>
-                    <span className="font-mono text-[10px] uppercase tracking-wide text-mint bg-mint/10 px-2 py-0.5 rounded">
-                      {q.category}
-                    </span>
-                  </div>
-
-                  <div className="mb-3">
-                    <div className="text-sm font-semibold text-white line-clamp-2" title={q.title}>{q.title}</div>
-                  </div>
-
-                  <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className={tw.iconBtnApprove}
-                      onClick={() => handleProcessQueueItem(q.link)}
-                      title="Process"
-                      disabled={isProcessing || processingLinks.has(q.link)}
-                    >
-                      {processingLinks.has(q.link) ? <RefreshIcon size={16} className={tw.spin} /> : <CheckIcon size={16} />}
-                    </button>
-                    <button className={tw.iconBtnDanger} onClick={() => { setQueueItemToDelete(q); }} title="Remove">
-                      <TrashIcon size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {queue.length === 0 && (
+            {queue.length === 0 ? (
               <EmptyState>No items in the news queue.</EmptyState>
+            ) : (
+              <table className={tw.table}>
+                <thead>
+                  <tr>
+                    <th className={tw.th}></th>
+                    <th className={tw.th}>Title</th>
+                    <th className={tw.th}>Category</th>
+                    <th className={cn(tw.th, tw.textRight)}> </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {queue.map((q) => (
+                    <tr key={q.link}>
+                      <td className={tw.td}>
+                        <input
+                          type="checkbox"
+                          checked={selectedQueueLinks.has(q.link)}
+                          onChange={() => toggleSelectQueueItem(q.link)}
+                        />
+                      </td>
+                      <td className={tw.td}>
+                        <span className="font-semibold text-ink line-clamp-2">{q.title}</span>
+                      </td>
+                      <td className={tw.td}>
+                        <span className="font-mono text-xs text-ink-tertiary uppercase">{q.category}</span>
+                      </td>
+                      <td className={cn(tw.td, tw.textRight)}>
+                        <div className={tw.actionGroup}>
+                          <button
+                            className={tw.iconBtnApprove}
+                            onClick={() => handleProcessQueueItem(q.link)}
+                            title="Process"
+                            disabled={isProcessing || processingLinks.has(q.link)}
+                          >
+                            {processingLinks.has(q.link) ? <RefreshIcon size={16} className={tw.spin} /> : <CheckIcon size={16} />}
+                          </button>
+                          <button className={tw.iconBtnDanger} onClick={() => { setQueueItemToDelete(q); }} title="Remove">
+                            <TrashIcon size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         )}
-      </div>
+      </section>
 
       <DeleteConfirmModal
         isOpen={!!postToDelete || !!queueItemToDelete || bulkQueueDelete}

@@ -53,14 +53,14 @@ export default function ArchivesPage({ initialPosts }) {
       {posts.length === 0 ? (
         <p>No posts yet. Check back soon.</p>
       ) : (
-        <div className="flex flex-col gap-0 border-t border-[#222]">
+        <div className="flex flex-col gap-0 border-t border-line">
           {posts.map((post) => (
             <Link
               key={post.id}
               href={postUrl(post)}
-              className="group grid grid-cols-1 sm:grid-cols-[110px_1fr] gap-1.5 sm:gap-4 py-4 border-b border-[#1c1c1c] no-underline text-inherit"
+              className="group grid grid-cols-1 sm:grid-cols-[110px_1fr] gap-1.5 sm:gap-4 py-4 border-b border-line no-underline text-inherit"
             >
-              <span className="font-mono text-[11px] text-[#666] pt-1">
+              <span className="font-mono text-[11px] text-ink-muted pt-1">
                 {formatDate(post.date) || '—'}
               </span>
               <div>
@@ -69,7 +69,7 @@ export default function ArchivesPage({ initialPosts }) {
                     {post.bucket}
                   </div>
                 ) : null}
-                <div className="text-base font-bold text-white leading-snug transition-colors group-hover:text-mint">
+                <div className="text-base font-bold text-ink leading-snug transition-colors group-hover:text-mint">
                   {post.title}
                 </div>
               </div>

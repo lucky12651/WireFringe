@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_staff, require_user
+from ..dependencies import get_db, get_optional_user, require_staff, require_user
 from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
     CommentOut,
     CommentTrendOut,
     CommentVoteRequest,
+    MyCommentOut,
     PendingCountOut,
 )
 from ..services import CommentService, PostService
@@ -42,10 +43,26 @@ def list_comments(
 def create_comment(
     post_id: str,
     payload: CommentCreateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
     service: CommentService = Depends(get_comment_service),
 ) -> CommentOut:
-    """Create a new comment (pending approval)."""
-    return service.create_comment(post_id, payload)
+    """Create a new comment. Signed-in / signed-up users only."""
+    user = get_optional_user(request, db)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Sign in to comment")
+    return service.create_comment_as_user(post_id, payload.comment, user)
+
+
+@router.get("/me/comments", response_model=list[MyCommentOut])
+def list_my_comments(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: CommentService = Depends(get_comment_service),
+) -> list[MyCommentOut]:
+    """List comments the signed-in user posted, including pending ones."""
+    user = require_user(request, db)
+    return service.list_my_comments(user)
 
 
 @router.post("/comments/{comment_id}/vote", response_model=CommentOut)

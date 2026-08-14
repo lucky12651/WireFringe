@@ -43,13 +43,13 @@ export function Sidebar({
     <aside
       className={cn(
         'sticky top-0 self-start flex flex-col h-screen overflow-hidden',
-        'bg-black/70 backdrop-blur-2xl border-r border-white/[0.07] font-sans z-[100]',
+        'bg-bg-elevated/90 backdrop-blur-2xl border-r border-line font-sans z-[100]',
         'transition-[width] duration-[220ms] ease-out',
         collapsed ? 'w-[84px]' : 'w-64',
         'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:left-0 max-[980px]:top-auto',
         'max-[980px]:w-full max-[980px]:h-16 max-[980px]:flex-row',
-        'max-[980px]:border-r-0 max-[980px]:border-t max-[980px]:border-white/[0.08]',
-        'max-[980px]:bg-black/90 max-[980px]:backdrop-blur-xl'
+        'max-[980px]:border-r-0 max-[980px]:border-t max-[980px]:border-line',
+        'max-[980px]:bg-bg-elevated/95 max-[980px]:backdrop-blur-xl'
       )}
       aria-label="Admin navigation"
       data-collapsed={collapsed ? 'true' : 'false'}

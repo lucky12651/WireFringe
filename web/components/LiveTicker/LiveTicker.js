@@ -14,10 +14,10 @@ export default function LiveTicker({ posts = [] }) {
     <div className="inline-flex gap-7 max-sm:gap-[18px] items-center whitespace-nowrap pl-4 animate-ticker" aria-hidden="true">
       {items.map((it) => (
         <span key={it.id} className="inline-flex items-center gap-2">
-          <Link href={it.url} className="text-white no-underline inline-flex gap-2 items-center">
+          <Link href={it.url} className="text-ink no-underline inline-flex gap-2 items-center">
             <strong className="text-mint font-bold text-xs">{it.bucket}</strong>
             <span className="text-ink-tertiary">•</span>
-            <span className="font-heading font-bold text-white text-sm max-sm:text-[13px]">{it.title}</span>
+            <span className="font-heading font-bold text-ink text-sm max-sm:text-[13px]">{it.title}</span>
           </Link>
         </span>
       ))}

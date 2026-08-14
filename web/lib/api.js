@@ -108,11 +108,17 @@ export const authApi = {
     return api('/api/admin/logout', { method: 'POST' });
   },
   me: () => api('/api/admin/me', { method: 'GET' }),
-  updateProfile: (displayName) =>
-    api('/api/admin/profile', {
+  updateProfile: (displayNameOrPayload) => {
+    const payload =
+      displayNameOrPayload && typeof displayNameOrPayload === 'object'
+        ? displayNameOrPayload
+        : { displayName: displayNameOrPayload };
+    return api('/api/admin/profile', {
       method: 'PUT',
-      body: JSON.stringify({ displayName }),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
+  myComments: () => api('/api/me/comments', { method: 'GET' }),
   uploadPhoto: (file) => uploadFile('/api/admin/profile/photo', file),
   updateBrandByline: (enabled) =>
     api('/api/admin/profile/brand-byline', {

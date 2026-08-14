@@ -1,28 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { initTheme } from '../lib/theme';
 import { useAuth } from '../hooks';
 import { SignupPage } from '../components/admin/Login';
+import { nextQuery, safeNextPath } from '../lib/utils';
 
 export default function SignupPageContainer() {
   const router = useRouter();
   const auth = useAuth();
   const { isAuthed, isInitialLoading } = auth;
+  const next = safeNextPath(router.query?.next, '/');
 
   useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
-  }, []);
-
-  useEffect(() => {
-    if (isAuthed) {
-      router.replace('/');
-    }
-  }, [isAuthed, router]);
+    if (!router.isReady || !isAuthed) return;
+    router.replace(next);
+  }, [isAuthed, next, router, router.isReady]);
 
   const handleSignup = async (username, password, displayName) => {
     const result = await auth.signup(username, password, displayName);
     if (result.success) {
-      router.push('/');
+      router.push(next);
     }
     return result;
   };
@@ -30,10 +26,10 @@ export default function SignupPageContainer() {
   if (isAuthed || isInitialLoading) return null;
 
   return (
-    <SignupPage 
-      onSignup={handleSignup} 
-      onToggleMode={() => router.push('/login')} 
-      error={auth.error} 
+    <SignupPage
+      onSignup={handleSignup}
+      onToggleMode={() => router.push(`/login${nextQuery(next)}`)}
+      error={auth.error}
     />
   );
 }

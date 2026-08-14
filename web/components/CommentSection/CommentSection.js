@@ -123,7 +123,7 @@ export default function CommentSection({ postId }) {
 
   return (
     <section className="mt-12 pt-7 border-t border-line">
-      <h3 className="flex items-center gap-2.5 mb-5 text-xl font-extrabold text-white">
+      <h3 className="flex items-center gap-2.5 mb-5 text-xl font-extrabold text-ink">
         Comments ({comments.length})
         <svg
           className="w-[18px] h-[18px] text-mint"
@@ -144,7 +144,7 @@ export default function CommentSection({ postId }) {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
-            className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full focus:border-mint"
+            className="bg-bg border border-line rounded-sm p-3 text-[15px] text-ink outline-none w-full focus:border-mint"
             type="text"
             placeholder="Name"
             value={name}
@@ -153,7 +153,7 @@ export default function CommentSection({ postId }) {
             maxLength={60}
           />
           <input
-            className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full focus:border-mint"
+            className="bg-bg border border-line rounded-sm p-3 text-[15px] text-ink outline-none w-full focus:border-mint"
             type="email"
             placeholder="Email (private)"
             value={email}
@@ -163,7 +163,7 @@ export default function CommentSection({ postId }) {
           />
         </div>
         <textarea
-          className="bg-[#0a0a0a] border border-line rounded-sm p-3 text-[15px] text-white outline-none w-full min-h-[110px] resize-y leading-normal focus:border-mint"
+          className="bg-bg border border-line rounded-sm p-3 text-[15px] text-ink outline-none w-full min-h-[110px] resize-y leading-normal focus:border-mint"
           placeholder="Join the conversation..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
@@ -183,25 +183,25 @@ export default function CommentSection({ postId }) {
 
       <div className="flex flex-col">
         {loading ? (
-          <p className="text-[#888] text-sm py-3">Loading comments...</p>
+          <p className="text-ink-tertiary text-sm py-3">Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className="text-[#888] text-sm py-3">
+          <p className="text-ink-tertiary text-sm py-3">
             No comments yet. Be the first to join the conversation!
           </p>
         ) : (
           comments.map((c) => (
-            <div key={c.id} className="py-[18px] border-b border-[#222]">
+            <div key={c.id} className="py-[18px] border-b border-line">
               <div className="flex justify-between gap-3 mb-2">
                 <span className="font-bold text-[13px] text-mint tracking-wide uppercase">
                   {c.name}
                 </span>
-                <span className="text-xs text-[#666]">{formatDate(c.createdAt)}</span>
+                <span className="text-xs text-ink-muted">{formatDate(c.createdAt)}</span>
               </div>
-              <p className="text-[15px] leading-relaxed text-[#ddd] mb-2.5">{c.comment}</p>
+              <p className="text-[15px] leading-relaxed text-ink-dek mb-2.5">{c.comment}</p>
               <div className="flex gap-2">
                 <button
                   className={cn(
-                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-[#888] px-2.5 py-1 text-xs cursor-pointer hover:text-white hover:border-[#444]',
+                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-ink-tertiary px-2.5 py-1 text-xs cursor-pointer hover:text-ink hover:border-line-strong',
                     c.myVote === 'like' && 'text-mint border-mint/40'
                   )}
                   onClick={() => handleVote(c.id, 'like')}
@@ -212,7 +212,7 @@ export default function CommentSection({ postId }) {
                 </button>
                 <button
                   className={cn(
-                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-[#888] px-2.5 py-1 text-xs cursor-pointer hover:text-white hover:border-[#444]',
+                    'inline-flex items-center gap-1.5 bg-transparent border border-line rounded-sm text-ink-tertiary px-2.5 py-1 text-xs cursor-pointer hover:text-ink hover:border-line-strong',
                     c.myVote === 'dislike' && 'text-mint border-mint/40'
                   )}
                   onClick={() => handleVote(c.id, 'dislike')}

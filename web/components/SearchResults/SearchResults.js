@@ -13,11 +13,11 @@ function formatDate(date) {
 export default function SearchResults({ results = [], query = '' }) {
   return (
     <div className="pt-7 pb-12">
-      <header className="mb-6 pb-3.5 border-b border-[#222]">
-        <h2 className="text-[28px] font-extrabold mb-1.5 text-white">
+      <header className="mb-6 pb-3.5 border-b border-line">
+        <h2 className="text-[28px] font-extrabold mb-1.5 text-ink">
           Search Results for &quot;{query}&quot;
         </h2>
-        <p className="text-sm text-[#888]">{results.length} articles found</p>
+        <p className="text-sm text-ink-tertiary">{results.length} articles found</p>
       </header>
 
       {results.length > 0 ? (
@@ -26,22 +26,22 @@ export default function SearchResults({ results = [], query = '' }) {
             <Link
               key={post.id}
               href={postUrl(post)}
-              className="group block py-5 border-b border-[#222]"
+              className="group block py-5 border-b border-line"
             >
               <article>
                 <div>
-                  <div className="flex gap-2 text-xs text-[#888] mb-2">
+                  <div className="flex gap-2 text-xs text-ink-tertiary mb-2">
                     <span className="text-mint font-bold uppercase tracking-wide text-[11px]">
                       {post.bucket}
                     </span>
                     <span>•</span>
                     <time>{formatDate(post.date)}</time>
                   </div>
-                  <h3 className="text-xl font-bold leading-snug mb-2 text-white group-hover:text-mint transition-colors">
+                  <h3 className="text-xl font-bold leading-snug mb-2 text-ink group-hover:text-mint transition-colors">
                     {post.title}
                   </h3>
                   {postExcerpt(post, 180) ? (
-                    <p className="text-[15px] text-[#aaa] leading-normal max-w-[42em]">
+                    <p className="text-[15px] text-ink-secondary leading-normal max-w-[42em]">
                       {postExcerpt(post, 180)}
                     </p>
                   ) : null}
@@ -51,8 +51,8 @@ export default function SearchResults({ results = [], query = '' }) {
           ))}
         </div>
       ) : (
-        <div className="py-12 text-center text-[#888]">
-          <h3 className="mb-2 text-white">No results found</h3>
+        <div className="py-12 text-center text-ink-tertiary">
+          <h3 className="mb-2 text-ink">No results found</h3>
           <p>Try adjusting your search terms or filters.</p>
         </div>
       )}

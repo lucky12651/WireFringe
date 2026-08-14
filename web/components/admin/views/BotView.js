@@ -77,7 +77,7 @@ function SwitchKnob({ on }) {
     <div
       className={cn(
         'relative shrink-0 w-[42px] h-6 rounded-full border mt-0.5 transition-colors',
-        on ? 'bg-mint/15 border-mint' : 'bg-[#1a1a1a] border-line'
+        on ? 'bg-mint/15 border-mint' : 'bg-bg-hover border-line'
       )}
     >
       <span
@@ -93,11 +93,9 @@ function SwitchKnob({ on }) {
 }
 
 const fieldLabel =
-  'block font-mono text-xs tracking-[0.06em] text-[#aaa] mb-2 uppercase font-semibold';
+  'block font-mono text-xs tracking-[0.06em] text-ink-tertiary mb-2 uppercase font-semibold';
 const fieldInput =
-  'w-full bg-[#0a0a0a] border border-line text-white font-mono text-[15px] py-3 px-3.5 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug focus:border-mint focus:shadow-[0_0_0_3px_rgba(255,255,255,0.2)]';
-const cardClass =
-  'bg-bg-elevated border border-line rounded-lg py-6 px-[26px] pb-[26px] min-w-0 max-[720px]:p-5';
+  'w-full bg-bg-elevated border border-line text-ink font-mono text-[15px] py-3 px-3.5 rounded-md outline-none transition-[border-color,box-shadow] box-border leading-snug focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]';
 
 function LoopNode({ live, position, icon, title, value }) {
   return (
@@ -109,14 +107,14 @@ function LoopNode({ live, position, icon, title, value }) {
     >
       <div
         className={cn(
-          'w-[54px] h-[54px] rounded-full border-[1.5px] bg-[#0a0a0a] flex items-center justify-center transition-all',
-          live ? 'border-mint shadow-[0_0_14px_rgba(255,255,255,0.3)] text-mint' : 'border-line text-[#666]'
+          'w-[54px] h-[54px] rounded-full border-[1.5px] bg-bg-elevated flex items-center justify-center transition-all',
+          live ? 'border-mint text-mint' : 'border-line text-ink-muted'
         )}
       >
         {icon}
       </div>
-      <div className="text-[13.5px] max-[720px]:text-xs font-semibold text-white">{title}</div>
-      <div className="font-mono text-xs max-[720px]:text-[11px] text-[#888]">{value}</div>
+      <div className="text-[13.5px] max-[720px]:text-xs font-semibold text-ink">{title}</div>
+      <div className="font-mono text-xs max-[720px]:text-[11px] text-ink-tertiary">{value}</div>
     </div>
   );
 }
@@ -287,7 +285,7 @@ export function BotView({
   if (isLoading && !settings && activeTab === 'engine') {
     return (
       <div className="flex flex-col w-full animate-fade-up">
-        <div className="border border-line rounded-lg bg-bg-elevated py-12 px-6 text-center text-[#b0b0b0] text-[15px]">
+        <div className="py-12 text-center text-ink-secondary text-[15px]">
           <EmptyState>Loading bot settings…</EmptyState>
         </div>
       </div>
@@ -333,21 +331,21 @@ export function BotView({
       ) : (
         <>
       <section
-        className="grid grid-cols-1 min-[1051px]:grid-cols-2 gap-0 bg-bg-elevated border border-line rounded-lg overflow-hidden mb-0"
+        className="grid grid-cols-1 min-[1051px]:grid-cols-2 gap-8 py-7 border-b border-line"
         aria-label="Bot engine console"
       >
-        <div className="py-[26px] px-[30px] max-[720px]:p-5 min-[1051px]:border-r border-line max-[1050px]:border-b border-line">
-          <div className="font-mono text-xs tracking-[0.12em] text-[#888] mb-4 uppercase font-semibold">
+        <div>
+          <div className="font-mono text-xs tracking-[0.12em] text-ink-tertiary mb-4 uppercase font-semibold">
             Power
           </div>
           <div className="flex items-center gap-[18px]">
             <button
               type="button"
               className={cn(
-                'w-[58px] h-[58px] rounded-full shrink-0 border-2 bg-[#0a0a0a] flex items-center justify-center cursor-pointer transition-all duration-300 p-0',
+                'w-[58px] h-[58px] rounded-full shrink-0 border-2 bg-bg-elevated flex items-center justify-center cursor-pointer transition-all duration-300 p-0',
                 botOn
-                  ? 'border-mint bg-mint/10 shadow-[0_0_20px_rgba(255,255,255,0.28)] text-mint'
-                  : 'border-line text-[#666]'
+                  ? 'border-mint bg-mint/10 text-mint'
+                  : 'border-line text-ink-muted'
               )}
               role="switch"
               aria-checked={botOn}
@@ -359,45 +357,45 @@ export function BotView({
               <PowerIcon />
             </button>
             <div>
-              <strong className="block text-base font-bold mb-1 text-white">Bot enabled</strong>
-              <span className="text-[13.5px] text-[#b0b0b0] leading-snug">
+              <strong className="block text-base font-bold mb-1 text-ink">Bot enabled</strong>
+              <span className="text-[13.5px] text-ink-secondary leading-snug">
                 {isTogglingPower
                   ? 'Saving power state…'
                   : 'Turn automated article publishing on or off. Saves immediately.'}
               </span>
             </div>
           </div>
-          <p className="text-[13.5px] text-[#888] leading-relaxed mt-[18px] mb-0 max-w-[48ch]">
+          <p className="text-[13.5px] text-ink-tertiary leading-relaxed mt-[18px] mb-0 max-w-[48ch]">
             When off, the news bot skips gathering feeds and publishing. The loop still sleeps and
             checks this flag each cycle.
           </p>
         </div>
 
-        <div className="py-[26px] px-[30px] max-[720px]:p-5 flex flex-col justify-center">
-          <div className="font-mono text-xs tracking-[0.12em] text-[#888] mb-4 uppercase font-semibold">
+        <div className="flex flex-col justify-center">
+          <div className="font-mono text-xs tracking-[0.12em] text-ink-tertiary mb-4 uppercase font-semibold">
             Bot article stats
           </div>
           <div className="flex gap-0 flex-wrap">
             <div className="flex-1 text-left pr-5 min-w-[100px]">
-              <div className="font-mono font-extrabold text-[32px] leading-none text-white">
+              <div className="font-mono font-extrabold text-[32px] leading-none text-ink">
                 {stats.totalBotPosts}
               </div>
-              <div className="text-[13px] text-[#b0b0b0] mt-2.5 font-medium">Total bot posts</div>
-              <div className="text-[11px] text-[#666] font-mono uppercase tracking-wide mt-0.5">All time</div>
+              <div className="text-[13px] text-ink-secondary mt-2.5 font-medium">Total bot posts</div>
+              <div className="text-[11px] text-ink-muted font-mono uppercase tracking-wide mt-0.5">All time</div>
             </div>
             <div className="flex-1 text-left pr-5 min-w-[100px]">
               <div className="font-mono font-extrabold text-[32px] leading-none text-mint">
                 {stats.visibleBotPosts}
               </div>
-              <div className="text-[13px] text-[#b0b0b0] mt-2.5 font-medium">Visible</div>
-              <div className="text-[11px] text-[#666] font-mono uppercase tracking-wide mt-0.5">On site</div>
+              <div className="text-[13px] text-ink-secondary mt-2.5 font-medium">Visible</div>
+              <div className="text-[11px] text-ink-muted font-mono uppercase tracking-wide mt-0.5">On site</div>
             </div>
             <div className="flex-1 text-left pr-5 min-w-[100px]">
               <div className="font-mono font-extrabold text-[32px] leading-none text-[#ff6b6b]">
                 {stats.hiddenBotPosts}
               </div>
-              <div className="text-[13px] text-[#b0b0b0] mt-2.5 font-medium">Hidden</div>
-              <div className="text-[11px] text-[#666] font-mono uppercase tracking-wide mt-0.5">Filtered</div>
+              <div className="text-[13px] text-ink-secondary mt-2.5 font-medium">Hidden</div>
+              <div className="text-[11px] text-ink-muted font-mono uppercase tracking-wide mt-0.5">Filtered</div>
             </div>
           </div>
         </div>
@@ -411,14 +409,14 @@ export function BotView({
         botOn={botOn}
       />
 
-      <section className="bg-bg-elevated border border-line rounded-lg py-7 px-[30px] pb-8 mb-5 max-[720px]:p-5" aria-label="Cycle loop">
+      <section className="py-7 border-b border-line" aria-label="Cycle loop">
         <div className="flex justify-between items-baseline mb-1 gap-3 flex-wrap">
-          <h2 className="text-lg m-0 font-bold text-white tracking-tight">Cycle loop</h2>
-          <span className="font-mono text-[12.5px] text-[#666]">
-            CYCLE TIME ≈ <strong className="text-[#c0c0c0]">{loopVals.cycleTotal}</strong>
+          <h2 className="text-lg m-0 font-bold text-ink tracking-tight">Cycle loop</h2>
+          <span className="font-mono text-[12.5px] text-ink-tertiary">
+            CYCLE TIME ≈ <strong className="text-ink">{loopVals.cycleTotal}</strong>
           </span>
         </div>
-        <p className="text-[13.5px] text-[#888] mt-1 mb-6 leading-normal">
+        <p className="text-[13.5px] text-ink-secondary mt-1 mb-6 leading-normal">
           One pass through the loop. Timing comes from the values below — edit them and the loop
           updates.
         </p>
@@ -426,17 +424,17 @@ export function BotView({
         <div className="flex justify-center">
           <div className="relative w-80 h-80 max-[720px]:w-[280px] max-[720px]:h-[280px]">
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320" aria-hidden>
-              <circle cx="160" cy="160" r="128" fill="none" stroke="#2a2a2a" strokeWidth="1.5" />
+              <circle cx="160" cy="160" r="128" fill="none" stroke="currentColor" className="text-line" strokeWidth="1.5" />
               <circle
                 cx="160"
                 cy="160"
                 r="128"
                 fill="none"
-                stroke="#ffffff"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 strokeDasharray="6 10"
                 className={cn(
-                  'origin-center transition-opacity duration-300',
+                  'origin-center transition-opacity duration-300 text-ink',
                   botOn ? 'opacity-100 animate-spin [animation-duration:6s] motion-reduce:animate-none' : 'opacity-0'
                 )}
                 style={{ transformOrigin: '160px 160px' }}
@@ -447,12 +445,12 @@ export function BotView({
               <div
                 className={cn(
                   'font-mono font-extrabold text-sm tracking-[0.06em]',
-                  botOn ? 'text-mint' : 'text-[#666]'
+                  botOn ? 'text-mint' : 'text-ink-muted'
                 )}
               >
                 {botOn ? 'ACTIVE' : 'DORMANT'}
               </div>
-              <div className="text-xs text-[#666] font-mono mt-1.5">
+              <div className="text-xs text-ink-muted font-mono mt-1.5">
                 {botOn ? 'cycling now' : 'bot is off'}
               </div>
             </div>
@@ -465,17 +463,17 @@ export function BotView({
         </div>
       </section>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 min-[721px]:grid-cols-2 gap-[18px]">
-        <div className={cn(cardClass, 'col-span-full')}>
-          <h3 className="text-[17px] font-bold m-0 mb-2 text-white tracking-tight">Visibility</h3>
-          <p className="text-sm text-[#b0b0b0] leading-snug m-0 mb-5">
+      <form onSubmit={handleSave} className="grid grid-cols-1 min-[721px]:grid-cols-2 gap-x-10 gap-y-8 py-7">
+        <div className="col-span-full">
+          <h3 className="text-[15px] font-semibold m-0 mb-2 text-ink tracking-tight">Visibility</h3>
+          <p className="text-sm text-ink-secondary leading-snug m-0 mb-5">
             Hide bot posts from the public site without deleting them. Admins still see them in
             Posts. Toggling applies to all existing bot articles right away.
           </p>
 
           <div
             className={cn(
-              'flex items-start gap-4 bg-[#0a0a0a] border border-line rounded-lg py-4 px-[18px] mb-[18px] cursor-pointer select-none hover:border-mint/20',
+              'flex items-start gap-4 py-3 mb-2 cursor-pointer select-none',
               isTogglingVisibility && 'opacity-70 pointer-events-none'
             )}
             role="switch"
@@ -492,14 +490,14 @@ export function BotView({
           >
             <SwitchKnob on={!!form.hideArticles} />
             <div>
-              <strong className="block text-[15px] font-semibold mb-1 text-white">
+              <strong className="block text-[15px] font-semibold mb-1 text-ink">
                 {isTogglingVisibility
                   ? 'Updating visibility…'
                   : form.hideArticles
                     ? 'Bot articles hidden from public site'
                     : 'Hide all bot articles'}
               </strong>
-              <span className="text-[13.5px] text-[#b0b0b0] leading-snug">
+              <span className="text-[13.5px] text-ink-secondary leading-snug">
                 When on, public feeds exclude bot posts and existing bot articles are hidden. When
                 off, they are shown again. New bot posts follow this setting too.
               </span>
@@ -507,8 +505,8 @@ export function BotView({
           </div>
         </div>
 
-        <div className={cardClass}>
-          <h3 className="text-[17px] font-bold m-0 mb-2 text-white tracking-tight">Publishing limits</h3>
+        <div>
+          <h3 className="text-[15px] font-semibold m-0 mb-4 text-ink tracking-tight">Publishing limits</h3>
           <div className="mb-[18px] last:mb-0">
             <label htmlFor="bot-daily" className={fieldLabel}>Daily post limit</label>
             <input
@@ -520,7 +518,7 @@ export function BotView({
               onChange={(e) => setField('dailyLimit', e.target.value)}
               className={fieldInput}
             />
-            <div className="text-[13px] text-[#888] mt-2 leading-snug">Max bot posts published per UTC day.</div>
+            <div className="text-[13px] text-ink-tertiary mt-2 leading-snug">Max bot posts published per UTC day.</div>
           </div>
           <div className="mb-[18px] last:mb-0">
             <label htmlFor="bot-gap" className={fieldLabel}>Gap between posts (minutes)</label>
@@ -533,7 +531,7 @@ export function BotView({
               onChange={(e) => setField('gapMinutes', e.target.value)}
               className={fieldInput}
             />
-            <div className="text-[13px] text-[#888] mt-2 leading-snug">
+            <div className="text-[13px] text-ink-tertiary mt-2 leading-snug">
               Minimum wait between bot publications (0 = no gap).
             </div>
           </div>
@@ -551,8 +549,8 @@ export function BotView({
           </div>
         </div>
 
-        <div className={cardClass}>
-          <h3 className="text-[17px] font-bold m-0 mb-2 text-white tracking-tight">Cycle &amp; cleanup</h3>
+        <div>
+          <h3 className="text-[15px] font-semibold m-0 mb-4 text-ink tracking-tight">Cycle &amp; cleanup</h3>
           <div className="mb-[18px]">
             <label htmlFor="bot-sleep" className={fieldLabel}>Sleep between cycles (seconds)</label>
             <input
@@ -564,7 +562,7 @@ export function BotView({
               onChange={(e) => setField('sleepSeconds', e.target.value)}
               className={fieldInput}
             />
-            <div className="text-[13px] text-[#888] mt-2 leading-snug">Default 3600 (1 hour). Min 60.</div>
+            <div className="text-[13px] text-ink-tertiary mt-2 leading-snug">Default 3600 (1 hour). Min 60.</div>
           </div>
           <div className="mb-[18px]">
             <label htmlFor="bot-max" className={fieldLabel}>Max items per RSS feed</label>
@@ -601,14 +599,14 @@ export function BotView({
               onChange={(e) => setField('recentCacheHours', e.target.value)}
               className={fieldInput}
             />
-            <div className="text-[13px] text-[#888] mt-2 leading-snug">Used for duplicate title/URL checks.</div>
+            <div className="text-[13px] text-ink-tertiary mt-2 leading-snug">Used for duplicate title/URL checks.</div>
           </div>
         </div>
 
-        <div className={cn(cardClass, 'col-span-full flex items-center gap-3.5 flex-wrap')}>
+        <div className="col-span-full flex items-center gap-3.5 flex-wrap pt-2 border-t border-line">
           <button
             type="submit"
-            className="font-mono font-bold text-sm tracking-[0.03em] bg-mint text-black border-none rounded-md py-3.5 px-[22px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:bg-white/90 enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
+            className="font-mono font-bold text-sm tracking-[0.03em] bg-ink text-[var(--bg)] border-none rounded-md py-3.5 px-[22px] cursor-pointer inline-flex items-center gap-2 transition-all enabled:hover:opacity-90 disabled:opacity-55 disabled:cursor-not-allowed"
             disabled={isSaving || isTogglingVisibility || isTogglingPower}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14" aria-hidden>
@@ -618,7 +616,7 @@ export function BotView({
           </button>
           <button
             type="button"
-            className="font-mono text-[13px] tracking-[0.04em] text-[#c8c8c8] bg-transparent border border-line rounded-md py-3 px-4 cursor-pointer inline-flex items-center gap-2 font-semibold enabled:hover:border-mint/35 enabled:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-[13px] tracking-[0.04em] text-ink-secondary bg-transparent border border-line rounded-md py-3 px-4 cursor-pointer inline-flex items-center gap-2 font-semibold enabled:hover:border-mint enabled:hover:text-ink disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleRefresh()}
             disabled={isLoading || isSaving || isTogglingVisibility || isTogglingPower}
           >

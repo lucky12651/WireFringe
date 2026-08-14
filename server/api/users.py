@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from slowapi import Limiter
@@ -132,7 +130,7 @@ def admin_update_profile(
 ) -> MeOut:
     """Update current user profile."""
     user = require_user(request, db)
-    return service.update_profile(user, payload.displayName)
+    return service.update_profile(user, payload.displayName, payload.email)
 
 
 @router.put("/profile/password")

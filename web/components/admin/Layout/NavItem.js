@@ -28,8 +28,8 @@ export function NavItem({
           ? 'w-11 h-11 min-h-11 rounded-xl justify-center p-0 gap-0'
           : 'w-full min-h-10 h-auto rounded-xl justify-start gap-3 py-2.5 px-3',
         isActive
-          ? 'bg-white text-black font-semibold shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_8px_28px_rgba(255,255,255,0.08)]'
-          : 'bg-transparent text-[#8a8a8a] hover:bg-white/[0.06] hover:text-white',
+          ? 'bg-ink text-[var(--bg)] font-semibold'
+          : 'bg-transparent text-ink-tertiary hover:bg-bg-hover hover:text-ink',
         (isDisabled || isUserNavDisabled) && 'opacity-40 cursor-not-allowed',
         'max-[980px]:w-12 max-[980px]:h-12 max-[980px]:min-h-12 max-[980px]:justify-center max-[980px]:p-0'
       )}
@@ -54,8 +54,8 @@ export function NavItem({
           className={cn(
             'font-bold text-center shrink-0 rounded-full',
             isActive
-              ? 'bg-black text-white'
-              : 'bg-white text-black',
+              ? 'bg-[var(--bg)] text-ink'
+              : 'bg-ink text-[var(--bg)]',
             collapsed
               ? 'absolute top-1 right-1 ml-0 text-[9px] py-0.5 px-1.5 min-w-4'
               : 'ml-auto text-[10px] py-0.5 px-1.5 min-w-[18px]',

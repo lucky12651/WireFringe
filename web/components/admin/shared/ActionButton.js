@@ -30,12 +30,12 @@ export function ActionButton({
 }) {
   const combinedClassName = cn(
     'inline-flex items-center justify-center gap-2 flex-none py-2.5 px-4',
-    'border border-white/12 rounded-lg bg-white/[0.04] text-[#ccc] text-xs font-semibold',
+    'border border-line rounded-lg bg-bg-hover text-ink text-xs font-semibold',
     'tracking-[0.02em] no-underline cursor-pointer whitespace-nowrap',
     'transition-all duration-200 ease-out',
-    'enabled:hover:bg-white enabled:hover:border-white enabled:hover:text-black enabled:hover:-translate-y-px',
+    'enabled:hover:bg-ink enabled:hover:border-ink enabled:hover:text-[var(--bg)] enabled:hover:-translate-y-px',
     'enabled:active:translate-y-0',
-    'disabled:opacity-45 disabled:cursor-not-allowed disabled:bg-white/[0.02] disabled:border-white/8 disabled:text-[#666] disabled:shadow-none',
+    'disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none',
     size === 'sm' && 'flex-none py-2 px-3.5 text-[11px] gap-1.5',
     grow && 'flex-auto w-full',
     variant === 'danger' &&

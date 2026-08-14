@@ -3,12 +3,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { initTheme } from '../../lib/theme';
 import { api, postsApi, mediaApi } from '../../lib/api';
 import { slugifyTitle, cn } from '../../lib/utils';
 import { tw } from '../../lib/tw';
 import BrandLogo from '../../components/BrandLogo/BrandLogo';
+import ThemeToggle from '../../components/ThemeToggle/ThemeToggle';
 import { useCategories } from '../../hooks/useCategories';
+import { ACCENT_PRESETS, DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function AdminPostPage() {
   const [bucket, setBucket] = useState('');
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
+  const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
   const [excerpt, setExcerpt] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
@@ -76,6 +78,7 @@ export default function AdminPostPage() {
     setTitle('');
     setBucket('Tech');
     setOgImg('');
+    setAccentColor(DEFAULT_ACCENT);
     setReadMinutes('');
     setExcerpt('');
     editorHtmlRef.current = '';
@@ -87,6 +90,7 @@ export default function AdminPostPage() {
     setTitle(post.title || '');
     setBucket(post.bucket || 'Tech');
     setOgImg(post.ogImg || '');
+    setAccentColor(normalizeAccentColor(post.accentColor, DEFAULT_ACCENT));
     setReadMinutes(post.readMinutes ? String(post.readMinutes) : '');
     setExcerpt(post.excerpt || '');
     editorHtmlRef.current = post.content || '';
@@ -113,6 +117,7 @@ export default function AdminPostPage() {
       excerpt: excerpt.trim() ? excerpt.trim() : null,
       creator: me ? me.username : null,
       ogImg: ogImg.trim() ? ogImg.trim() : null,
+      accentColor: normalizeAccentColor(accentColor, DEFAULT_ACCENT),
       readMinutes: readMinutes ? Number(readMinutes) : null,
     };
   }
@@ -178,7 +183,6 @@ export default function AdminPostPage() {
 
   useEffect(() => {
     (async () => {
-      initTheme({ defaultTheme: 'dark' });
       await refreshCategories();
       const ok = await refreshMe();
       if (!ok) {
@@ -229,13 +233,13 @@ export default function AdminPostPage() {
 
       <div className={tw.pageShellAdmin}>
         <div className="admin-xai-noise" aria-hidden="true" />
-        <header className="border-b border-white/[0.07] bg-black/60 backdrop-blur-xl sticky top-0 z-50">
+        <header className="border-b border-line bg-bg sticky top-0 z-50">
           <div className="flex items-center justify-between gap-4 px-6 py-3.5 max-w-[1280px] mx-auto w-full">
-            <Link className="flex items-center gap-3 no-underline text-white" href="/admin" aria-label="Back to admin">
+            <Link className="flex items-center gap-3 no-underline text-ink" href="/admin" aria-label="Back to admin">
               <BrandLogo size="sm" />
               <div>
                 <h1 className="m-0 text-base font-semibold tracking-tight">Editor</h1>
-                <span id="editorMode" className="text-xs text-white/40">{modeLabel}</span>
+                <span id="editorMode" className="text-xs text-ink-tertiary">{modeLabel}</span>
               </div>
             </Link>
 
@@ -243,7 +247,8 @@ export default function AdminPostPage() {
               <div className={tw.adminMe} id="meLine">
                 {me ? `Signed in as ${me.username} (${me.role})` : ''}
               </div>
-              <button className={tw.pillBtn} id="logoutBtn" type="button" onClick={onLogout}>
+              <ThemeToggle compact />
+              <button className={tw.secondaryBtn} id="logoutBtn" type="button" onClick={onLogout}>
                 Logout
               </button>
             </div>
@@ -251,13 +256,13 @@ export default function AdminPostPage() {
         </header>
 
         <main className={tw.editorShell}>
-          <section className={cn(tw.sideCard, tw.editorCard)}>
+          <section className={tw.editorCard}>
             <form id="editorForm" className={tw.form} onSubmit={onSave}>
               <input type="hidden" id="postId" value={postId} readOnly />
 
               <div className={tw.editorToolbar} role="toolbar" aria-label="Editor toolbar">
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="bold"
                   onClick={() => exec('bold')}
@@ -269,7 +274,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="italic"
                   onClick={() => exec('italic')}
@@ -281,7 +286,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="underline"
                   onClick={() => exec('underline')}
@@ -293,7 +298,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="strikeThrough"
                   onClick={() => exec('strikeThrough')}
@@ -308,7 +313,7 @@ export default function AdminPostPage() {
                 <div className="w-px h-6 bg-line mx-1 self-center"></div>
 
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-block="h2"
                   onClick={() => formatBlock('h2')}
@@ -320,7 +325,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-block="h3"
                   onClick={() => formatBlock('h3')}
@@ -332,7 +337,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="insertUnorderedList"
                   onClick={() => exec('insertUnorderedList')}
@@ -351,7 +356,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-cmd="insertOrderedList"
                   onClick={() => exec('insertOrderedList')}
@@ -370,7 +375,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-block="blockquote"
                   onClick={() => formatBlock('blockquote')}
@@ -385,7 +390,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   data-block="pre"
                   onClick={() => formatBlock('pre')}
@@ -404,7 +409,7 @@ export default function AdminPostPage() {
                 <div className="w-px h-6 bg-line mx-1 self-center"></div>
 
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   id="linkBtn"
                   onClick={() => {
@@ -435,7 +440,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   id="unlinkBtn"
                   onClick={() => exec('unlink')}
@@ -464,7 +469,7 @@ export default function AdminPostPage() {
                 </button>
 
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   id="imageUrlBtn"
                   onClick={() => {
@@ -484,7 +489,7 @@ export default function AdminPostPage() {
                   </span>
                 </button>
                 <button
-                  className={tw.pillBtn}
+                  className={tw.editorToolBtn}
                   type="button"
                   id="uploadImageBtn"
                   onClick={() => fileInputRef.current?.click()}
@@ -533,18 +538,17 @@ export default function AdminPostPage() {
               ></div>
 
               <div className="flex items-center gap-3 flex-wrap mt-4">
-                <button className={tw.heroCta} type="submit" id="saveBtn">
+                <button className={tw.primaryBtn} type="submit" id="saveBtn">
                   Save
                 </button>
                 {postId ? (
-                  <button className={tw.pillBtn} type="button" id="deleteBtn" onClick={onDelete}>
+                  <button className={tw.secondaryBtn} type="button" id="deleteBtn" onClick={onDelete}>
                     <span className={tw.dot} style={{ background: 'var(--danger)' }}></span>
                     Delete
                   </button>
                 ) : null}
                 {postId ? (
-                  <a className={tw.pillBtn} id="viewBtn" href={viewHref}>
-                    <span className={tw.dot} style={{ background: 'var(--accent)' }}></span>
+                  <a className={tw.secondaryBtn} id="viewBtn" href={viewHref}>
                     View
                   </a>
                 ) : null}
@@ -555,34 +559,32 @@ export default function AdminPostPage() {
             </form>
           </section>
 
-          {/* Right Sidebar - Metadata Panel */}
           <aside
-            className={cn(tw.sideCard, tw.editorSidebar)}
+            className={cn(
+              tw.editorSidebar,
+              sidebarExpanded
+                ? 'border-l border-line pl-6 max-md:border-l-0 max-md:pl-0 max-md:border-t max-md:pt-5'
+                : ''
+            )}
             style={{
               width: sidebarExpanded ? '280px' : '44px',
               flexShrink: 0,
               transition: 'width 0.25s ease',
               overflow: 'hidden',
-              borderRadius: '12px',
-              padding: 0,
             }}
           >
             <div
-              className={tw.editorSidebarHeader}
+              className={cn(
+                tw.editorSidebarHeader,
+                'flex items-center cursor-pointer mb-4',
+                sidebarExpanded ? 'justify-between pb-3 border-b border-line' : 'justify-center'
+              )}
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
               title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: sidebarExpanded ? 'space-between' : 'center',
-                padding: '0.75rem',
-                borderBottom: sidebarExpanded ? '1px solid rgba(127,127,127,0.15)' : 'none',
-                cursor: 'pointer',
-              }}
             >
-              {sidebarExpanded && <span className={cn(tw.formLabel, 'm-0 text-[0.8rem]')}>Metadata</span>}
+              {sidebarExpanded && <span className={cn(tw.formLabel, 'm-0')}>Metadata</span>}
               <span
-                className="inline-flex items-center justify-center w-[22px] h-[22px] transition-transform duration-200"
+                className="inline-flex items-center justify-center w-[22px] h-[22px] text-ink-secondary transition-transform duration-200"
                 style={{
                   transform: sidebarExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 }}
@@ -594,15 +596,7 @@ export default function AdminPostPage() {
             </div>
 
             {sidebarExpanded && (
-              <div
-                className={tw.editorSidebarContent}
-                style={{
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                }}
-              >
+              <div className={cn(tw.editorSidebarContent, 'flex flex-col gap-3')}>
                 {/* Title field */}
                 <div className={tw.formGroup}>
                   <label className={tw.formLabel}>Title</label>
@@ -651,6 +645,58 @@ export default function AdminPostPage() {
                     value={ogImg}
                     onChange={(e) => setOgImg(e.target.value)}
                   />
+                </div>
+
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Article header color</label>
+                  <p className="text-[11px] text-ink-tertiary m-0 mb-2 leading-snug">
+                    Lime-style band behind the header and hero on this post only.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {ACCENT_PRESETS.map((preset) => {
+                      const selected =
+                        normalizeAccentColor(accentColor, '') === preset.value;
+                      return (
+                        <button
+                          key={preset.value}
+                          type="button"
+                          title={preset.name}
+                          aria-label={preset.name}
+                          aria-pressed={selected}
+                          onClick={() => setAccentColor(preset.value)}
+                          className="w-7 h-7 rounded-full border-0 cursor-pointer p-0"
+                          style={{
+                            background: preset.value,
+                            outline: selected
+                              ? '2px solid var(--text-primary)'
+                              : '1px solid var(--border)',
+                            outlineOffset: '2px',
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={normalizeAccentColor(accentColor, DEFAULT_ACCENT)}
+                      onChange={(e) => setAccentColor(e.target.value.toUpperCase())}
+                      className="w-9 h-9 p-0 border-0 bg-transparent cursor-pointer"
+                      aria-label="Custom header color"
+                    />
+                    <input
+                      className={tw.formInput}
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      placeholder={DEFAULT_ACCENT}
+                    />
+                  </div>
+                  <div
+                    className="mt-2 h-10 rounded-md border border-line flex items-center px-3 font-mono text-[11px] font-bold tracking-wide uppercase text-[#111]"
+                    style={{ background: normalizeAccentColor(accentColor, DEFAULT_ACCENT) }}
+                  >
+                    Preview
+                  </div>
                 </div>
 
                 {/* Excerpt */}

@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import BrandLogo from '../BrandLogo/BrandLogo';
+import { SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../hooks';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 
 const NAV = [
   { label: 'Tech', cat: 'Tech' },
@@ -41,24 +44,21 @@ function slugifyCategory(cat) {
   return cat.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-function LogoMark({ className }) {
-  return <BrandLogo size="md" className={className} />;
-}
-
 export default function Header({
   searchQuery = '',
   onSearchChange,
   activeCategory = 'All',
   onCategoryChange,
   user = null,
+  accentColor = null,
 }) {
   const router = useRouter();
+  const { logout: authLogout } = useAuth();
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef(null);
-  const dropRef = useRef(null);
+  const headerRef = useRef(null);
 
   useEffect(() => setLocalSearch(searchQuery), [searchQuery]);
   useEffect(() => {
@@ -83,19 +83,30 @@ export default function Header({
   }, []);
 
   useEffect(() => {
-    const outside = (e) => {
-      if (dropRef.current && !dropRef.current.contains(e.target)) setDropdownOpen(false);
-    };
-    if (dropdownOpen) document.addEventListener('mousedown', outside);
-    return () => document.removeEventListener('mousedown', outside);
-  }, [dropdownOpen]);
-
-  useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof window === 'undefined') return;
+
+    const applyHeight = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      if (h > 0) document.documentElement.style.setProperty('--header-height', `${h}px`);
+    };
+
+    applyHeight();
+    const ro = new ResizeObserver(applyHeight);
+    ro.observe(el);
+    window.addEventListener('resize', applyHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', applyHeight);
+    };
+  }, [searchOpen, accentColor]);
 
   const goCat = (cat) => {
     setMenuOpen(false);
@@ -111,18 +122,25 @@ export default function Header({
 
   const logout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      await authLogout();
+    } finally {
       window.location.href = '/';
-    } catch (_) {}
+    }
   };
 
   return (
     <>
-      <header className="sticky top-0 z-[11000] w-full bg-black/80 backdrop-blur-[16px] backdrop-saturate-150 border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-        <div className="relative w-full max-w-site mx-auto px-4 pt-3 pb-2.5 box-border md:px-6 md:pt-3.5 md:pb-3">
-          <div className="flex justify-end items-center gap-3.5 w-full mb-2.5">
+      <header
+        ref={headerRef}
+        className={cn(
+          'sticky top-0 z-[11000] w-full',
+          accentColor && 'on-accent',
+          !accentColor && 'bg-bg/80 backdrop-blur-[16px] backdrop-saturate-150'
+        )}
+        style={accentColor ? { backgroundColor: accentColor } : undefined}
+      >
+        <div className="relative w-full max-w-site mx-auto px-4 pt-1.5 pb-1.5 box-border md:px-6 md:pt-2 md:pb-1.5">
+          <div className="flex justify-end items-center gap-3.5 w-full mb-1">
             <a
               href="#newsletter"
               className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
@@ -130,52 +148,13 @@ export default function Header({
               SUBSCRIBE
             </a>
             {user ? (
-              <div className="relative" ref={dropRef}>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
-                  onClick={() => setDropdownOpen((v) => !v)}
-                >
-                  <UserIcon />
-                  <span>SIGN IN</span>
-                </button>
-                {dropdownOpen && (
-                  <div className="absolute top-[calc(100%+10px)] right-0 w-[200px] bg-bg-elevated border border-line rounded-sm shadow-lg py-1.5 z-[12000] animate-drop-in">
-                    <Link
-                      href="/for-you"
-                      className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      For You
-                    </Link>
-                    {user.role !== 'user' && (
-                      <>
-                        <Link
-                          href="/admin"
-                          className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          href="/admin/post"
-                          className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer no-underline hover:bg-[#1a1a1a] hover:text-mint"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          New Post
-                        </Link>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className="block w-full text-left px-3.5 py-2.5 bg-transparent border-0 text-[#bbb] text-sm cursor-pointer hover:bg-[#1a1a1a] hover:text-mint"
-                      onClick={logout}
-                    >
-                      Log out
-                    </button>
-                  </div>
-                )}
-              </div>
+              <Link
+                href="/account"
+                className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
+              >
+                <UserIcon />
+                <span>ACCOUNT</span>
+              </Link>
             ) : (
               <Link
                 href="/login"
@@ -189,24 +168,24 @@ export default function Header({
 
           <div className="w-full flex justify-stretch">
             <nav
-              className="flex items-center justify-between flex-nowrap w-full border-b-[1.5px] border-mint pb-[7px] gap-4"
+              className="flex items-end justify-between flex-nowrap w-full gap-4"
               aria-label="Main"
             >
               <Link
                 href="/"
-                className="flex items-center no-underline text-white shrink-0 max-md:text-xl"
+                className="flex items-center no-underline text-ink shrink-0 max-md:text-xl pb-[7px]"
                 onClick={() => setMenuOpen(false)}
               >
-                <LogoMark />
+                <BrandLogo size="md" />
               </Link>
 
-              <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0">
+              <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 border-b-[1.5px] border-mint pb-[7px]">
                 <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
                   {NAV.map((item, index) => (
                     <span key={item.label} className="inline-flex items-center">
                       {index > 0 ? (
                         <span
-                          className="text-[#888] text-sm ml-[5px] mr-px select-none leading-none"
+                          className="text-ink-tertiary text-sm ml-[5px] mr-px select-none leading-none"
                           aria-hidden="true"
                         >
                           /
@@ -215,7 +194,7 @@ export default function Header({
                       <button
                         type="button"
                         className={cn(
-                          'appearance-none bg-transparent border-0 text-[#e8e8e8] text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
+                          'appearance-none bg-transparent border-0 text-ink text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
                           activeCategory === item.cat ? 'text-mint' : 'hover:text-mint'
                         )}
                         onClick={() => goCat(item.cat)}
@@ -226,10 +205,10 @@ export default function Header({
                   ))}
                 </div>
 
-                <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-[#222]">
+                <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-line">
                   <button
                     type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-[#e0e0e0] cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
                     aria-label="Search"
                     onClick={() => {
                       setSearchOpen((v) => !v);
@@ -240,7 +219,7 @@ export default function Header({
                   </button>
                   <button
                     type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-[#e0e0e0] cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
                     aria-label="Notifications"
                   >
                     <BellIcon />
@@ -254,19 +233,19 @@ export default function Header({
                   >
                     <span
                       className={cn(
-                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
                         menuOpen && 'translate-y-[5.5px] rotate-45'
                       )}
                     />
                     <span
                       className={cn(
-                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
                         menuOpen && 'opacity-0 w-0'
                       )}
                     />
                     <span
                       className={cn(
-                        'block w-[18px] h-[1.5px] bg-[#e8e8e8] transition-all duration-200 group-hover:bg-mint',
+                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
                         menuOpen && '-translate-y-[5.5px] -rotate-45'
                       )}
                     />
@@ -278,23 +257,29 @@ export default function Header({
         </div>
 
         {searchOpen && (
-          <div className="border-t border-line-light px-5 pt-3 pb-3.5 bg-black animate-drop-in">
+          <div
+            className={cn(
+              'border-t px-5 pt-3 pb-3.5 animate-drop-in',
+              accentColor ? 'border-black/10' : 'border-line-light bg-bg'
+            )}
+            style={accentColor ? { backgroundColor: accentColor } : undefined}
+          >
             <form
               className="max-w-site mx-auto relative flex items-center"
               onSubmit={(e) => e.preventDefault()}
             >
-              <SearchIcon className="absolute left-3 text-[#666] pointer-events-none" />
+              <SearchIcon className="absolute left-3 text-ink-muted pointer-events-none" />
               <input
                 ref={searchRef}
                 type="search"
-                className="w-full h-[42px] pl-10 pr-[72px] border border-line rounded-sm bg-bg-elevated text-white text-[15px] outline-none focus:border-mint"
+                className="w-full h-[42px] pl-10 pr-[72px] border border-line rounded-sm bg-bg-elevated text-ink text-[15px] outline-none focus:border-mint"
                 placeholder="Search stories…"
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
               />
               <button
                 type="button"
-                className="absolute right-2.5 bg-transparent border-0 text-[#888] font-mono text-[11px] uppercase tracking-wide cursor-pointer hover:text-mint"
+                className="absolute right-2.5 bg-transparent border-0 text-ink-tertiary font-mono text-[11px] uppercase tracking-wide cursor-pointer hover:text-mint"
                 onClick={() => {
                   setLocalSearch('');
                   onSearchChange?.('');
@@ -318,17 +303,17 @@ export default function Header({
       />
       <aside
         className={cn(
-          'fixed top-0 right-0 bottom-0 w-[min(400px,92vw)] bg-[#0a0a0a] border-l border-[#222] z-[12001] transition-transform duration-300 ease-out flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.5)]',
-          menuOpen ? 'translate-x-0' : 'translate-x-[105%]'
+          'fixed top-0 right-0 bottom-0 w-[min(400px,92vw)] bg-bg-elevated border-l border-line z-[12001] transition-transform duration-300 ease-out flex flex-col',
+          menuOpen ? 'translate-x-0' : 'translate-x-full'
         )}
         aria-hidden={!menuOpen}
         aria-label="Site menu"
       >
         <div className="flex items-center justify-between px-[22px] py-5 border-b border-line-dim">
-          <LogoMark className="!text-[22px]" />
+          <BrandLogo size="md" className="!text-[22px]" />
           <button
             type="button"
-            className="w-9 h-9 border border-[#333] rounded-full bg-transparent text-[#ccc] text-base cursor-pointer flex items-center justify-center hover:text-white hover:border-mint hover:bg-mint/10"
+            className="w-9 h-9 border border-line rounded-full bg-transparent text-ink-secondary text-base cursor-pointer flex items-center justify-center hover:text-ink hover:border-mint hover:bg-mint/10"
             onClick={() => setMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -338,7 +323,7 @@ export default function Header({
         <div className="flex-1 overflow-y-auto px-[22px] pt-5 pb-10">
           <a
             href="#newsletter"
-            className="block text-center bg-mint text-black font-mono text-xs font-bold tracking-widest uppercase p-3.5 rounded-sm mb-3.5 hover:bg-[#2ee6b8]"
+            className="block text-center bg-mint text-black font-mono text-xs font-bold tracking-widest uppercase p-3.5 rounded-sm mb-3.5 hover:bg-mint-hover"
             onClick={() => setMenuOpen(false)}
           >
             SUBSCRIBE
@@ -346,23 +331,33 @@ export default function Header({
           {!user ? (
             <Link
               href="/login"
-              className="flex items-center justify-center gap-2 w-full p-3 mb-7 border border-[#333] rounded-sm bg-transparent text-[#ddd] text-sm cursor-pointer no-underline hover:border-mint hover:text-mint"
+              className="flex items-center justify-center gap-2 w-full p-3 mb-3.5 border border-line rounded-sm bg-transparent text-ink text-sm cursor-pointer no-underline hover:border-mint hover:text-mint"
               onClick={() => setMenuOpen(false)}
             >
               <UserIcon /> Sign in / Sign up
             </Link>
           ) : (
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 w-full p-3 mb-7 border border-[#333] rounded-sm bg-transparent text-[#ddd] text-sm cursor-pointer hover:border-mint hover:text-mint"
-              onClick={logout}
-            >
-              <UserIcon /> Log out
-            </button>
+            <div className="mb-3.5 flex flex-col gap-2">
+              <Link
+                href="/account"
+                className="flex items-center justify-center gap-2 w-full p-3 border border-line rounded-sm bg-transparent text-ink text-sm cursor-pointer no-underline hover:border-mint hover:text-mint"
+                onClick={() => setMenuOpen(false)}
+              >
+                <UserIcon /> Account
+              </Link>
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 w-full p-3 border border-line rounded-sm bg-transparent text-ink text-sm cursor-pointer hover:border-mint hover:text-mint"
+                onClick={logout}
+              >
+                Log out
+              </button>
+            </div>
           )}
+          <ThemeToggle className="w-full justify-center mb-7" />
           {DRAWER_SECTIONS.map((section) => (
             <div key={section.title} className="mb-7">
-              <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-[#666] mb-2.5 pb-2 border-b border-line-dim">
+              <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-ink-muted mb-2.5 pb-2 border-b border-line-dim">
                 {section.title}
               </h3>
               <ul className="list-none m-0 p-0">
@@ -370,11 +365,11 @@ export default function Header({
                   <li key={item.label}>
                     <button
                       type="button"
-                      className="group flex items-center justify-between w-full py-3 bg-transparent border-0 border-b border-line-light text-white text-lg font-semibold cursor-pointer text-left transition-all hover:text-mint hover:pl-1.5"
+                      className="group flex items-center justify-between w-full py-3 bg-transparent border-0 border-b border-line-light text-ink text-lg font-semibold cursor-pointer text-left transition-all hover:text-mint hover:pl-1.5"
                       onClick={() => (item.href ? goHref(item.href) : goCat(item.cat))}
                     >
                       {item.label}
-                      <span className="text-[#444] transition-all group-hover:text-mint group-hover:translate-x-[3px]">
+                      <span className="text-ink-muted transition-all group-hover:text-mint group-hover:translate-x-[3px]">
                         →
                       </span>
                     </button>
@@ -384,24 +379,20 @@ export default function Header({
             </div>
           ))}
           <div className="mb-7">
-            <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-[#666] mb-2.5 pb-2 border-b border-line-dim">
+            <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-ink-muted mb-2.5 pb-2 border-b border-line-dim">
               Follow
             </h3>
             <div className="flex gap-2.5 flex-wrap">
-              {[
-                { href: 'https://x.com', label: 'X' },
-                { href: 'https://youtube.com', label: 'YT' },
-                { href: 'https://instagram.com', label: 'IG' },
-                { href: 'https://facebook.com', label: 'FB' },
-              ].map((s) => (
+              {SOCIAL_LINKS.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 border-[1.5px] border-mint rounded-full text-mint flex items-center justify-center text-[11px] font-bold transition-all hover:bg-mint hover:text-black hover:scale-110"
+                  aria-label={s.label}
+                  className="w-10 h-10 border-[1.5px] border-mint rounded-full text-mint flex items-center justify-center transition-all hover:bg-mint hover:text-black hover:scale-110"
                 >
-                  {s.label}
+                  <s.Icon size={17} />
                 </a>
               ))}
             </div>

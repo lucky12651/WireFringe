@@ -25,6 +25,9 @@ class Post(Base):
     read_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     og_img: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Public article hero/header band color (e.g. #DEF23A). Null = site default lime.
+    accent_color: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # SEO Fields
     meta_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     keywords: Mapped[str | None] = mapped_column(Text, nullable=True)  # Comma-separated
@@ -50,6 +53,7 @@ class User(Base):
 
     # Public-facing profile fields
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
     # Binary image stored in DB so redeploys do not wipe profile photos
     avatar_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
@@ -75,6 +79,7 @@ class Comment(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
     likes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     dislikes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

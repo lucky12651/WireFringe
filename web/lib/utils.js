@@ -77,6 +77,22 @@ export function postUrl(post) {
   return `/post/${encodeURIComponent(slug)}`;
 }
 
+/** Allow only same-origin relative paths after login/signup. */
+export function safeNextPath(value, fallback = '/') {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (typeof raw !== 'string' || !raw.trim()) return fallback;
+  const path = raw.trim();
+  if (!path.startsWith('/')) return fallback;
+  if (path.startsWith('//')) return fallback;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path)) return fallback;
+  return path;
+}
+
+export function nextQuery(nextPath) {
+  if (!nextPath || nextPath === '/') return '';
+  return `?next=${encodeURIComponent(nextPath)}`;
+}
+
 export function truncateText(text, maxLength, suffix = '…') {
   const s = String(text || '').trim();
   if (s.length <= maxLength) return s;

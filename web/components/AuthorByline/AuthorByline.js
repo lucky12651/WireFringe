@@ -50,7 +50,7 @@ export default function AuthorByline({
         {label ? (
           <span
             className={cn(
-              'font-mono tracking-wide uppercase text-[#888] shrink-0',
+              'font-mono tracking-wide uppercase text-ink-tertiary shrink-0',
               labelSize
             )}
           >
@@ -73,7 +73,7 @@ export default function AuthorByline({
           />
         </span>
         {time ? (
-          <span className="font-mono text-[10px] tracking-wide uppercase text-[#777]">
+          <span className="font-mono text-[10px] tracking-wide uppercase text-ink-muted">
             {time}
           </span>
         ) : null}
@@ -94,7 +94,7 @@ export default function AuthorByline({
         {label ? (
           <span
             className={cn(
-              'font-mono tracking-wide uppercase text-[#888] shrink-0',
+              'font-mono tracking-wide uppercase text-ink-tertiary shrink-0',
               labelSize
             )}
           >
@@ -110,7 +110,7 @@ export default function AuthorByline({
           {displayName || 'Staff'}
         </span>
         {time ? (
-          <span className="font-mono text-[10px] tracking-wide uppercase text-[#777]">
+          <span className="font-mono text-[10px] tracking-wide uppercase text-ink-muted">
             {time}
           </span>
         ) : null}

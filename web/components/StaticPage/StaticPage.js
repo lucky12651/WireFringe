@@ -29,14 +29,14 @@ export default function StaticPage({
             {kicker}
           </p>
         ) : null}
-        <h1 className="text-[clamp(1.85rem,4vw,2.5rem)] font-black tracking-tight leading-tight text-white m-0 mb-3">
+        <h1 className="text-[clamp(1.85rem,4vw,2.5rem)] font-black tracking-tight leading-tight text-ink m-0 mb-3">
           {title}
         </h1>
         {showUpdated && updated ? (
-          <p className="text-[13px] text-[#777] m-0 mb-7">Last updated: {updated}</p>
+          <p className="text-[13px] text-ink-tertiary m-0 mb-7">Last updated: {updated}</p>
         ) : null}
         {lead ? (
-          <p className="text-[1.1rem] leading-relaxed text-ink-soft m-0 mb-8 pb-7 border-b border-[#222]">
+          <p className="text-[1.1rem] leading-relaxed text-ink-soft m-0 mb-8 pb-7 border-b border-line">
             {lead}
           </p>
         ) : null}

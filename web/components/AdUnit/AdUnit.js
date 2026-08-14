@@ -58,7 +58,7 @@ export default function AdUnit({
       fullWidth: fullWidthResponsive !== false,
       style: { minHeight: 250, width: '100%' },
       unitClass: 'my-9 mb-8 pt-5 pb-2 border-t border-b border-line-dim max-md:my-7 max-md:mb-6 max-md:pt-4 max-md:pb-1',
-      slotClass: 'min-h-[280px] p-3.5 px-3 bg-[#0c0c0c] border-[#252525] max-md:min-h-[250px]',
+      slotClass: 'min-h-[280px] p-3.5 px-3 bg-bg-card border-line max-md:min-h-[250px]',
       hideLabel: false,
       centerLabel: false,
     },
@@ -69,7 +69,7 @@ export default function AdUnit({
       layout: 'in-article',
       unitClass: 'my-10 max-md:my-7 max-md:-mx-1 pt-2 pb-1',
       slotClass:
-        'min-h-[280px] p-4 px-3 bg-gradient-to-b from-[#121212] to-[#0d0d0d] border border-[#262626] rounded-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-md:min-h-[250px] max-md:p-3 max-md:px-2 max-md:rounded-sm',
+        'min-h-[280px] p-4 px-3 bg-bg-card border border-line rounded-sm max-md:min-h-[250px] max-md:p-3 max-md:px-2 max-md:rounded-sm',
       hideLabel: false,
       centerLabel: true,
     },
@@ -150,8 +150,8 @@ export default function AdUnit({
         >
           <span
             className={cn(
-              'font-mono text-[9px] font-bold tracking-[0.16em] uppercase text-[#5a5a5a] shrink-0',
-              cfg.centerLabel && 'text-[#4a4a4a] tracking-[0.18em]'
+              'font-mono text-[9px] font-bold tracking-[0.16em] uppercase text-ink-muted shrink-0',
+              cfg.centerLabel && 'tracking-[0.18em]'
             )}
           >
             {label}
@@ -167,7 +167,7 @@ export default function AdUnit({
       ) : null}
       <div
         className={cn(
-          'w-full min-w-0 flex justify-center items-center bg-[#0f0f0f] border border-[#222] rounded-sm overflow-hidden relative',
+          'w-full min-w-0 flex justify-center items-center bg-bg-card border border-line rounded-sm overflow-hidden relative',
           cfg.slotClass,
           '[&_ins.adsbygoogle]:relative [&_ins.adsbygoogle]:z-[1] [&_ins.adsbygoogle]:!min-w-full [&_ins.adsbygoogle]:!block'
         )}

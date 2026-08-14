@@ -68,82 +68,77 @@ export function CategoriesView({
 
   return (
     <div className={tw.adminView}>
-      <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
-        <h2 className="m-0 text-xl font-extrabold text-white tracking-tight">Categories Management</h2>
-        <span className={tw.titleCount}>{categoriesWithCounts.length} Buckets</span>
-      </div>
+      {canManageUsers ? (
+        <section className={tw.adminSection}>
+          <h3 className={tw.adminSectionTitle}>Add category</h3>
+          <p className={tw.adminSectionDesc}>Create a bucket for the public site navigation.</p>
+          <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 max-w-[640px]">
+            <div className="flex-1 min-w-[200px]">
+              <label className={tw.formLabel}>Name</label>
+              <input
+                type="text"
+                className={cn(tw.formInput, 'mt-1.5')}
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="e.g. Technology"
+              />
+            </div>
+            <button type="submit" className={tw.primaryBtn}>
+              <PlusIcon /> Add
+            </button>
+            {hint ? <p className={tw.formHint}>{hint}</p> : null}
+          </form>
+        </section>
+      ) : null}
 
-      <div className={tw.adminGrid}>
-        {/* Add Category Card */}
-        {canManageUsers && (
-          <div className={tw.card}>
-            <h3 className={tw.cardTitle}>Create New Category</h3>
-            <form onSubmit={handleSubmit} className={tw.form}>
-              <div className={tw.formGroup}>
-                <label className={tw.formLabel}>Category Name</label>
-                <input
-                  type="text"
-                  className={tw.formInput}
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="e.g., Technology"
-                />
-              </div>
-              {hint && <p className={tw.formHint}>{hint}</p>}
-              <button type="submit" className={tw.primaryBtn}>
-                <PlusIcon /> Create Category
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Categories List Card */}
-        <div className={tw.card}>
-          <h3 className={tw.cardTitle}>Existing Categories</h3>
-          <div className={tw.tableWrap}>
-            <table className={tw.table}>
-              <thead>
-                <tr>
-                  <th className={tw.th}>Category Name</th>
-                  <th className={tw.th}>Article Count</th>
-                  <th className={cn(tw.th, tw.textRight)}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categoriesWithCounts.length ? (
-                  categoriesWithCounts.map((cat) => (
-                    <tr key={cat.id}>
-                      <td className={tw.td}>
-                        <span className="font-semibold text-white">{cat.name}</span>
-                      </td>
-                      <td className={tw.td}>
-                        <span className="font-mono text-xs text-mint">{cat.count} Articles</span>
-                      </td>
-                      <td className={cn(tw.td, tw.textRight)}>
-                        {canManageUsers && (
-                          <button
-                            className={tw.iconBtnDanger}
-                            onClick={() => handleDeleteClick(cat)}
-                            title="Delete category"
-                          >
-                            <TrashIcon size={16} />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className={tw.td}>
-                      <EmptyState>No categories created yet.</EmptyState>
+      <section className={tw.adminSection}>
+        <div className="flex items-baseline justify-between gap-3 mb-4">
+          <h3 className={cn(tw.adminSectionTitle, 'mb-0')}>All categories</h3>
+          <span className="text-[12px] text-ink-tertiary">{categoriesWithCounts.length}</span>
+        </div>
+        <div className={tw.tableWrap}>
+          <table className={tw.table}>
+            <thead>
+              <tr>
+                <th className={tw.th}>Name</th>
+                <th className={tw.th}>Articles</th>
+                <th className={cn(tw.th, tw.textRight)}> </th>
+              </tr>
+            </thead>
+            <tbody>
+              {categoriesWithCounts.length ? (
+                categoriesWithCounts.map((cat) => (
+                  <tr key={cat.id}>
+                    <td className={tw.td}>
+                      <span className="font-semibold text-ink">{cat.name}</span>
+                    </td>
+                    <td className={tw.td}>
+                      <span className="font-mono text-xs text-ink-secondary">{cat.count}</span>
+                    </td>
+                    <td className={cn(tw.td, tw.textRight)}>
+                      {canManageUsers && (
+                        <button
+                          className={tw.iconBtnDanger}
+                          onClick={() => handleDeleteClick(cat)}
+                          title="Delete category"
+                        >
+                          <TrashIcon size={16} />
+                        </button>
+                      )}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className={tw.td}>
+                    <EmptyState>No categories yet.</EmptyState>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
 
       <DeleteConfirmModal
         isOpen={!!categoryToDelete}

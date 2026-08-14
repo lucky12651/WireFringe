@@ -30,11 +30,11 @@ export default function TopStories({ posts = [] }) {
           >
             {p.ogImg ? (
               <div
-                className="w-full aspect-[16/10] rounded-sm bg-[#222] bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.02]"
+                className="w-full aspect-[16/10] rounded-sm bg-bg-card bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.02]"
                 style={{ backgroundImage: `url(${p.ogImg})` }}
               />
             ) : (
-              <div className="w-full aspect-[16/10] rounded-sm bg-[#222]" />
+              <div className="w-full aspect-[16/10] rounded-sm bg-bg-card" />
             )}
 
             <div className="flex flex-col gap-1.5">

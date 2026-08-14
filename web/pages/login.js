@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import useSWR from 'swr';
-import { initTheme } from '../lib/theme';
-import { fetcher } from '../lib/api';
 import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia } from '../hooks';
 import { LoginPage } from '../components/admin/Login';
+import { nextQuery, safeNextPath } from '../lib/utils';
+
+function destinationAfterAuth(router, user) {
+  const next = safeNextPath(router.query?.next, '');
+  if (next) return next;
+  return user?.role === 'user' ? '/' : '/admin';
+}
 
 export default function LoginPageContainer() {
   const router = useRouter();
@@ -22,38 +26,27 @@ export default function LoginPageContainer() {
   const users = useUsers(posts.posts, creatorCountsOverride);
 
   useEffect(() => {
-    initTheme({ defaultTheme: 'dark' });
-  }, []);
-
-  useEffect(() => {
-    if (isAuthed) {
-      if (me?.role === 'user') {
-        router.replace('/');
-      } else {
-        router.replace('/admin');
-      }
-    }
-  }, [isAuthed, me, router]);
+    if (!router.isReady || !isAuthed) return;
+    router.replace(destinationAfterAuth(router, me));
+  }, [isAuthed, me, router, router.isReady, router.query?.next]);
 
   const handleLogin = async (username, password) => {
     const result = await auth.login(username, password);
     if (result.success) {
-      if (result.user?.role === 'user') {
-        router.push('/');
-      } else {
-        router.push('/admin');
-      }
+      router.push(destinationAfterAuth(router, result.user));
     }
     return result;
   };
 
+  const next = safeNextPath(router.query?.next, '');
+
   if (isAuthed || isInitialLoading) return null;
 
   return (
-    <LoginPage 
-      onLogin={handleLogin} 
-      onToggleMode={() => router.push('/signup')} 
-      error={auth.error} 
+    <LoginPage
+      onLogin={handleLogin}
+      onToggleMode={() => router.push(`/signup${nextQuery(next)}`)}
+      error={auth.error}
     />
   );
 }

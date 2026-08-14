@@ -22,6 +22,7 @@ class PostOut(BaseModel):
     bucket: str
     readMinutes: int | None = None
     ogImg: str | None = None
+    accentColor: str | None = None
     metaDescription: str | None = None
     keywords: str | None = None
     # Approved public comments only (pending do not count)
@@ -60,6 +61,7 @@ class MeOut(BaseModel):
     username: str
     role: str
     displayName: str | None = None
+    email: str | None = None
     avatarUrl: str | None = None
     brandBylineEnabled: bool = False
     brandLogoUrl: str | None = None
@@ -133,6 +135,7 @@ class UserSignup(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     displayName: str | None = None
+    email: str | None = None
 
 
 class BrandBylineUpdateRequest(BaseModel):
@@ -180,6 +183,7 @@ class PostUpsert(BaseModel):
     excerpt: str | None = None
     creator: str | None = None
     ogImg: str | None = None
+    accentColor: str | None = None
     readMinutes: int | None = None
     metaDescription: str | None = None
     keywords: str | None = None
@@ -217,9 +221,18 @@ class CommentOut(BaseModel):
 
 
 class CommentCreateRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=60)
-    email: EmailStr
     comment: str = Field(..., min_length=1, max_length=5000)
+    name: str | None = Field(None, max_length=60)
+    email: str | None = Field(None, max_length=160)
+
+
+class MyCommentOut(BaseModel):
+    id: int
+    postId: str
+    postTitle: str | None = None
+    comment: str
+    approved: bool = False
+    createdAt: datetime
 
 
 class CommentVoteRequest(BaseModel):

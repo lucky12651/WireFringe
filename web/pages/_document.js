@@ -13,14 +13,14 @@ export default function Document() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap"
           rel="stylesheet"
         />
       </Head>
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.dataset.theme='dark';try{localStorage.setItem('cnb_theme','dark');localStorage.setItem('cnb_theme_mode','manual');}catch(e){}`,
+            __html: `(function(){try{var t=localStorage.getItem('cnb_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#f3f1eb':'#000000');}}catch(e){}})();`,
           }}
         />
         <Main />
