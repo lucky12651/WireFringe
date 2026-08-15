@@ -4,12 +4,12 @@ import { useRouter } from 'next/router';
 import Layout from '../Layout/Layout';
 import Loader from '../Loader/Loader';
 import { useAuth } from '../../hooks';
-import { authApi } from '../../lib/api';
+import { authApi, newsroomApi } from '../../lib/api';
 import { postUrl } from '../../lib/utils';
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
-  { id: 'subscription', label: 'Subscription & Billing' },
+  { id: 'subscription', label: 'Newsletter' },
   { id: 'following', label: 'Following' },
   { id: 'notifications', label: 'Notification Settings' },
   { id: 'comments', label: 'Comments' },
@@ -238,53 +238,9 @@ export default function AccountPage() {
               />
             ) : null}
 
-            {tab === 'subscription' ? (
-              <>
-                <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
-                  Subscription &amp; Billing
-                </h2>
-                <p className="m-0 text-[15px] leading-relaxed text-ink-secondary">
-                  You don&apos;t have an active paid subscription. The Wirefringe newsletter is
-                  free — get it from the homepage subscribe box.
-                </p>
-                <Link
-                  href="/#newsletter"
-                  className="inline-block mt-5 no-underline text-[12px] font-semibold tracking-[0.1em] uppercase text-mint hover:text-mint-hover"
-                >
-                  Get the newsletter
-                </Link>
-              </>
-            ) : null}
-
-            {tab === 'following' ? (
-              <>
-                <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
-                  Following
-                </h2>
-                <p className="m-0 text-[15px] leading-relaxed text-ink-secondary">
-                  You&apos;re not following any topics yet. Follow sections from stories to
-                  personalize your homepage.
-                </p>
-                <Link
-                  href="/for-you"
-                  className="inline-block mt-5 no-underline text-[12px] font-semibold tracking-[0.1em] uppercase text-mint hover:text-mint-hover"
-                >
-                  Open For You
-                </Link>
-              </>
-            ) : null}
-
-            {tab === 'notifications' ? (
-              <>
-                <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
-                  Notification Settings
-                </h2>
-                <p className="m-0 text-[15px] leading-relaxed text-ink-secondary">
-                  Comment replies and editorial emails will appear here. We&apos;ll only use the
-                  email on your profile.
-                </p>
-              </>
-            ) : null}
+            {tab === 'subscription' ? <NewsletterTab /> : null}
+            {tab === 'following' ? <FollowingTab /> : null}
+            {tab === 'notifications' ? <NotifyTab me={me} /> : null}
 
             {tab === 'comments' ? (
               <CommentsTab comments={comments} loading={commentsLoading} />
@@ -506,6 +462,119 @@ function CommentsTab({ comments, loading }) {
           ))}
         </ul>
       )}
+    </>
+  );
+}
+
+function NewsletterTab() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('');
+  return (
+    <>
+      <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
+        Newsletter
+      </h2>
+      <p className="m-0 text-[15px] leading-relaxed text-ink-secondary">
+        Wirefringe is free. Subscribe to the briefing — we store your address in the newsroom list.
+        There is no paid billing yet.
+      </p>
+      <form
+        className="flex gap-2 mt-5 max-w-[420px]"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            await newsroomApi.subscribe(email.trim(), 'account');
+            setStatus('You are on the list.');
+          } catch (err) {
+            setStatus(err.message || 'Could not subscribe.');
+          }
+        }}
+      >
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="flex-1 h-11 px-3 border border-line bg-bg-elevated"
+        />
+        <button type="submit" className="h-11 px-4 bg-mint text-black border-0 font-semibold">
+          Subscribe
+        </button>
+      </form>
+      {status ? <p className="text-sm mt-3">{status}</p> : null}
+    </>
+  );
+}
+
+function FollowingTab() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    newsroomApi.follows().then(setRows).catch(() => setRows([]));
+  }, []);
+  return (
+    <>
+      <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
+        Following
+      </h2>
+      {rows.length ? (
+        <ul className="list-none m-0 p-0">
+          {rows.map((r) => (
+            <li key={`${r.kind}-${r.target}`} className="py-3 border-b border-line flex justify-between">
+              <span>
+                <strong>{r.kind}</strong> · {r.target}
+              </span>
+              <button
+                type="button"
+                className="border-0 bg-transparent text-mint cursor-pointer"
+                onClick={async () => {
+                  await newsroomApi.unfollow(r.kind, r.target);
+                  setRows((prev) => prev.filter((x) => !(x.kind === r.kind && x.target === r.target)));
+                }}
+              >
+                Unfollow
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-ink-secondary">You are not following anything yet. Use Follow on a story.</p>
+      )}
+      <Link href="/for-you" className="inline-block mt-5 text-mint">
+        Open For You
+      </Link>
+    </>
+  );
+}
+
+function NotifyTab({ me }) {
+  const [replies, setReplies] = useState(me?.notifyReplies !== false);
+  const [editorial, setEditorial] = useState(me?.notifyEditorial !== false);
+  const [status, setStatus] = useState('');
+  return (
+    <>
+      <h2 className="font-sans font-extrabold text-[32px] leading-none m-0 mb-5 text-ink">
+        Notification Settings
+      </h2>
+      <label className="flex items-center gap-2 mb-3">
+        <input type="checkbox" checked={replies} onChange={(e) => setReplies(e.target.checked)} />
+        Email me about comment replies
+      </label>
+      <label className="flex items-center gap-2 mb-4">
+        <input type="checkbox" checked={editorial} onChange={(e) => setEditorial(e.target.checked)} />
+        Editorial / newsletter emails
+      </label>
+      <button
+        type="button"
+        className="h-10 px-4 bg-mint text-black border-0 font-semibold"
+        onClick={async () => {
+          await newsroomApi.saveNotify({ notifyReplies: replies, notifyEditorial: editorial });
+          setStatus('Saved.');
+        }}
+      >
+        Save
+      </button>
+      {status ? <p className="text-sm mt-3">{status}</p> : null}
     </>
   );
 }

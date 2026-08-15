@@ -41,7 +41,7 @@ export default function HeroSection({ posts = [] }) {
     <section className="w-full animate-fade-up">
       <Link
         href={postUrl(featured)}
-        className="group block text-inherit mb-1.5 rounded-md max-md:rounded overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.45)] outline outline-1 outline-white/[0.04] transition-all duration-300 hover:shadow-[0_28px_60px_rgba(0,0,0,0.55),0_0_0_1px_rgba(60,255,208,0.15),0_0_40px_rgba(60,255,208,0.06)] hover:outline-mint/20"
+        className="hero-feature group block text-inherit mb-1.5 rounded-md max-md:rounded overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.45)] outline outline-1 outline-white/[0.04] transition-all duration-300 hover:shadow-[0_28px_60px_rgba(0,0,0,0.55)] hover:outline-mint/20"
       >
         <div className="relative w-full aspect-video overflow-hidden bg-bg-card">
           {featured.ogImg ? (
@@ -54,7 +54,7 @@ export default function HeroSection({ posts = [] }) {
           ) : (
             <div className="w-full h-full min-h-[120px] bg-[radial-gradient(circle_at_30%_40%,rgba(60,255,208,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
           )}
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
+          <div className="hero-feature-shade absolute inset-0 pointer-events-none bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
           <div className="on-media absolute left-0 right-0 bottom-0 z-[3] p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
             <HighlightTitle
               title={featured.title}
@@ -89,7 +89,7 @@ export default function HeroSection({ posts = [] }) {
             <article
               key={post.id}
               className={cn(
-                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b border-dotted border-line transition-colors hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.03),transparent)]',
+                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b border-dotted border-line transition-colors hover:bg-bg-hover/40',
                 i % 2 === 0
                   ? 'md:pr-[22px] md:border-r md:border-dotted md:border-line md:pl-0'
                   : 'md:pl-[22px] md:pr-0',

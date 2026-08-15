@@ -3,9 +3,14 @@ import Link from 'next/link';
 import { z } from 'zod';
 import BrandLogo from '../../BrandLogo/BrandLogo';
 import { cn } from '../../../lib/utils';
+import { fieldErrorsFromZod } from '../../../lib/formErrors';
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -25,7 +30,7 @@ const inputClass =
   'w-full h-[46px] px-3 border border-line-strong rounded-sm bg-bg-elevated text-ink text-[15px] outline-none transition-[border-color,box-shadow] duration-150 focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]';
 
 export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -34,19 +39,11 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
 
   const validateForm = () => {
     try {
-      loginSchema.parse({ username, password });
+      loginSchema.parse({ email, password });
       setErrors({});
       return true;
     } catch (err) {
-      if (err instanceof z.ZodError || (err && err.errors)) {
-        const formattedErrors = {};
-        (err.errors || []).forEach((e) => {
-          formattedErrors[e.path[0]] = e.message;
-        });
-        setErrors(formattedErrors);
-      } else {
-        setErrors({ form: 'Validation failed' });
-      }
+      setErrors(fieldErrorsFromZod(err));
       return false;
     }
   };
@@ -56,7 +53,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    const result = await onLogin(username.trim(), password, rememberMe);
+    const result = await onLogin(email.trim(), password, rememberMe);
     setIsLoading(false);
 
     if (!result.success && result.error) {
@@ -108,22 +105,22 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="login-username"
+                htmlFor="login-email"
                 className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-ink-tertiary"
               >
-                Username
+                Email
               </label>
               <input
-                id="login-username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder=""
-                autoComplete="username"
-                className={cn(inputClass, errors.username && 'border-[#ff6b6b]')}
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={cn(inputClass, errors.email && 'border-[#ff6b6b]')}
               />
-              {errors.username ? (
-                <span className="text-xs text-[#c0392b]">{errors.username}</span>
+              {errors.email ? (
+                <span className="text-xs text-[#c0392b]">{errors.email}</span>
               ) : null}
             </div>
 
@@ -183,6 +180,11 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
             </button>
           </form>
 
+          <p className="mt-3 mb-0 text-center text-sm">
+            <Link href="/forgot-password" className="text-mint">
+              Forgot password?
+            </Link>
+          </p>
           <p className="mt-[18px] mb-0 text-center text-sm text-ink-secondary">
             Don&apos;t have an account?{' '}
             <button

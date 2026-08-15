@@ -90,15 +90,15 @@ export async function uploadFile(path, file) {
 
 // Auth API
 export const authApi = {
-  login: (username, password) =>
+  login: (email, password) =>
     api('/api/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, username: email, password }),
     }),
-  signup: (username, password, displayName) =>
+  signup: (email, password, displayName) =>
     api('/api/admin/signup', {
       method: 'POST',
-      body: JSON.stringify({ username, password, displayName }),
+      body: JSON.stringify({ email, username: email, password, displayName }),
     }),
   logout: () => {
     if (typeof window !== 'undefined') {
@@ -162,6 +162,70 @@ export const postsApi = {
     api(`/api/admin/posts/queue/bulk-process`, { method: 'POST', body: JSON.stringify(links) }),
   refreshQueueFeeds: () =>
     api(`/api/admin/posts/queue/refresh-feeds`, { method: 'POST' }),
+  setStatus: (id, status, scheduledAt) =>
+    api(`/api/admin/posts/${encodeURIComponent(id)}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status, scheduledAt: scheduledAt || null }),
+    }),
+  revisions: (id) => api(`/api/admin/posts/${encodeURIComponent(id)}/revisions`, { method: 'GET' }),
+  rollback: (id, revisionId) =>
+    api(`/api/admin/posts/${encodeURIComponent(id)}/revisions/${revisionId}/rollback`, {
+      method: 'POST',
+    }),
+  related: (id) => api(`/api/posts/${encodeURIComponent(id)}/related`, { method: 'GET' }),
+  search: (q) => api(`/api/search?q=${encodeURIComponent(q)}`, { method: 'GET' }),
+  section: (slug) => api(`/api/section/${encodeURIComponent(slug)}`, { method: 'GET' }),
+  author: (slug) => api(`/api/authors/${encodeURIComponent(slug)}`, { method: 'GET' }),
+};
+
+export const newsroomApi = {
+  frontpage: () => api('/api/frontpage', { method: 'GET' }),
+  saveFrontpage: (payload) =>
+    api('/api/admin/frontpage', { method: 'PUT', body: JSON.stringify(payload) }),
+  masthead: () => api('/api/masthead', { method: 'GET' }),
+  saveMasthead: (payload) =>
+    api('/api/admin/masthead', { method: 'PUT', body: JSON.stringify(payload) }),
+  subscribe: (email, source) =>
+    api('/api/newsletter/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email, source }),
+    }),
+  subscribers: () => api('/api/admin/newsletter/subscribers', { method: 'GET' }),
+  issues: () => api('/api/admin/newsletter/issues', { method: 'GET' }),
+  createIssue: (subject, body) =>
+    api('/api/admin/newsletter/issues', {
+      method: 'POST',
+      body: JSON.stringify({ subject, body }),
+    }),
+  sendTip: (contact, message) =>
+    api('/api/tips', { method: 'POST', body: JSON.stringify({ contact, message }) }),
+  tips: () => api('/api/admin/tips', { method: 'GET' }),
+  markTipRead: (id) => api(`/api/admin/tips/${id}/read`, { method: 'POST' }),
+  deleteTip: (id) => api(`/api/admin/tips/${id}`, { method: 'DELETE' }),
+  unreadTips: () => api('/api/admin/tips/unread-count', { method: 'GET' }),
+  follows: () => api('/api/me/follows', { method: 'GET' }),
+  follow: (kind, target) =>
+    api('/api/me/follows', { method: 'POST', body: JSON.stringify({ kind, target }) }),
+  unfollow: (kind, target) =>
+    api('/api/me/follows', { method: 'DELETE', body: JSON.stringify({ kind, target }) }),
+  saveNotify: (payload) =>
+    api('/api/me/notifications', { method: 'PUT', body: JSON.stringify(payload) }),
+  redirects: () => api('/api/admin/redirects', { method: 'GET' }),
+  addRedirect: (fromPath, toPath) =>
+    api('/api/admin/redirects', { method: 'POST', body: JSON.stringify({ fromPath, toPath }) }),
+  deleteRedirect: (id) => api(`/api/admin/redirects/${id}`, { method: 'DELETE' }),
+  analytics: () => api('/api/admin/analytics', { method: 'GET' }),
+  forgotPassword: (email) =>
+    api('/api/auth/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token, newPassword) =>
+    api('/api/auth/reset', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+  verifyEmail: (token) =>
+    api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token }) }),
+  sendVerify: () => api('/api/me/verify-email', { method: 'POST' }),
+  setup2fa: () => api('/api/me/2fa/setup', { method: 'POST' }),
+  confirm2fa: (code) =>
+    api('/api/me/2fa/confirm', { method: 'POST', body: JSON.stringify({ code }) }),
+  disable2fa: () => api('/api/me/2fa', { method: 'DELETE' }),
 };
 
 // Categories API
@@ -180,10 +244,10 @@ export const categoriesApi = {
 // Users API
 export const usersApi = {
   list: () => api('/api/admin/users', { method: 'GET' }),
-  create: (username, password, role) =>
+  create: (email, password, role) =>
     api('/api/admin/users', {
       method: 'POST',
-      body: JSON.stringify({ username, password, role }),
+      body: JSON.stringify({ email, username: email, password, role }),
     }),
   setPassword: (id, newPassword) =>
     api(`/api/admin/users/${encodeURIComponent(id)}/password`, {
@@ -198,7 +262,7 @@ export const usersApi = {
   /**
    * Delete a user.
    * @param {number|string} id
-   * @param {{ postsAction?: 'delete'|'transfer', transferToUserId?: number|null }} [options]
+   * @param {{ postsAction?: 'delete'|'transfer'|'keep', transferToUserId?: number|null }} [options]
    */
   delete: (id, options = {}) =>
     api(`/api/admin/users/${encodeURIComponent(id)}/delete`, {
@@ -210,6 +274,12 @@ export const usersApi = {
             ? null
             : Number(options.transferToUserId),
       }),
+    }),
+  /** Move one login account's posts to another login. Source user stays. */
+  transferPosts: (id, transferToUserId) =>
+    api(`/api/admin/users/${encodeURIComponent(id)}/transfer-posts`, {
+      method: 'POST',
+      body: JSON.stringify({ transferToUserId: Number(transferToUserId) }),
     }),
   /** Create login account for post-creator with no users row (Krishna, Reet, etc.) */
   claimOrphan: (payload) =>
@@ -243,6 +313,29 @@ export const commentsApi = {
     api(`/api/admin/comments/${encodeURIComponent(id)}/disapprove`, { method: 'DELETE' }),
   delete: (id) =>
     api(`/api/admin/comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  report: (id, reason) =>
+    api(`/api/comments/${encodeURIComponent(id)}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  listReports: () => api('/api/admin/comments/reports', { method: 'GET' }),
+  dismissReport: (id) =>
+    api(`/api/admin/comments/reports/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+};
+
+// Contact API
+export const contactApi = {
+  submit: (payload) =>
+    api('/api/contact', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  list: () => api('/api/admin/contact', { method: 'GET' }),
+  unreadCount: () => api('/api/admin/contact/unread-count', { method: 'GET' }),
+  markRead: (id) =>
+    api(`/api/admin/contact/${encodeURIComponent(id)}/read`, { method: 'POST' }),
+  delete: (id) =>
+    api(`/api/admin/contact/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 // Media API

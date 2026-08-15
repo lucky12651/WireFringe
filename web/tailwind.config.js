@@ -69,8 +69,8 @@ module.exports = {
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
         xl: 'var(--shadow-xl)',
-        mint: '0 6px 22px rgba(60, 255, 208, 0.35)',
-        'mint-glow': '0 0 24px rgba(60, 255, 208, 0.25)',
+        mint: 'var(--mint-glow)',
+        'mint-glow': 'var(--mint-glow-soft)',
       },
       keyframes: {
         'fade-up': {

@@ -11,7 +11,7 @@ from .models import User
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create an admin/editor/author user")
-    parser.add_argument("--username", required=True)
+    parser.add_argument("--email", "--username", dest="email", required=True)
     parser.add_argument("--password", required=True)
     parser.add_argument("--role", default="admin", choices=["admin", "editor", "author"])
     args = parser.parse_args()
@@ -23,13 +23,15 @@ def main() -> None:
 
     db = SessionLocal()
     try:
-        existing = db.execute(select(User).where(User.username == args.username)).scalar_one_or_none()
+        email = (args.email or "").strip().lower()
+        existing = db.execute(select(User).where(User.username == email)).scalar_one_or_none()
         if existing is not None:
-            raise SystemExit(f"User already exists: {args.username}")
+            raise SystemExit(f"User already exists: {email}")
 
         password_hash, password_salt = hash_password(args.password)
         user = User(
-            username=args.username,
+            username=email,
+            email=email,
             password_hash=password_hash,
             password_salt=password_salt,
             role=args.role,
@@ -37,7 +39,7 @@ def main() -> None:
         db.add(user)
         db.commit()
         db.refresh(user)
-        print(f"Created user id={user.id} username={user.username} role={user.role}")
+        print(f"Created user id={user.id} email={user.username} role={user.role}")
     finally:
         db.close()
 

@@ -44,9 +44,14 @@ async def lifespan(app: FastAPI):
     # Lightweight schema upgrades (create_all does not add columns)
     try:
         _ensure_user_profile_columns()
+        _migrate_usernames_to_emails()
         _ensure_comment_moderation_columns()
+        _ensure_contact_messages_table()
         _ensure_post_visibility_columns()
         _ensure_post_accent_column()
+        from .newsroom_schema import apply_newsroom_schema
+
+        apply_newsroom_schema()
         _seed_default_categories()
         settings.uploads_dir.mkdir(parents=True, exist_ok=True)
         _migrate_disk_avatars_into_db()
@@ -203,7 +208,8 @@ def _ensure_user_profile_columns() -> None:
                             NULLIF(TRIM(brand_logo_url), ''),
                             '/wirefringe.png'
                         )
-                    WHERE lower(username) = 'wirefringe'
+                    WHERE lower(username) IN ('wirefringe', 'team@wirefringe.com')
+                       OR lower(coalesce(email, '')) IN ('wirefringe', 'team@wirefringe.com')
                     """
                 )
             )
@@ -214,11 +220,80 @@ def _ensure_user_profile_columns() -> None:
                     """
                     UPDATE users
                     SET brand_logo_url = '/wirefringe.png'
-                    WHERE lower(username) = 'wirefringe'
+                    WHERE (
+                        lower(username) IN ('wirefringe', 'team@wirefringe.com')
+                        OR lower(coalesce(email, '')) IN ('wirefringe', 'team@wirefringe.com')
+                    )
                       AND (brand_logo_url IS NULL OR TRIM(brand_logo_url) = '')
                     """
                 )
             )
+
+
+def _migrate_usernames_to_emails() -> None:
+    """Use email as the login id. Keep display names. Do not rewrite post bylines."""
+    from sqlalchemy import inspect, text
+
+    from .identity import LOGIN_EMAIL_MAP
+
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+        if "users" not in inspector.get_table_names():
+            return
+        columns = {c["name"] for c in inspector.get_columns("users")}
+        if "username" not in columns:
+            return
+
+        if "email" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR"))
+
+        for old_username, email in LOGIN_EMAIL_MAP.items():
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT id, username, email, display_name
+                    FROM users
+                    WHERE lower(username) = :old
+                       OR lower(coalesce(email, '')) = :old
+                       OR lower(coalesce(email, '')) = :email
+                    """
+                ),
+                {"old": old_username, "email": email},
+            ).mappings().all()
+            if not rows:
+                continue
+            for row in rows:
+                display = (row["display_name"] or "").strip()
+                if not display:
+                    # Keep the human name that used to live in username.
+                    if old_username == "wirefringe":
+                        display = "WireFringe"
+                    else:
+                        display = row["username"] or old_username
+                conn.execute(
+                    text(
+                        """
+                        UPDATE users
+                        SET username = :email,
+                            email = :email,
+                            display_name = :display
+                        WHERE id = :id
+                        """
+                    ),
+                    {"email": email, "display": display, "id": row["id"]},
+                )
+
+        # If a login is already an email, keep the email column in sync.
+        conn.execute(
+            text(
+                """
+                UPDATE users
+                SET email = username
+                WHERE (email IS NULL OR TRIM(email) = '')
+                  AND username LIKE '%@%'
+                """
+            )
+        )
 
 
 def _migrate_disk_avatars_into_db() -> None:
@@ -303,6 +378,49 @@ def _ensure_comment_moderation_columns() -> None:
             conn.execute(text("UPDATE comments SET approved = TRUE"))
         if "user_id" not in existing:
             conn.execute(text("ALTER TABLE comments ADD COLUMN user_id INTEGER"))
+
+        tables = set(inspector.get_table_names())
+        if "comment_reports" not in tables:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE comment_reports (
+                        id SERIAL PRIMARY KEY,
+                        comment_id INTEGER NOT NULL REFERENCES comments(id),
+                        reason TEXT NOT NULL,
+                        reporter_name VARCHAR,
+                        reporter_user_id INTEGER REFERENCES users(id),
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                    """
+                )
+            )
+            conn.execute(text("CREATE INDEX ix_comment_reports_comment_id ON comment_reports (comment_id)"))
+
+
+def _ensure_contact_messages_table() -> None:
+    """Create contact_messages if an older database is missing it."""
+    from sqlalchemy import inspect, text
+
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+        if "contact_messages" in inspector.get_table_names():
+            return
+        conn.execute(
+            text(
+                """
+                CREATE TABLE contact_messages (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR NOT NULL,
+                    email VARCHAR NOT NULL,
+                    subject VARCHAR NOT NULL,
+                    message TEXT NOT NULL,
+                    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+        )
 
 
 def _seed_default_categories() -> None:

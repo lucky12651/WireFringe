@@ -41,7 +41,11 @@ export default function Layout({
         style={accent ? { '--header-accent': accent } : undefined}
       >
         <Header {...headerProps} user={headerUser} accentColor={accent} />
-        {headerHero}
+        {headerHero ? (
+          <div className="relative mt-[calc(var(--header-height)*-1)] pt-[var(--header-height)]">
+            {headerHero}
+          </div>
+        ) : null}
         {showAdRails ? <AdRails /> : null}
         <main className="flex-1 bg-transparent pt-4 md:pt-5" id="content">
           <div className={fullWidth ? 'w-full' : 'max-w-site mx-auto w-full px-4 sm:px-7'}>
@@ -88,6 +92,12 @@ export default function Layout({
             <Link href="/contact">Contact</Link>
             <span>|</span>
             <Link href="/tip-us">Tip Us</Link>
+            <span>|</span>
+            <Link href="/masthead">Masthead</Link>
+            <span>|</span>
+            <Link href="/sourcing">Sourcing</Link>
+            <span>|</span>
+            <Link href="/feed.xml">RSS</Link>
             <span>|</span>
             <Link href="/community-guidelines">Community Guidelines</Link>
             <span>|</span>

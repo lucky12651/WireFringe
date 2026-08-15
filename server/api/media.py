@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_user
+from ..dependencies import get_db, require_user, require_newsroom
 from ..schemas import MediaFileOut
 from ..services import MediaService
 
@@ -22,7 +22,8 @@ async def admin_upload_image(
     service: MediaService = Depends(get_media_service),
 ) -> dict:
     """Upload an image file."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_newsroom(user)
     url = await service.store_uploaded_image(file)
     return {"url": url}
 
@@ -34,5 +35,6 @@ def admin_list_media(
     service: MediaService = Depends(get_media_service),
 ) -> list[MediaFileOut]:
     """List all uploaded media files."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_newsroom(user)
     return service.list_media_files()

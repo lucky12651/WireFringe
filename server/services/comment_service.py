@@ -13,6 +13,7 @@ from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
     CommentOut,
+    CommentReportOut,
     CommentTrendOut,
     MyCommentOut,
     PendingCountOut,
@@ -85,8 +86,8 @@ class CommentService:
         if len(name) > 60:
             name = name[:60]
 
-        real_email = (getattr(user, "email", None) or "").strip()
-        email = real_email or f"{getattr(user, 'username', 'user')}@users.local"
+        real_email = (getattr(user, "email", None) or getattr(user, "username", None) or "").strip()
+        email = real_email if "@" in real_email else f"{getattr(user, 'username', 'user')}@users.local"
 
         body = (body or "").strip()
         if not body:
@@ -230,6 +231,7 @@ class CommentService:
             raise HTTPException(status_code=400, detail="Comment is already approved")
 
         self.comment_repo.delete_votes_for_comment(comment_id)
+        self.comment_repo.delete_reports_for_comment(comment_id)
         self.comment_repo.delete(comment)
 
     def delete_comment(self, comment_id: int) -> None:
@@ -239,7 +241,53 @@ class CommentService:
             raise HTTPException(status_code=404, detail="Comment not found")
 
         self.comment_repo.delete_votes_for_comment(comment_id)
+        self.comment_repo.delete_reports_for_comment(comment_id)
         self.comment_repo.delete(comment)
+
+    def create_report(self, comment_id: int, reason: str, user=None) -> dict:
+        comment = self.comment_repo.get(comment_id)
+        if comment is None:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        text = (reason or "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Reason is required")
+        if len(text) > 2000:
+            text = text[:2000]
+        reporter_name = None
+        reporter_user_id = None
+        if user is not None:
+            reporter_name = (
+                getattr(user, "display_name", None) or getattr(user, "username", None) or None
+            )
+            reporter_user_id = getattr(user, "id", None)
+        self.comment_repo.create_report(comment_id, text, reporter_name, reporter_user_id)
+        return {"ok": True}
+
+    def list_reports(self) -> list[CommentReportOut]:
+        rows = self.comment_repo.list_reports()
+        out: list[CommentReportOut] = []
+        for report, comment, post_title in rows:
+            out.append(
+                CommentReportOut(
+                    id=report.id,
+                    commentId=comment.id,
+                    comment=comment.body,
+                    commentAuthor=comment.name,
+                    postId=comment.post_id,
+                    postTitle=post_title,
+                    reason=report.reason,
+                    reporterName=report.reporter_name,
+                    createdAt=report.created_at,
+                )
+            )
+        return out
+
+    def dismiss_report(self, report_id: int) -> None:
+        report = self.comment_repo.get_report(report_id)
+        if report is None:
+            raise HTTPException(status_code=404, detail="Report not found")
+        self.db.delete(report)
+        self.db.commit()
 
     def get_trending(
         self, days: int = 15, limit: int = 8, creator: str | None = None

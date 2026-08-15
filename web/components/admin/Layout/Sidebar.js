@@ -13,6 +13,7 @@ export function Sidebar({
   onNavigate,
   onLogout,
   pendingCommentsCount,
+  unreadContactCount,
 }) {
   // Default expanded (full labels). User can collapse to icons-only.
   const [collapsed, setCollapsed] = useState(false);
@@ -61,6 +62,7 @@ export function Sidebar({
         activeView={activeView}
         onNavigate={onNavigate}
         pendingCommentsCount={pendingCommentsCount}
+        unreadContactCount={unreadContactCount}
         collapsed={collapsed}
       />
       <SidebarFooter

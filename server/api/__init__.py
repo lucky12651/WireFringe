@@ -11,12 +11,16 @@ from .admin import router as admin_router
 from .views import router as views_router
 from .settings import router as settings_router
 from .assets import router as assets_router
+from .contact import router as contact_router
+from .newsroom import router as newsroom_router
 
 api_router = APIRouter()
 
 # Public routes
 api_router.include_router(posts_router, tags=["posts"])
 api_router.include_router(comments_router, tags=["comments"])
+api_router.include_router(contact_router, tags=["contact"])
+api_router.include_router(newsroom_router, tags=["newsroom"])
 api_router.include_router(categories_router, prefix="/categories", tags=["categories"])
 api_router.include_router(views_router, prefix="/views", tags=["views"])
 api_router.include_router(settings_router, tags=["settings"])

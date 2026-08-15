@@ -107,6 +107,15 @@ class NewsBot:
             slug = f"{slug}-{str(uuid.uuid4())[:8]}"
 
         bot_cfg = SettingsService(db).get_bot()
+        auto_publish = bool(bot_cfg.get("autoPublish"))
+        now = datetime.now(timezone.utc)
+        source_name = None
+        try:
+            from urllib.parse import urlparse
+
+            source_name = (urlparse(resolved_url).netloc or "").replace("www.", "") or None
+        except Exception:
+            source_name = None
         new_post = Post(
             id=slug,
             title=article_data.title,
@@ -119,9 +128,12 @@ class NewsBot:
             og_img=article_data.ogImg,
             meta_description=article_data.metaDescription,
             keywords=article_data.keywords,
-            published_at=datetime.now(timezone.utc),
+            published_at=now if auto_publish else None,
             is_bot=True,
-            is_hidden=bool(bot_cfg.get("hideArticles")),
+            is_hidden=not auto_publish or bool(bot_cfg.get("hideArticles")),
+            status="published" if auto_publish else "review",
+            source_url=resolved_url,
+            source_name=source_name,
         )
 
         try:

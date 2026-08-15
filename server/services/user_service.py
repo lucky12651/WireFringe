@@ -5,8 +5,10 @@ from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from ..auth import authenticate, hash_password, verify_password
+from ..identity import first_login_value, normalize_login_email
 from ..models import (
     Comment,
+    CommentReport,
     CommentVote,
     PersonalizedFeed,
     Post,
@@ -42,6 +44,11 @@ class UserService:
             avatarUrl=(user.avatar_url or None),
             brandBylineEnabled=bool(getattr(user, "brand_byline_enabled", False)),
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
+            bio=getattr(user, "bio", None),
+            emailVerified=bool(getattr(user, "email_verified", False)),
+            notifyReplies=bool(getattr(user, "notify_replies", True)),
+            notifyEditorial=bool(getattr(user, "notify_editorial", True)),
+            totpEnabled=bool(getattr(user, "totp_enabled", False)),
         )
 
     def _post_counts_by_creator_key(self) -> dict[str, tuple[str, int]]:
@@ -75,6 +82,7 @@ class UserService:
             role=user.role,
             avatarUrl=(user.avatar_url or None),
             displayName=(user.display_name or None),
+            email=(getattr(user, "email", None) or user.username or None),
             brandBylineEnabled=bool(getattr(user, "brand_byline_enabled", False)),
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
             postCount=int(post_count or 0),
@@ -161,9 +169,7 @@ class UserService:
         if not creator:
             raise HTTPException(status_code=400, detail="creatorName is required")
 
-        login_username = (username or creator).strip()
-        if len(login_username) < 3:
-            raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+        login_username = normalize_login_email(first_login_value(username))
 
         role_norm = (role or "author").strip().lower()
         if role_norm not in {"admin", "editor", "author", "user"}:
@@ -175,23 +181,28 @@ class UserService:
         if existing is not None:
             raise HTTPException(
                 status_code=409,
-                detail=f'Username "{login_username}" already exists. Use reassign instead.',
+                detail=f'Email "{login_username}" already exists. Use reassign instead.',
             )
 
-        # Case-insensitive username collision
         collision = self.db.execute(
-            select(User).where(func.lower(User.username) == login_username.lower())
+            select(User).where(
+                or_(
+                    func.lower(User.username) == login_username,
+                    func.lower(func.coalesce(User.email, "")) == login_username,
+                )
+            )
         ).scalar_one_or_none()
         if collision is not None:
             raise HTTPException(
                 status_code=409,
-                detail=f'Username "{login_username}" already exists. Use reassign instead.',
+                detail=f'Email "{login_username}" already exists. Use reassign instead.',
             )
 
         password_hash, password_salt = hash_password(password)
         disp = (display_name or creator).strip() or None
         new_user = User(
             username=login_username,
+            email=login_username,
             password_hash=password_hash,
             password_salt=password_salt,
             role=role_norm,
@@ -317,13 +328,15 @@ class UserService:
                 status_code=400, detail="Password must be at least 8 characters"
             )
 
-        existing = self.user_repo.get_by_username(payload.username)
+        login_email = normalize_login_email(first_login_value(payload.email, payload.username))
+        existing = self.user_repo.get_by_username(login_email)
         if existing is not None:
-            raise HTTPException(status_code=409, detail="Username already exists")
+            raise HTTPException(status_code=409, detail="Email already exists")
 
         password_hash, password_salt = hash_password(payload.password)
         new_user = User(
-            username=payload.username,
+            username=login_email,
+            email=login_email,
             password_hash=password_hash,
             password_salt=password_salt,
             role=role,
@@ -335,8 +348,14 @@ class UserService:
         user: User,
         display_name: str | None = None,
         email: str | None = None,
+        bio: str | None = None,
     ) -> MeOut:
         """Update user profile."""
+        if bio is not None:
+            text = (bio or "").strip()
+            if len(text) > 2000:
+                raise HTTPException(status_code=400, detail="Bio too long")
+            user.bio = text or None
         if display_name is not None:
             name = (display_name or "").strip()
             if not name:
@@ -486,6 +505,9 @@ class UserService:
         username = (user.username or "").strip()
         if username:
             keys.append(username.lower())
+        email = (getattr(user, "email", None) or "").strip()
+        if email:
+            keys.append(email.lower())
         display = (user.display_name or "").strip()
         if display:
             keys.append(display.lower())
@@ -506,6 +528,61 @@ class UserService:
         ).all()
         return [str(r[0]) for r in rows if r and r[0] is not None]
 
+    def _detach_user_fks(self, user_id: int) -> None:
+        """Clear or delete rows that would block deleting a users row."""
+        self.db.execute(
+            update(Comment).where(Comment.user_id == user_id).values(user_id=None)
+        )
+        self.db.execute(
+            update(CommentReport)
+            .where(CommentReport.reporter_user_id == user_id)
+            .values(reporter_user_id=None)
+        )
+        self.db.execute(delete(UserInteraction).where(UserInteraction.user_id == user_id))
+        self.db.execute(delete(PersonalizedFeed).where(PersonalizedFeed.user_id == user_id))
+
+    def _move_posts_to_username(self, creator_keys: list[str], transfer_username: str) -> int:
+        if not creator_keys or not transfer_username:
+            return 0
+        result = self.db.execute(
+            update(Post)
+            .where(func.lower(func.trim(Post.creator)).in_(creator_keys))
+            .values(creator=transfer_username)
+        )
+        return int(result.rowcount or 0)
+
+    def transfer_user_posts(
+        self, user_id: int, transfer_to_user_id: int, admin: User
+    ) -> OrphanActionOut:
+        """Move one login account's posts to another login. Source user stays."""
+        if (admin.role or "").strip().lower() != "admin":
+            raise HTTPException(status_code=403, detail="Admin required")
+
+        source = self.user_repo.get(user_id)
+        if source is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        if int(transfer_to_user_id) == int(source.id):
+            raise HTTPException(status_code=400, detail="Cannot transfer posts to the same user")
+
+        recipient = self.user_repo.get(transfer_to_user_id)
+        if recipient is None:
+            raise HTTPException(status_code=404, detail="Transfer target user not found")
+
+        transfer_username = (recipient.username or "").strip()
+        if not transfer_username:
+            raise HTTPException(status_code=400, detail="Transfer target has no username")
+
+        creator_keys = self._creator_keys_for_user(source)
+        posts_affected = self._move_posts_to_username(creator_keys, transfer_username)
+        self.db.commit()
+
+        return OrphanActionOut(
+            ok=True,
+            creatorName=(source.username or "").strip(),
+            postsAffected=posts_affected,
+            user=self._build_user_out(recipient),
+        )
+
     def delete_user(
         self,
         user_id: int,
@@ -513,7 +590,7 @@ class UserService:
         posts_action: str = "transfer",
         transfer_to_user_id: int | None = None,
     ) -> AdminUserDeleteOut:
-        """Delete a user, either deleting or transferring their posts."""
+        """Delete a user: transfer posts, delete posts, or keep posts as an orphan author."""
         target = self.user_repo.get(user_id)
         if target is None:
             raise HTTPException(status_code=404, detail="User not found")
@@ -521,10 +598,10 @@ class UserService:
             raise HTTPException(status_code=400, detail="Cannot delete your own user")
 
         action = (posts_action or "transfer").strip().lower()
-        if action not in {"delete", "transfer"}:
+        if action not in {"delete", "transfer", "keep"}:
             raise HTTPException(
                 status_code=400,
-                detail="postsAction must be 'delete' or 'transfer'",
+                detail="postsAction must be 'delete', 'transfer', or 'keep'",
             )
 
         creator_keys = self._creator_keys_for_user(target)
@@ -532,6 +609,7 @@ class UserService:
 
         posts_deleted = 0
         posts_transferred = 0
+        posts_kept = 0
         transfer_username: str | None = None
 
         if action == "transfer":
@@ -558,23 +636,18 @@ class UserService:
                     status_code=400, detail="Transfer target has no username"
                 )
 
-            if post_ids and creator_keys:
-                result = self.db.execute(
-                    update(Post)
-                    .where(func.lower(func.trim(Post.creator)).in_(creator_keys))
-                    .values(creator=transfer_username)
-                )
-                posts_transferred = int(result.rowcount or 0)
+            posts_transferred = self._move_posts_to_username(creator_keys, transfer_username)
 
-        else:
-            # delete posts and dependent rows
+        elif action == "delete":
             if post_ids:
-                # votes -> comments -> interactions/feeds for those posts -> posts
                 comment_ids_stmt = select(Comment.id).where(Comment.post_id.in_(post_ids))
                 self.db.execute(
                     delete(CommentVote).where(
                         CommentVote.comment_id.in_(comment_ids_stmt)
                     )
+                )
+                self.db.execute(
+                    delete(CommentReport).where(CommentReport.comment_id.in_(comment_ids_stmt))
                 )
                 self.db.execute(delete(Comment).where(Comment.post_id.in_(post_ids)))
                 self.db.execute(
@@ -587,15 +660,15 @@ class UserService:
                 )
                 result = self.db.execute(delete(Post).where(Post.id.in_(post_ids)))
                 posts_deleted = int(result.rowcount or 0)
+        else:
+            # keep: leave posts on the original creator name so they become orphans
+            keep_name = (target.username or "").strip()
+            if keep_name and creator_keys:
+                posts_kept = self._move_posts_to_username(creator_keys, keep_name)
+            else:
+                posts_kept = len(post_ids)
 
-        # Remove rows that FK to this user
-        self.db.execute(
-            delete(UserInteraction).where(UserInteraction.user_id == target.id)
-        )
-        self.db.execute(
-            delete(PersonalizedFeed).where(PersonalizedFeed.user_id == target.id)
-        )
-
+        self._detach_user_fks(target.id)
         self.db.delete(target)
         self.db.commit()
 
@@ -603,5 +676,6 @@ class UserService:
             ok=True,
             postsDeleted=posts_deleted,
             postsTransferred=posts_transferred,
+            postsKept=posts_kept,
             transferToUsername=transfer_username,
         )

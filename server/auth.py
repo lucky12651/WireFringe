@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from .config import settings
@@ -66,8 +66,23 @@ class AuthUser:
     role: str
 
 
+def find_user_by_login(db: Session, login: str) -> User | None:
+    ident = (login or "").strip()
+    if not ident:
+        return None
+    ident_l = ident.lower()
+    return db.execute(
+        select(User).where(
+            or_(
+                func.lower(User.username) == ident_l,
+                func.lower(func.coalesce(User.email, "")) == ident_l,
+            )
+        )
+    ).scalar_one_or_none()
+
+
 def authenticate(db: Session, username: str, password: str) -> AuthUser | None:
-    user = db.execute(select(User).where(User.username == username)).scalar_one_or_none()
+    user = find_user_by_login(db, username)
     if user is None:
         return None
     if not verify_password(password, user.password_hash, user.password_salt):

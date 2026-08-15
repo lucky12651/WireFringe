@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class PostOut(BaseModel):
@@ -29,6 +29,23 @@ class PostOut(BaseModel):
     commentCount: int = 0
 
     date: datetime | None = None
+    status: str = "published"
+    scheduledAt: datetime | None = None
+    isBreaking: bool = False
+    isPinned: bool = False
+    isSponsored: bool = False
+    isBot: bool = False
+    isHidden: bool = False
+    correction: str | None = None
+    correctedAt: datetime | None = None
+    updatedAt: datetime | None = None
+    sourceUrl: str | None = None
+    sourceName: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    relatedIds: list[str] = Field(default_factory=list)
+    viewCount: int = 0
+    authorSlug: str | None = None
+    authorBio: str | None = None
 
 
 class PaginatedPostsOut(BaseModel):
@@ -52,8 +69,19 @@ class MonthCountOut(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    username: str
+    username: str | None = None
+    email: str | None = None
     password: str
+
+    @model_validator(mode="after")
+    def require_login(self):
+        if not (self.email or self.username or "").strip():
+            raise ValueError("Email is required")
+        return self
+
+    @property
+    def login(self) -> str:
+        return (self.email or self.username or "").strip()
 
 
 class MeOut(BaseModel):
@@ -66,6 +94,11 @@ class MeOut(BaseModel):
     brandBylineEnabled: bool = False
     brandLogoUrl: str | None = None
     token: str | None = None
+    bio: str | None = None
+    emailVerified: bool = False
+    notifyReplies: bool = True
+    notifyEditorial: bool = True
+    totpEnabled: bool = False
 
 
 class TokenOut(BaseModel):
@@ -81,6 +114,7 @@ class UserOut(BaseModel):
     role: str
     avatarUrl: str | None = None
     displayName: str | None = None
+    email: str | None = None
     brandBylineEnabled: bool = False
     brandLogoUrl: str | None = None
     # Extended for admin user management
@@ -89,21 +123,32 @@ class UserOut(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
+    username: str | None = Field(None, max_length=254)
+    email: str | None = Field(None, max_length=254)
     password: str = Field(..., min_length=8)
     role: str = "editor"
+
+    @model_validator(mode="after")
+    def require_email(self):
+        ident = (self.email or self.username or "").strip()
+        if not ident:
+            raise ValueError("Email is required")
+        self.username = ident
+        self.email = ident
+        return self
 
 
 class OrphanClaimRequest(BaseModel):
     """Create a real login account for a post-creator name (orphan author)."""
 
     creatorName: str = Field(..., min_length=1, max_length=80)
-    # Optional login username (defaults to creatorName)
-    username: str | None = Field(None, min_length=3, max_length=50)
+    # Login email (username field kept as alias for older clients)
+    username: str | None = Field(None, max_length=254)
+    email: str | None = Field(None, max_length=254)
     password: str = Field(..., min_length=8, max_length=200)
     role: str = "author"
     displayName: str | None = Field(None, max_length=80)
-    # If True, rewrite posts.creator to the new username when it differs
+    # If True, rewrite posts.creator to the new login when it differs
     reassignPosts: bool = True
 
 
@@ -128,14 +173,25 @@ class OrphanActionOut(BaseModel):
 
 
 class UserSignup(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
+    username: str | None = Field(None, max_length=254)
+    email: str | None = Field(None, max_length=254)
     password: str = Field(..., min_length=8)
     displayName: str | None = Field(None, max_length=80)
+
+    @model_validator(mode="after")
+    def require_email(self):
+        ident = (self.email or self.username or "").strip()
+        if not ident:
+            raise ValueError("Email is required")
+        self.username = ident
+        self.email = ident
+        return self
 
 
 class ProfileUpdateRequest(BaseModel):
     displayName: str | None = None
     email: str | None = None
+    bio: str | None = None
 
 
 class BrandBylineUpdateRequest(BaseModel):
@@ -164,7 +220,7 @@ class AdminRoleUpdateRequest(BaseModel):
 class AdminUserDeleteRequest(BaseModel):
     """Options when deleting a user and their posts."""
 
-    # "delete" removes their posts; "transfer" reassigns posts to another user
+    # delete = remove posts; transfer = move to another user; keep = leave posts (orphan author)
     postsAction: str = Field("transfer", min_length=1, max_length=32)
     transferToUserId: int | None = None
 
@@ -173,7 +229,14 @@ class AdminUserDeleteOut(BaseModel):
     ok: bool = True
     postsDeleted: int = 0
     postsTransferred: int = 0
+    postsKept: int = 0
     transferToUsername: str | None = None
+
+
+class AdminTransferPostsRequest(BaseModel):
+    """Move one login account's posts to another login account."""
+
+    transferToUserId: int
 
 
 class PostUpsert(BaseModel):
@@ -187,6 +250,16 @@ class PostUpsert(BaseModel):
     readMinutes: int | None = None
     metaDescription: str | None = None
     keywords: str | None = None
+    status: str | None = None
+    scheduledAt: datetime | None = None
+    isBreaking: bool | None = None
+    isPinned: bool | None = None
+    isSponsored: bool | None = None
+    correction: str | None = None
+    sourceUrl: str | None = None
+    sourceName: str | None = None
+    tags: str | None = None
+    relatedIds: str | None = None
 
 
 class NewsQueueItem(BaseModel):
@@ -239,6 +312,22 @@ class CommentVoteRequest(BaseModel):
     direction: Literal["like", "dislike"]
 
 
+class CommentReportCreate(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=2000)
+
+
+class CommentReportOut(BaseModel):
+    id: int
+    commentId: int
+    comment: str
+    commentAuthor: str
+    postId: str
+    postTitle: str | None = None
+    reason: str
+    reporterName: str | None = None
+    createdAt: datetime
+
+
 class AdminCommentOut(BaseModel):
     id: int
     postId: str
@@ -286,6 +375,33 @@ class InteractionCreate(BaseModel):
     post_id: str
     interaction_type: str = "view"
 
+CONTACT_SUBJECTS = (
+    "General inquiry",
+    "Correction / update",
+    "Advertising & partnerships",
+    "Privacy request",
+    "Technical issue",
+    "Other",
+)
+
+
+class ContactCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    email: EmailStr
+    subject: str = Field(..., min_length=1, max_length=120)
+    message: str = Field(..., min_length=1, max_length=5000)
+
+
+class ContactOut(BaseModel):
+    id: int
+    name: str
+    email: str
+    subject: str
+    message: str
+    isRead: bool = False
+    createdAt: datetime
+
+
 class BotLogOut(BaseModel):
     id: int
     level: str
@@ -295,3 +411,117 @@ class BotLogOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PostRevisionOut(BaseModel):
+    id: int
+    postId: str
+    editorName: str | None = None
+    title: str
+    status: str | None = None
+    createdAt: datetime
+
+
+class NewsletterSubCreate(BaseModel):
+    email: EmailStr
+    source: str | None = None
+
+
+class NewsletterSubOut(BaseModel):
+    id: int
+    email: str
+    source: str | None = None
+    isActive: bool = True
+    createdAt: datetime
+
+
+class NewsletterIssueCreate(BaseModel):
+    subject: str = Field(..., min_length=1, max_length=200)
+    body: str = Field(..., min_length=1)
+
+
+class NewsletterIssueOut(BaseModel):
+    id: int
+    subject: str
+    body: str
+    sentAt: datetime | None = None
+    createdAt: datetime
+
+
+class TipCreate(BaseModel):
+    contact: str | None = None
+    message: str = Field(..., min_length=1, max_length=8000)
+
+
+class TipOut(BaseModel):
+    id: int
+    contact: str | None = None
+    message: str
+    isRead: bool = False
+    createdAt: datetime
+
+
+class FollowIn(BaseModel):
+    kind: Literal["topic", "author"]
+    target: str = Field(..., min_length=1, max_length=160)
+
+
+class FollowOut(BaseModel):
+    kind: str
+    target: str
+
+
+class RedirectIn(BaseModel):
+    fromPath: str = Field(..., min_length=1, max_length=400)
+    toPath: str = Field(..., min_length=1, max_length=400)
+
+
+class RedirectOut(BaseModel):
+    id: int
+    fromPath: str
+    toPath: str
+    createdAt: datetime
+
+
+class FrontpageIn(BaseModel):
+    heroIds: list[str] = []
+    topIds: list[str] = []
+    breakingId: str | None = None
+
+
+class MastheadIn(BaseModel):
+    heading: str | None = None
+    body: str | None = None
+    staff: list[dict] | None = None
+
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    newPassword: str = Field(..., min_length=8)
+
+
+class VerifyEmailIn(BaseModel):
+    token: str
+
+
+class NotifyPrefsIn(BaseModel):
+    notifyReplies: bool | None = None
+    notifyEditorial: bool | None = None
+
+
+class TwoFactorConfirmIn(BaseModel):
+    code: str
+
+
+class TwoFactorLoginIn(BaseModel):
+    ticket: str
+    code: str
+
+
+class StatusChangeIn(BaseModel):
+    status: str
+    scheduledAt: datetime | None = None

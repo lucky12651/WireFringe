@@ -40,7 +40,7 @@ export default function StreamFeed({
           className={cn(
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'latest'
-              ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
+              ? 'bg-mint text-black shadow-mint hover:bg-mint-hover hover:text-black'
               : 'bg-transparent text-ink-muted hover:text-ink'
           )}
           onClick={() => onTabChange?.('latest')}
@@ -52,7 +52,7 @@ export default function StreamFeed({
           className={cn(
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'following'
-              ? 'bg-mint text-black shadow-[0_2px_16px_rgba(60,255,208,0.4),0_0_24px_rgba(60,255,208,0.15)] hover:bg-mint-hover hover:text-black'
+              ? 'bg-mint text-black shadow-mint hover:bg-mint-hover hover:text-black'
               : 'bg-transparent text-ink-muted hover:text-ink'
           )}
           onClick={() => onTabChange?.('following')}
@@ -82,7 +82,7 @@ export default function StreamFeed({
             return (
               <article
                 key={post.id}
-                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-line animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-[linear-gradient(90deg,transparent,rgba(60,255,208,0.055),transparent)] hover:rounded-sm"
+                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-line animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-bg-hover/50 hover:rounded-sm"
               >
                 <div className="flex items-center gap-2.5 mb-3">
                   <AuthorByline

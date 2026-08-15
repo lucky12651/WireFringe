@@ -3,11 +3,16 @@ import Link from 'next/link';
 import { z } from 'zod';
 import BrandLogo from '../../BrandLogo/BrandLogo';
 import { cn } from '../../../lib/utils';
+import { fieldErrorsFromZod } from '../../../lib/formErrors';
 
 const signupSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  displayName: z.string().trim().min(1, 'Display name is required'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  displayName: z.string().min(1, 'Display name is required'),
 });
 
 const COLLAGE = [
@@ -26,7 +31,7 @@ const inputClass =
   'w-full h-[46px] px-3 border border-line-strong rounded-sm bg-bg-elevated text-ink text-[15px] outline-none transition-[border-color,box-shadow] duration-150 focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]';
 
 export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,19 +40,11 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
 
   const validateForm = () => {
     try {
-      signupSchema.parse({ username, password, displayName });
+      signupSchema.parse({ email, password, displayName });
       setErrors({});
       return true;
     } catch (err) {
-      if (err instanceof z.ZodError || (err && err.errors)) {
-        const formattedErrors = {};
-        (err.errors || []).forEach((e) => {
-          formattedErrors[e.path[0]] = e.message;
-        });
-        setErrors(formattedErrors);
-      } else {
-        setErrors({ form: 'Validation failed' });
-      }
+      setErrors(fieldErrorsFromZod(err));
       return false;
     }
   };
@@ -57,7 +54,7 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    const result = await onSignup(username.trim(), password, displayName.trim());
+    const result = await onSignup(email.trim(), password, displayName.trim());
     setIsLoading(false);
 
     if (!result.success && result.error) {
@@ -129,21 +126,22 @@ export function SignupPage({ onSignup, onToggleMode, error: serverError }) {
 
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="signup-username"
+                htmlFor="signup-email"
                 className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-ink-tertiary"
               >
-                Username
+                Email
               </label>
               <input
-                id="signup-username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                className={cn(inputClass, errors.username && 'border-[#ff6b6b]')}
+                id="signup-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={cn(inputClass, errors.email && 'border-[#ff6b6b]')}
               />
-              {errors.username ? (
-                <span className="text-xs text-[#c0392b]">{errors.username}</span>
+              {errors.email ? (
+                <span className="text-xs text-[#c0392b]">{errors.email}</span>
               ) : null}
             </div>
 

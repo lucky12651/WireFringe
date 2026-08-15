@@ -10,12 +10,37 @@ import { LATEST_POSTS_LIMIT } from '../lib/constants';
 
 export function usePosts(initialLimit = 20) {
   const [page, setPage] = useState(0);
+  const [source, setSourceState] = useState('editorial');
+  const [filters, setFiltersState] = useState({ q: '', status: '', dateFrom: '', dateTo: '' });
   const limit = initialLimit;
   const offset = page * limit;
 
-  const swrKey = limit > 0 
-    ? `/api/admin/posts?offset=${offset}&limit=${limit}` 
-    : '/api/admin/posts?limit=0';
+  const setSource = useCallback((next) => {
+    const kind = next === 'bot' ? 'bot' : next === 'all' ? 'all' : 'editorial';
+    setSourceState(kind);
+    setPage(0);
+  }, []);
+
+  const setFilters = useCallback((patch) => {
+    setFiltersState((prev) => ({ ...prev, ...patch }));
+    setPage(0);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setFiltersState({ q: '', status: '', dateFrom: '', dateTo: '' });
+    setPage(0);
+  }, []);
+
+  const params = new URLSearchParams({
+    offset: String(limit > 0 ? offset : 0),
+    limit: String(limit > 0 ? limit : 0),
+    source,
+  });
+  if (filters.q.trim()) params.set('q', filters.q.trim());
+  if (filters.status) params.set('status', filters.status);
+  if (filters.dateFrom) params.set('date_from', filters.dateFrom);
+  if (filters.dateTo) params.set('date_to', filters.dateTo);
+  const swrKey = `/api/admin/posts?${params.toString()}`;
 
   const { data: postsData, error: fetchError, isValidating } = useSWR(
     swrKey,
@@ -201,6 +226,13 @@ export function usePosts(initialLimit = 20) {
 
   const latestPosts = useMemo(() => {
     const list = [...(posts || [])]
+      .filter((p) => {
+        const status = String(p?.status || (p?.date ? 'published' : 'draft')).toLowerCase();
+        if (status !== 'published') return false;
+        if (p?.isHidden) return false;
+        if (p?.isBot) return false;
+        return true;
+      })
       .map((p) => ({ ...p, dateObj: p?.date ? new Date(p.date) : null }))
       .sort((a, b) => {
         const ta = a.dateObj ? a.dateObj.getTime() : -Infinity;
@@ -234,6 +266,11 @@ export function usePosts(initialLimit = 20) {
       error,
       page,
       setPage,
+      source,
+      setSource,
+      filters,
+      setFilters,
+      resetFilters,
       limit,
       refreshPosts,
       setPosts,
@@ -263,6 +300,11 @@ export function usePosts(initialLimit = 20) {
       isActionLoading,
       error,
       page,
+      source,
+      setSource,
+      filters,
+      setFilters,
+      resetFilters,
       limit,
       refreshPosts,
       setPosts,

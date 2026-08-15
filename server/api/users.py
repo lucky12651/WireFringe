@@ -8,6 +8,7 @@ from ..dependencies import get_db, require_admin, require_user
 from ..schemas import (
     AdminPasswordSetRequest,
     AdminRoleUpdateRequest,
+    AdminTransferPostsRequest,
     AdminUserDeleteOut,
     AdminUserDeleteRequest,
     LoginRequest,
@@ -41,9 +42,9 @@ def login(
     service: UserService = Depends(get_user_service),
 ) -> TokenOut:
     """Authenticate and login a user."""
-    user_model = service.authenticate_user(payload.username, payload.password)
+    user_model = service.authenticate_user(payload.login, payload.password)
     if user_model is None:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Generate JWT token
     token = create_access_token(data={"sub": str(user_model.id), "role": user_model.role})
@@ -72,11 +73,12 @@ def signup(
     # Ensure user doesn't already exist
     existing = service.user_repo.get_by_username(payload.username)
     if existing:
-        raise HTTPException(status_code=400, detail="Username already taken")
+        raise HTTPException(status_code=400, detail="Email already taken")
     
     # Create user with role 'user'
     user_create = UserCreate(
         username=payload.username,
+        email=payload.email or payload.username,
         password=payload.password,
         role="user"
     )
@@ -130,7 +132,7 @@ def admin_update_profile(
 ) -> MeOut:
     """Update current user profile."""
     user = require_user(request, db)
-    return service.update_profile(user, payload.displayName, payload.email)
+    return service.update_profile(user, payload.displayName, payload.email, payload.bio)
 
 
 @router.put("/profile/password")
@@ -191,7 +193,7 @@ def admin_claim_orphan(
         creator_name=payload.creatorName,
         password=payload.password,
         role=payload.role,
-        username=payload.username,
+        username=payload.email or payload.username,
         display_name=payload.displayName,
         reassign_posts=payload.reassignPosts,
         admin=user,
@@ -257,6 +259,20 @@ def admin_set_user_role(
     return service.admin_set_role(user_id, payload.role, user)
 
 
+@router.post("/users/{user_id:int}/transfer-posts", response_model=OrphanActionOut)
+def admin_transfer_user_posts(
+    user_id: int,
+    payload: AdminTransferPostsRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> OrphanActionOut:
+    """Move this user's posts to another login account. The source user stays."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.transfer_user_posts(user_id, payload.transferToUserId, user)
+
+
 @router.delete("/users/{user_id}", response_model=AdminUserDeleteOut)
 def admin_delete_user(
     user_id: int,
@@ -269,7 +285,7 @@ def admin_delete_user(
     """Delete a user.
 
     Query params:
-    - postsAction: "delete" (remove their posts) or "transfer" (reassign posts)
+    - postsAction: delete | transfer | keep
     - transferToUserId: required when postsAction=transfer
     """
     user = require_user(request, db)

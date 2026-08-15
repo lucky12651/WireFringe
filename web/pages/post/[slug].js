@@ -1,4 +1,21 @@
-// Slugged post URLs (e.g. /post/my-headline) use the same page + data loading
-// as /post?id=... — re-export both the page and getServerSideProps.
+import PostPage, { getServerSideProps as postGssp } from '../post';
+import { api } from '../../lib/api';
 
-export { default, getServerSideProps } from '../post';
+export async function getServerSideProps(ctx) {
+  const result = await postGssp(ctx);
+  if (result?.props?.initialPost || result?.notFound) return result;
+  const slug = ctx.params?.slug;
+  if (!slug) return result;
+  try {
+    const path = `/post/${encodeURIComponent(String(slug))}`;
+    const dest = await api(`/api/redirect?path=${encodeURIComponent(path)}`);
+    if (dest?.to) {
+      return { redirect: { destination: dest.to, permanent: true } };
+    }
+  } catch {
+    /* no redirect */
+  }
+  return result;
+}
+
+export default PostPage;

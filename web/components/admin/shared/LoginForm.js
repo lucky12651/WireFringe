@@ -4,7 +4,7 @@ import { tw } from '../../../lib/tw';
 import { cn } from '../../../lib/utils';
 
 export function LoginForm({ onLogin, error }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
 
@@ -12,8 +12,8 @@ export function LoginForm({ onLogin, error }) {
     e.preventDefault();
     setLocalError('');
 
-    if (!username.trim()) {
-      setLocalError('Username is required');
+    if (!email.trim()) {
+      setLocalError('Email is required');
       return;
     }
     if (!password) {
@@ -21,7 +21,7 @@ export function LoginForm({ onLogin, error }) {
       return;
     }
 
-    const result = await onLogin(username.trim(), password);
+    const result = await onLogin(email.trim(), password);
     if (!result.success) {
       setLocalError(result.error);
     }
@@ -36,12 +36,14 @@ export function LoginForm({ onLogin, error }) {
 
       <form className={tw.form} onSubmit={handleSubmit}>
         <div className={tw.formGroup}>
-          <label className={tw.formLabel}>Username</label>
+          <label className={tw.formLabel}>Email</label>
           <input
             className={tw.formInput}
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div className={tw.formGroup}>

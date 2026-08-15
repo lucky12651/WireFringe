@@ -1,13 +1,21 @@
 import { useState } from 'react';
+import { newsroomApi } from '../../lib/api';
 
 export default function NewsletterSignup() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    setSent(true);
+    setError('');
+    try {
+      await newsroomApi.subscribe(email.trim(), 'homepage');
+      setSent(true);
+    } catch (err) {
+      setError(err.message || 'Could not subscribe.');
+    }
   };
 
   return (
@@ -29,7 +37,7 @@ export default function NewsletterSignup() {
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
           <input
-            className="h-11 px-3.5 border border-line rounded-sm bg-bg text-ink text-sm outline-none w-full transition-all focus:border-mint focus:shadow-[0_0_0_3px_rgba(60,255,208,0.14)]"
+            className="h-11 px-3.5 border border-line rounded-sm bg-bg text-ink text-sm outline-none w-full transition-all focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]"
             type="email"
             placeholder="you@domain.com"
             value={email}
@@ -37,11 +45,12 @@ export default function NewsletterSignup() {
             aria-label="Email address"
           />
           <button
-            className="h-11 bg-mint text-black border-0 rounded-sm font-mono text-[11px] font-bold tracking-wide uppercase cursor-pointer transition-all hover:bg-mint-hover hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(60,255,208,0.28)] active:translate-y-0"
+            className="h-11 bg-mint text-black border-0 rounded-sm font-mono text-[11px] font-bold tracking-wide uppercase cursor-pointer transition-all hover:bg-mint-hover hover:-translate-y-px hover:shadow-mint active:translate-y-0"
             type="submit"
           >
             Subscribe
           </button>
+          {error ? <p className="m-0 text-[12px] text-[#c0392b]">{error}</p> : null}
         </form>
       )}
     </div>

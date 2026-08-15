@@ -12,6 +12,7 @@ export function AdminLayout({
   onNavigate,
   onLogout,
   pendingCommentsCount,
+  unreadContactCount,
 }) {
   return (
     <>
@@ -29,6 +30,7 @@ export function AdminLayout({
             onNavigate={onNavigate}
             onLogout={onLogout}
             pendingCommentsCount={pendingCommentsCount}
+            unreadContactCount={unreadContactCount}
           />
 
           <main className={tw.adminContent} aria-label="Admin content">

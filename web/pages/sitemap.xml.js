@@ -22,6 +22,9 @@ const STATIC_PATHS = [
   '/community-guidelines',
   '/tip-us',
   '/archives',
+  '/masthead',
+  '/sourcing',
+  '/search',
 ];
 
 function buildUrl(loc, lastmod, changefreq, priority) {

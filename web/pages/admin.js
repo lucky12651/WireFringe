@@ -13,6 +13,7 @@ import {
   useLogs,
   useAdsenseSettings,
   useBotSettings,
+  useContact,
 } from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
 import { LoginPage, SignupPage } from '../components/admin/Login';
@@ -26,6 +27,13 @@ import {
   SettingsView,
   AdsenseView,
   BotView,
+  ContactView,
+  FrontpageView,
+  NewsletterAdminView,
+  TipsView,
+  AnalyticsView,
+  RedirectsView,
+  MastheadView,
 } from '../components/admin/views';
 
 export default function AdminPage() {
@@ -42,7 +50,8 @@ export default function AdminPage() {
   const logs = useLogs();
   const adsense = useAdsenseSettings();
   const bot = useBotSettings();
-  const { me, isAuthed, isLoading, isInitialLoading, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
+  const contact = useContact();
+  const { me, isAuthed, isLoading, isInitialLoading, access, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
 
   // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
   const shouldLoadDashboardStats = isAuthed && activeView === 'dashboard';
@@ -121,6 +130,7 @@ export default function AdminPage() {
         media.refreshMedia(),
         comments.refreshTrendingComments(),
         comments.refreshPendingCount(),
+        contact.refreshUnreadCount(),
         categories.refreshCategoriesWithCounts(),
       ]);
 
@@ -136,13 +146,15 @@ export default function AdminPage() {
     if (!isAuthed) return;
 
     if (activeView === 'dashboard') {
+      if (posts.source !== 'editorial') posts.setSource('editorial');
+      posts.resetFilters?.();
       comments.refreshTrendingComments();
       comments.refreshPendingCount();
       categories.refreshCategoriesWithCounts();
-      posts.refreshRecentCache();
-      posts.refreshQueue();
+      if (access.canProcessQueue) posts.refreshQueue();
+      if (access.canSeeBotCache) posts.refreshRecentCache();
     }
-    if (activeView === 'bot' || activeView === 'logs') {
+    if ((activeView === 'bot' || activeView === 'logs') && access.canRunBot) {
       posts.refreshQueue();
       posts.refreshRecentCache();
       bot.refresh();
@@ -150,12 +162,17 @@ export default function AdminPage() {
     }
     if (activeView === 'comments') {
       comments.refreshComments();
+      if (access.canSeeReports) comments.refreshReports();
+    }
+    if (activeView === 'contact') {
+      contact.refreshMessages();
+      contact.refreshUnreadCount();
     }
     if (activeView === 'users' && me?.role === 'admin') {
       users.refreshUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeView, isAuthed]);
+  }, [activeView, isAuthed, access.canProcessQueue, access.canSeeBotCache, access.canSeeReports, access.canRunBot]);
 
   const handleLogin = async (username, password) => {
     const result = await auth.login(username, password);
@@ -199,6 +216,13 @@ export default function AdminPage() {
     setActiveView('dashboard');
   };
 
+  useEffect(() => {
+    if (!isAuthed || !me) return;
+    if (!access.canAccessView(activeView) && activeView !== 'settings') {
+      setActiveView('dashboard');
+    }
+  }, [activeView, isAuthed, me, access]);
+
   // Render the active view (only called when authenticated)
   const renderView = () => {
     if (isInitialLoading) {
@@ -227,6 +251,7 @@ export default function AdminPage() {
             recentCache={posts.recentCache}
             mediaCount={media.mediaCount}
             me={me}
+            access={access}
             onNavigate={setActiveView}
           />
         );
@@ -244,22 +269,28 @@ export default function AdminPage() {
             onBulkProcessQueue={posts.bulkProcessQueueItems}
             onRefreshFeeds={posts.refreshQueueFeeds}
             me={me}
+            access={access}
             page={posts.page}
             onPageChange={posts.setPage}
             limit={posts.limit}
             isLoading={posts.isLoading}
             queue={posts.queue}
             refreshQueue={posts.refreshQueue}
+            source={posts.source}
+            onSourceChange={posts.setSource}
+            filters={posts.filters}
+            onFiltersChange={posts.setFilters}
           />
         );
 
       case 'categories':
+        if (!access.canAccessView('categories')) return null;
         return (
           <CategoriesView
             categoriesWithCounts={categories.categoriesWithCounts}
             onCreate={categories.createCategory}
             onDelete={categories.deleteCategory}
-            canManageUsers={canManageUsers}
+            canManageUsers={access.canManageCategories}
           />
         );
 
@@ -277,16 +308,55 @@ export default function AdminPage() {
         return (
           <CommentsView
             comments={comments.comments}
+            reports={comments.reports}
+            loadError={comments.error}
             onRefresh={comments.refreshComments}
             onApprove={comments.approveComment}
             onDisapprove={comments.disapproveComment}
             onDelete={comments.deleteComment}
+            onDismissReport={comments.dismissReport}
             canModerateComments={canModerateComments}
             canManageUsers={canManageUsers}
           />
         );
 
+      case 'contact':
+        if (!access.canAccessView('contact')) return null;
+        return (
+          <ContactView
+            messages={contact.messages}
+            loadError={contact.error}
+            onMarkRead={contact.markRead}
+            onDelete={contact.deleteMessage}
+          />
+        );
+
+      case 'tips':
+        if (!access.canAccessView('tips')) return null;
+        return <TipsView />;
+
+      case 'frontpage':
+        if (!access.canAccessView('frontpage')) return null;
+        return <FrontpageView />;
+
+      case 'newsletter':
+        if (!access.canAccessView('newsletter')) return null;
+        return <NewsletterAdminView />;
+
+      case 'analytics':
+        if (!access.canAccessView('analytics')) return null;
+        return <AnalyticsView />;
+
+      case 'redirects':
+        if (!access.canAccessView('redirects')) return null;
+        return <RedirectsView />;
+
+      case 'masthead':
+        if (!access.canAccessView('masthead')) return null;
+        return <MastheadView />;
+
       case 'users':
+        if (!access.canManageUsers) return null;
         return (
           <UsersView
             users={users.users}
@@ -294,6 +364,7 @@ export default function AdminPage() {
             onDelete={users.deleteUser}
             onSetPassword={users.setUserPassword}
             onSetRole={users.setUserRole}
+            onTransferPosts={users.transferPosts}
             onClaimOrphan={users.claimOrphan}
             onReassignOrphan={users.reassignOrphan}
             onDeleteOrphanPosts={users.deleteOrphanPosts}
@@ -315,7 +386,7 @@ export default function AdminPage() {
 
       case 'logs':
         // System Logs is a tab inside News Bot (legacy nav / deep links)
-        if (me?.role !== 'admin') return null;
+        if (!access.canRunBot) return null;
         return (
           <BotView
             settings={bot.settings}
@@ -334,7 +405,7 @@ export default function AdminPage() {
         );
 
       case 'adsense':
-        if (me?.role !== 'admin') return null;
+        if (!access.canManageAds) return null;
         return (
           <AdsenseView
             settings={adsense.settings}
@@ -346,7 +417,7 @@ export default function AdminPage() {
         );
 
       case 'bot':
-        if (me?.role !== 'admin') return null;
+        if (!access.canRunBot) return null;
         return (
           <BotView
             settings={bot.settings}
@@ -399,6 +470,7 @@ export default function AdminPage() {
       onNavigate={setActiveView}
       onLogout={handleLogout}
       pendingCommentsCount={comments.pendingCount}
+      unreadContactCount={contact.unreadCount}
     >
       {renderView()}
     </AdminLayout>

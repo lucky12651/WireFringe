@@ -89,6 +89,7 @@ export function DashboardView({
   mediaCount,
   memberStats,
   me,
+  access,
   onNavigate,
 }) {
   const [filter, setFilter] = useState('all');
@@ -111,7 +112,7 @@ export function DashboardView({
       sortAt: new Date(p.date || p.publishedAt || p.createdAt || 0).getTime() || 0,
     }));
 
-    const cached = (Array.isArray(recentCache) ? recentCache : []).map((item, idx) => ({
+    const cached = (!(access?.dashboard?.showBotCache) ? [] : Array.isArray(recentCache) ? recentCache : []).map((item, idx) => ({
       key: `cache-${item.id || item.url || idx}`,
       kind: 'cached',
       id: item.id || null,
@@ -125,7 +126,7 @@ export function DashboardView({
     }));
 
     return [...live, ...cached].sort((a, b) => b.sortAt - a.sortAt);
-  }, [latestPosts, recentCache]);
+  }, [latestPosts, recentCache, access]);
 
   const visible = useMemo(() => {
     if (filter === 'all') return feedItems;
@@ -139,23 +140,50 @@ export function DashboardView({
     canViewPendingCommentsCount !== false ? Number(pendingCommentsCount) || 0 : 0;
 
   const trends = Array.isArray(trendingComments) ? trendingComments : [];
+  const dash = access?.dashboard || {};
+  const isAuthor = access?.isAuthor;
+
+  const overviewStats = [
+    dash.showSiteStats || dash.showMyStats
+      ? {
+          label: isAuthor ? 'My published' : 'Published',
+          value: published,
+          sub: isAuthor ? 'Your live articles' : 'Live articles',
+          go: 'posts',
+        }
+      : null,
+    dash.showPendingComments
+      ? {
+          label: isAuthor ? 'My pending comments' : 'Pending comments',
+          value: pendingComments,
+          sub: isAuthor ? 'On your stories' : 'Awaiting review',
+          go: 'comments',
+          warn: pendingComments > 0,
+        }
+      : null,
+    dash.showCategories
+      ? { label: 'Categories', value: Number(categoriesCount) || 0, sub: 'Taxonomy', go: 'categories' }
+      : null,
+    dash.showMedia
+      ? { label: 'Media', value: media, sub: 'Uploaded assets', go: 'media' }
+      : null,
+  ].filter(Boolean);
 
   return (
     <div className="flex flex-col gap-0 animate-fade-up motion-reduce:animate-none">
+      {access?.label ? (
+        <section className="py-5 border-b border-line">
+          <p className="m-0 text-[11px] tracking-[0.14em] uppercase text-ink-muted font-medium">
+            Access
+          </p>
+          <h2 className="m-0 mt-1 text-[18px] font-semibold text-ink">{access.label}</h2>
+          <p className="m-0 mt-1.5 text-[13px] text-ink-secondary max-w-[62ch]">{access.summary}</p>
+        </section>
+      ) : null}
+
       <section className="py-6 border-b border-line" aria-label="Overview stats">
         <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-x-8 gap-y-5">
-          {[
-            { label: 'Published', value: published, sub: 'Live articles', go: 'posts' },
-            {
-              label: 'Pending comments',
-              value: pendingComments,
-              sub: 'Awaiting review',
-              go: 'comments',
-              warn: pendingComments > 0,
-            },
-            { label: 'Categories', value: Number(categoriesCount) || 0, sub: 'Taxonomy', go: 'categories' },
-            { label: 'Media', value: media, sub: 'Uploaded assets', go: 'media' },
-          ].map((stat) => (
+          {overviewStats.map((stat) => (
             <button
               key={stat.label}
               type="button"
@@ -179,7 +207,9 @@ export function DashboardView({
         </div>
       </section>
 
+      {dash.showGrowth || dash.showCommentsTrend ? (
       <section className="py-6 border-b border-line grid grid-cols-1 min-[801px]:grid-cols-2 gap-10 items-start">
+        {dash.showGrowth ? (
         <div aria-label="Post growth">
           <h2 className="text-[15px] m-0 mb-1 font-semibold text-ink tracking-tight">Post growth</h2>
           <p className="m-0 mb-4 text-[12px] text-ink-tertiary">Articles published over the last 6 months.</p>
@@ -216,7 +246,9 @@ export function DashboardView({
             </div>
           )}
         </div>
+        ) : null}
 
+        {dash.showCommentsTrend ? (
         <div aria-label="Comments trend">
           <h2 className="text-[15px] m-0 mb-1 font-semibold text-ink tracking-tight">Comments trend</h2>
           <p className="m-0 mb-4 text-[12px] text-ink-tertiary">Top liked comments from the last 15 days.</p>
@@ -243,7 +275,9 @@ export function DashboardView({
             <p className="m-0 text-[13px] text-ink-muted">No trending comments yet.</p>
           )}
         </div>
+        ) : null}
       </section>
+      ) : null}
 
       <div className="grid grid-cols-1 min-[1151px]:grid-cols-[minmax(0,1fr)_280px] gap-10 items-start pt-6">
         <section className="min-w-0" aria-label="Activity">
@@ -251,15 +285,19 @@ export function DashboardView({
             <div>
               <h2 className="text-[15px] m-0 mb-1 font-semibold text-ink tracking-tight">Activity</h2>
               <p className="m-0 text-[12px] text-ink-tertiary">
-                Recent published articles and bot output.
+                {isAuthor
+                  ? 'Your recent articles.'
+                  : dash.showBotCache
+                    ? 'Recent published articles and bot output.'
+                    : 'Recent published articles.'}
               </p>
             </div>
             <div className="flex gap-3" role="tablist" aria-label="Activity filters">
               {[
                 { id: 'all', label: 'All' },
                 { id: 'active', label: 'Live' },
-                { id: 'cached', label: 'Cached' },
-              ].map((f) => (
+                dash.showBotCache ? { id: 'cached', label: 'Cached' } : null,
+              ].filter(Boolean).map((f) => (
                 <button
                   key={f.id}
                   type="button"
@@ -368,6 +406,7 @@ export function DashboardView({
           </div>
         </section>
 
+        {dash.showGrowth ? (
         <aside className="flex flex-col gap-3 pt-1" aria-label="30-day growth">
           <h3 className="text-[11px] tracking-[0.12em] uppercase text-ink-muted font-medium m-0">
             30-day
@@ -387,6 +426,17 @@ export function DashboardView({
             {postGrowth30?.prev != null ? ` · previous ${postGrowth30.prev}` : ''}.
           </p>
         </aside>
+        ) : (
+        <aside className="flex flex-col gap-3 pt-1" aria-label="Your desk">
+          <h3 className="text-[11px] tracking-[0.12em] uppercase text-ink-muted font-medium m-0">
+            Your desk
+          </h3>
+          <p className="m-0 text-[13px] text-ink-secondary leading-relaxed">
+            Write and save drafts. Send a story to <strong>Review</strong> when it is ready. An
+            editor publishes it.
+          </p>
+        </aside>
+        )}
       </div>
     </div>
   );

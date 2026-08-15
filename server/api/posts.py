@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_current_user, get_db, require_user, get_optional_user
+from ..dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff
 from ..models import User
 from ..schemas import (
     CreatorCountOut,
@@ -16,6 +17,7 @@ from ..schemas import (
     PostGrowthCountsOut,
     PostOut,
     PostUpsert,
+    StatusChangeIn,
 )
 from ..services import PostService
 
@@ -78,7 +80,35 @@ def get_post_by_slug(
     return service.get_post_by_slug(slug, public=True)
 
 
+@router.get("/posts/{post_id}/related", response_model=list[PostOut])
+def related_posts(post_id: str, service: PostService = Depends(get_post_service)) -> list[PostOut]:
+    post = service.post_repo.get(post_id)
+    if post is None:
+        # try slug
+        try:
+            built = service.get_post(post_id, public=True)
+            post = service.post_repo.get(built.id)
+        except HTTPException:
+            raise HTTPException(status_code=404, detail="Post not found")
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return service.related_posts(post)
+
+
 # Admin post endpoints
+
+
+def _parse_day(raw: str | None, *, end: bool = False):
+    value = (raw or "").strip()
+    if not value:
+        return None
+    try:
+        day = datetime.strptime(value[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    if end:
+        return day + timedelta(days=1)
+    return day
 
 
 @router.get("/admin/posts", response_model=PaginatedPostsOut)
@@ -86,12 +116,23 @@ def admin_list_posts(
     request: Request,
     offset: int = 0,
     limit: int | None = 20,
+    source: str = "editorial",
+    q: str = "",
+    status: str = "",
+    date_from: str | None = None,
+    date_to: str | None = None,
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ) -> PaginatedPostsOut:
     """List posts for admin (filtered by role)."""
     user = require_user(request, db)
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
+    kind = (source or "editorial").strip().lower()
+    if kind not in {"editorial", "bot", "all"}:
+        kind = "editorial"
+    start = _parse_day(date_from)
+    end = _parse_day(date_to, end=True)
     
     if limit is None or limit <= 0:
         # Fetch all posts if limit is not provided (admin: include hidden/bot)
@@ -99,9 +140,14 @@ def admin_list_posts(
             posts = service.list_posts_by_creator(creator)
         else:
             posts = service.list_posts(public=False)
+            if kind != "all":
+                want_bot = kind == "bot"
+                posts = [p for p in posts if bool(getattr(p, "isBot", False)) is want_bot]
         return PaginatedPostsOut(posts=posts, total=len(posts))
         
-    posts, total = service.list_posts_paginated(offset, limit, creator)
+    posts, total = service.list_posts_paginated(
+        offset, limit, creator, kind, q, status, start, end
+    )
     return PaginatedPostsOut(posts=posts, total=total)
 
 
@@ -116,6 +162,7 @@ def admin_posts_by_member_stats(
     Uses DB aggregation so results are correct regardless of admin post pagination.
     """
     user = require_user(request, db)
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
     return service.count_posts_by_creator(creator)
 
@@ -129,6 +176,7 @@ def admin_post_growth_stats(
 ) -> PostGrowthCountsOut:
     """Dashboard helper: post growth (last N days vs previous N days)."""
     user = require_user(request, db)
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
     days = max(1, min(int(days or 30), 365))
     return service.get_post_growth_counts(days, creator)
@@ -143,6 +191,7 @@ def admin_posts_by_month_stats(
 ) -> list[MonthCountOut]:
     """Dashboard helper: posts per month for the last N months."""
     user = require_user(request, db)
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
     months = max(1, min(int(months or 6), 24))
     return service.get_posts_by_month_counts(months, creator)
@@ -155,7 +204,8 @@ def admin_get_news_queue(
     service: PostService = Depends(get_post_service),
 ) -> list[NewsQueueItem]:
     """Get pending news from CSV queue."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     return service.get_news_queue()
 
 
@@ -166,7 +216,8 @@ async def admin_process_queue_item(
     db: Session = Depends(get_db),
 ):
     """Manually trigger processing of a queue item."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     
     from ..news_bot import NewsBot
     bot = NewsBot()
@@ -205,7 +256,8 @@ def admin_delete_queue_item(
     db: Session = Depends(get_db),
 ):
     """Delete an item from the news queue."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     from ..models import NewsQueue
     item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
     if not item:
@@ -223,7 +275,8 @@ def admin_bulk_delete_queue_items(
     db: Session = Depends(get_db),
 ):
     """Bulk delete items from the news queue."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     from ..models import NewsQueue
     db.query(NewsQueue).filter(NewsQueue.link.in_(links)).delete(synchronize_session=False)
     db.commit()
@@ -237,7 +290,8 @@ async def admin_bulk_process_queue_items(
     db: Session = Depends(get_db),
 ):
     """Bulk process items from the news queue."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     
     from ..news_bot import NewsBot
     bot = NewsBot()
@@ -263,7 +317,8 @@ def admin_get_recent_cache(
     db: Session = Depends(get_db),
 ) -> list[RecentCacheItem]:
     """Get recently published items from cache."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     from ..models import RecentNewsCache
     items = db.query(RecentNewsCache).order_by(RecentNewsCache.created_at.desc()).limit(50).all()
     return [
@@ -282,7 +337,8 @@ async def admin_refresh_queue_feeds(
     db: Session = Depends(get_db),
 ):
     """Manually trigger RSS feed collection to find new links."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_staff(user)
     
     from ..news_bot import NewsBot, FEEDS
     bot = NewsBot()
@@ -305,12 +361,11 @@ def admin_get_post(
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ) -> PostOut:
-    """Get a post for editing (admin)."""
+    """Get a post for the admin editor, including hidden/bot posts."""
     user = require_user(request, db)
-    post = service.get_post(id)
-    # Additional permission check
-    post_model = service.post_repo.get(id)
-    if user.role == "author" and (post_model.creator or "").strip() != user.username:
+    require_newsroom(user)
+    post = service.get_post(id, public=False)
+    if user.role == "author" and (post.creator or "").strip() != user.username:
         raise HTTPException(status_code=403, detail="Not allowed")
     return post
 
@@ -324,6 +379,7 @@ def admin_create_post(
 ) -> PostOut:
     """Create a new post."""
     user = require_user(request, db)
+    require_newsroom(user)
     return service.create_post(payload, user)
 
 
@@ -337,6 +393,7 @@ def admin_update_post(
 ) -> PostOut:
     """Update an existing post."""
     user = require_user(request, db)
+    require_newsroom(user)
     return service.update_post(post_id, payload, user)
 
 
@@ -350,6 +407,7 @@ def admin_update_post_query(
 ) -> PostOut:
     """Update a post (query param version)."""
     user = require_user(request, db)
+    require_newsroom(user)
     return service.update_post(id, payload, user)
 
 
@@ -362,7 +420,46 @@ def admin_publish_post(
 ) -> PostOut:
     """Publish a post."""
     user = require_user(request, db)
+    require_staff(user)
     return service.publish_post(post_id, user)
+
+
+@router.post("/admin/posts/{post_id}/status", response_model=PostOut)
+def admin_change_status(
+    post_id: str,
+    payload: StatusChangeIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> PostOut:
+    user = require_user(request, db)
+    require_newsroom(user)
+    return service.change_status(post_id, payload.status, payload.scheduledAt, user)
+
+
+@router.get("/admin/posts/{post_id}/revisions")
+def admin_list_revisions(
+    post_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> list:
+    user = require_user(request, db)
+    require_newsroom(user)
+    return service.list_revisions(post_id)
+
+
+@router.post("/admin/posts/{post_id}/revisions/{revision_id:int}/rollback", response_model=PostOut)
+def admin_rollback_revision(
+    post_id: str,
+    revision_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> PostOut:
+    user = require_user(request, db)
+    require_newsroom(user)
+    return service.rollback_revision(post_id, revision_id, user)
 
 
 @router.post("/admin/post/publish", response_model=PostOut)
@@ -374,6 +471,7 @@ def admin_publish_post_query(
 ) -> PostOut:
     """Publish a post (query param version)."""
     user = require_user(request, db)
+    require_staff(user)
     return service.publish_post(id, user)
 
 
@@ -386,6 +484,7 @@ def admin_delete_post(
 ) -> dict:
     """Delete a post."""
     user = require_user(request, db)
+    require_newsroom(user)
     service.delete_post(post_id, user)
     return {"ok": True}
 
@@ -399,5 +498,6 @@ def admin_delete_post_query(
 ) -> dict:
     """Delete a post (query param version)."""
     user = require_user(request, db)
+    require_newsroom(user)
     service.delete_post(id, user)
     return {"ok": True}

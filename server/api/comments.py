@@ -8,6 +8,8 @@ from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
     CommentOut,
+    CommentReportCreate,
+    CommentReportOut,
     CommentTrendOut,
     CommentVoteRequest,
     MyCommentOut,
@@ -65,7 +67,7 @@ def list_my_comments(
     return service.list_my_comments(user)
 
 
-@router.post("/comments/{comment_id}/vote", response_model=CommentOut)
+@router.post("/comments/{comment_id:int}/vote", response_model=CommentOut)
 def vote_comment(
     comment_id: int,
     payload: CommentVoteRequest,
@@ -74,6 +76,19 @@ def vote_comment(
 ) -> CommentOut:
     """Vote on a comment."""
     return service.vote_comment(comment_id, payload.direction, request)
+
+
+@router.post("/comments/{comment_id:int}/report")
+def report_comment(
+    comment_id: int,
+    payload: CommentReportCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: CommentService = Depends(get_comment_service),
+) -> dict:
+    """Save a user report on a comment for admin review."""
+    user = get_optional_user(request, db)
+    return service.create_report(comment_id, payload.reason, user)
 
 
 # Admin comment endpoints
@@ -87,8 +102,35 @@ def admin_list_comments(
 ) -> list[AdminCommentOut]:
     """List all comments for admin."""
     user = require_user(request, db)
+    from ..dependencies import require_newsroom
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
     return service.list_all_comments(creator)
+
+
+@router.get("/admin/comments/reports", response_model=list[CommentReportOut])
+def admin_list_comment_reports(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: CommentService = Depends(get_comment_service),
+) -> list[CommentReportOut]:
+    """List comment reports: who reported what, on which comment, and why."""
+    user = require_user(request, db)
+    require_staff(user)
+    return service.list_reports()
+
+
+@router.delete("/admin/comments/reports/{report_id:int}")
+def admin_dismiss_comment_report(
+    report_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: CommentService = Depends(get_comment_service),
+) -> dict:
+    user = require_user(request, db)
+    require_staff(user)
+    service.dismiss_report(report_id)
+    return {"ok": True}
 
 
 @router.get("/admin/comments/pending-count", response_model=PendingCountOut)
@@ -107,7 +149,7 @@ def admin_pending_comment_count(
     return service.get_pending_count()
 
 
-@router.post("/admin/comments/{comment_id}/approve")
+@router.post("/admin/comments/{comment_id:int}/approve")
 def admin_approve_comment(
     comment_id: int,
     request: Request,
@@ -121,7 +163,7 @@ def admin_approve_comment(
     return {"ok": True}
 
 
-@router.delete("/admin/comments/{comment_id}/disapprove")
+@router.delete("/admin/comments/{comment_id:int}/disapprove")
 def admin_disapprove_comment(
     comment_id: int,
     request: Request,
@@ -145,21 +187,21 @@ def admin_trending_comments(
 ) -> list[CommentTrendOut]:
     """Get trending comments."""
     user = require_user(request, db)
+    from ..dependencies import require_newsroom
+    require_newsroom(user)
     creator = user.username if user.role == "author" else None
     return service.get_trending(days, limit, creator)
 
 
-@router.delete("/admin/comments/{comment_id}")
+@router.delete("/admin/comments/{comment_id:int}")
 def admin_delete_comment(
     comment_id: int,
     request: Request,
     db: Session = Depends(get_db),
     service: CommentService = Depends(get_comment_service),
 ) -> dict:
-    """Delete any comment (admin only)."""
-    from ..dependencies import require_admin
-
+    """Delete any comment (desk: admin or editor)."""
     user = require_user(request, db)
-    require_admin(user)
+    require_staff(user)
     service.delete_comment(comment_id)
     return {"ok": True}

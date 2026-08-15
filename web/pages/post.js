@@ -10,6 +10,8 @@ import { PostSkeleton } from '../components/Skeleton/Skeleton';
 import PostHero from '../components/PostHero/PostHero';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl, stripHtml } from '../lib/utils';
+import { authorPath, sectionPath } from '../lib/sections';
+import { newsroomApi } from '../lib/api';
 import { AD_SLOTS } from '../lib/ads';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
@@ -117,6 +119,12 @@ export default function PostPage({
     revalidateOnFocus: false,
   });
 
+  const { data: relatedData } = useSWR(
+    postData?.id ? `/api/posts/${encodeURIComponent(postData.id)}/related` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   const { data: latestData } = useSWR('/api/posts', fetcher, {
     fallbackData: initialLatest,
     revalidateOnFocus: false,
@@ -125,13 +133,20 @@ export default function PostPage({
   const [previewPost, setPreviewPost] = useState(null);
 
   useEffect(() => {
-    if (isPreview && typeof window !== 'undefined') {
-      const data = localStorage.getItem('gn_preview_data');
-      if (data) {
-        setPreviewPost(JSON.parse(data));
-      }
+    if (!isPreview || typeof window === 'undefined') return;
+    const qid = new URLSearchParams(String(router.asPath || '').split('?')[1] || '').get('id');
+    if (qid) {
+      api(`/api/admin/post?id=${encodeURIComponent(qid)}`)
+        .then(setPreviewPost)
+        .catch(() => {
+          const data = localStorage.getItem('gn_preview_data');
+          if (data) setPreviewPost(JSON.parse(data));
+        });
+      return;
     }
-  }, [isPreview]);
+    const data = localStorage.getItem('gn_preview_data');
+    if (data) setPreviewPost(JSON.parse(data));
+  }, [isPreview, router.asPath]);
 
   const post = useMemo(() => {
     const raw = isPreview ? previewPost : postData;
@@ -251,8 +266,42 @@ export default function PostPage({
         ) : post ? (
           <>
             <div className="max-w-[1360px] mx-auto px-5 md:px-10 pt-12 md:pt-14 pb-6">
-              <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_320px] gap-12 min-[1001px]:gap-[70px] items-start">
+              <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_320px] gap-12 min-[1001px]:gap-[70px] items-start min-[1001px]:items-stretch">
                 <article className="min-w-0">
+                  {post.isBreaking ? (
+                    <p className="m-0 mb-3 text-[12px] font-bold uppercase tracking-wide text-[#c0392b]">Breaking</p>
+                  ) : null}
+                  {post.isSponsored ? (
+                    <p className="m-0 mb-3 text-[12px] font-bold uppercase tracking-wide text-ink-tertiary">
+                      Paid / branded content
+                    </p>
+                  ) : null}
+                  {post.correction ? (
+                    <div className="mb-6 p-4 border border-[#e8b342] bg-[#e8b342]/10 text-[14px] text-ink">
+                      <strong>Correction</strong>
+                      {post.correctedAt || post.updatedAt ? (
+                        <span className="text-ink-tertiary">
+                          {' '}
+                          · {new Date(post.correctedAt || post.updatedAt).toLocaleString()}
+                        </span>
+                      ) : null}
+                      <p className="m-0 mt-2 whitespace-pre-wrap">{post.correction}</p>
+                    </div>
+                  ) : null}
+                  {post.sourceUrl || post.sourceName || post.isBot ? (
+                    <p className="m-0 mb-5 text-[13px] text-ink-secondary">
+                      Rewritten from{' '}
+                      {post.sourceUrl ? (
+                        <a href={post.sourceUrl} className="text-mint" target="_blank" rel="noreferrer">
+                          {post.sourceName || post.sourceUrl}
+                        </a>
+                      ) : (
+                        <span>{post.sourceName || 'a partner wire'}</span>
+                      )}
+                      . Editors review these stories before they go live.{' '}
+                      <Link href="/sourcing">Sourcing policy</Link>
+                    </p>
+                  ) : null}
                   {authorName ? (
                     <div className="flex gap-3.5 items-start mb-8">
                       {authorAvatarUrl ? (
@@ -262,7 +311,7 @@ export default function PostPage({
                           className="w-10 h-10 rounded-full object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[#ff8fc8] to-[#5B4FE8] text-white font-display text-sm flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full shrink-0 bg-mint text-black font-display text-sm flex items-center justify-center">
                           {authorInitials}
                         </div>
                       )}
@@ -275,7 +324,10 @@ export default function PostPage({
                           label=""
                           className="inline-flex"
                         />{' '}
-                        covers {post.bucket || 'the news'} at Wirefringe.
+                        covers{' '}
+                        <Link href={sectionPath(post.bucket)}>{post.bucket || 'the news'}</Link> at
+                        Wirefringe.{' '}
+                        <Link href={authorPath(post)}>More by {authorName}</Link>
                       </p>
                     </div>
                   ) : null}
@@ -295,54 +347,89 @@ export default function PostPage({
                     onClick={() => setCommentsOpen(true)}
                   />
 
-                  <div className="on-accent bg-[#ECE7FC] text-[#1c1c1c] rounded-[14px] px-7 py-[26px] mt-1 mb-2">
-                    <p className="m-0 mb-4 text-[15.5px] leading-relaxed">
-                      <strong>Follow topics and authors</strong> from this story to see more like
-                      it in your personalized homepage feed.
+                  {(post.tags || []).length ? (
+                    <p className="mt-6 text-[13px] text-ink-secondary">
+                      Tags:{' '}
+                      {post.tags.map((tag) => (
+                        <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`} className="mr-2 text-mint">
+                          {tag}
+                        </Link>
+                      ))}
                     </p>
-                    <Link
-                      href={`/?category=${encodeURIComponent(
-                        String(post.bucket || 'tech')
-                          .toLowerCase()
-                          .replace(/ & /g, '-')
-                          .replace(/ /g, '-')
-                      )}`}
-                      className="inline-flex items-center gap-1.5 font-mono font-bold text-[12.5px] tracking-wide uppercase text-[#463AC9] py-1"
+                  ) : null}
+
+                  {(relatedData || []).length ? (
+                    <div className="mt-8">
+                      <h3 className="font-mono text-[12px] uppercase tracking-wide text-mint">Related</h3>
+                      {relatedData.map((r) => (
+                        <Link key={r.id} href={postUrl(r)} className="block py-2 text-ink no-underline">
+                          {r.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="bg-mint/10 border border-mint/20 text-ink rounded-[14px] px-7 py-[26px] mt-6 mb-2">
+                    <p className="m-0 mb-4 text-[15.5px] leading-relaxed">
+                      <strong>Follow this topic or author</strong> to see more like it in For You.
+                    </p>
+                    <button
+                      type="button"
+                      className="mr-3 border-0 bg-mint text-black h-9 px-3 font-semibold cursor-pointer"
+                      onClick={() => {
+                        if (!me) {
+                          router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
+                          return;
+                        }
+                        newsroomApi.follow('topic', post.bucket || 'Tech');
+                      }}
                     >
-                      <span className="inline-flex items-center justify-center w-[17px] h-[17px] rounded-full border-[1.4px] border-current text-xs leading-none">
-                        +
-                      </span>
-                      {post.bucket || 'News'}
-                    </Link>
+                      Follow {post.bucket || 'News'}
+                    </button>
+                    <button
+                      type="button"
+                      className="border border-line bg-transparent text-ink h-9 px-3 cursor-pointer"
+                      onClick={() => {
+                        if (!me) {
+                          router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
+                          return;
+                        }
+                        newsroomApi.follow('author', post.creatorName || post.creator);
+                      }}
+                    >
+                      Follow author
+                    </button>
                   </div>
                 </article>
 
-                <aside className="relative min-w-0">
-                  <span
-                    className="hidden min-[1200px]:block absolute -right-2 top-8 font-display text-[160px] leading-none text-[#5FF2C0]/35 pointer-events-none select-none tracking-[-0.04em] [writing-mode:vertical-rl]"
-                    aria-hidden="true"
-                  >
-                    WF
-                  </span>
+                <aside className="relative min-w-0 min-[1001px]:self-stretch">
                   <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
-                  <h3 className="relative font-mono text-[13px] tracking-[0.06em] uppercase text-[#463AC9] font-bold mt-6 mb-1.5">
-                    Most Popular
-                  </h3>
-                  <ol className="relative list-none m-0 p-0">
-                    {sidebarPosts.map((p, index) => (
-                      <li key={p.id} className="border-t border-line py-[18px] last:border-b">
-                        <Link
-                          href={postUrl(p)}
-                          className="flex gap-3 no-underline text-ink font-sans font-bold text-base leading-snug hover:text-[#463AC9]"
-                        >
-                          <span className="font-mono text-[#5B4FE8] font-bold shrink-0">
-                            {index + 1}.
-                          </span>
-                          <span>{p.title}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ol>
+                  <div
+                    className="relative pt-2 max-[1000px]:static min-[1001px]:sticky min-[1001px]:top-[calc(var(--header-height,96px)+16px)] min-[1001px]:z-[2]"
+                  >
+                    <span className="wf-mark pointer-events-none select-none hidden min-[1001px]:flex" aria-hidden="true">
+                      <span>F</span>
+                      <span>W</span>
+                    </span>
+                    <h3 className="relative z-[1] font-mono text-[13px] tracking-[0.06em] uppercase text-mint font-bold mt-4 mb-1.5">
+                      Most Popular
+                    </h3>
+                    <ol className="relative z-[1] list-none m-0 p-0">
+                      {sidebarPosts.map((p, index) => (
+                        <li key={p.id} className="border-t border-line py-[18px] last:border-b">
+                          <Link
+                            href={postUrl(p)}
+                            className="flex gap-3 no-underline text-ink font-sans font-bold text-base leading-snug hover:text-mint"
+                          >
+                            <span className="font-mono text-mint font-bold shrink-0">
+                              {index + 1}.
+                            </span>
+                            <span>{p.title}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </aside>
               </div>
             </div>
@@ -378,7 +465,7 @@ export default function PostPage({
                               />
                             ) : null}
                           </div>
-                          <h4 className="m-0 font-sans font-extrabold text-sm leading-snug line-clamp-2 text-[#111] group-hover:text-[#463AC9]">
+                          <h4 className="m-0 font-sans font-extrabold text-sm leading-snug line-clamp-2 text-[#111] group-hover:text-[#0b8f72]">
                             {p.title}
                           </h4>
                         </Link>
@@ -400,7 +487,7 @@ export default function PostPage({
                           ) : null}
                           <Link
                             href={postUrl(p)}
-                            className="font-sans font-extrabold text-sm leading-snug line-clamp-2 hover:text-[#463AC9]"
+                            className="font-sans font-extrabold text-sm leading-snug line-clamp-2 hover:text-[#0b8f72]"
                           >
                             {p.title}
                           </Link>

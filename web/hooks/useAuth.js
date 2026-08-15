@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../lib/api';
+import { accessFor } from '../lib/access';
 
 const AuthContext = createContext(null);
 
@@ -11,10 +12,11 @@ function useAuthState() {
 
   const isAuthed = Boolean(me);
 
-  const canManageUsers = me?.role === 'admin';
-  const canModerateComments = me?.role === 'admin' || me?.role === 'editor';
-  const canViewPendingCommentsCount = Boolean(me);
-  const isAuthor = me?.role === 'author';
+  const access = accessFor(me);
+  const canManageUsers = access.canManageUsers;
+  const canModerateComments = access.canModerateComments;
+  const canViewPendingCommentsCount = access.isNewsroom;
+  const isAuthor = access.isAuthor;
 
   const refreshMe = useCallback(async () => {
     let token = null;
@@ -210,6 +212,7 @@ function useAuthState() {
       isLoading,
       isInitialLoading,
       error,
+      access,
       canManageUsers,
       canModerateComments,
       canViewPendingCommentsCount,
@@ -231,6 +234,7 @@ function useAuthState() {
       isLoading,
       isInitialLoading,
       error,
+      access,
       canManageUsers,
       canModerateComments,
       canViewPendingCommentsCount,

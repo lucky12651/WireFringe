@@ -2,11 +2,19 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import func, literal, not_, or_, select
 from sqlalchemy.orm import Session
 
 from ..models import Post
 from .base import BaseRepository
+
+BOT_CREATOR_KEYS = (
+    "wirefringe",
+    "wire fringe",
+    "news bot engine",
+    "newsbot",
+    "news bot",
+)
 
 
 class PostRepository(BaseRepository[Post]):
@@ -37,6 +45,8 @@ class PostRepository(BaseRepository[Post]):
         if public_only:
             # Never show explicitly hidden posts
             query = query.where(Post.is_hidden.is_(False))
+            if hasattr(Post, "status"):
+                query = query.where(Post.status == "published")
             if hide_bot:
                 # Exclude flagged bot posts
                 query = query.where(Post.is_bot.is_(False))
@@ -59,10 +69,11 @@ class PostRepository(BaseRepository[Post]):
                         not_(or_(*[creator_key == k for k in bot_keys])),
                     )
                 )
+        order = [Post.published_at.desc().nullslast()]
+        if hasattr(Post, "is_pinned"):
+            order = [Post.is_pinned.desc(), Post.is_breaking.desc(), Post.published_at.desc().nullslast()]
         return (
-            self.db.execute(
-                query.order_by(Post.published_at.desc().nullslast())
-            )
+            self.db.execute(query.order_by(*order))
             .scalars()
             .all()
         )
@@ -79,25 +90,93 @@ class PostRepository(BaseRepository[Post]):
             .all()
         )
 
-    def list_paginated(self, offset: int = 0, limit: int = 20, creator: str | None = None) -> list[Post]:
+    def _apply_source(self, query, source: str | None):
+        kind = (source or "editorial").strip().lower()
+        if kind in {"all", ""}:
+            return query
+        creator_key = func.lower(func.trim(Post.creator))
+        known_bot = or_(*[creator_key == k for k in BOT_CREATOR_KEYS])
+        is_bot_row = or_(Post.is_bot.is_(True), known_bot)
+        if kind == "bot":
+            return query.where(is_bot_row)
+        return query.where(Post.is_bot.is_(False)).where(
+            or_(Post.creator.is_(None), Post.creator == "", not_(known_bot))
+        )
+
+    def _apply_filters(
+        self,
+        query,
+        *,
+        q: str | None = None,
+        status: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ):
+        text = (q or "").strip()
+        if text:
+            like = f"%{text}%"
+            query = query.where(or_(Post.title.ilike(like), Post.excerpt.ilike(like)))
+        kind = (status or "").strip().lower()
+        if kind and kind not in {"all", ""}:
+            if kind == "hidden":
+                # Hide-from-site only (bot hide / taken down). Drafts are also
+                # stored as is_hidden, so they must not appear here.
+                query = query.where(
+                    Post.is_hidden.is_(True),
+                    func.lower(Post.status) == "published",
+                )
+            else:
+                query = query.where(func.lower(Post.status) == kind)
+        stamp = func.coalesce(Post.published_at, Post.updated_at)
+        if date_from is not None:
+            query = query.where(stamp >= date_from)
+        if date_to is not None:
+            query = query.where(stamp < date_to)
+        return query
+
+    def list_paginated(
+        self,
+        offset: int = 0,
+        limit: int = 20,
+        creator: str | None = None,
+        source: str | None = "editorial",
+        q: str | None = None,
+        status: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> list[Post]:
         """List posts with pagination."""
         query = select(Post).order_by(
             Post.published_at.desc().nullslast(), Post.id.desc()
         )
         if creator:
             query = query.where(Post.creator == creator)
-        
+        else:
+            query = self._apply_source(query, source)
+        query = self._apply_filters(query, q=q, status=status, date_from=date_from, date_to=date_to)
+
         return (
             self.db.execute(query.offset(offset).limit(limit))
             .scalars()
             .all()
         )
 
-    def count(self, creator: str | None = None) -> int:
+    def count(
+        self,
+        creator: str | None = None,
+        source: str | None = "editorial",
+        q: str | None = None,
+        status: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> int:
         """Get total count of posts."""
         query = select(func.count(Post.id))
         if creator:
             query = query.where(Post.creator == creator)
+        else:
+            query = self._apply_source(query, source)
+        query = self._apply_filters(query, q=q, status=status, date_from=date_from, date_to=date_to)
         return self.db.execute(query).scalar() or 0
 
     def count_by_creator(self, creator: str | None = None) -> list[tuple[str, int]]:

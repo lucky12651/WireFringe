@@ -10,6 +10,7 @@ export function NavItem({
   isDisabled,
   isHidden,
   pendingCommentsCount,
+  unreadContactCount,
   onNavigate,
   collapsed,
 }) {
@@ -63,6 +64,22 @@ export function NavItem({
           )}
         >
           {pendingCommentsCount}
+        </span>
+      )}
+      {item.id === 'contact' && unreadContactCount > 0 && (
+        <span
+          className={cn(
+            'font-bold text-center shrink-0 rounded-full',
+            isActive
+              ? 'bg-[var(--bg)] text-ink'
+              : 'bg-ink text-[var(--bg)]',
+            collapsed
+              ? 'absolute top-1 right-1 ml-0 text-[9px] py-0.5 px-1.5 min-w-4'
+              : 'ml-auto text-[10px] py-0.5 px-1.5 min-w-[18px]',
+            'max-[980px]:absolute max-[980px]:top-1.5 max-[980px]:right-1.5 max-[980px]:ml-0 max-[980px]:text-[9px] max-[980px]:py-0.5 max-[980px]:px-1.5 max-[980px]:min-w-4'
+          )}
+        >
+          {unreadContactCount}
         </span>
       )}
     </button>

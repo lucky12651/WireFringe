@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import StaticPage from '../components/StaticPage/StaticPage';
 import { EDITORIAL_EMAIL, SITE_NAME } from '../lib/site';
+import { newsroomApi } from '../lib/api';
 
 export default function TipUsPage() {
   const [message, setMessage] = useState('');
@@ -15,16 +16,14 @@ export default function TipUsPage() {
       setStatus('Please describe the tip or story idea.');
       return;
     }
-    const body = [
-      'Story tip for ' + SITE_NAME,
-      contact.trim() ? `Contact (optional): ${contact.trim()}` : 'Contact: (anonymous)',
-      '',
-      msg,
-    ].join('\n');
-    window.location.href = `mailto:${EDITORIAL_EMAIL}?subject=${encodeURIComponent(
-      `[Tip] ${SITE_NAME}`
-    )}&body=${encodeURIComponent(body)}`;
-    setStatus('Your email app should open. If not, write us at the address below.');
+    newsroomApi
+      .sendTip(contact.trim(), msg)
+      .then(() => {
+        setMessage('');
+        setContact('');
+        setStatus('Tip received. The newsroom can read it in Admin → Tips.');
+      })
+      .catch((err) => setStatus(err.message || 'Could not send the tip.'));
   };
 
   return (
@@ -76,7 +75,7 @@ export default function TipUsPage() {
         </div>
         <button
           type="submit"
-          className="self-start mt-1 bg-mint text-black border-0 rounded-sm font-extrabold text-[13px] tracking-wide uppercase px-[22px] py-3 cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(60,255,208,0.2)]"
+          className="self-start mt-1 bg-mint text-black border-0 rounded-sm font-extrabold text-[13px] tracking-wide uppercase px-[22px] py-3 cursor-pointer transition-all hover:-translate-y-px hover:shadow-mint"
         >
           Send tip
         </button>

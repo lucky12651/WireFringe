@@ -6,28 +6,29 @@ import { SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
+import { getTheme, THEME_CHANGE_EVENT } from '../../lib/theme';
 
 const NAV = [
-  { label: 'Tech', cat: 'Tech' },
-  { label: 'Reviews', cat: 'Tech' },
-  { label: 'Science', cat: 'AI & Future Tech' },
-  { label: 'Entertainment', cat: 'Business & Markets' },
-  { label: 'AI', cat: 'AI & Future Tech' },
-  { label: 'Policy', cat: 'Personal Finance' },
+  { label: 'Tech', href: '/section/tech' },
+  { label: 'AI', href: '/section/ai' },
+  { label: 'Business', href: '/section/business' },
+  { label: 'Finance', href: '/section/finance' },
+  { label: 'India', href: '/section/india' },
+  { label: 'Sports', href: '/section/sports' },
 ];
 
 const DRAWER_SECTIONS = [
   {
     title: 'Sections',
     items: [
-      { label: 'Tech', cat: 'Tech' },
-      { label: 'Reviews', cat: 'Tech' },
-      { label: 'Science', cat: 'AI & Future Tech' },
-      { label: 'Entertainment', cat: 'Business & Markets' },
-      { label: 'AI', cat: 'AI & Future Tech' },
-      { label: 'Policy', cat: 'Personal Finance' },
-      { label: 'Business', cat: 'Business & Markets' },
-      { label: 'Finance', cat: 'Personal Finance' },
+      { label: 'Tech', href: '/section/tech' },
+      { label: 'AI', href: '/section/ai' },
+      { label: 'Business', href: '/section/business' },
+      { label: 'Finance', href: '/section/finance' },
+      { label: 'India', href: '/section/india' },
+      { label: 'Sports', href: '/section/sports' },
+      { label: 'Masthead', href: '/masthead' },
+      { label: 'Sourcing', href: '/sourcing' },
     ],
   },
   {
@@ -57,8 +58,17 @@ export default function Header({
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [theme, setTheme] = useState('dark');
   const searchRef = useRef(null);
   const headerRef = useRef(null);
+
+  useEffect(() => {
+    const sync = () => setTheme(getTheme());
+    sync();
+    window.addEventListener(THEME_CHANGE_EVENT, sync);
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, sync);
+  }, []);
 
   useEffect(() => setLocalSearch(searchQuery), [searchQuery]);
   useEffect(() => {
@@ -90,6 +100,31 @@ export default function Header({
   }, [menuOpen]);
 
   useEffect(() => {
+    if (!accentColor || typeof window === 'undefined') {
+      setScrolled(false);
+      return;
+    }
+
+    let frame = 0;
+    const apply = () => {
+      const next = window.scrollY > 16;
+      setScrolled((prev) => (prev === next ? prev : next));
+      frame = 0;
+    };
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(apply);
+    };
+
+    apply();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [accentColor]);
+
+  useEffect(() => {
     const el = headerRef.current;
     if (!el || typeof window === 'undefined') return;
 
@@ -110,6 +145,10 @@ export default function Header({
 
   const goCat = (cat) => {
     setMenuOpen(false);
+    if (typeof cat === 'string' && cat.startsWith('/')) {
+      router.push(cat);
+      return;
+    }
     if (onCategoryChange) onCategoryChange(cat);
     else if (cat === 'All') router.push('/');
     else router.push(`/?category=${slugifyCategory(cat)}`);
@@ -134,10 +173,11 @@ export default function Header({
         ref={headerRef}
         className={cn(
           'sticky top-0 z-[11000] w-full',
-          accentColor && 'on-accent',
-          !accentColor && 'bg-bg/80 backdrop-blur-[16px] backdrop-saturate-150'
+          accentColor && !scrolled && 'post-header',
+          accentColor && !scrolled && theme === 'light' && 'on-accent',
+          accentColor && scrolled && 'post-header post-header-scrolled',
+          (!accentColor || scrolled) && 'bg-bg/80 backdrop-blur-[16px] backdrop-saturate-150'
         )}
-        style={accentColor ? { backgroundColor: accentColor } : undefined}
       >
         <div className="relative w-full max-w-site mx-auto px-4 pt-1.5 pb-1.5 box-border md:px-6 md:pt-2 md:pb-1.5">
           <div className="flex justify-end items-center gap-3.5 w-full mb-1">
@@ -195,9 +235,9 @@ export default function Header({
                         type="button"
                         className={cn(
                           'appearance-none bg-transparent border-0 text-ink text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
-                          activeCategory === item.cat ? 'text-mint' : 'hover:text-mint'
+                          'hover:text-mint'
                         )}
-                        onClick={() => goCat(item.cat)}
+                        onClick={() => goHref(item.href)}
                       >
                         {item.label}
                       </button>
@@ -208,7 +248,7 @@ export default function Header({
                 <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-line">
                   <button
                     type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
                     aria-label="Search"
                     onClick={() => {
                       setSearchOpen((v) => !v);
@@ -219,7 +259,7 @@ export default function Header({
                   </button>
                   <button
                     type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10 hover:shadow-[0_0_16px_rgba(60,255,208,0.12)]"
+                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
                     aria-label="Notifications"
                   >
                     <BellIcon />
@@ -260,13 +300,19 @@ export default function Header({
           <div
             className={cn(
               'border-t px-5 pt-3 pb-3.5 animate-drop-in',
-              accentColor ? 'border-black/10' : 'border-line-light bg-bg'
+              accentColor && !scrolled ? 'border-black/10 bg-transparent' : 'border-line-light bg-bg'
             )}
-            style={accentColor ? { backgroundColor: accentColor } : undefined}
           >
             <form
               className="max-w-site mx-auto relative flex items-center"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = localSearch.trim();
+                if (q) {
+                  setSearchOpen(false);
+                  router.push(`/search?q=${encodeURIComponent(q)}`);
+                }
+              }}
             >
               <SearchIcon className="absolute left-3 text-ink-muted pointer-events-none" />
               <input

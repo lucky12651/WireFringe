@@ -51,6 +51,7 @@ DEFAULT_BOT: dict[str, Any] = {
     "recentCacheHours": 2,
     "maxItemsPerFeed": 5,
     "processPerCycle": 1,
+    "autoPublish": False,
 }
 
 ADSENSE_KEY = "adsense"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_admin, require_user
+from ..dependencies import get_db, require_staff, require_user
 from ..schemas import CategoryCreate, CategoryOut, CategoryWithCountOut
 from ..services import CategoryService
 
@@ -39,7 +39,7 @@ def admin_create_category(
 ) -> CategoryOut:
     """Create a new category."""
     user = require_user(request, db)
-    require_admin(user)
+    require_staff(user)
     return service.create_category(payload.name)
 
 
@@ -52,6 +52,6 @@ def admin_delete_category(
 ) -> dict:
     """Delete a category."""
     user = require_user(request, db)
-    require_admin(user)
+    require_staff(user)
     service.delete_category(category_id)
     return {"ok": True}

@@ -22,13 +22,45 @@ export function PostsView({
   limit,
   isLoading,
   queue,
-  refreshQueue
+  refreshQueue,
+  access,
+  source = 'editorial',
+  onSourceChange,
+  filters = { q: '', status: '', dateFrom: '', dateTo: '' },
+  onFiltersChange,
 }) {
   const postsScrollRef = useRef(null);
   const postsScrollHideTimerRef = useRef(null);
-  const isAuthor = me?.role === 'author';
+  const isAuthor = Boolean(access?.isAuthor ?? me?.role === 'author');
+  const canProcessQueue = Boolean(access?.canProcessQueue && !isAuthor);
+  const canDeletePublished = Boolean(access?.canDeleteAnyPost);
 
   const [activeTab, setActiveTab] = useState('published');
+
+  useEffect(() => {
+    if (!canProcessQueue && activeTab === 'queue') setActiveTab('published');
+    if (isAuthor && activeTab === 'bot') setActiveTab('published');
+  }, [canProcessQueue, isAuthor, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'bot' && source !== 'bot') onSourceChange?.('bot');
+    if ((activeTab === 'published' || activeTab === 'draft') && source !== 'editorial') {
+      onSourceChange?.('editorial');
+    }
+  }, [activeTab, source, onSourceChange]);
+
+  const goTab = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'published') {
+      onSourceChange?.('editorial');
+      if (filters.status === 'draft') onFiltersChange?.({ status: '' });
+    } else if (tab === 'draft') {
+      onSourceChange?.('editorial');
+      onFiltersChange?.({ status: 'draft' });
+    } else if (tab === 'bot') {
+      onSourceChange?.('bot');
+    }
+  };
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingLinks, setProcessingLinks] = useState(new Set());
   const [selectedQueueLinks, setSelectedQueueLinks] = useState(new Set());
@@ -189,16 +221,32 @@ export function PostsView({
           <div className={tw.tabs}>
             <button
               className={cn(tw.tab, activeTab === 'published' && tw.tabActive)}
-              onClick={() => setActiveTab('published')}
+              onClick={() => goTab('published')}
             >
-              Published <span className="ml-1 opacity-80">{postsCount}</span>
+              All staff post <span className="ml-1 opacity-80">{activeTab === 'published' ? postsCount : ''}</span>
             </button>
             <button
+              className={cn(tw.tab, activeTab === 'draft' && tw.tabActive)}
+              onClick={() => goTab('draft')}
+            >
+              Draft <span className="ml-1 opacity-80">{activeTab === 'draft' ? postsCount : ''}</span>
+            </button>
+            {!isAuthor ? (
+            <button
+              className={cn(tw.tab, activeTab === 'bot' && tw.tabActive)}
+              onClick={() => goTab('bot')}
+            >
+              Bot posts <span className="ml-1 opacity-80">{source === 'bot' ? postsCount : ''}</span>
+            </button>
+            ) : null}
+            {canProcessQueue ? (
+            <button
               className={cn(tw.tab, activeTab === 'queue' && tw.tabActive)}
-              onClick={() => setActiveTab('queue')}
+              onClick={() => goTab('queue')}
             >
               Queue <span className="ml-1 opacity-80">{queue.length}</span>
             </button>
+            ) : null}
           </div>
           <div className={tw.headerActions}>
             {activeTab === 'queue' && (
@@ -214,14 +262,67 @@ export function PostsView({
       </section>
 
       <section className={tw.adminSection}>
-        {activeTab === 'published' ? (
+        {activeTab === 'published' || activeTab === 'draft' || activeTab === 'bot' ? (
           <>
+            {activeTab === 'published' ? (
+              <div className="flex flex-wrap items-end gap-2.5 mb-4">
+                <div className="flex-1 min-w-[180px]">
+                  <label className={tw.formLabel} htmlFor="staff-post-search">Search</label>
+                  <input
+                    id="staff-post-search"
+                    className={tw.formInput}
+                    type="search"
+                    value={filters.q || ''}
+                    placeholder="Title or excerpt"
+                    onChange={(e) => onFiltersChange?.({ q: e.target.value })}
+                  />
+                </div>
+                <div className="w-[160px]">
+                  <label className={tw.formLabel} htmlFor="staff-post-status">Status</label>
+                  <select
+                    id="staff-post-status"
+                    className={tw.formSelect}
+                    value={filters.status || ''}
+                    onChange={(e) => onFiltersChange?.({ status: e.target.value })}
+                  >
+                    <option value="">All statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="review">Review</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="published">Published</option>
+                    <option value="unpublished">Unpublished</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </div>
+                <div className="w-[150px]">
+                  <label className={tw.formLabel} htmlFor="staff-post-from">From</label>
+                  <input
+                    id="staff-post-from"
+                    className={tw.formInput}
+                    type="date"
+                    value={filters.dateFrom || ''}
+                    onChange={(e) => onFiltersChange?.({ dateFrom: e.target.value })}
+                  />
+                </div>
+                <div className="w-[150px]">
+                  <label className={tw.formLabel} htmlFor="staff-post-to">To</label>
+                  <input
+                    id="staff-post-to"
+                    className={tw.formInput}
+                    type="date"
+                    value={filters.dateTo || ''}
+                    onChange={(e) => onFiltersChange?.({ dateTo: e.target.value })}
+                  />
+                </div>
+              </div>
+            ) : null}
             <div className={tw.tableWrap}>
               <table className={tw.table}>
                 <thead>
                   <tr>
                     <th className={tw.th}>Article</th>
                     <th className={tw.th}>Category</th>
+                    <th className={tw.th}>Status</th>
                     <th className={tw.th}>Date</th>
                     <th className={cn(tw.th, tw.textRight)}>Actions</th>
                   </tr>
@@ -246,6 +347,11 @@ export function PostsView({
                         <span className="font-mono text-xs text-ink-secondary">{p.bucket}</span>
                       </td>
                       <td className={tw.td}>
+                        <span className={tw.statusBadge}>
+                          {p.status || (p.date ? 'published' : 'draft')}
+                        </span>
+                      </td>
+                      <td className={tw.td}>
                         <span className="text-ink-secondary">{formatDateShort(p.date)}</span>
                       </td>
                       <td className={cn(tw.td, tw.textRight)}>
@@ -253,9 +359,11 @@ export function PostsView({
                           <a href={`/admin/post?id=${encodeURIComponent(p.id)}`} className={tw.iconBtn} title="Edit">
                             <EditIcon size={16} />
                           </a>
+                          {canDeletePublished || (p.status || (p.date ? 'published' : 'draft')) !== 'published' ? (
                           <button className={tw.iconBtnDanger} onClick={() => handleDeleteClick(p)} title="Delete">
                             <TrashIcon size={16} />
                           </button>
+                          ) : null}
                         </div>
                       </td>
                     </tr>

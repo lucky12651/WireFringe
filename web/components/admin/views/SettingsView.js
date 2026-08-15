@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initialsFromName, cn } from '../../../lib/utils';
 import { MIN_PASSWORD_LENGTH } from '../../../lib/constants';
 import { tw } from '../../../lib/tw';
+import { newsroomApi } from '../../../lib/api';
 
 export function SettingsView({
   me,
@@ -12,6 +13,7 @@ export function SettingsView({
   onChangePassword,
 }) {
   const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
   const [profileHint, setProfileHint] = useState('');
   const [photoHint, setPhotoHint] = useState('');
 
@@ -28,6 +30,7 @@ export function SettingsView({
   useEffect(() => {
     if (me) {
       setDisplayName(me.displayName || '');
+      setBio(me.bio || '');
       setBrandEnabled(!!me.brandBylineEnabled);
       setProfileHint('');
       setPhotoHint('');
@@ -57,7 +60,7 @@ export function SettingsView({
     e.preventDefault();
     setProfileHint('');
 
-    const result = await onUpdateProfile(displayName);
+    const result = await onUpdateProfile({ displayName, bio });
     if (result.success) {
       setProfileHint('Saved.');
     } else {
@@ -76,7 +79,7 @@ export function SettingsView({
         setBrandHint(
           next
             ? 'Brand logo byline is ON for your posts.'
-            : 'Brand logo byline is OFF — username text will show on posts.'
+            : 'Brand logo byline is OFF — your name will show on posts.'
         );
       } else {
         setBrandEnabled(!!me?.brandBylineEnabled);
@@ -142,7 +145,7 @@ export function SettingsView({
       <section className={tw.adminSection}>
         <h3 className={tw.adminSectionTitle}>Public profile</h3>
         <p className={tw.adminSectionDesc}>
-          Name and photo shown on your posts. Username cannot be changed.
+          Name and photo shown on your posts. Email cannot be changed.
         </p>
         <div className="flex items-center gap-4 flex-wrap mb-6">
           <div className="w-16 h-16 rounded-full bg-bg-hover border border-line overflow-hidden flex items-center justify-center shrink-0">
@@ -164,10 +167,10 @@ export function SettingsView({
         </div>
         <form onSubmit={handleProfileSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[720px]">
           <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Username</label>
+            <label className={tw.formLabel}>Email</label>
             <input
-              type="text"
-              value={me?.username || ''}
+              type="email"
+              value={me?.email || me?.username || ''}
               disabled
               className={cn(tw.formInput, tw.disabledInput)}
             />
@@ -182,6 +185,15 @@ export function SettingsView({
               placeholder="Name shown on articles"
             />
           </div>
+          <div className="sm:col-span-2">
+            <label className={tw.formLabel}>Author bio</label>
+            <textarea
+              className={tw.formTextarea}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Shown on your public author page"
+            />
+          </div>
           <div className="sm:col-span-2 flex items-center gap-3">
             <button type="submit" className={tw.primaryBtn}>
               Save profile
@@ -190,6 +202,8 @@ export function SettingsView({
           </div>
         </form>
       </section>
+
+      <TwoFactorBlock enabled={!!me?.totpEnabled} />
 
       <section className={tw.adminSection}>
         <h3 className={tw.adminSectionTitle}>Security</h3>
@@ -279,11 +293,11 @@ export function SettingsView({
               />
               <span>
                 <span className="block font-semibold text-ink text-sm">
-                  Show brand logo instead of username on posts
+                  Show brand logo instead of your name on posts
                 </span>
                 <span className="block text-xs text-ink-secondary mt-1">
                   When on, readers see the logo instead of
-                  &ldquo;{me?.displayName || me?.username || 'Username'}&rdquo;.
+                  &ldquo;{me?.displayName || 'your name'}&rdquo;.
                 </span>
               </span>
             </label>
@@ -295,5 +309,39 @@ export function SettingsView({
         </div>
       </section>
     </div>
+  );
+}
+
+function TwoFactorBlock({ enabled }) {
+  const [secret, setSecret] = useState('');
+  const [code, setCode] = useState('');
+  const [hint, setHint] = useState(enabled ? 'Authenticator is on.' : '');
+  return (
+    <section className={tw.adminSection}>
+      <h3 className={tw.adminSectionTitle}>Two-factor authentication</h3>
+      <p className={tw.adminSectionDesc}>Use an authenticator app. Turn this on before adding more staff.</p>
+      <button
+        type="button"
+        className={tw.secondaryBtn}
+        onClick={async () => {
+          const out = await newsroomApi.setup2fa();
+          setSecret(out.secret || '');
+          setHint(out.otpauth || 'Scan this secret in your app.');
+        }}
+      >
+        Generate secret
+      </button>
+      {secret ? <p className="text-xs break-all mt-2">{secret}</p> : null}
+      <div className="flex gap-2 mt-3 max-w-[360px]">
+        <input className={tw.formInput} value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" />
+        <button type="button" className={tw.primaryBtn} onClick={() => newsroomApi.confirm2fa(code).then(() => setHint('2FA is on.'))}>
+          Confirm
+        </button>
+      </div>
+      <button type="button" className={tw.secondaryBtn + ' mt-3'} onClick={() => newsroomApi.disable2fa().then(() => setHint('2FA is off.'))}>
+        Turn off 2FA
+      </button>
+      {hint ? <p className={tw.formHint}>{hint}</p> : null}
+    </section>
   );
 }

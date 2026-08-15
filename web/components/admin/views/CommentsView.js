@@ -1,19 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort, cn } from '../../../lib/utils';
 import { CheckIcon, TrashIcon } from '../Layout/icons';
 import { tw } from '../../../lib/tw';
+import { REPORT_REASONS, reportReasonCategory } from '../../../lib/reportReasons';
 
 export function CommentsView({
   comments,
+  reports = [],
+  loadError = '',
   onApprove,
   onDisapprove,
   onDelete,
+  onDismissReport,
   canModerateComments,
   canManageUsers,
 }) {
   const [hint, setHint] = useState('');
   const [openCommentId, setOpenCommentId] = useState(null);
+  const [reasonFilter, setReasonFilter] = useState('all');
 
   useEffect(() => {
     if (openCommentId == null) return;
@@ -61,22 +66,144 @@ export function CommentsView({
     setOpenCommentId((prev) => (prev === id ? null : id));
   };
 
+  const handleDismissReport = async (id) => {
+    if (!onDismissReport) return;
+    setHint('');
+    const result = await onDismissReport(id);
+    if (!result.success) setHint(result.error);
+  };
+
+  const filteredReports = useMemo(() => {
+    const list = Array.isArray(reports) ? reports : [];
+    if (reasonFilter === 'all') return list;
+    return list.filter((r) => reportReasonCategory(r.reason) === reasonFilter);
+  }, [reports, reasonFilter]);
+
   return (
     <div className={tw.adminView}>
+      {hint || loadError ? (
+        <p className={cn(tw.formHint, 'text-[#ff8a8a] mb-3')}>{hint || loadError}</p>
+      ) : null}
+      {canModerateComments ? (
+      <section className={tw.adminSection}>
+        <div className="flex items-end justify-between gap-3 mb-4 flex-wrap">
+          <div>
+            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Reports</h3>
+            <p className={cn(tw.adminSectionDesc, 'mb-0')}>
+              What users reported, on which comment, and why.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <label className="sr-only" htmlFor="report-reason-filter">
+              Filter reports by reason
+            </label>
+            <select
+              id="report-reason-filter"
+              className={cn(tw.formSelect, 'w-auto min-w-[200px]')}
+              value={reasonFilter}
+              onChange={(e) => setReasonFilter(e.target.value)}
+            >
+              <option value="all">All reasons</option>
+              {REPORT_REASONS.map((reason) => (
+                <option key={reason} value={reason}>
+                  {reason}
+                </option>
+              ))}
+            </select>
+            <span className="text-[12px] text-ink-tertiary whitespace-nowrap">
+              {filteredReports.length}
+              {reasonFilter !== 'all' && Array.isArray(reports) ? ` / ${reports.length}` : ''}
+            </span>
+          </div>
+        </div>
+        <div className={tw.tableWrap}>
+          <table className={tw.table}>
+            <thead>
+              <tr>
+                <th className={tw.th}>Reporter</th>
+                <th className={tw.th}>Reason</th>
+                <th className={tw.th}>Comment</th>
+                <th className={tw.th}>On post</th>
+                <th className={cn(tw.th, tw.textRight)}> </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReports.length ? (
+                filteredReports.map((r) => (
+                  <tr key={r.id}>
+                    <td className={tw.td}>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-ink">{r.reporterName || 'Guest'}</span>
+                        <span className="text-xs text-ink-tertiary">{formatDateShort(r.createdAt)}</span>
+                      </div>
+                    </td>
+                    <td className={tw.td}>
+                      <p className="m-0 text-sm text-ink">{r.reason}</p>
+                    </td>
+                    <td className={tw.td}>
+                      <p className="m-0 text-sm text-ink-dek line-clamp-3">
+                        <span className="font-semibold text-ink">{r.commentAuthor}: </span>
+                        {r.comment}
+                      </p>
+                    </td>
+                    <td className={tw.td}>
+                      <span className="text-sm text-ink-secondary">{r.postTitle || r.postId}</span>
+                    </td>
+                    <td className={cn(tw.td, tw.textRight)}>
+                      <div className={tw.actionGroup}>
+                        {canModerateComments || canManageUsers ? (
+                          <button
+                            className={tw.iconBtnDanger}
+                            onClick={() => handleDelete(r.commentId)}
+                            title="Delete reported comment"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                        ) : null}
+                        {onDismissReport ? (
+                          <button
+                            className={tw.secondaryBtn}
+                            onClick={() => handleDismissReport(r.id)}
+                            title="Dismiss report"
+                          >
+                            Dismiss
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className={tw.td}>
+                    <EmptyState>
+                      {reasonFilter === 'all'
+                        ? 'No comment reports yet.'
+                        : `No reports with reason “${reasonFilter}”.`}
+                    </EmptyState>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      ) : null}
+
       <section className={tw.adminSection}>
         <div className="flex items-baseline justify-between gap-3 mb-4">
           <div>
             <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Moderation</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>
-              Approve or remove comments before they appear on the site.
+              {canModerateComments
+                ? 'Approve or remove comments before they appear on the site.'
+                : 'Comments on your stories. Editors approve or remove them.'}
             </p>
           </div>
           <span className="text-[12px] text-ink-tertiary">
             {Array.isArray(comments) ? comments.length : 0}
           </span>
         </div>
-        {hint ? <p className={cn(tw.formHint, 'text-[#ff8a8a] mb-3')}>{hint}</p> : null}
-
         <div className={tw.tableWrap}>
           <table className={tw.table}>
             <thead>
@@ -117,6 +244,7 @@ export function CommentsView({
                       </span>
                     </td>
                     <td className={cn(tw.td, tw.textRight)}>
+                      {canModerateComments ? (
                       <div className={tw.actionGroup}>
                         {!c.approved && (
                           <button
@@ -135,6 +263,7 @@ export function CommentsView({
                           <TrashIcon size={16} />
                         </button>
                       </div>
+                      ) : null}
                     </td>
                   </tr>
                 ))

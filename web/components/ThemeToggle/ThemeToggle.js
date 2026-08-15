@@ -66,7 +66,7 @@ export default function ThemeToggle({ className = '', compact = false }) {
           'inline-flex items-center gap-1.5 h-8 rounded-full border-0 cursor-pointer font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-200',
           compact ? 'w-8 px-0 justify-center' : 'px-3',
           theme === 'light'
-            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(11,143,114,0.28)]'
+            ? 'bg-mint text-black'
             : 'bg-transparent text-ink-tertiary hover:text-ink'
         )}
       >
@@ -82,7 +82,7 @@ export default function ThemeToggle({ className = '', compact = false }) {
           'inline-flex items-center gap-1.5 h-8 rounded-full border-0 cursor-pointer font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-200',
           compact ? 'w-8 px-0 justify-center' : 'px-3',
           theme === 'dark'
-            ? 'bg-mint text-black shadow-[0_2px_12px_rgba(60,255,208,0.35)]'
+            ? 'bg-mint text-black shadow-mint'
             : 'bg-transparent text-ink-tertiary hover:text-ink'
         )}
       >

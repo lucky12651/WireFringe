@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import StaticPage from '../components/StaticPage/StaticPage';
 import { CONTACT_EMAIL, EDITORIAL_EMAIL, SITE_NAME } from '../lib/site';
+import { CONTACT_SUBJECTS } from '../lib/contactSubjects';
+import { contactApi } from '../lib/api';
 
 const fieldLabel =
   'font-mono text-[11px] font-bold tracking-wide uppercase text-ink-tertiary';
@@ -15,8 +17,9 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setStatus('');
@@ -33,22 +36,19 @@ export default function ContactPage() {
       return;
     }
 
-    const body = [
-      `Name: ${n}`,
-      `Email: ${em}`,
-      `Subject: ${subject}`,
-      '',
-      msg,
-    ].join('\n');
-
-    const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-      `[${SITE_NAME}] ${subject}`
-    )}&body=${encodeURIComponent(body)}`;
-
-    window.location.href = mailto;
-    setStatus(
-      'Your email app should open with the message ready to send. If it does not, email us directly at the address below.'
-    );
+    setSending(true);
+    try {
+      await contactApi.submit({ name: n, email: em, subject, message: msg });
+      setName('');
+      setEmail('');
+      setSubject('General inquiry');
+      setMessage('');
+      setStatus('Message sent. We typically reply within a few business days.');
+    } catch (err) {
+      setError(err.message || 'Could not send your message. Please try again or email us directly.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -68,7 +68,7 @@ export default function ContactPage() {
         </li>
       </ul>
       <p>
-        Prefer a form? Fill this out — it opens your email client with the details filled in.
+        Prefer a form? Fill this out and we will receive it in the newsroom inbox.
       </p>
 
       <form className="flex flex-col gap-4 mt-2 max-w-[520px]" onSubmit={onSubmit} noValidate>
@@ -113,12 +113,11 @@ export default function ContactPage() {
             onChange={(e) => setSubject(e.target.value)}
             className={fieldInput}
           >
-            <option>General inquiry</option>
-            <option>Correction / update</option>
-            <option>Advertising &amp; partnerships</option>
-            <option>Privacy request</option>
-            <option>Technical issue</option>
-            <option>Other</option>
+            {CONTACT_SUBJECTS.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -136,9 +135,10 @@ export default function ContactPage() {
         </div>
         <button
           type="submit"
-          className="self-start mt-1 bg-mint text-black border-0 rounded-sm font-extrabold text-[13px] tracking-wide uppercase px-[22px] py-3 cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(60,255,208,0.2)]"
+          disabled={sending}
+          className="self-start mt-1 bg-mint text-black border-0 rounded-sm font-extrabold text-[13px] tracking-wide uppercase px-[22px] py-3 cursor-pointer transition-all hover:-translate-y-px hover:shadow-mint disabled:opacity-60"
         >
-          Send message
+          {sending ? 'Sending…' : 'Send message'}
         </button>
         {error ? <p className="text-sm text-[#ff6b6b] mt-1">{error}</p> : null}
         {status ? <p className="text-sm text-mint mt-1">{status}</p> : null}

@@ -75,6 +75,7 @@ export default function HomePage({ initialPosts }) {
     fallbackData: initialPosts,
     revalidateOnFocus: false,
   });
+  const { data: frontpage } = useSWR('/api/frontpage', fetcher, { revalidateOnFocus: false });
 
   const posts = useMemo(
     () => (postsData || []).map((p) => ({ ...p, date: p.date ? new Date(p.date) : null })),
@@ -119,7 +120,11 @@ export default function HomePage({ initialPosts }) {
     return list;
   }, [posts, activeCategory, searchQuery]);
 
-  const heroPosts = filtered.slice(0, 5);
+  const programmedHero = (frontpage?.hero || []).map((p) => ({
+    ...p,
+    date: p.date ? new Date(p.date) : null,
+  }));
+  const heroPosts = (programmedHero.length ? programmedHero : filtered.slice(0, 5));
   const feedPosts = (filtered.slice(5).length ? filtered.slice(5) : filtered).slice(0, 20);
   const mostRead = useMemo(() => {
     return [...filtered]
@@ -170,6 +175,14 @@ export default function HomePage({ initialPosts }) {
               aria-hidden="true"
             />
             <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-line max-[1000px]:pb-7">
+              {frontpage?.breaking ? (
+                <Link
+                  href={postUrl(frontpage.breaking)}
+                  className="block mb-4 px-3 py-2 bg-[#c0392b] text-white no-underline text-[13px] font-semibold"
+                >
+                  Breaking: {frontpage.breaking.title}
+                </Link>
+              ) : null}
               <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
@@ -212,7 +225,7 @@ export default function HomePage({ initialPosts }) {
                         key={post.id}
                         className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-line"
                       >
-                        <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent group-hover:shadow-[0_6px_20px_rgba(60,255,208,0.3)]">
+                        <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent">
                           {i + 1}
                         </span>
                         <div>
@@ -402,7 +415,7 @@ function CategoryRow({ title, posts, href }) {
   if (!posts?.length) return null;
   return (
     <Reveal as="section" className="mt-14">
-      <div className="flex items-baseline justify-between mb-[22px] border-t-2 border-mint pt-4 shadow-[0_-8px_24px_rgba(60,255,208,0.04)]">
+      <div className="flex items-baseline justify-between mb-[22px] border-t-2 border-mint pt-4">
         <h2 className="text-[22px] font-extrabold tracking-tight">{title}</h2>
         <Link
           href={href}

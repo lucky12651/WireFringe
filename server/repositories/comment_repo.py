@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Comment, CommentVote, Post, User
+from ..models import Comment, CommentReport, CommentVote, Post, User
 from .base import BaseRepository
 
 
@@ -97,6 +97,36 @@ class CommentRepository(BaseRepository[Comment]):
         )
         self.db.commit()
 
+    def delete_reports_for_comment(self, comment_id: int) -> None:
+        self.db.execute(delete(CommentReport).where(CommentReport.comment_id == comment_id))
+        self.db.commit()
+
+    def create_report(
+        self, comment_id: int, reason: str, reporter_name: str | None, reporter_user_id: int | None
+    ) -> CommentReport:
+        report = CommentReport(
+            comment_id=comment_id,
+            reason=reason,
+            reporter_name=reporter_name,
+            reporter_user_id=reporter_user_id,
+        )
+        self.db.add(report)
+        self.db.commit()
+        self.db.refresh(report)
+        return report
+
+    def list_reports(self) -> list[tuple[CommentReport, Comment, str | None]]:
+        stmt = (
+            select(CommentReport, Comment, Post.title)
+            .join(Comment, Comment.id == CommentReport.comment_id)
+            .outerjoin(Post, Post.id == Comment.post_id)
+            .order_by(CommentReport.created_at.desc(), CommentReport.id.desc())
+        )
+        return list(self.db.execute(stmt).all())
+
+    def get_report(self, report_id: int) -> CommentReport | None:
+        return self.db.get(CommentReport, report_id)
+
     def list_for_user(self, user: User) -> list[tuple[Comment, str | None]]:
         """Comments posted by this signed-in user, newest first."""
         username = (getattr(user, "username", "") or "").strip()
@@ -165,12 +195,13 @@ class CommentRepository(BaseRepository[Comment]):
 
     def delete_by_post(self, post_id: str) -> int:
         """Delete all comments for a post, including their votes. Returns count deleted."""
-        # First delete all votes for comments on this post
         comment_ids_stmt = select(Comment.id).where(Comment.post_id == post_id)
         self.db.execute(
             delete(CommentVote).where(CommentVote.comment_id.in_(comment_ids_stmt))
         )
-        # Then delete the comments
+        self.db.execute(
+            delete(CommentReport).where(CommentReport.comment_id.in_(comment_ids_stmt))
+        )
         result = self.db.execute(delete(Comment).where(Comment.post_id == post_id))
         self.db.commit()
         return result.rowcount

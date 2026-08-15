@@ -11,3 +11,4 @@ Disallow: /api/
 
 # Sitemap (update domain if needed)
 Sitemap: https://wirefringe.com/sitemap.xml
+Sitemap: https://wirefringe.com/news-sitemap.xml

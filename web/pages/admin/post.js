@@ -7,9 +7,9 @@ import { api, postsApi, mediaApi } from '../../lib/api';
 import { slugifyTitle, cn } from '../../lib/utils';
 import { tw } from '../../lib/tw';
 import BrandLogo from '../../components/BrandLogo/BrandLogo';
-import ThemeToggle from '../../components/ThemeToggle/ThemeToggle';
 import { useCategories } from '../../hooks/useCategories';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
+import { accessFor } from '../../lib/access';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -28,8 +28,20 @@ export default function AdminPostPage() {
   const [ogImg, setOgImg] = useState('');
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
   const [excerpt, setExcerpt] = useState('');
+  const [status, setStatus] = useState('draft');
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [tags, setTags] = useState('');
+  const [correction, setCorrection] = useState('');
+  const [isBreaking, setIsBreaking] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isSponsored, setIsSponsored] = useState(false);
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [sourceName, setSourceName] = useState('');
+  const [relatedIds, setRelatedIds] = useState('');
+  const [revisions, setRevisions] = useState([]);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
+  const access = accessFor(me);
   const modeLabel = postId ? 'Edit post' : 'New post';
   const viewHref = postId
     ? `/post/${encodeURIComponent(slugifyTitle(title))}`
@@ -81,6 +93,17 @@ export default function AdminPostPage() {
     setAccentColor(DEFAULT_ACCENT);
     setReadMinutes('');
     setExcerpt('');
+    setStatus('draft');
+    setScheduledAt('');
+    setTags('');
+    setCorrection('');
+    setIsBreaking(false);
+    setIsPinned(false);
+    setIsSponsored(false);
+    setSourceUrl('');
+    setSourceName('');
+    setRelatedIds('');
+    setRevisions([]);
     editorHtmlRef.current = '';
     if (editorRef.current) editorRef.current.innerHTML = editorHtmlRef.current;
   }
@@ -93,7 +116,20 @@ export default function AdminPostPage() {
     setAccentColor(normalizeAccentColor(post.accentColor, DEFAULT_ACCENT));
     setReadMinutes(post.readMinutes ? String(post.readMinutes) : '');
     setExcerpt(post.excerpt || '');
+    setStatus(post.status || 'draft');
+    setScheduledAt(post.scheduledAt ? String(post.scheduledAt).slice(0, 16) : '');
+    setTags((post.tags || []).join(', '));
+    setCorrection(post.correction || '');
+    setIsBreaking(!!post.isBreaking);
+    setIsPinned(!!post.isPinned);
+    setIsSponsored(!!post.isSponsored);
+    setSourceUrl(post.sourceUrl || '');
+    setSourceName(post.sourceName || '');
+    setRelatedIds((post.relatedIds || []).join(', '));
     editorHtmlRef.current = post.content || '';
+    if (post.id) {
+      postsApi.revisions(post.id).then(setRevisions).catch(() => setRevisions([]));
+    }
     if (editorRef.current) editorRef.current.innerHTML = editorHtmlRef.current;
   }
 
@@ -119,6 +155,16 @@ export default function AdminPostPage() {
       ogImg: ogImg.trim() ? ogImg.trim() : null,
       accentColor: normalizeAccentColor(accentColor, DEFAULT_ACCENT),
       readMinutes: readMinutes ? Number(readMinutes) : null,
+      status,
+      scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+      tags,
+      correction,
+      isBreaking,
+      isPinned,
+      isSponsored,
+      sourceUrl,
+      sourceName,
+      relatedIds,
     };
   }
 
@@ -218,12 +264,15 @@ export default function AdminPostPage() {
     // Keep state synced if user pastes/edits directly in the contentEditable.
     const el = editorRef.current;
     if (!el) return;
+    if (editorHtmlRef.current && el.innerHTML !== editorHtmlRef.current) {
+      el.innerHTML = editorHtmlRef.current;
+    }
     const onInput = () => {
       editorHtmlRef.current = el.innerHTML;
     };
     el.addEventListener('input', onInput);
     return () => el.removeEventListener('input', onInput);
-  }, []);
+  }, [postId]);
 
   return (
     <>
@@ -245,9 +294,8 @@ export default function AdminPostPage() {
 
             <div className="flex items-center gap-3">
               <div className={tw.adminMe} id="meLine">
-                {me ? `Signed in as ${me.username} (${me.role})` : ''}
+                {me ? `Signed in as ${me.displayName || me.email || me.username} (${me.role})` : ''}
               </div>
-              <ThemeToggle compact />
               <button className={tw.secondaryBtn} id="logoutBtn" type="button" onClick={onLogout}>
                 Logout
               </button>
@@ -607,6 +655,104 @@ export default function AdminPostPage() {
                     placeholder="Post title..."
                   />
                 </div>
+
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Status</label>
+                  <select className={tw.formSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
+                    <option value="draft">Draft</option>
+                    <option value="review">Review</option>
+                    <option value="scheduled">Scheduled</option>
+                    {access.canPublish || status === 'published' ? (
+                      <option value="published" disabled={!access.canPublish}>
+                        Published
+                      </option>
+                    ) : null}
+                    {access.canUnpublish || status === 'unpublished' ? (
+                      <option value="unpublished" disabled={!access.canUnpublish}>
+                        Unpublished
+                      </option>
+                    ) : null}
+                  </select>
+                  {access.isAuthor && status === 'published' ? (
+                    <p className="m-0 mt-1.5 text-[11px] text-ink-tertiary">
+                      This is live. You can edit the story; an editor must unpublish it.
+                    </p>
+                  ) : access.isAuthor ? (
+                    <p className="m-0 mt-1.5 text-[11px] text-ink-tertiary">
+                      Send to Review when ready. An editor publishes it.
+                    </p>
+                  ) : null}
+                </div>
+                {status === 'scheduled' ? (
+                  <div className={tw.formGroup}>
+                    <label className={tw.formLabel}>Publish at</label>
+                    <input
+                      className={tw.formInput}
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => setScheduledAt(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+                <div className="flex flex-col gap-1.5 text-[13px]">
+                  <label><input type="checkbox" checked={isBreaking} onChange={(e) => setIsBreaking(e.target.checked)} /> Breaking</label>
+                  {access.canPin ? (
+                    <label><input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} /> Pin</label>
+                  ) : null}
+                  {access.canMarkSponsored ? (
+                    <label><input type="checkbox" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} /> Sponsored / branded</label>
+                  ) : null}
+                </div>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Tags</label>
+                  <input className={tw.formInput} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ai, markets, india" />
+                </div>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Correction</label>
+                  <textarea className={tw.formTextarea} value={correction} onChange={(e) => setCorrection(e.target.value)} />
+                </div>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Source name</label>
+                  <input className={tw.formInput} value={sourceName} onChange={(e) => setSourceName(e.target.value)} />
+                </div>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Source URL</label>
+                  <input className={tw.formInput} value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
+                </div>
+                <div className={tw.formGroup}>
+                  <label className={tw.formLabel}>Related post IDs</label>
+                  <input className={tw.formInput} value={relatedIds} onChange={(e) => setRelatedIds(e.target.value)} placeholder="id-one, id-two" />
+                </div>
+                {postId ? (
+                  <p className="text-xs m-0">
+                    <a href={`/post/${encodeURIComponent(slugifyTitle(title))}?preview=true&id=${encodeURIComponent(postId)}`} target="_blank" rel="noreferrer">
+                      Preview unpublished
+                    </a>
+                  </p>
+                ) : null}
+                {revisions.length ? (
+                  <div>
+                    <label className={tw.formLabel}>Revisions</label>
+                    {revisions.map((r) => (
+                      <div key={r.id} className="flex justify-between text-xs py-1">
+                        <span>
+                          {r.editorName || 'Editor'} · {r.status}
+                        </span>
+                        <button
+                          type="button"
+                          className={tw.secondaryBtn}
+                          onClick={async () => {
+                            const updated = await postsApi.rollback(postId, r.id);
+                            fillForm(updated);
+                            setHint('Rolled back.');
+                          }}
+                        >
+                          Rollback
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 {/* Category & Read minutes row */}
                 <div className="flex gap-2">

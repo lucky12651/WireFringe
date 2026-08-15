@@ -15,6 +15,7 @@ const EMPTY_FORM = {
   recentCacheHours: 2,
   maxItemsPerFeed: 5,
   processPerCycle: 1,
+  autoPublish: false,
 };
 
 function formFromSettings(settings) {
@@ -22,6 +23,7 @@ function formFromSettings(settings) {
   return {
     enabled: settings.enabled !== false,
     hideArticles: !!settings.hideArticles,
+    autoPublish: !!settings.autoPublish,
     dailyLimit: Number(settings.dailyLimit) || 12,
     gapMinutes: Number(settings.gapMinutes) ?? 120,
     sleepSeconds: Number(settings.sleepSeconds) || 3600,
@@ -504,6 +506,19 @@ export function BotView({
             </div>
           </div>
         </div>
+
+        <label className="flex items-center gap-2 mb-5 text-sm">
+          <input
+            type="checkbox"
+            checked={!!form.autoPublish}
+            onChange={(e) => {
+              const autoPublish = e.target.checked;
+              setForm((prev) => ({ ...prev, autoPublish }));
+              onSave?.({ ...form, autoPublish });
+            }}
+          />
+          Auto-publish bot stories (off = they wait in Review)
+        </label>
 
         <div>
           <h3 className="text-[15px] font-semibold m-0 mb-4 text-ink tracking-tight">Publishing limits</h3>

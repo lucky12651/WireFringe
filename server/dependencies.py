@@ -84,9 +84,15 @@ def require_admin(user: User) -> None:
 
 
 def require_staff(user: User) -> None:
-    """Require admin or editor role."""
+    """Desk: admin or editor (publish, inbox, front page)."""
     if user.role not in {"admin", "editor"}:
-        raise HTTPException(status_code=403, detail="Admin/editor required")
+        raise HTTPException(status_code=403, detail="Editor or admin required")
+
+
+def require_newsroom(user: User) -> None:
+    """Anyone who may open the admin panel: admin, editor, or author."""
+    if user.role not in {"admin", "editor", "author"}:
+        raise HTTPException(status_code=403, detail="Newsroom access required")
 
 
 def get_existing_visitor_id(request: Request) -> str | None:

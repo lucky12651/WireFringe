@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_user
+from ..dependencies import get_db, require_user, require_admin
 from ..schemas import BrandBylineUpdateRequest, MeOut, BotLogOut
 from ..services import MediaService, UserService
 from ..models import BotLog
@@ -26,7 +26,8 @@ def admin_get_logs(
     limit: int = 100,
 ) -> list[BotLogOut]:
     """Get recent bot and system logs."""
-    require_user(request, db)
+    user = require_user(request, db)
+    require_admin(user)
     logs = db.query(BotLog).order_by(BotLog.created_at.desc()).limit(limit).all()
     
     # Map to schema manually

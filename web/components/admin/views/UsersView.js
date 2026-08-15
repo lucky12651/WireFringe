@@ -15,6 +15,7 @@ export function UsersView({
   onDelete,
   onSetPassword,
   onSetRole,
+  onTransferPosts,
   onClaimOrphan,
   onReassignOrphan,
   onDeleteOrphanPosts,
@@ -26,7 +27,7 @@ export function UsersView({
   const [hint, setHint] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
-  const [deletePostsAction, setDeletePostsAction] = useState('transfer'); // transfer | delete
+  const [deletePostsAction, setDeletePostsAction] = useState('transfer'); // transfer | keep | delete
   const [transferToUserId, setTransferToUserId] = useState('');
   const [deleteHint, setDeleteHint] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,6 +51,11 @@ export function UsersView({
   const [claimRole, setClaimRole] = useState('author');
   const [claimHint, setClaimHint] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
+
+  const [transferUser, setTransferUser] = useState(null);
+  const [transferPostsToUserId, setTransferPostsToUserId] = useState('');
+  const [transferHint, setTransferHint] = useState('');
+  const [isTransferring, setIsTransferring] = useState(false);
 
   const [reassignAuthor, setReassignAuthor] = useState(null);
   const [reassignToUserId, setReassignToUserId] = useState('');
@@ -87,9 +93,10 @@ export function UsersView({
   const ShieldIcon = Icons.shield;
 
   const transferCandidates = useMemo(() => {
-    if (!userToDelete) return accountUsers;
-    return accountUsers.filter((u) => u.id !== userToDelete.id);
-  }, [accountUsers, userToDelete]);
+    const excludeId = transferUser?.id || userToDelete?.id;
+    if (!excludeId) return accountUsers;
+    return accountUsers.filter((u) => u.id !== excludeId);
+  }, [accountUsers, userToDelete, transferUser]);
 
   const markAvatarFailed = (userId) => {
     setFailedAvatars((prev) => {
@@ -118,7 +125,11 @@ export function UsersView({
 
     const username = newUsername.trim();
     if (!username) {
-      setHint('Username is required');
+      setHint('Email is required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+      setHint('Enter a valid email address');
       return;
     }
     if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
@@ -173,6 +184,8 @@ export function UsersView({
         let msg = `User "${deletedUsername}" deleted.`;
         if (deletePostsAction === 'delete') {
           msg += ` ${Number(info.postsDeleted) || 0} post(s) removed.`;
+        } else if (deletePostsAction === 'keep') {
+          msg += ` ${Number(info.postsKept) || 0} post(s) left under Authors without an account.`;
         } else {
           msg += ` ${Number(info.postsTransferred) || 0} post(s) transferred to ${
             info.transferToUsername || 'selected user'
@@ -283,7 +296,7 @@ export function UsersView({
 
   const openClaim = (author) => {
     setClaimAuthor(author);
-    setClaimUsername(author.username || '');
+    setClaimUsername('');
     setClaimPassword('');
     setClaimRole('author');
     setClaimHint('');
@@ -296,9 +309,13 @@ export function UsersView({
       setClaimHint(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
-    const uname = (claimUsername || claimAuthor.username || '').trim();
-    if (uname.length < 3) {
-      setClaimHint('Username must be at least 3 characters.');
+    const uname = (claimUsername || '').trim();
+    if (!uname) {
+      setClaimHint('Email is required.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(uname)) {
+      setClaimHint('Enter a valid email address.');
       return;
     }
 
@@ -308,6 +325,7 @@ export function UsersView({
       const result = await onClaimOrphan({
         creatorName: claimAuthor.username,
         username: uname,
+        email: uname,
         password: claimPassword,
         role: claimRole,
         displayName: claimAuthor.displayName || claimAuthor.username,
@@ -324,6 +342,41 @@ export function UsersView({
       }
     } finally {
       setIsClaiming(false);
+    }
+  };
+
+  const openTransferPosts = (user) => {
+    setTransferUser(user);
+    setTransferHint('');
+    const others = accountUsers.filter((u) => u.id !== user.id);
+    const preferred =
+      others.find((u) => String(u.role).toLowerCase() === 'admin') ||
+      others.find((u) => String(u.role).toLowerCase() === 'editor') ||
+      others[0];
+    setTransferPostsToUserId(preferred ? String(preferred.id) : '');
+  };
+
+  const handleTransferPosts = async (e) => {
+    e.preventDefault();
+    if (!transferUser || !onTransferPosts) return;
+    if (!transferPostsToUserId) {
+      setTransferHint('Select a user to receive the posts.');
+      return;
+    }
+    setIsTransferring(true);
+    setTransferHint('');
+    try {
+      const result = await onTransferPosts(transferUser.id, Number(transferPostsToUserId));
+      if (result.success) {
+        const n = result.result?.postsAffected ?? 0;
+        const to = result.result?.user?.username || 'selected user';
+        setSuccessMessage(`Moved ${n} post(s) from "${transferUser.username}" → "${to}".`);
+        setTransferUser(null);
+      } else {
+        setTransferHint(result.error || 'Failed to transfer posts.');
+      }
+    } finally {
+      setIsTransferring(false);
     }
   };
 
@@ -388,12 +441,12 @@ export function UsersView({
         <p className={tw.adminSectionDesc}>Add a login account for editors, authors, or admins.</p>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end max-w-[900px]">
           <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Username</label>
+            <label className={tw.formLabel}>Email</label>
             <input
-              className={tw.formInput} type="text"
+              className={tw.formInput} type="email"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="Username"
+              placeholder="you@example.com"
             />
           </div>
           <div className={tw.formGroup}>
@@ -464,12 +517,12 @@ export function UsersView({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className="font-semibold text-ink">{user.username}</span>
-                            {user.displayName && user.displayName !== user.username ? (
-                              <div className={tw.textMuted} style={{ fontSize: 12 }}>
-                                {user.displayName}
-                              </div>
-                            ) : null}
+                            <span className="font-semibold text-ink">
+                              {user.displayName || user.username}
+                            </span>
+                            <div className={tw.textMuted} style={{ fontSize: 12 }}>
+                              {user.email || user.username}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -480,7 +533,16 @@ export function UsersView({
                         <span className={tw.textMuted}>{Number(user.postCount) || 0}</span>
                       </td>
                       <td className={cn(tw.td, tw.textRight)}>
-                        <div className={tw.actionGroup}>
+                        <div className={tw.actionGroup} style={{ flexWrap: 'wrap', gap: 6 }}>
+                          <button
+                            type="button"
+                            className={tw.secondaryBtn}
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            onClick={() => openTransferPosts(user)}
+                            title="Move this user's posts to another account"
+                          >
+                            Transfer posts
+                          </button>
                           <button
                             type="button"
                             className={tw.iconBtn}
@@ -661,6 +723,31 @@ export function UsersView({
                 <label
                   className={cn(
                     'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
+                    deletePostsAction === 'keep'
+                      ? 'border-mint/40 bg-mint/[0.06]'
+                      : 'border-line bg-bg-hover hover:border-line-strong'
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="posts-action"
+                    value="keep"
+                    checked={deletePostsAction === 'keep'}
+                    onChange={() => setDeletePostsAction('keep')}
+                    disabled={isDeleting}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="block font-semibold text-ink text-sm">Delete account only</span>
+                    <span className="block text-xs text-ink-tertiary mt-0.5">
+                      Remove the login. Keep the posts under Authors without an account.
+                    </span>
+                  </span>
+                </label>
+
+                <label
+                  className={cn(
+                    'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
                     deletePostsAction === 'delete'
                       ? 'border-[#ff6b6b]/50 bg-red-500/10'
                       : 'border-line bg-bg-hover hover:border-[#ff6b6b]/35'
@@ -711,7 +798,9 @@ export function UsersView({
                   ? 'Deleting…'
                   : deletePostsAction === 'delete'
                     ? 'Delete user & posts'
-                    : 'Transfer & delete'}
+                    : deletePostsAction === 'keep'
+                      ? 'Delete account only'
+                      : 'Transfer & delete'}
               </ActionButton>
             </div>
       </AdminModal>
@@ -837,11 +926,12 @@ export function UsersView({
                   appear in Users management.
                 </p>
                 <div className={tw.formGroup} style={{ marginTop: 16 }}>
-                  <label className={tw.formLabel}>Login username</label>
+                  <label className={tw.formLabel}>Login email</label>
                   <input
-                    className={tw.formInput} type="text"
+                    className={tw.formInput} type="email"
                     value={claimUsername}
                     onChange={(e) => setClaimUsername(e.target.value)}
+                    placeholder="you@example.com"
                     disabled={isClaiming}
                   />
                 </div>
@@ -882,6 +972,61 @@ export function UsersView({
                 </ActionButton>
                 <ActionButton type="submit" size="sm" disabled={isClaiming}>
                   {isClaiming ? 'Creating…' : 'Create account'}
+                </ActionButton>
+              </div>
+            </form>
+      </AdminModal>
+      ) : null}
+
+      {transferUser ? (
+      <AdminModal open onClose={isTransferring ? undefined : () => setTransferUser(null)}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>Transfer posts</h3>
+            </div>
+            <form onSubmit={handleTransferPosts}>
+              <div className={tw.modalBody}>
+                <p>
+                  Move all posts by <strong className="text-ink">{transferUser?.username}</strong> (
+                  {Number(transferUser?.postCount) || 0}) to another login. This user stays.
+                </p>
+                <div className={tw.formGroup} style={{ marginTop: 16 }}>
+                  <label htmlFor="transfer-posts-to" className={tw.formLabel}>Transfer posts to</label>
+                  <select
+                    className={tw.formSelect}
+                    id="transfer-posts-to"
+                    value={transferPostsToUserId}
+                    onChange={(e) => setTransferPostsToUserId(e.target.value)}
+                    disabled={isTransferring || transferCandidates.length === 0}
+                  >
+                    {transferCandidates.length === 0 ? (
+                      <option value="">No other users available</option>
+                    ) : (
+                      transferCandidates.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                          {u.displayName ? ` (${u.displayName})` : ''} — {u.role}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+                {transferHint ? <p className={tw.formHint}>{transferHint}</p> : null}
+              </div>
+              <div className={tw.modalActions}>
+                <ActionButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setTransferUser(null)}
+                  disabled={isTransferring}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton
+                  type="submit"
+                  size="sm"
+                  disabled={isTransferring || !transferPostsToUserId || transferCandidates.length === 0}
+                >
+                  {isTransferring ? 'Transferring…' : 'Transfer posts'}
                 </ActionButton>
               </div>
             </form>

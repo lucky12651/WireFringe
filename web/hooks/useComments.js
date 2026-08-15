@@ -4,6 +4,7 @@ import { TRENDING_COMMENTS_DAYS, TRENDING_COMMENTS_LIMIT } from '../lib/constant
 
 export function useComments() {
   const [comments, setComments] = useState([]);
+  const [reports, setReports] = useState([]);
   const [trendingComments, setTrendingComments] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +37,26 @@ export function useComments() {
       setIsLoading(false);
     }
   }, []);
+
+  const refreshReports = useCallback(async () => {
+    try {
+      const data = await commentsApi.listReports();
+      setReports(data || []);
+    } catch (err) {
+      setReports([]);
+      setError(err?.message || 'Failed to fetch comment reports');
+    }
+  }, []);
+
+  const dismissReport = useCallback(async (id) => {
+    try {
+      await commentsApi.dismissReport(id);
+      await refreshReports();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err?.message };
+    }
+  }, [refreshReports]);
 
   const refreshPendingCount = useCallback(async () => {
     try {
@@ -71,6 +92,7 @@ export function useComments() {
       await refreshComments();
       await refreshPendingCount();
       await refreshTrendingComments();
+      await refreshReports();
       return { success: true };
     } catch (err) {
       setError(err?.message || 'Failed to disapprove comment');
@@ -78,7 +100,7 @@ export function useComments() {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshComments, refreshPendingCount, refreshTrendingComments]);
+  }, [refreshComments, refreshPendingCount, refreshTrendingComments, refreshReports]);
 
   const deleteComment = useCallback(async (id) => {
     try {
@@ -87,6 +109,7 @@ export function useComments() {
       await commentsApi.delete(id);
       await refreshComments();
       await refreshTrendingComments();
+      await refreshReports();
       return { success: true };
     } catch (err) {
       setError(err?.message || 'Failed to delete comment');
@@ -94,7 +117,7 @@ export function useComments() {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshComments, refreshTrendingComments]);
+  }, [refreshComments, refreshTrendingComments, refreshReports]);
 
   const pendingComments = useMemo(() => {
     return (comments || []).filter((c) => !c?.approved);
@@ -103,6 +126,7 @@ export function useComments() {
   return useMemo(
     () => ({
       comments,
+      reports,
       trendingComments,
       pendingCount,
       pendingComments,
@@ -114,6 +138,8 @@ export function useComments() {
       setTrendingComments,
       refreshPendingCount,
       setPendingCount,
+      refreshReports,
+      dismissReport,
       approveComment,
       disapproveComment,
       deleteComment,
@@ -121,6 +147,7 @@ export function useComments() {
     }),
     [
       comments,
+      reports,
       setComments,
       trendingComments,
       setTrendingComments,
@@ -130,6 +157,8 @@ export function useComments() {
       isLoading,
       error,
       refreshComments,
+      refreshReports,
+      dismissReport,
       refreshTrendingComments,
       refreshPendingCount,
       approveComment,

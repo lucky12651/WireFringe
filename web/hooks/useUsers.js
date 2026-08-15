@@ -80,6 +80,24 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
     }
   }, [refreshUsers]);
 
+  const transferPosts = useCallback(
+    async (id, transferToUserId) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await usersApi.transferPosts(id, transferToUserId);
+        await refreshUsers();
+        return { success: true, result };
+      } catch (err) {
+        setError(err?.message || 'Failed to transfer posts');
+        return { success: false, error: err?.message };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshUsers]
+  );
+
   const claimOrphan = useCallback(
     async (payload) => {
       try {
@@ -167,6 +185,7 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      transferPosts,
       claimOrphan,
       reassignOrphan,
       deleteOrphanPosts,
@@ -185,6 +204,7 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      transferPosts,
       claimOrphan,
       reassignOrphan,
       deleteOrphanPosts,
