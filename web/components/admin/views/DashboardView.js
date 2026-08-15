@@ -171,16 +171,6 @@ export function DashboardView({
 
   return (
     <div className="flex flex-col gap-0 animate-fade-up motion-reduce:animate-none">
-      {access?.label ? (
-        <section className="py-5 border-b border-line">
-          <p className="m-0 text-[11px] tracking-[0.14em] uppercase text-ink-muted font-medium">
-            Access
-          </p>
-          <h2 className="m-0 mt-1 text-[18px] font-semibold text-ink">{access.label}</h2>
-          <p className="m-0 mt-1.5 text-[13px] text-ink-secondary max-w-[62ch]">{access.summary}</p>
-        </section>
-      ) : null}
-
       <section className="py-6 border-b border-line" aria-label="Overview stats">
         <div className="grid grid-cols-2 min-[900px]:grid-cols-4 gap-x-8 gap-y-5">
           {overviewStats.map((stat) => (
