@@ -13,7 +13,8 @@ export default function SearchPage() {
 
   return (
     <Layout title={`Search – ${q || 'Wirefringe'}`}>
-      <div className="max-w-[900px] mx-auto px-5 md:px-10 py-10">
+      <div className="max-w-[900px] mx-auto px-0 sm:px-5 md:px-10 py-5 md:py-10">
+        <h1 className="m-0 mb-4 text-[22px] font-extrabold tracking-tight min-[1001px]:hidden">Search</h1>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -24,8 +25,9 @@ export default function SearchPage() {
           <input
             name="q"
             defaultValue={q}
+            autoFocus
             placeholder="Search stories, tags, authors…"
-            className="w-full h-12 px-4 border border-line bg-bg-elevated text-ink mb-6"
+            className="w-full h-12 px-4 border border-line rounded-md bg-bg-elevated text-ink mb-6 outline-none focus:border-mint"
           />
         </form>
         {q.trim().length < 2 ? (

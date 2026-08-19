@@ -11,6 +11,7 @@ import Reveal from '../components/Reveal/Reveal';
 import { HomeSkeleton } from '../components/Skeleton/Skeleton';
 import { fetcher, api } from '../lib/api';
 import { postUrl, postExcerpt, stripHtml } from '../lib/utils';
+import { postMatchesFollows } from '../lib/follows';
 import { AD_SLOTS } from '../lib/ads';
 import SearchResults from '../components/SearchResults/SearchResults';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
@@ -86,6 +87,11 @@ export default function HomePage({ initialPosts }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [feedTab, setFeedTab] = useState('latest');
+  const { data: follows, isLoading: followsLoading } = useSWR(
+    user ? '/api/me/follows' : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -125,7 +131,12 @@ export default function HomePage({ initialPosts }) {
     date: p.date ? new Date(p.date) : null,
   }));
   const heroPosts = (programmedHero.length ? programmedHero : filtered.slice(0, 5));
-  const feedPosts = (filtered.slice(5).length ? filtered.slice(5) : filtered).slice(0, 20);
+  const latestFeed = (filtered.slice(5).length ? filtered.slice(5) : filtered).slice(0, 20);
+  const followingFeed = useMemo(
+    () => filtered.filter((p) => postMatchesFollows(p, follows)).slice(0, 30),
+    [filtered, follows]
+  );
+  const feedPosts = feedTab === 'following' ? followingFeed : latestFeed;
   const mostRead = useMemo(() => {
     return [...filtered]
       .sort((a, b) => Number(b.readMinutes || 0) - Number(a.readMinutes || 0))
@@ -318,6 +329,8 @@ export default function HomePage({ initialPosts }) {
                 feedTab={feedTab}
                 onTabChange={setFeedTab}
                 user={user}
+                followCount={Array.isArray(follows) ? follows.length : 0}
+                followsLoading={Boolean(user) && followsLoading}
                 NewsletterComponent={<NewsletterSignup />}
               />
             </div>

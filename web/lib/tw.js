@@ -8,6 +8,7 @@ export const tw = {
   logo: 'inline-block font-black whitespace-nowrap text-ink leading-none tracking-[-0.065em] font-heading',
   logoF:
     'admin-brand-f text-mint italic font-extrabold inline-block [transform:skewX(-6deg)]',
+  logoXs: 'text-[15px]',
   logoSm: 'text-lg',
   logoMd: 'text-[26px]',
   logoLg: 'text-[32px]',

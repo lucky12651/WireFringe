@@ -16,10 +16,24 @@ const EMPTY_FORM = {
   maxItemsPerFeed: 5,
   processPerCycle: 1,
   autoPublish: false,
+  maxAgeHours: 6,
+  countries: ['india', 'us', 'uk', 'world'],
+  sections: [
+    'Tech',
+    'AI & Future Tech',
+    'Business & Markets',
+    'Personal Finance',
+    'India News',
+    'Sports',
+    'World',
+  ],
+  feeds: [],
+  writerPrompt: '',
+  focusNote: '',
 };
 
-function formFromSettings(settings) {
-  if (!settings) return { ...EMPTY_FORM };
+function formFromSettings(settings, fallback = EMPTY_FORM) {
+  if (!settings) return { ...fallback };
   return {
     enabled: settings.enabled !== false,
     hideArticles: !!settings.hideArticles,
@@ -31,7 +45,30 @@ function formFromSettings(settings) {
     recentCacheHours: Number(settings.recentCacheHours) || 2,
     maxItemsPerFeed: Number(settings.maxItemsPerFeed) || 5,
     processPerCycle: Number(settings.processPerCycle) || 1,
+    maxAgeHours: Number(settings.maxAgeHours) || 6,
+    // Keep empty arrays / blank prompt — do not fall back to defaults after save.
+    countries: Array.isArray(settings.countries)
+      ? settings.countries
+      : [...fallback.countries],
+    sections: Array.isArray(settings.sections)
+      ? settings.sections
+      : [...fallback.sections],
+    feeds: Array.isArray(settings.feeds) ? settings.feeds : [...(fallback.feeds || [])],
+    writerPrompt: settings.writerPrompt ?? fallback.writerPrompt ?? '',
+    focusNote: settings.focusNote ?? fallback.focusNote ?? '',
   };
+}
+
+function mergeSavedSettings(local, server) {
+  const src = { ...local, ...(server || {}) };
+  // If the API omitted editorial keys (stale schema), keep what the editor just saved.
+  if (!Array.isArray(server?.countries)) src.countries = local.countries;
+  if (!Array.isArray(server?.sections)) src.sections = local.sections;
+  if (!Array.isArray(server?.feeds)) src.feeds = local.feeds;
+  if (server?.writerPrompt == null) src.writerPrompt = local.writerPrompt;
+  if (server?.focusNote == null) src.focusNote = local.focusNote;
+  if (server?.maxAgeHours == null) src.maxAgeHours = local.maxAgeHours;
+  return formFromSettings(src, local);
 }
 
 function fmtSeconds(s) {
@@ -138,11 +175,17 @@ export function BotView({
   const [activeTab, setActiveTab] = useState(
     initialTab === 'logs' ? 'logs' : 'engine'
   );
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(() => formFromSettings(settings));
   const [hint, setHint] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [isTogglingPower, setIsTogglingPower] = useState(false);
+  const [customFeed, setCustomFeed] = useState({
+    label: '',
+    url: '',
+    country: 'world',
+    section: 'World',
+  });
 
   const dirtyRef = useRef(false);
   const acceptServerRef = useRef(true);
@@ -181,6 +224,68 @@ export function BotView({
   };
 
   const botOn = !!form.enabled;
+  const catalog = settings?.catalog || {
+    countries: [
+      { id: 'india', label: 'India' },
+      { id: 'us', label: 'United States' },
+      { id: 'uk', label: 'United Kingdom' },
+      { id: 'world', label: 'World' },
+    ],
+    sections: EMPTY_FORM.sections,
+  };
+
+  const toggleCountry = (id) => {
+    setField(
+      'countries',
+      form.countries.includes(id)
+        ? form.countries.filter((c) => c !== id)
+        : [...form.countries, id]
+    );
+  };
+
+  const toggleSection = (name) => {
+    setField(
+      'sections',
+      form.sections.includes(name)
+        ? form.sections.filter((s) => s !== name)
+        : [...form.sections, name]
+    );
+  };
+
+  const toggleFeed = (id) => {
+    setField(
+      'feeds',
+      form.feeds.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f))
+    );
+  };
+
+  const addCustomFeed = () => {
+    const url = customFeed.url.trim();
+    if (!url.startsWith('http')) {
+      setHint('Enter a valid RSS URL starting with http.');
+      return;
+    }
+    const id = `custom-${Date.now()}`;
+    setField('feeds', [
+      ...form.feeds,
+      {
+        id,
+        url,
+        label: customFeed.label.trim() || 'Custom feed',
+        country: customFeed.country,
+        section: customFeed.section,
+        enabled: true,
+      },
+    ]);
+    setCustomFeed({ label: '', url: '', country: 'world', section: 'World' });
+  };
+
+  const removeFeed = (id) => {
+    setField(
+      'feeds',
+      form.feeds.filter((f) => f.id !== id)
+    );
+  };
 
   const loopVals = useMemo(
     () => ({
@@ -197,14 +302,19 @@ export function BotView({
     e?.preventDefault?.();
     setIsSaving(true);
     setHint('');
+    const snapshot = { ...formRef.current };
     try {
-      acceptServerRef.current = true;
-      const result = await onSave(formRef.current);
+      // Block the settings-sync effect until we merge, so a partial API
+      // response cannot wipe countries / prompt / feeds after Save.
+      acceptServerRef.current = false;
+      const result = await onSave(snapshot);
       if (result?.success) {
+        const next = mergeSavedSettings(snapshot, result.data);
+        setForm(next);
+        formRef.current = next;
         dirtyRef.current = false;
         setHint('Bot settings saved.');
       } else {
-        acceptServerRef.current = false;
         setHint(result?.error || 'Failed to save.');
       }
     } finally {
@@ -220,13 +330,16 @@ export function BotView({
     setIsTogglingPower(true);
     setHint('');
     try {
-      acceptServerRef.current = true;
-      const result = await onSave({ ...formRef.current, enabled: next });
+      acceptServerRef.current = false;
+      const snapshot = { ...formRef.current, enabled: next };
+      const result = await onSave(snapshot);
       if (result?.success) {
+        const merged = mergeSavedSettings(snapshot, result.data);
+        setForm(merged);
+        formRef.current = merged;
         dirtyRef.current = false;
         setHint(next ? 'Bot turned ON and saved.' : 'Bot turned OFF and saved.');
       } else {
-        acceptServerRef.current = false;
         setForm((prev) => ({ ...prev, enabled: !next }));
         setHint(result?.error || 'Failed to update bot power.');
       }
@@ -236,6 +349,32 @@ export function BotView({
       setHint(err?.message || 'Failed to update bot power.');
     } finally {
       setIsTogglingPower(false);
+    }
+  };
+
+  const handleAutoPublishToggle = async () => {
+    if (isTogglingPower || isSaving || isTogglingVisibility) return;
+    const next = !formRef.current.autoPublish;
+    setForm((prev) => ({ ...prev, autoPublish: next }));
+    setHint('');
+    try {
+      acceptServerRef.current = false;
+      const snapshot = { ...formRef.current, autoPublish: next };
+      const result = await onSave?.({ autoPublish: next });
+      if (result?.success) {
+        const merged = mergeSavedSettings(snapshot, result.data);
+        setForm(merged);
+        formRef.current = merged;
+        dirtyRef.current = false;
+        setHint(next ? 'Auto-publish is ON and saved.' : 'Auto-publish is OFF and saved.');
+      } else {
+        setForm((prev) => ({ ...prev, autoPublish: !next }));
+        setHint(result?.error || 'Failed to save auto-publish.');
+      }
+    } catch (err) {
+      acceptServerRef.current = false;
+      setForm((prev) => ({ ...prev, autoPublish: !next }));
+      setHint(err?.message || 'Failed to save auto-publish.');
     }
   };
 
@@ -468,57 +607,247 @@ export function BotView({
       <form onSubmit={handleSave} className="grid grid-cols-1 min-[721px]:grid-cols-2 gap-x-10 gap-y-8 py-7">
         <div className="col-span-full">
           <h3 className="text-[15px] font-semibold m-0 mb-2 text-ink tracking-tight">Visibility</h3>
-          <p className="text-sm text-ink-secondary leading-snug m-0 mb-5">
+          <p className="text-sm text-ink-secondary leading-snug m-0 mb-4 max-w-[62ch]">
             Hide bot posts from the public site without deleting them. Admins still see them in
             Posts. Toggling applies to all existing bot articles right away.
           </p>
 
-          <div
-            className={cn(
-              'flex items-start gap-4 py-3 mb-2 cursor-pointer select-none',
-              isTogglingVisibility && 'opacity-70 pointer-events-none'
-            )}
-            role="switch"
-            aria-checked={!!form.hideArticles}
-            aria-busy={isTogglingVisibility}
-            tabIndex={isTogglingVisibility ? -1 : 0}
-            onClick={() => handleVisibilityToggle()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleVisibilityToggle();
-              }
-            }}
-          >
-            <SwitchKnob on={!!form.hideArticles} />
-            <div>
-              <strong className="block text-[15px] font-semibold mb-1 text-ink">
-                {isTogglingVisibility
-                  ? 'Updating visibility…'
-                  : form.hideArticles
-                    ? 'Bot articles hidden from public site'
-                    : 'Hide all bot articles'}
-              </strong>
-              <span className="text-[13.5px] text-ink-secondary leading-snug">
-                When on, public feeds exclude bot posts and existing bot articles are hidden. When
-                off, they are shown again. New bot posts follow this setting too.
-              </span>
+          <div className="rounded-lg border border-line bg-bg-elevated/40 divide-y divide-line overflow-hidden">
+            <div
+              className={cn(
+                'flex items-start gap-4 px-4 py-4 cursor-pointer select-none',
+                isTogglingVisibility && 'opacity-70 pointer-events-none'
+              )}
+              role="switch"
+              aria-checked={!!form.hideArticles}
+              aria-busy={isTogglingVisibility}
+              tabIndex={isTogglingVisibility ? -1 : 0}
+              onClick={() => handleVisibilityToggle()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleVisibilityToggle();
+                }
+              }}
+            >
+              <SwitchKnob on={!!form.hideArticles} />
+              <div className="min-w-0">
+                <strong className="block text-[15px] font-semibold mb-1 text-ink">
+                  {isTogglingVisibility
+                    ? 'Updating visibility…'
+                    : form.hideArticles
+                      ? 'Bot articles hidden from public site'
+                      : 'Hide all bot articles'}
+                </strong>
+                <span className="block text-[13.5px] text-ink-secondary leading-snug">
+                  When on, public feeds exclude bot posts and existing bot articles are hidden. When
+                  off, they are shown again. New bot posts follow this setting too.
+                </span>
+              </div>
+            </div>
+
+            <div
+              className="flex items-start gap-4 px-4 py-4 cursor-pointer select-none"
+              role="switch"
+              aria-checked={!!form.autoPublish}
+              tabIndex={0}
+              onClick={() => handleAutoPublishToggle()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAutoPublishToggle();
+                }
+              }}
+            >
+              <SwitchKnob on={!!form.autoPublish} />
+              <div className="min-w-0">
+                <strong className="block text-[15px] font-semibold mb-1 text-ink">
+                  Auto-publish bot stories
+                </strong>
+                <span className="block text-[13.5px] text-ink-secondary leading-snug">
+                  When on, finished bot stories go live immediately. When off, they wait in Review.
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <label className="flex items-center gap-2 mb-5 text-sm">
-          <input
-            type="checkbox"
-            checked={!!form.autoPublish}
-            onChange={(e) => {
-              const autoPublish = e.target.checked;
-              setForm((prev) => ({ ...prev, autoPublish }));
-              onSave?.({ ...form, autoPublish });
-            }}
-          />
-          Auto-publish bot stories (off = they wait in Review)
-        </label>
+        <div className="col-span-full">
+          <h3 className="text-[15px] font-semibold m-0 mb-2 text-ink tracking-tight">Editorial control</h3>
+          <p className="text-sm text-ink-secondary leading-snug m-0 mb-4 max-w-[68ch]">
+            Choose which countries and sections the bot may scrape, edit the writing prompt, and
+            turn individual RSS feeds on or off. Save bot settings to apply.
+          </p>
+
+          <div className="mb-5">
+            <div className={fieldLabel}>Countries</div>
+            <div className="flex flex-wrap gap-2">
+              {catalog.countries.map((c) => {
+                const on = form.countries.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCountry(c.id)}
+                    className={cn(
+                      'h-9 px-3 rounded-md border text-[13px] font-semibold cursor-pointer',
+                      on
+                        ? 'border-mint bg-mint/15 text-mint'
+                        : 'border-line bg-bg-elevated text-ink-secondary'
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <div className={fieldLabel}>Sections to focus</div>
+            <div className="flex flex-wrap gap-2">
+              {(catalog.sections || EMPTY_FORM.sections).map((name) => {
+                const on = form.sections.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => toggleSection(name)}
+                    className={cn(
+                      'h-9 px-3 rounded-md border text-[13px] font-semibold cursor-pointer',
+                      on
+                        ? 'border-mint bg-mint/15 text-mint'
+                        : 'border-line bg-bg-elevated text-ink-secondary'
+                    )}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <label htmlFor="bot-focus" className={fieldLabel}>Desk focus</label>
+            <input
+              id="bot-focus"
+              className={fieldInput}
+              value={form.focusNote}
+              onChange={(e) => setField('focusNote', e.target.value)}
+              placeholder="e.g. Prioritize AI regulation, cricket, and Indian markets"
+            />
+            <div className="text-[13px] text-ink-tertiary mt-2">
+              Short instruction added to every rewrite. Leave blank for a general desk.
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="bot-prompt" className={fieldLabel}>Writer prompt</label>
+            <textarea
+              id="bot-prompt"
+              className={cn(fieldInput, 'min-h-[140px] resize-y')}
+              value={form.writerPrompt}
+              onChange={(e) => setField('writerPrompt', e.target.value)}
+              placeholder="Voice, tone, what to keep or drop…"
+            />
+            <div className="text-[13px] text-ink-tertiary mt-2">
+              Editorial voice. Formatting and JSON rules stay in the engine so output does not break.
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-line overflow-hidden">
+            <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-3 flex-wrap">
+              <strong className="text-[14px] text-ink">RSS feeds</strong>
+              <span className="font-mono text-[11px] text-ink-muted">
+                {form.feeds.filter((f) => f.enabled).length} on / {form.feeds.length} total
+              </span>
+            </div>
+            <div className="max-h-[360px] overflow-y-auto divide-y divide-line">
+              {form.feeds.map((feed) => {
+                const countryOn = form.countries.includes(feed.country);
+                const sectionOn = form.sections.includes(feed.section);
+                const live = feed.enabled && countryOn && sectionOn;
+                return (
+                  <div key={feed.id} className="flex items-start gap-3 px-4 py-3">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!!feed.enabled}
+                      onClick={() => toggleFeed(feed.id)}
+                      className="shrink-0 bg-transparent border-0 p-0 cursor-pointer"
+                    >
+                      <SwitchKnob on={!!feed.enabled} />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[13.5px] font-semibold text-ink">{feed.label}</span>
+                        <span className="font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+                          {feed.country} · {feed.section}
+                        </span>
+                        {!live ? (
+                          <span className="font-mono text-[10px] text-[#ff6b6b]">
+                            {!feed.enabled ? 'off' : !countryOn ? 'country off' : 'section off'}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-[12px] text-ink-tertiary truncate">{feed.url}</div>
+                    </div>
+                    {String(feed.id).startsWith('custom-') ? (
+                      <button
+                        type="button"
+                        className="text-[12px] text-[#ff6b6b] bg-transparent border-0 cursor-pointer"
+                        onClick={() => removeFeed(feed.id)}
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-4 py-3 border-t border-line grid grid-cols-1 min-[721px]:grid-cols-[1fr_1fr_140px_160px_auto] gap-2 items-end">
+              <input
+                className={fieldInput}
+                placeholder="Feed name"
+                value={customFeed.label}
+                onChange={(e) => setCustomFeed((p) => ({ ...p, label: e.target.value }))}
+              />
+              <input
+                className={fieldInput}
+                placeholder="https://example.com/rss.xml"
+                value={customFeed.url}
+                onChange={(e) => setCustomFeed((p) => ({ ...p, url: e.target.value }))}
+              />
+              <select
+                className={fieldInput}
+                value={customFeed.country}
+                onChange={(e) => setCustomFeed((p) => ({ ...p, country: e.target.value }))}
+              >
+                {catalog.countries.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={fieldInput}
+                value={customFeed.section}
+                onChange={(e) => setCustomFeed((p) => ({ ...p, section: e.target.value }))}
+              >
+                {(catalog.sections || EMPTY_FORM.sections).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className={tw.secondaryBtn} onClick={addCustomFeed}>
+                Add feed
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div>
           <h3 className="text-[15px] font-semibold m-0 mb-4 text-ink tracking-tight">Publishing limits</h3>
@@ -566,6 +895,19 @@ export function BotView({
 
         <div>
           <h3 className="text-[15px] font-semibold m-0 mb-4 text-ink tracking-tight">Cycle &amp; cleanup</h3>
+          <div className="mb-[18px]">
+            <label htmlFor="bot-age" className={fieldLabel}>Only take stories newer than (hours)</label>
+            <input
+              id="bot-age"
+              type="number"
+              min={1}
+              max={72}
+              value={form.maxAgeHours}
+              onChange={(e) => setField('maxAgeHours', e.target.value)}
+              className={fieldInput}
+            />
+            <div className="text-[13px] text-ink-tertiary mt-2 leading-snug">Skip older RSS items. Default 6.</div>
+          </div>
           <div className="mb-[18px]">
             <label htmlFor="bot-sleep" className={fieldLabel}>Sleep between cycles (seconds)</label>
             <input

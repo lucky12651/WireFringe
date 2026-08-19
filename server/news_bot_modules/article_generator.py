@@ -152,6 +152,8 @@ async def generate_article(
     scraped_img: Optional[str] = None, 
     parsed_title: Optional[str] = None,
     internal_links: Optional[list[dict]] = None,
+    writer_prompt: Optional[str] = None,
+    focus_note: Optional[str] = None,
     **kwargs
 ) -> Optional[PostUpsert]:
     """
@@ -166,7 +168,7 @@ async def generate_article(
         logger.info(f"Truncating excessively large raw content from {len(raw_content)} to 15000 characters.")
         raw_content = raw_content[:15000]
 
-    og_img = scraped_img or CATEGORY_IMAGES.get(category)
+    og_img = scraped_img or None
     final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else fallback_title
     final_title = re.split(r' - \w+', final_title)[0].strip()
 
@@ -179,9 +181,17 @@ async def generate_article(
 
     try:
         logger.info(f"Generating article for {source_url} using Groq AI paraphrasing.")
-        
+
+        editorial = (writer_prompt or "").strip()
+        focus = (focus_note or "").strip()
+        voice = editorial or (
+            "You are a professional news editor and SEO specialist. Paraphrase the provided text into original, neutral journalistic copy while preserving chronological facts."
+        )
+        if focus:
+            voice += f"\n\nDESK FOCUS (obey this): {focus}"
+
         system_prompt = (
-            "You are a professional news editor and SEO specialist. Paraphrase the provided text into original, neutral journalistic copy while preserving chronological facts.\n\n"
+            f"{voice}\n\n"
             "CRITICAL FORMATTING INSTRUCTIONS:\n"
             "1. Output the text using WordPress Gutenberg block comments (<!-- wp:paragraph -->, <!-- wp:heading -->, <!-- wp:list -->).\n"
             "2. If you see a Twitter/X link (e.g., twitter.com/user/status/123), extract the URL and output it EXACTLY inside this block format:\n"

@@ -11,9 +11,9 @@ import PostHero from '../components/PostHero/PostHero';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl, stripHtml } from '../lib/utils';
 import { authorPath, sectionPath } from '../lib/sections';
-import { newsroomApi } from '../lib/api';
 import { AD_SLOTS } from '../lib/ads';
 import AuthorByline from '../components/AuthorByline/AuthorByline';
+import FollowBar from '../components/FollowBar/FollowBar';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
 import { useAuth } from '../hooks';
 
@@ -118,12 +118,6 @@ export default function PostPage({
     fallbackData: initialPost,
     revalidateOnFocus: false,
   });
-
-  const { data: relatedData } = useSWR(
-    postData?.id ? `/api/posts/${encodeURIComponent(postData.id)}/related` : null,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
 
   const { data: latestData } = useSWR('/api/posts', fetcher, {
     fallbackData: initialLatest,
@@ -358,48 +352,11 @@ export default function PostPage({
                     </p>
                   ) : null}
 
-                  {(relatedData || []).length ? (
-                    <div className="mt-8">
-                      <h3 className="font-mono text-[12px] uppercase tracking-wide text-mint">Related</h3>
-                      {relatedData.map((r) => (
-                        <Link key={r.id} href={postUrl(r)} className="block py-2 text-ink no-underline">
-                          {r.title}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="bg-mint/10 border border-mint/20 text-ink rounded-[14px] px-7 py-[26px] mt-6 mb-2">
-                    <p className="m-0 mb-4 text-[15.5px] leading-relaxed">
-                      <strong>Follow this topic or author</strong> to see more like it in For You.
-                    </p>
-                    <button
-                      type="button"
-                      className="mr-3 border-0 bg-mint text-black h-9 px-3 font-semibold cursor-pointer"
-                      onClick={() => {
-                        if (!me) {
-                          router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
-                          return;
-                        }
-                        newsroomApi.follow('topic', post.bucket || 'Tech');
-                      }}
-                    >
-                      Follow {post.bucket || 'News'}
-                    </button>
-                    <button
-                      type="button"
-                      className="border border-line bg-transparent text-ink h-9 px-3 cursor-pointer"
-                      onClick={() => {
-                        if (!me) {
-                          router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
-                          return;
-                        }
-                        newsroomApi.follow('author', post.creatorName || post.creator);
-                      }}
-                    >
-                      Follow author
-                    </button>
-                  </div>
+                  <FollowBar
+                    topic={post.bucket || 'News'}
+                    author={post.creatorName || post.creator}
+                    loginNext={router.asPath}
+                  />
                 </article>
 
                 <aside className="relative min-w-0 min-[1001px]:self-stretch">

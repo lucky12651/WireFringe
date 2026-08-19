@@ -12,6 +12,7 @@ from ..models import (
     CommentVote,
     PersonalizedFeed,
     Post,
+    PostRevision,
     User,
     UserInteraction,
 )
@@ -304,6 +305,7 @@ class UserService:
             self.db.execute(
                 delete(PersonalizedFeed).where(PersonalizedFeed.post_id.in_(post_ids))
             )
+            self.db.execute(delete(PostRevision).where(PostRevision.post_id.in_(post_ids)))
             result = self.db.execute(delete(Post).where(Post.id.in_(post_ids)))
             posts_deleted = int(result.rowcount or 0)
             self.db.commit()
@@ -402,13 +404,8 @@ class UserService:
         return self._build_me_out(updated)
 
     def update_brand_byline(self, user: User, enabled: bool) -> MeOut:
-        """Enable/disable post-only brand logo byline for this user."""
+        """Enable/disable the homepage text wordmark on this user's posts."""
         user.brand_byline_enabled = bool(enabled)
-        # If enabling without a logo yet, fall back to default brand asset for Wirefringe
-        if user.brand_byline_enabled and not (user.brand_logo_url or "").strip():
-            username = (user.username or "").strip().lower()
-            if "wirefringe" in username.replace(" ", ""):
-                user.brand_logo_url = "/wirefringe.png"
         updated = self.user_repo.update(user)
         return self._build_me_out(updated)
 
@@ -658,6 +655,7 @@ class UserService:
                         PersonalizedFeed.post_id.in_(post_ids)
                     )
                 )
+                self.db.execute(delete(PostRevision).where(PostRevision.post_id.in_(post_ids)))
                 result = self.db.execute(delete(Post).where(Post.id.in_(post_ids)))
                 posts_deleted = int(result.rowcount or 0)
         else:

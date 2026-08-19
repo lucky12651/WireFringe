@@ -37,8 +37,5 @@ export function brandLogoUrl(post) {
 }
 
 export function authorAvatarUrl(post) {
-  const uploaded = String(post?.creatorAvatarUrl || '').trim();
-  if (uploaded) return uploaded;
-  if (isBrandBylineAuthor(post)) return brandLogoUrl(post) || WIREFRINGE_LOGO;
-  return '';
+  return String(post?.creatorAvatarUrl || '').trim();
 }

@@ -9,10 +9,22 @@ from datetime import datetime, timedelta, timezone
 from xml.sax.saxutils import escape as xml_escape
 
 from fastapi import HTTPException
-from sqlalchemy import func, or_
+from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..models import NewsQueue, PersonalizedFeed, Post, PostRevision, UrlRedirect, User, UserInteraction
+from ..models import (
+    Comment,
+    CommentReport,
+    CommentVote,
+    NewsQueue,
+    PersonalizedFeed,
+    Post,
+    PostRevision,
+    UrlRedirect,
+    User,
+    UserInteraction,
+)
 from ..repositories import CommentRepository, PostRepository, UserRepository
 from ..schemas import (
     CreatorCountOut,
@@ -91,14 +103,9 @@ class PostService:
             creator_name = (author.display_name or author.username).strip() or author.username
             creator_avatar = (author.avatar_url or "").strip() or None
             brand_byline = bool(getattr(author, "brand_byline_enabled", False))
-            brand_logo = (getattr(author, "brand_logo_url", None) or "").strip() or None
+            brand_logo = None
             author_bio = getattr(author, "bio", None)
             author_slug = self._slugify_title(creator_name)
-            if brand_byline and not brand_logo:
-                # Sensible default for brand accounts without a custom upload yet
-                uname = (author.username or "").strip().lower().replace(" ", "")
-                if "wirefringe" in uname:
-                    brand_logo = "/wirefringe.png"
         else:
             creator_name = creator_raw
             creator_avatar = None
@@ -465,21 +472,24 @@ class PostService:
 
         follows = self.db.query(UserFollow).filter(UserFollow.user_id == user_id).all()
         if follows:
-            topics = {f.target for f in follows if f.kind == "topic"}
-            authors = {f.target.lower() for f in follows if f.kind == "author"}
+            def _key(value: str | None) -> str:
+                return re.sub(r"[^a-z0-9]+", "", (value or "").strip().lower())
+
+            topics = {_key(f.target) for f in follows if f.kind == "topic" and (f.target or "").strip()}
+            authors = {_key(f.target) for f in follows if f.kind == "author" and (f.target or "").strip()}
             public = self.list_posts(public=True)
             picked = [
                 p
                 for p in public
-                if p.bucket in topics
-                or (p.creatorName or "").lower() in authors
-                or (p.creator or "").lower() in authors
+                if _key(p.bucket) in topics
+                or _key(p.creatorName) in authors
+                or _key(p.creator) in authors
             ]
-            if picked:
-                return picked[:limit]
+            # Do not fall back to latest — Following must only show followed work.
+            return picked[:limit]
 
-        # 3. Fallback: latest posts
-        return self.list_posts(public=True)[:limit]
+        # 3. No follows yet
+        return []
 
     def get_news_queue(self) -> list[NewsQueueItem]:
         """Get all pending or failed news from the database queue."""
@@ -721,7 +731,7 @@ class PostService:
         return "".join(parts)
 
     def delete_post(self, post_id: str, user: User) -> None:
-        """Delete a post and all its associated comments."""
+        """Delete a post and every row that still points at it."""
         post = self.post_repo.get(post_id)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -731,8 +741,37 @@ class PostService:
         if user.role == "author" and (getattr(post, "status", None) or "") == "published":
             raise HTTPException(status_code=403, detail="Ask an editor to unpublish before deleting")
 
-        # Delete all comments for this post first (to avoid FK constraint violation)
-        self.comment_repo.delete_by_post(post_id)
-        
-        # Then delete the post
-        self.post_repo.delete(post)
+        pid = str(post.id)
+        try:
+            # Detach the loaded row so SQLAlchemy does not emit its own DELETE
+            # before the child tables are cleared.
+            self.db.expunge(post)
+            self.db.execute(
+                text(
+                    "DELETE FROM comment_votes WHERE comment_id IN "
+                    "(SELECT id FROM comments WHERE post_id = :pid)"
+                ),
+                {"pid": pid},
+            )
+            self.db.execute(
+                text(
+                    "DELETE FROM comment_reports WHERE comment_id IN "
+                    "(SELECT id FROM comments WHERE post_id = :pid)"
+                ),
+                {"pid": pid},
+            )
+            self.db.execute(text("DELETE FROM comments WHERE post_id = :pid"), {"pid": pid})
+            self.db.execute(text("DELETE FROM user_interactions WHERE post_id = :pid"), {"pid": pid})
+            self.db.execute(text("DELETE FROM personalized_feeds WHERE post_id = :pid"), {"pid": pid})
+            self.db.execute(text("DELETE FROM post_revisions WHERE post_id = :pid"), {"pid": pid})
+            self.db.execute(text("DELETE FROM posts WHERE id = :pid"), {"pid": pid})
+            self.db.commit()
+        except IntegrityError as exc:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Could not delete this post because related records still point at it.",
+            ) from exc
+        except Exception:
+            self.db.rollback()
+            raise

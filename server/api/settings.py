@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db, require_admin, require_user
@@ -36,8 +36,13 @@ class AdSenseUpdate(BaseModel):
 
 
 class BotUpdate(BaseModel):
+    # Allow extra keys so a stale process / older schema cannot silently
+    # drop editorial fields (countries, prompt, feeds) on save.
+    model_config = ConfigDict(extra="allow")
+
     enabled: bool | None = None
     hideArticles: bool | None = None
+    autoPublish: bool | None = None
     dailyLimit: int | None = Field(None, ge=1, le=100)
     gapMinutes: int | None = Field(None, ge=0, le=1440)
     sleepSeconds: int | None = Field(None, ge=60, le=86400)
@@ -45,6 +50,12 @@ class BotUpdate(BaseModel):
     recentCacheHours: int | None = Field(None, ge=1, le=72)
     maxItemsPerFeed: int | None = Field(None, ge=1, le=50)
     processPerCycle: int | None = Field(None, ge=1, le=10)
+    maxAgeHours: int | None = Field(None, ge=1, le=72)
+    countries: list[str] | None = None
+    sections: list[str] | None = None
+    feeds: list[dict] | None = None
+    writerPrompt: str | None = None
+    focusNote: str | None = None
 
 
 # ── Public AdSense ───────────────────────────────────────────

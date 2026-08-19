@@ -4,7 +4,7 @@ import { tw } from '../../lib/tw';
 
 /**
  * Site wordmark — styles via Tailwind (no global CSS logo classes).
- * size: sm | md | lg | xl
+ * size: xs | sm | md | lg | xl
  */
 export default function BrandLogo({
   size = 'md',
@@ -14,13 +14,15 @@ export default function BrandLogo({
   asLink = false,
 }) {
   const sizeClass =
-    size === 'sm'
-      ? tw.logoSm
-      : size === 'lg'
-        ? tw.logoLg
-        : size === 'xl'
-          ? tw.logoXl
-          : tw.logoMd;
+    size === 'xs'
+      ? tw.logoXs
+      : size === 'sm'
+        ? tw.logoSm
+        : size === 'lg'
+          ? tw.logoLg
+          : size === 'xl'
+            ? tw.logoXl
+            : tw.logoMd;
 
   const mark = (
     <span className={cn(tw.logo, sizeClass, className)} aria-label="Wirefringe">

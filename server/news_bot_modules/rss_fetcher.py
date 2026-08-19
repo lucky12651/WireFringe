@@ -9,7 +9,9 @@ import httpx
 logger = logging.getLogger(__name__)
 
 
-async def fetch_rss_items(category: str, url: str, http_client: httpx.AsyncClient) -> List[Dict[str, str]]:
+async def fetch_rss_items(
+    category: str, url: str, http_client: httpx.AsyncClient, max_age_hours: int = 6
+) -> List[Dict[str, str]]:
     """Fetch and parse RSS items with fallback link extraction."""
     try:
         response = await http_client.get(url)
@@ -26,7 +28,8 @@ async def fetch_rss_items(category: str, url: str, http_client: httpx.AsyncClien
         logger.info(f"🔍 Found {len(found_elements)} raw XML items for category: {category}")
 
         now = datetime.now(timezone.utc)
-        one_hour_ago = now - timedelta(hours=1)
+        hours = max(1, min(int(max_age_hours or 6), 72))
+        one_hour_ago = now - timedelta(hours=hours)
 
         for item in found_elements:
             # Check publication date - only take news under 1 hour old
@@ -55,10 +58,20 @@ async def fetch_rss_items(category: str, url: str, http_client: httpx.AsyncClien
                     link = guid_el.text
 
             if link:
+                image = ""
+                enc = item.find("enclosure")
+                if enc is not None and "image" in (enc.get("type") or ""):
+                    image = enc.get("url") or ""
+                media = item.find("{http://search.yahoo.com/mrss/}content") or item.find(
+                    "{http://search.yahoo.com/mrss/}thumbnail"
+                )
+                if media is not None:
+                    image = image or media.get("url") or ""
                 items.append({
                     "title": title.strip(),
                     "link": link.strip(),
-                    "category": category
+                    "category": category,
+                    "image": image.strip(),
                 })
         return items
     except Exception as e:

@@ -3,26 +3,17 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout/Layout';
-import { fetcher, newsroomApi } from '../../lib/api';
+import FollowBar from '../../components/FollowBar/FollowBar';
+import { fetcher } from '../../lib/api';
 import { postUrl, postExcerpt } from '../../lib/utils';
-import { useAuth } from '../../hooks';
 
 export default function AuthorPage() {
   const router = useRouter();
   const slug = String(router.query.slug || '');
-  const { me } = useAuth();
   const { data, error } = useSWR(slug ? `/api/authors/${encodeURIComponent(slug)}` : null, fetcher, {
     revalidateOnFocus: false,
   });
   const posts = useMemo(() => data?.posts || [], [data]);
-
-  const follow = async () => {
-    if (!me) {
-      router.push(`/login?next=/author/${encodeURIComponent(slug)}`);
-      return;
-    }
-    await newsroomApi.follow('author', data?.name || slug);
-  };
 
   return (
     <Layout title={`${data?.name || 'Author'} – Wirefringe`} description={data?.bio || ''}>
@@ -30,9 +21,12 @@ export default function AuthorPage() {
         {error ? <p>Author not found.</p> : null}
         <h1 className="text-[34px] font-extrabold m-0 mb-2">{data?.name || 'Author'}</h1>
         {data?.bio ? <p className="text-ink-secondary leading-relaxed">{data.bio}</p> : null}
-        <button type="button" className="mt-3 mb-8 h-10 px-4 border-0 bg-mint text-black font-semibold cursor-pointer" onClick={follow}>
-          Follow this author
-        </button>
+        <div className="mt-4 mb-8">
+          <FollowBar
+            author={data?.name || slug}
+            loginNext={`/author/${encodeURIComponent(slug)}`}
+          />
+        </div>
         {posts.map((p) => (
           <Link key={p.id} href={postUrl(p)} className="block py-4 border-b border-line no-underline text-ink">
             <div className="text-[11px] uppercase text-mint font-mono">{p.bucket}</div>

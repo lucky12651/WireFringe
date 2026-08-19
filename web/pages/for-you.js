@@ -53,7 +53,7 @@ export default function ForYouPage() {
         <div className="text-center px-4 py-12 text-ink-tertiary min-h-[50vh] pt-20">
           <h1 className="mb-3 text-[32px] font-extrabold text-ink">For You</h1>
           <p className="mb-5">Sign in to see your personalized feed.</p>
-          <Link href="/login" className={tw.btnAccent}>
+          <Link href="/login?next=/for-you" className={tw.btnAccent}>
             SIGN IN
           </Link>
         </div>
@@ -117,7 +117,7 @@ export default function ForYouPage() {
               ))}
               {!posts.length && (
                 <div className="text-center px-4 py-12 text-ink-tertiary">
-                  No recommendations yet. Start reading!
+                  Nothing in For You yet. Follow a topic or author on a story, then come back.
                 </div>
               )}
             </aside>

@@ -119,6 +119,14 @@
     background: var(--bg);
     transition: background-color 0.2s ease;
     --header-height: 96px;
+    --bottom-nav-height: 0px;
+  }
+
+  @media (max-width: 1000px) {
+    html {
+      --header-height: 72px;
+      --bottom-nav-height: calc(58px + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   body {
@@ -329,6 +337,13 @@ html[data-theme='light'] .enabled\:hover\:shadow-mint:hover:enabled {
 .post-header {
   background-color: transparent;
   transition: background-color 280ms ease, backdrop-filter 280ms ease;
+}
+
+/* Same homepage --bg in both themes. 90% solid color, 10% frost. */
+.site-header-bar {
+  background-color: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Dark mode post header: keep type white (do not use on-accent black). */

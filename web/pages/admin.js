@@ -379,7 +379,6 @@ export default function AdminPage() {
             onUpdateProfile={auth.updateProfile}
             onUploadPhoto={auth.uploadPhoto}
             onUpdateBrandByline={auth.updateBrandByline}
-            onUploadBrandLogo={auth.uploadBrandLogo}
             onChangePassword={auth.changePassword}
           />
         );

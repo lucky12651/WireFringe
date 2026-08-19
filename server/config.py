@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     ollama_api_url: str = Field("https://api.ollama.cloud/v1", validation_alias="OLLAMA_API_URL")
     ollama_api_key: str = Field("", validation_alias="OLLAMA_API_KEY")
     groq_api_key: str = Field("", validation_alias="GROQ_API_KEY")
-    groq_model: str = Field("llama-3.3-70b-versatile", validation_alias="GROQ_MODEL")
+    groq_model: str = Field("openai/gpt-oss-20b", validation_alias="GROQ_MODEL")
     revalidate_secret: str = Field("dev-revalidate-secret", validation_alias="REVALIDATE_SECRET")
 
     model_config = SettingsConfigDict(

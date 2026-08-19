@@ -9,6 +9,7 @@ export function DeleteConfirmModal({
   title, 
   itemName, 
   message,
+  error,
   onConfirm, 
   onCancel, 
   isDeleting 
@@ -29,6 +30,7 @@ export function DeleteConfirmModal({
         <p>{displayMessage}</p>
         {displayName && <p className="font-semibold text-ink mt-2">&quot;{displayName}&quot;</p>}
         <p className={tw.modalWarning}>This action cannot be undone.</p>
+        {error ? <p className="text-[13px] text-[#ff6b6b] mt-3 font-mono">{error}</p> : null}
       </div>
       <div className={tw.modalActions}>
         <ActionButton size="sm" onClick={onCancel} disabled={isDeleting}>

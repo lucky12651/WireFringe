@@ -340,14 +340,23 @@ async def admin_refresh_queue_feeds(
     user = require_user(request, db)
     require_staff(user)
     
-    from ..news_bot import NewsBot, FEEDS
+    from ..news_bot import NewsBot
+    from ..news_bot_modules.bot_catalog import active_feeds
+    from ..news_bot_modules.rss_fetcher import fetch_rss_items
+    from ..services.settings_service import SettingsService
+
     bot = NewsBot()
     try:
+        cfg = SettingsService(db).get_bot()
         all_items = []
-        for category, url in FEEDS.items():
-            items = await bot.fetch_rss_items(category, url)
-            all_items.extend(items[:10]) # Get a bit more for manual refresh
-        
+        for feed in active_feeds(cfg):
+            items = await fetch_rss_items(
+                feed["section"],
+                feed["url"],
+                bot.http_client,
+                max_age_hours=int(cfg.get("maxAgeHours") or 6),
+            )
+            all_items.extend(items[:10])
         bot.save_to_queue(db, all_items)
         return {"success": True, "count": len(all_items)}
     finally:

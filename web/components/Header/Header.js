@@ -176,11 +176,11 @@ export default function Header({
           accentColor && !scrolled && 'post-header',
           accentColor && !scrolled && theme === 'light' && 'on-accent',
           accentColor && scrolled && 'post-header post-header-scrolled',
-          (!accentColor || scrolled) && 'bg-bg/80 backdrop-blur-[16px] backdrop-saturate-150'
+          (!accentColor || scrolled) && 'site-header-bar'
         )}
       >
         <div className="relative w-full max-w-site mx-auto px-4 pt-1.5 pb-1.5 box-border md:px-6 md:pt-2 md:pb-1.5">
-          <div className="flex justify-end items-center gap-3.5 w-full mb-1">
+          <div className="hidden min-[1001px]:flex justify-end items-center gap-3.5 w-full mb-1">
             <a
               href="#newsletter"
               className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
@@ -248,7 +248,7 @@ export default function Header({
                 <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-line">
                   <button
                     type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
+                    className="hidden min-[1001px]:inline-flex w-[34px] h-[30px] items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
                     aria-label="Search"
                     onClick={() => {
                       setSearchOpen((v) => !v);
@@ -349,7 +349,7 @@ export default function Header({
       />
       <aside
         className={cn(
-          'fixed top-0 right-0 bottom-0 w-[min(400px,92vw)] bg-bg-elevated border-l border-line z-[12001] transition-transform duration-300 ease-out flex flex-col',
+          'fixed top-0 right-0 bottom-0 w-[min(400px,92vw)] bg-bg border-l border-line z-[12001] transition-transform duration-300 ease-out flex flex-col',
           menuOpen ? 'translate-x-0' : 'translate-x-full'
         )}
         aria-hidden={!menuOpen}

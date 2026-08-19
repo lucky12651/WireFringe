@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { WIREFRINGE_LOGO, isWirefringeAuthor } from '../../lib/author';
+import { isWirefringeAuthor } from '../../lib/author';
 import { cn } from '../../lib/utils';
 
 function getInitials(name) {
@@ -24,7 +24,7 @@ export default function AuthorAvatar({
   const [failed, setFailed] = useState(false);
   const label = String(name || '').trim() || 'Author';
   const isBrand = brand || isWirefringeAuthor(label) || isWirefringeAuthor(src);
-  const url = String(src || (isBrand ? WIREFRINGE_LOGO : '') || '').trim();
+  const url = String(src || '').trim();
 
   useEffect(() => {
     setFailed(false);

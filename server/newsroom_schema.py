@@ -142,6 +142,22 @@ def apply_newsroom_schema() -> None:
                     """
                 )
             )
+            # Hide-all used to flip status to unpublished, then unhide only
+            # cleared is_hidden. Public feeds require status=published, so
+            # those posts stayed invisible while admin stats said "visible".
+            # Legitimate editor unpublish always keeps is_hidden=true.
+            conn.execute(
+                text(
+                    """
+                    UPDATE posts
+                    SET status = 'published'
+                    WHERE COALESCE(is_bot, FALSE) = TRUE
+                      AND published_at IS NOT NULL
+                      AND COALESCE(is_hidden, FALSE) = FALSE
+                      AND lower(status) = 'unpublished'
+                    """
+                )
+            )
 
         if "users" in tables:
             existing = {c["name"] for c in inspector.get_columns("users")}

@@ -12,7 +12,7 @@ import httpx
 from .config import settings
 from .db import SessionLocal
 from .models import Post, NewsQueue
-from .news_bot_modules.constants import FEEDS
+from .news_bot_modules.bot_catalog import active_feeds
 from .news_bot_modules.rss_fetcher import fetch_rss_items
 from .news_bot_modules.queue_ops import (
     save_to_queue, 
@@ -72,7 +72,9 @@ class NewsBot:
         category = item.category
 
         logger.info(f"Processing: {source_url}")
-        raw_content, scraped_img, parsed_title, resolved_url = await scrape_article(source_url, self.http_client)
+        raw_content, scraped_img, parsed_title, resolved_url, extra_images = await scrape_article(
+            source_url, self.http_client
+        )
         logger.info(f"Scraped raw content length: {len(raw_content) if raw_content else 0}")
 
         final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else item.title
@@ -94,9 +96,12 @@ class NewsBot:
             for p in recent_posts
         ]
 
+        bot_cfg = SettingsService(db).get_bot()
         article_data = await generate_article(
             raw_content, source_url, category, item.title, scraped_img, parsed_title,
-            internal_links=internal_links
+            internal_links=internal_links,
+            writer_prompt=bot_cfg.get("writerPrompt"),
+            focus_note=bot_cfg.get("focusNote"),
         )
         if not article_data:
             update_queue_status(db, source_url, "failed_gen")
@@ -106,7 +111,22 @@ class NewsBot:
         if db.query(Post).filter(Post.id == slug).first():
             slug = f"{slug}-{str(uuid.uuid4())[:8]}"
 
-        bot_cfg = SettingsService(db).get_bot()
+        from .news_bot_modules.image_ops import resolve_story_image
+
+        rss_image = getattr(item, "image", None) or ""
+        article_data.ogImg = await resolve_story_image(
+            db,
+            candidates=[scraped_img, rss_image, article_data.ogImg, *(extra_images or [])],
+            title=article_data.title,
+            category=article_data.bucket or category,
+            http_client=self.http_client,
+            unique=slug,
+        )
+        if not article_data.ogImg:
+            logger.info("Dropping story with no real photo: %s", source_url)
+            update_queue_status(db, source_url, "failed_image")
+            return False
+
         auto_publish = bool(bot_cfg.get("autoPublish"))
         now = datetime.now(timezone.utc)
         source_name = None
@@ -175,9 +195,14 @@ class NewsBot:
             cleanup_old_queue_items(db, hours=queue_cleanup_hours)
             cleanup_recent_cache(db, hours=recent_cache_hours)
 
+            max_age_hours = int(bot_cfg.get("maxAgeHours") or 6)
+            feeds = active_feeds(bot_cfg)
+            logger.info("Fetching %s enabled editorial feeds", len(feeds))
             all_items = []
-            for category, url in FEEDS.items():
-                items = await self.fetch_rss_items(category, url)
+            for feed in feeds:
+                items = await fetch_rss_items(
+                    feed["section"], feed["url"], self.http_client, max_age_hours=max_age_hours
+                )
                 all_items.extend(items[:max_items_per_feed])
 
             logger.info("Syncing discovered items into the staging database queue...")

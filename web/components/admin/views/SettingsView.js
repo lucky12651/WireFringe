@@ -3,13 +3,13 @@ import { initialsFromName, cn } from '../../../lib/utils';
 import { MIN_PASSWORD_LENGTH } from '../../../lib/constants';
 import { tw } from '../../../lib/tw';
 import { newsroomApi } from '../../../lib/api';
+import BrandLogo from '../../BrandLogo/BrandLogo';
 
 export function SettingsView({
   me,
   onUpdateProfile,
   onUploadPhoto,
   onUpdateBrandByline,
-  onUploadBrandLogo,
   onChangePassword,
 }) {
   const [displayName, setDisplayName] = useState('');
@@ -19,7 +19,6 @@ export function SettingsView({
 
   const [brandEnabled, setBrandEnabled] = useState(false);
   const [brandHint, setBrandHint] = useState('');
-  const [brandLogoHint, setBrandLogoHint] = useState('');
   const [isSavingBrand, setIsSavingBrand] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -35,13 +34,12 @@ export function SettingsView({
       setProfileHint('');
       setPhotoHint('');
       setBrandHint('');
-      setBrandLogoHint('');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setPasswordHint('');
     }
-  }, [me?.id, me?.brandBylineEnabled, me?.brandLogoUrl, me?.displayName]);
+  }, [me?.id, me?.brandBylineEnabled, me?.displayName]);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -78,8 +76,8 @@ export function SettingsView({
       if (result.success) {
         setBrandHint(
           next
-            ? 'Brand logo byline is ON for your posts.'
-            : 'Brand logo byline is OFF — your name will show on posts.'
+            ? 'Posts will show the Wirefringe wordmark instead of your name.'
+            : 'Posts will show your name again.'
         );
       } else {
         setBrandEnabled(!!me?.brandBylineEnabled);
@@ -88,22 +86,6 @@ export function SettingsView({
     } finally {
       setIsSavingBrand(false);
     }
-  };
-
-  const handleBrandLogoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !onUploadBrandLogo) return;
-    setBrandLogoHint('');
-    const result = await onUploadBrandLogo(file);
-    if (result.success) {
-      setBrandLogoHint('Post brand logo updated. Site header logo is unchanged.');
-      if (result.user) {
-        setBrandEnabled(!!result.user.brandBylineEnabled);
-      }
-    } else {
-      setBrandLogoHint(result.error || 'Upload failed.');
-    }
-    e.target.value = '';
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -133,12 +115,6 @@ export function SettingsView({
       setPasswordHint(result.error);
     }
   };
-
-  const brandLogoPreview =
-    me?.brandLogoUrl ||
-    (String(me?.username || '').toLowerCase().includes('wirefringe')
-      ? '/wirefringe.png'
-      : null);
 
   return (
     <div className={tw.adminView}>
@@ -255,32 +231,15 @@ export function SettingsView({
       <section className={tw.adminSection}>
         <h3 className={tw.adminSectionTitle}>Post brand byline</h3>
         <p className={tw.adminSectionDesc}>
-          Controls how your name appears on posts only. Does not change the site header or footer logo.
+          Use the same text wordmark as the homepage instead of your name. No photo needed — it
+          follows light and dark mode automatically. Header and footer stay unchanged.
         </p>
         <div className="flex flex-col sm:flex-row gap-8 items-start">
-          <div className="flex flex-col gap-3">
-            <div className="w-[200px] h-16 rounded-md border border-line bg-bg-hover flex items-center justify-center overflow-hidden">
-              {brandLogoPreview ? (
-                <img src={brandLogoPreview} alt="Post brand logo preview" className="max-h-12 max-w-full object-contain" />
-              ) : (
-                <span className="text-xs text-ink-muted">No logo yet</span>
-              )}
+          <div className="flex flex-col gap-2">
+            <div className="min-w-[200px] h-16 px-4 rounded-md border border-line bg-bg-elevated flex items-center justify-center">
+              <BrandLogo size="sm" />
             </div>
-            <label className={cn(tw.secondaryBtn, 'cursor-pointer w-fit')}>
-              Upload logo
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleBrandLogoUpload}
-                disabled={!onUploadBrandLogo}
-              />
-            </label>
-            {brandLogoHint ? (
-              <p className={brandLogoHint.toLowerCase().includes('updated') ? tw.formHintSuccess : tw.formHint}>
-                {brandLogoHint}
-              </p>
-            ) : null}
+            <span className="text-[11px] text-ink-muted font-mono">Preview</span>
           </div>
           <div className="flex flex-col gap-3 max-w-[420px]">
             <label className="flex items-start gap-3 cursor-pointer">
@@ -296,8 +255,9 @@ export function SettingsView({
                   Show brand logo instead of your name on posts
                 </span>
                 <span className="block text-xs text-ink-secondary mt-1">
-                  When on, readers see the logo instead of
-                  &ldquo;{me?.displayName || 'your name'}&rdquo;.
+                  When on, readers see Wire
+                  <span className="italic text-mint">F</span>
+                  ringe instead of &ldquo;{me?.displayName || 'your name'}&rdquo;.
                 </span>
               </span>
             </label>

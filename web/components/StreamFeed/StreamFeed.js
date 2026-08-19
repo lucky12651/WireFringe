@@ -26,17 +26,74 @@ export default function StreamFeed({
   feedTab = 'latest',
   onTabChange,
   user = null,
+  followCount = 0,
+  followsLoading = false,
   showNewsletter = true,
   NewsletterComponent = null,
 }) {
+  const emptyState = (() => {
+    if (feedTab === 'following' && !user) {
+      return (
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
+          <p>Sign in to follow writers and topics.</p>
+          <Link
+            href="/login?next=/"
+            className="inline-block mt-3.5 bg-mint text-black font-mono text-[11px] font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm transition-all hover:bg-mint-hover hover:-translate-y-0.5"
+          >
+            SIGN IN
+          </Link>
+        </div>
+      );
+    }
+    if (feedTab === 'following' && followsLoading) {
+      return (
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
+          Loading your follows…
+        </div>
+      );
+    }
+    if (feedTab === 'following' && followCount === 0) {
+      return (
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
+          <p>You&apos;re not following anyone yet.</p>
+          <p className="mt-2 text-[13px] leading-relaxed">
+            Open a story and tap Follow topic or Follow author. Those posts will show up here.
+          </p>
+        </div>
+      );
+    }
+    if (feedTab === 'following' && posts.length === 0) {
+      return (
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
+          <p>No stories from your follows yet.</p>
+          <Link href="/for-you" className="inline-block mt-3 text-mint font-semibold">
+            Open For You
+          </Link>
+        </div>
+      );
+    }
+    if (posts.length === 0) {
+      return (
+        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">No posts yet.</div>
+      );
+    }
+    return null;
+  })();
+
   return (
     <aside
       className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pr-2.5 pb-5 pl-[22px] overflow-hidden bg-bg max-md:h-auto max-md:max-h-none max-md:overflow-visible max-md:pt-7 max-md:px-0 max-md:pb-0"
-      aria-label="Latest stream"
+      aria-label={feedTab === 'following' ? 'Following stream' : 'Latest stream'}
     >
-      <div className="flex gap-0 mx-auto mb-4 bg-bg-secondary rounded-pill p-[3px] w-fit shrink-0 z-[5] justify-center border border-line shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div
+        className="flex gap-0 mx-auto mb-2 bg-bg-secondary rounded-pill p-[3px] w-fit shrink-0 z-[5] justify-center border border-line shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.04)]"
+        role="tablist"
+        aria-label="Feed"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={feedTab === 'latest'}
           className={cn(
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'latest'
@@ -49,6 +106,8 @@ export default function StreamFeed({
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={feedTab === 'following'}
           className={cn(
             'appearance-none border-0 font-mono text-[10px] font-bold tracking-[0.12em] uppercase px-[18px] py-2.5 rounded-pill cursor-pointer transition-all',
             feedTab === 'following'
@@ -60,19 +119,12 @@ export default function StreamFeed({
           FOLLOWING
         </button>
       </div>
+      <p className="m-0 mb-3 text-center font-mono text-[10px] tracking-[0.08em] uppercase text-ink-muted shrink-0">
+        {feedTab === 'following' ? 'From topics and authors you follow' : 'Newest stories'}
+      </p>
 
-      {feedTab === 'following' && !user ? (
-        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">
-          <p>Sign in to follow writers and topics.</p>
-          <Link
-            href="/login"
-            className="inline-block mt-3.5 bg-mint text-black font-mono text-[11px] font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm transition-all hover:bg-mint-hover hover:-translate-y-0.5"
-          >
-            SIGN IN
-          </Link>
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center px-3 py-10 text-ink-tertiary text-sm flex-1">No posts yet.</div>
+      {emptyState ? (
+        emptyState
       ) : (
         <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1.5 -mr-0.5 max-md:overflow-visible max-md:max-h-none">
           {posts.map((post, idx) => {

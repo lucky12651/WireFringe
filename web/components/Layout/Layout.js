@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Header from '../Header/Header';
 import AdRails from '../AdRails/AdRails';
 import BrandLogo from '../BrandLogo/BrandLogo';
+import MobileBottomNav from '../MobileBottomNav/MobileBottomNav';
 import { ArchivesIcon, SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '../../lib/site';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
@@ -47,13 +48,13 @@ export default function Layout({
           </div>
         ) : null}
         {showAdRails ? <AdRails /> : null}
-        <main className="flex-1 bg-transparent pt-4 md:pt-5" id="content">
+        <main className="flex-1 bg-transparent pt-4 md:pt-5 pb-[calc(var(--bottom-nav-height)+12px)] min-[1001px]:pb-0" id="content">
           <div className={fullWidth ? 'w-full' : 'max-w-site mx-auto w-full px-4 sm:px-7'}>
             {children}
           </div>
         </main>
 
-        <footer className="relative bg-gradient-to-b from-transparent from-0% via-bg via-[18%] to-bg border-t border-line pt-[72px] px-6 pb-[52px] text-center">
+        <footer className="relative bg-gradient-to-b from-transparent from-0% via-bg via-[18%] to-bg border-t border-line pt-[72px] px-6 pb-[calc(52px+var(--bottom-nav-height))] min-[1001px]:pb-[52px] text-center">
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(420px,60%)] h-px bg-gradient-to-r from-transparent via-mint/45 to-transparent"
             aria-hidden="true"
@@ -124,6 +125,7 @@ export default function Layout({
             © {new Date().getFullYear()} {SITE_NAME.toUpperCase()}. ALL RIGHTS RESERVED.
           </p>
         </footer>
+        <MobileBottomNav />
       </div>
     </>
   );

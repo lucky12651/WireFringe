@@ -37,29 +37,19 @@ export function PostsView({
 
   const [activeTab, setActiveTab] = useState('published');
 
-  useEffect(() => {
-    if (!canProcessQueue && activeTab === 'queue') setActiveTab('published');
-    if (isAuthor && activeTab === 'bot') setActiveTab('published');
-  }, [canProcessQueue, isAuthor, activeTab]);
+  const botOn = source === 'bot';
 
   useEffect(() => {
-    if (activeTab === 'bot' && source !== 'bot') onSourceChange?.('bot');
-    if ((activeTab === 'published' || activeTab === 'draft') && source !== 'editorial') {
-      onSourceChange?.('editorial');
-    }
-  }, [activeTab, source, onSourceChange]);
+    if (!canProcessQueue && activeTab === 'queue') setActiveTab('published');
+  }, [canProcessQueue, activeTab]);
 
   const goTab = (tab) => {
     setActiveTab(tab);
-    if (tab === 'published') {
-      onSourceChange?.('editorial');
-      if (filters.status === 'draft') onFiltersChange?.({ status: '' });
-    } else if (tab === 'draft') {
-      onSourceChange?.('editorial');
-      onFiltersChange?.({ status: 'draft' });
-    } else if (tab === 'bot') {
-      onSourceChange?.('bot');
-    }
+  };
+
+  const setBotPosts = (on) => {
+    onSourceChange?.(on ? 'bot' : 'editorial');
+    if (activeTab === 'queue') setActiveTab('published');
   };
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingLinks, setProcessingLinks] = useState(new Set());
@@ -72,12 +62,14 @@ export function PostsView({
 
   // Success toast state
   const [successMessage, setSuccessMessage] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
   const totalPages = Math.ceil(postsCount / limit);
   const hasNext = page < totalPages - 1;
   const hasPrev = page > 0;
 
   const handleDeleteClick = (post) => {
+    setDeleteError('');
     setPostToDelete(post);
   };
 
@@ -86,7 +78,12 @@ export function PostsView({
       const deletedTitle = postToDelete.title;
       setIsDeleting(true);
       try {
-        await onDelete(postToDelete.id);
+        const result = await onDelete(postToDelete.id);
+        if (result?.success === false) {
+          setDeleteError(result.error || 'Failed to delete post.');
+          return;
+        }
+        setDeleteError('');
         setPostToDelete(null);
         setSuccessMessage(`"${deletedTitle}" has been deleted successfully.`);
       } finally {
@@ -119,6 +116,7 @@ export function PostsView({
     setPostToDelete(null);
     setQueueItemToDelete(null);
     setBulkQueueDelete(false);
+    setDeleteError('');
   };
 
   const [bulkQueueDelete, setBulkQueueDelete] = useState(false);
@@ -223,22 +221,9 @@ export function PostsView({
               className={cn(tw.tab, activeTab === 'published' && tw.tabActive)}
               onClick={() => goTab('published')}
             >
-              All staff post <span className="ml-1 opacity-80">{activeTab === 'published' ? postsCount : ''}</span>
+              {botOn ? 'Bot posts' : 'All staff post'}{' '}
+              <span className="ml-1 opacity-80">{activeTab === 'published' ? postsCount : ''}</span>
             </button>
-            <button
-              className={cn(tw.tab, activeTab === 'draft' && tw.tabActive)}
-              onClick={() => goTab('draft')}
-            >
-              Draft <span className="ml-1 opacity-80">{activeTab === 'draft' ? postsCount : ''}</span>
-            </button>
-            {!isAuthor ? (
-            <button
-              className={cn(tw.tab, activeTab === 'bot' && tw.tabActive)}
-              onClick={() => goTab('bot')}
-            >
-              Bot posts <span className="ml-1 opacity-80">{source === 'bot' ? postsCount : ''}</span>
-            </button>
-            ) : null}
             {canProcessQueue ? (
             <button
               className={cn(tw.tab, activeTab === 'queue' && tw.tabActive)}
@@ -262,9 +247,8 @@ export function PostsView({
       </section>
 
       <section className={tw.adminSection}>
-        {activeTab === 'published' || activeTab === 'draft' || activeTab === 'bot' ? (
+        {activeTab === 'published' ? (
           <>
-            {activeTab === 'published' ? (
               <div className="flex flex-wrap items-end gap-2.5 mb-4">
                 <div className="flex-1 min-w-[180px]">
                   <label className={tw.formLabel} htmlFor="staff-post-search">Search</label>
@@ -314,8 +298,34 @@ export function PostsView({
                     onChange={(e) => onFiltersChange?.({ dateTo: e.target.value })}
                   />
                 </div>
+                {!isAuthor ? (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={botOn}
+                    aria-label="Show bot posts"
+                    onClick={() => setBotPosts(!botOn)}
+                    className="h-[42px] px-3 mb-0 flex items-center gap-2.5 border border-line rounded-lg bg-bg-elevated text-ink cursor-pointer select-none"
+                  >
+                    <span
+                      className={cn(
+                        'relative shrink-0 w-[42px] h-6 rounded-full border transition-colors',
+                        botOn ? 'bg-mint/15 border-mint' : 'bg-bg-hover border-line'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'absolute top-[3px] left-[3px] w-4 h-4 rounded-full transition-all duration-200',
+                          botOn ? 'translate-x-[18px] bg-mint' : 'bg-[#888]'
+                        )}
+                      />
+                    </span>
+                    <span className="text-[13px] font-semibold whitespace-nowrap">
+                      Bot posts
+                    </span>
+                  </button>
+                ) : null}
               </div>
-            ) : null}
             <div className={tw.tableWrap}>
               <table className={tw.table}>
                 <thead>
@@ -476,6 +486,7 @@ export function PostsView({
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDeleting={isDeleting}
+        error={deleteError}
       />
 
       {successMessage && (

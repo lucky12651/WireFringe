@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
+import { mutate } from 'swr';
 import { botApi } from '../lib/api';
 
 export function useBotSettings() {
@@ -52,6 +53,7 @@ export function useBotSettings() {
       setError(null);
       const data = await botApi.hideArticles();
       const full = await botApi.get();
+      await mutate('/api/posts');
       if (id !== reqIdRef.current) return { success: true, data, stale: true };
       setSettings(full || null);
       return { success: true, data };
@@ -72,6 +74,7 @@ export function useBotSettings() {
       setError(null);
       const data = await botApi.unhideArticles();
       const full = await botApi.get();
+      await mutate('/api/posts');
       if (id !== reqIdRef.current) return { success: true, data, stale: true };
       setSettings(full || null);
       return { success: true, data };

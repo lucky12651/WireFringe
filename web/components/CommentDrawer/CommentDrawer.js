@@ -431,7 +431,7 @@ export default function CommentDrawer({
       <aside
         data-comment-drawer
         className={cn(
-          'fixed top-0 right-0 bottom-0 z-[13001] w-[min(400px,100vw)] bg-bg-elevated text-ink border-l border-line flex flex-col overflow-hidden transition-[transform,box-shadow] duration-300 ease-out',
+          'fixed top-0 right-0 bottom-0 z-[13001] w-[min(400px,100vw)] bg-bg text-ink border-l border-line flex flex-col overflow-hidden transition-[transform,box-shadow] duration-300 ease-out',
           open
             ? 'translate-x-0 shadow-[-8px_0_28px_rgba(0,0,0,0.16)]'
             : 'translate-x-full shadow-none'
@@ -441,7 +441,7 @@ export default function CommentDrawer({
         inert={!open ? '' : undefined}
       >
         {reportFor ? (
-          <div className="flex flex-col h-full min-h-0 bg-bg-elevated">
+          <div className="flex flex-col h-full min-h-0 bg-bg">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-line shrink-0">
               <h3 className="m-0 text-[16px] font-semibold text-ink">Report comment</h3>
               <button
