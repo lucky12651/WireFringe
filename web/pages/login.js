@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth, usePosts, useCategories, useUsers, useComments, useMedia } from '../hooks';
+import { useAuth } from '../hooks';
 import { LoginPage } from '../components/admin/Login';
 import { nextQuery, safeNextPath } from '../lib/utils';
 
@@ -13,17 +13,7 @@ function destinationAfterAuth(router, user) {
 export default function LoginPageContainer() {
   const router = useRouter();
   const auth = useAuth();
-  const posts = usePosts();
-  const categories = useCategories();
-  const comments = useComments();
-  const media = useMedia();
   const { isAuthed, me, isInitialLoading } = auth;
-
-  const creatorCountsOverride = useMemo(() => {
-    return new Map();
-  }, []);
-
-  const users = useUsers(posts.posts, creatorCountsOverride);
 
   useEffect(() => {
     if (!router.isReady || !isAuthed) return;

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { SWRConfig } from 'swr';
 // Single global CSS entry: Tailwind + design tokens + shared helpers (GridWork-style).
 import '../styles/globals.css';
 import { initTheme } from '../lib/theme';
@@ -7,6 +8,14 @@ import { loadAdsenseConfig } from '../lib/ads';
 
 import Head from 'next/head';
 import { AuthProvider } from '../hooks';
+
+function swrOnErrorRetry(error, _key, _config, revalidate, { retryCount }) {
+  // 401/403 on /api/admin/* are not flaky — retrying them looks like brute-force
+  // logins and gets the visitor IP banned by the server firewall.
+  if (error?.status === 401 || error?.status === 403) return;
+  if (retryCount >= 2) return;
+  setTimeout(() => revalidate({ retryCount }), 3000);
+}
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -151,12 +160,14 @@ export default function App({ Component, pageProps }) {
   }, [router.events, isAdminRoute, adsScriptLoaded, refreshAds, adsEnabled]);
 
   return (
-    <AuthProvider>
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </Head>
+    <SWRConfig value={{ onErrorRetry: swrOnErrorRetry, errorRetryCount: 2 }}>
+      <AuthProvider>
+        <Head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </Head>
 
-      <Component {...pageProps} />
-    </AuthProvider>
+        <Component {...pageProps} />
+      </AuthProvider>
+    </SWRConfig>
   );
 }

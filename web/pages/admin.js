@@ -43,7 +43,8 @@ export default function AdminPage() {
 
   // Initialize hooks
   const auth = useAuth();
-  const posts = usePosts();
+  const { me, isAuthed, isLoading, isInitialLoading, access, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
+  const posts = usePosts(20, { enabled: Boolean(isAuthed) });
   const categories = useCategories();
   const comments = useComments();
   const media = useMedia();
@@ -51,7 +52,6 @@ export default function AdminPage() {
   const adsense = useAdsenseSettings();
   const bot = useBotSettings();
   const contact = useContact();
-  const { me, isAuthed, isLoading, isInitialLoading, access, canManageUsers, canModerateComments, canViewPendingCommentsCount } = auth;
 
   // Correct dashboard stats: don't derive growth/by-member/monthly counts from the paginated posts page.
   const shouldLoadDashboardStats = isAuthed && activeView === 'dashboard';

@@ -18,6 +18,14 @@ function internalApiBase() {
   ).replace(/\/$/, '');
 }
 
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export async function api(path, options = {}) {
   // Use absolute URL if on server and not a full URL
   const url =
@@ -49,7 +57,7 @@ export async function api(path, options = {}) {
       const data = await res.json();
       if (data && data.detail) detail = data.detail;
     } catch (_) {}
-    throw new Error(detail);
+    throw new ApiError(detail, res.status);
   }
 
   if (res.status === 204) return null;
@@ -82,7 +90,7 @@ export async function uploadFile(path, file) {
       const data = await res.json();
       if (data && data.detail) detail = data.detail;
     } catch (_) {}
-    throw new Error(detail);
+    throw new ApiError(detail, res.status);
   }
 
   return await res.json();

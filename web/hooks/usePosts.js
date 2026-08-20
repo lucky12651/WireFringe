@@ -8,12 +8,13 @@ import {
 } from '../lib/utils';
 import { LATEST_POSTS_LIMIT } from '../lib/constants';
 
-export function usePosts(initialLimit = 20) {
+export function usePosts(initialLimit = 20, { enabled = true } = {}) {
   const [page, setPage] = useState(0);
   const [source, setSourceState] = useState('editorial');
   const [filters, setFiltersState] = useState({ q: '', status: '', dateFrom: '', dateTo: '' });
   const limit = initialLimit;
   const offset = page * limit;
+  const canFetch = !!enabled;
 
   const setSource = useCallback((next) => {
     const kind = next === 'bot' ? 'bot' : next === 'all' ? 'all' : 'editorial';
@@ -43,10 +44,11 @@ export function usePosts(initialLimit = 20) {
   const swrKey = `/api/admin/posts?${params.toString()}`;
 
   const { data: postsData, error: fetchError, isValidating } = useSWR(
-    swrKey,
+    canFetch ? swrKey : null,
     fetcher,
     {
       revalidateOnFocus: false,
+      shouldRetryOnError: (err) => err?.status !== 401 && err?.status !== 403,
     }
   );
 
@@ -56,15 +58,21 @@ export function usePosts(initialLimit = 20) {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   const { data: queueData, mutate: refreshQueue } = useSWR(
-    '/api/admin/posts/queue',
+    canFetch ? '/api/admin/posts/queue' : null,
     fetcher,
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: (err) => err?.status !== 401 && err?.status !== 403,
+    }
   );
 
   const { data: recentCacheData, mutate: refreshRecentCache } = useSWR(
-    '/api/admin/posts/queue/recent-cache',
+    canFetch ? '/api/admin/posts/queue/recent-cache' : null,
     fetcher,
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: (err) => err?.status !== 401 && err?.status !== 403,
+    }
   );
 
   const refreshPosts = useCallback(() => {
