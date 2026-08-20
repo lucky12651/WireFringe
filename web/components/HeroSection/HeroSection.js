@@ -43,25 +43,26 @@ export default function HeroSection({ posts = [] }) {
         href={postUrl(featured)}
         className="hero-feature group block text-inherit mb-1.5 rounded-md max-md:rounded overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.45)] outline outline-1 outline-white/[0.04] transition-all duration-300 hover:shadow-[0_28px_60px_rgba(0,0,0,0.55)] hover:outline-mint/20"
       >
-        <div className="relative w-full aspect-video overflow-hidden bg-bg-card">
+        <div className="relative w-full aspect-[16/10] md:aspect-video overflow-hidden bg-bg-card">
           {featured.ogImg ? (
             <img
               src={featured.ogImg}
               alt=""
               loading="eager"
-              className="w-full h-full object-cover block transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.055] group-hover:brightness-105 group-hover:saturate-105"
+              className="w-full h-full object-cover object-center block transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.055] group-hover:brightness-105 group-hover:saturate-105"
             />
           ) : (
             <div className="w-full h-full min-h-[120px] bg-[radial-gradient(circle_at_30%_40%,rgba(60,255,208,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
           )}
-          <div className="hero-feature-shade absolute inset-0 pointer-events-none bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
-          <div className="on-media absolute left-0 right-0 bottom-0 z-[3] p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
+          {/* Overlay copy is desktop-only so the photo stays visible on phones. */}
+          <div className="hero-feature-shade absolute inset-0 pointer-events-none hidden md:block bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
+          <div className="on-media absolute left-0 right-0 bottom-0 z-[3] hidden md:block p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
             <HighlightTitle
               title={featured.title}
-              className="on-media text-hero font-black leading-[1.02] tracking-[-0.038em] text-white mb-3.5 max-w-[22ch] max-md:max-w-none shadow-black/50 [text-shadow:0_2px_32px_rgba(0,0,0,0.55)]"
+              className="on-media text-hero font-black leading-[1.02] tracking-[-0.038em] text-white mb-3.5 max-w-[22ch] shadow-black/50 [text-shadow:0_2px_32px_rgba(0,0,0,0.55)]"
             />
             {excerpt(featured) ? (
-              <p className="on-media text-[15px] md:text-[17.5px] font-normal text-white mb-4 max-w-[38em] leading-[1.42] tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
+              <p className="on-media text-[17.5px] font-normal text-white mb-4 max-w-[38em] leading-[1.42] tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
                 {excerpt(featured)}
               </p>
             ) : null}
@@ -79,6 +80,30 @@ export default function HeroSection({ posts = [] }) {
                 <CommentIcon /> {Number(featured.commentCount) || 0}
               </span>
             </div>
+          </div>
+        </div>
+        <div className="md:hidden px-0.5 pt-3 pb-1">
+          <h1 className="m-0 mb-2 text-[22px] font-extrabold leading-[1.18] tracking-[-0.03em] text-ink">
+            {featured.title}
+          </h1>
+          {excerpt(featured, 90) ? (
+            <p className="m-0 mb-2.5 text-[14px] leading-[1.4] text-ink-secondary line-clamp-2">
+              {excerpt(featured, 90)}
+            </p>
+          ) : null}
+          <div className="flex items-center gap-3 flex-wrap text-xs">
+            <AuthorByline post={featured} size="sm" />
+            {featured.date ? (
+              <span className="font-mono text-[10px] text-ink-muted tracking-wide uppercase">
+                {formatDate(featured.date)}
+              </span>
+            ) : null}
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-ink-muted px-2 py-[3px] rounded-pill bg-bg-hover border border-line"
+              title="Comments"
+            >
+              <CommentIcon /> {Number(featured.commentCount) || 0}
+            </span>
           </div>
         </div>
       </Link>
