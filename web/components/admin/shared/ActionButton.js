@@ -29,17 +29,16 @@ export function ActionButton({
   ...props
 }) {
   const combinedClassName = cn(
-    'inline-flex items-center justify-center gap-2 flex-none py-2.5 px-4',
-    'border border-line rounded-lg bg-bg-hover text-ink text-xs font-semibold',
-    'tracking-[0.02em] no-underline cursor-pointer whitespace-nowrap',
-    'transition-all duration-200 ease-out',
-    'enabled:hover:bg-ink enabled:hover:border-ink enabled:hover:text-[var(--bg)] enabled:hover:-translate-y-px',
-    'enabled:active:translate-y-0',
-    'disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none',
-    size === 'sm' && 'flex-none py-2 px-3.5 text-[11px] gap-1.5',
+    'inline-flex items-center justify-center gap-1.5 flex-none h-9 px-3.5',
+    'border border-line-strong rounded-sm bg-bg-elevated text-ink text-[13px] font-medium',
+    'no-underline cursor-pointer whitespace-nowrap',
+    'transition-colors duration-150',
+    'enabled:hover:bg-bg-hover',
+    'disabled:opacity-45 disabled:cursor-not-allowed',
+    size === 'sm' && 'h-8 px-2.5 text-[12px] gap-1',
     grow && 'flex-auto w-full',
     variant === 'danger' &&
-      'border-[rgba(255,107,107,0.35)] text-[#ff6b6b] bg-[rgba(255,107,107,0.08)] enabled:hover:bg-[rgba(255,107,107,0.16)] enabled:hover:border-[#ff6b6b] enabled:hover:text-[#ff6b6b]',
+      'border-[var(--danger)]/35 text-[var(--danger)] bg-[var(--danger-soft)] enabled:hover:bg-[var(--danger-soft)]',
     className
   );
 

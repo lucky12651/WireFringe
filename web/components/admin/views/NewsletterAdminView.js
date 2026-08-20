@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { newsroomApi } from '../../../lib/api';
 import { tw } from '../../../lib/tw';
 import { formatDateShort } from '../../../lib/utils';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 export function NewsletterAdminView() {
   const [subs, setSubs] = useState([]);
@@ -20,10 +21,12 @@ export function NewsletterAdminView() {
   }, []);
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Subscribers</h3>
-        <p className={tw.adminSectionDesc}>{subs.length} addresses on the list.</p>
+    <div className="wp-wrap">
+      <ScreenTitle title="Newsletter" />
+      {hint ? <Notice type="success">{hint}</Notice> : null}
+      <section className="postbox">
+        <h2 className="hndle">Subscribers <span className="font-normal text-ink-secondary">({subs.length})</span></h2>
+        <div className="inside">
         <div className={tw.tableWrap}>
           <table className={tw.table}>
             <thead>
@@ -44,40 +47,61 @@ export function NewsletterAdminView() {
             </tbody>
           </table>
         </div>
+        </div>
       </section>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Archive a send</h3>
-        <p className={tw.adminSectionDesc}>
-          Saves an issue in the archive. Configure SMTP later to actually email the list.
-        </p>
-        <input className={tw.formInput} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" />
-        <textarea className={cnText()} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Body" />
-        <button
-          type="button"
-          className={tw.primaryBtn}
-          onClick={async () => {
-            await newsroomApi.createIssue(subject, body);
-            setSubject('');
-            setBody('');
-            setHint('Issue archived.');
-            refresh();
-          }}
-        >
-          Save issue
-        </button>
-        {hint ? <p className={tw.formHintSuccess}>{hint}</p> : null}
-        <ul className="mt-4 pl-5">
-          {issues.map((i) => (
-            <li key={i.id}>
-              {i.subject} — {formatDateShort(i.sentAt || i.createdAt)}
-            </li>
-          ))}
-        </ul>
+      <section className="postbox">
+        <h2 className="hndle">Archive a send</h2>
+        <div className="inside">
+          <table className="form-table">
+            <tbody>
+              <tr>
+                <th scope="row"><label htmlFor="nl-subject">Subject</label></th>
+                <td>
+                  <input id="nl-subject" className={tw.formInput + ' max-w-md'} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" />
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><label htmlFor="nl-body">Body</label></th>
+                <td>
+                  <textarea id="nl-body" className={tw.formTextarea + ' max-w-xl'} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Body" />
+                  <span className="description">Saves an issue in the archive. Configure SMTP later to email the list.</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p className="submit">
+            <button
+              type="button"
+              className={tw.primaryBtn}
+              onClick={async () => {
+                await newsroomApi.createIssue(subject, body);
+                setSubject('');
+                setBody('');
+                setHint('Issue archived.');
+                refresh();
+              }}
+            >
+              Save issue
+            </button>
+          </p>
+          <table className="wp-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {issues.map((i) => (
+                <tr key={i.id}>
+                  <td>{i.subject}</td>
+                  <td>{formatDateShort(i.sentAt || i.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
-}
-
-function cnText() {
-  return 'min-h-[120px] w-full mt-2 mb-3 p-3 border border-line bg-bg-elevated text-ink';
 }

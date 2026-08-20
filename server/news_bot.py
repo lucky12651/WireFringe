@@ -123,9 +123,7 @@ class NewsBot:
             unique=slug,
         )
         if not article_data.ogImg:
-            logger.info("Dropping story with no real photo: %s", source_url)
-            update_queue_status(db, source_url, "failed_image")
-            return False
+            logger.warning("Publishing without a local photo: %s", source_url)
 
         auto_publish = bool(bot_cfg.get("autoPublish"))
         now = datetime.now(timezone.utc)
@@ -252,14 +250,19 @@ class NewsBot:
                 )
 
                 success_count = 0
+                attempts = 0
+                max_attempts = max(process_per_cycle * 8, 8)
                 for item in pending:
                     if success_count >= process_per_cycle or success_count >= remaining_slots:
                         break
+                    if attempts >= max_attempts:
+                        break
+                    attempts += 1
                     success = await self.process_item(db, item)
                     if success:
                         success_count += 1
                     else:
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(3)
 
                 logger.info(f"✨ Successfully finished processing {success_count} items in this cycle.")
             elif not pending:

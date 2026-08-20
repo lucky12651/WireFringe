@@ -3,6 +3,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort, cn } from '../../../lib/utils';
 import { TrashIcon } from '../Layout/icons';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 import { CONTACT_SUBJECTS } from '../../../lib/contactSubjects';
 
 export function ContactView({
@@ -38,14 +39,14 @@ export function ContactView({
   };
 
   return (
-    <div className={tw.adminView}>
-      {hint || loadError ? (
-        <p className={cn(tw.formHint, 'text-[#ff8a8a] mb-3')}>{hint || loadError}</p>
-      ) : null}
-      <section className={tw.adminSection}>
+    <div className="wp-wrap">
+      <ScreenTitle title="Contact" />
+      {hint || loadError ? <Notice type="error">{hint || loadError}</Notice> : null}
+      <section className="postbox">
+        <h2 className="hndle">Messages</h2>
+        <div className="inside">
         <div className="flex items-end justify-between gap-3 mb-4 flex-wrap">
           <div>
-            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Contact us</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>
               Messages sent from the public Contact page.
             </p>
@@ -152,6 +153,7 @@ export function ContactView({
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
     </div>

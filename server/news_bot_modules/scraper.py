@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Tuple, Optional
 
 import newspaper
@@ -8,6 +9,11 @@ import httpx
 from .utils import extract_clean_url, clean_url
 
 logger = logging.getLogger(__name__)
+
+SKIP_URL_RE = re.compile(
+    r"/live[-_]?blog|/live-updates|/video[s]?/|/watch-|/web-stories/|/gallery/|/short[s]?/",
+    re.I,
+)
 
 
 async def scrape_article(
@@ -23,6 +29,10 @@ async def scrape_article(
     target_url = clean_url(url)
     target_url = extract_clean_url(target_url)
     resolved_url = target_url
+
+    if SKIP_URL_RE.search(target_url or ""):
+        logger.info("Skipping video/liveblog/gallery URL: %s", target_url)
+        return None, None, None, resolved_url, []
 
     # Configure newspaper to use a real browser User-Agent to avoid 403 Forbidden errors
     config = newspaper.Config()

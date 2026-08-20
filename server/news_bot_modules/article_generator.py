@@ -219,12 +219,27 @@ async def generate_article(
         meta_description = ""
         keywords = ""
 
-        if response_text == "ERROR_429":
-            logger.warning(f"Groq Rate Limit hit for {source_url}. Failing generation because AI is required.")
-            return None
-        elif not response_text:
-            logger.warning(f"Groq paraphrasing failed (empty response) for {source_url}. Failing generation because AI is required.")
-            return None
+        if response_text in ("ERROR_429", "", None):
+            logger.warning(
+                "AI unavailable for %s; publishing cleaned source copy so the queue can drain.",
+                source_url,
+            )
+            content = format_to_wp_blocks(raw_content)
+            if not content:
+                return None
+            plain_text = re.sub(r"<[^>]+>", "", content).strip()
+            excerpt = plain_text[:220].rsplit(" ", 1)[0] + "..." if len(plain_text) > 220 else plain_text
+            return PostUpsert(
+                title=final_title,
+                content=content,
+                excerpt=excerpt,
+                bucket=category,
+                ogImg=og_img,
+                readMinutes=max(1, len(plain_text.split()) // 220),
+                creator="Wirefringe",
+                metaDescription=(plain_text[:157] + "...") if len(plain_text) > 160 else plain_text,
+                keywords=category,
+            )
 
         try:
             # Clean JSON response if AI wraps it in backticks
@@ -237,8 +252,8 @@ async def generate_article(
             keywords = data.get('keywords', '')
             
             if not content:
-                logger.warning(f"AI returned empty paraphrased content for {source_url}. Failing generation.")
-                return None
+                logger.warning(f"AI returned empty paraphrased content for {source_url}. Using source copy.")
+                content = format_to_wp_blocks(raw_content)
                 
             logger.info(f"Successfully paraphrased article for {source_url} using Groq Llama with SEO data.")
             
@@ -247,8 +262,10 @@ async def generate_article(
                 content = format_to_wp_blocks(content)
                 
         except Exception as e:
-            logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Failing generation because AI is required.")
-            return None
+            logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Using source copy.")
+            content = format_to_wp_blocks(raw_content)
+            if not content:
+                return None
         
         # Add source attribution footer
         

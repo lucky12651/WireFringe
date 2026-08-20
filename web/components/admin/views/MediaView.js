@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort, cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 export function MediaView({ media, mediaCount, onUpload, onRefresh }) {
   const [hint, setHint] = useState('');
@@ -21,50 +22,52 @@ export function MediaView({ media, mediaCount, onUpload, onRefresh }) {
   };
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
+    <div className="wp-wrap">
+      <ScreenTitle title="Media Library">
+        <label className="page-title-action cursor-pointer">
+          Add New
+          <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+        </label>
+      </ScreenTitle>
+      {hint ? <Notice type={hint.includes('Uploaded') ? 'success' : 'info'}>{hint}</Notice> : null}
+      <section className="postbox">
+        <h2 className="hndle">Library</h2>
+        <div className="inside">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className={tw.adminSectionTitle}>Library</h3>
-            <p className={cn(tw.adminSectionDesc, 'mb-0')}>{mediaCount} files</p>
+            <p className={cn(tw.adminSectionDesc, 'mb-0')}>{mediaCount} items</p>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <label className={cn(tw.primaryBtn, 'cursor-pointer')}>
-              Upload image
-              <input type="file" hidden accept="image/*" onChange={handleFileChange} />
-            </label>
             <button type="button" className={tw.secondaryBtn} onClick={onRefresh}>
               Refresh
             </button>
             {hint ? <p className={tw.formHint}>{hint}</p> : null}
           </div>
         </div>
-      </section>
-
-      <section className={tw.adminSection}>
         {media.length ? (
-          <div className={tw.mediaGrid}>
+          <div className={cn(tw.mediaGrid, 'mt-4')}>
             {media.map((m) => (
-              <div key={m.name} className="overflow-hidden">
+              <figure key={m.name} className="overflow-hidden border border-line bg-bg-elevated">
                 <a
                   href={m.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="block aspect-video bg-bg-hover overflow-hidden border border-line"
+                  className="block aspect-[3/2] bg-[var(--chip)] overflow-hidden"
                   title={m.name}
                 >
                   <img src={m.url} alt={m.name} loading="lazy" className="w-full h-full object-cover" />
                 </a>
-                <div className="pt-2 flex flex-col gap-0.5 min-w-0">
+                <figcaption className="flex flex-col gap-0.5 min-w-0 px-2 py-1.5">
                   <span className="text-xs text-ink truncate font-medium" title={m.name}>{m.name}</span>
-                  <span className="text-[11px] text-ink-tertiary font-mono">{formatDateShort(m.modifiedAt || m.date)}</span>
-                </div>
-              </div>
+                  <span className="text-[11px] text-ink-tertiary">{formatDateShort(m.modifiedAt || m.date)}</span>
+                </figcaption>
+              </figure>
             ))}
           </div>
         ) : (
           <EmptyState>No files in your library yet.</EmptyState>
         )}
+        </div>
       </section>
     </div>
   );

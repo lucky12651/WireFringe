@@ -228,7 +228,7 @@ export default function AdminPage() {
     if (isInitialLoading) {
       return (
         <div className="flex justify-center items-center min-h-[40vh]">
-          <div className="w-7 h-7 rounded-full border-2 border-white/15 border-t-white animate-spin" aria-label="Loading" />
+          <div className="w-7 h-7 rounded-full border-2 border-line border-t-mint animate-spin" aria-label="Loading" />
         </div>
       );
     }
@@ -450,8 +450,13 @@ export default function AdminPage() {
   // Show loading state while checking auth
   if (isInitialLoading) {
     return (
-      <div className="admin-xai flex justify-center items-center h-screen bg-black">
-        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-white animate-spin" aria-label="Loading" />
+      <div className="admin-xai grid min-h-screen place-items-center bg-bg">
+        <div className="flex flex-col items-center gap-3">
+          <span className="font-serif text-xl tracking-tight text-ink">
+            Wire<span className="admin-brand-f italic font-extrabold">F</span>ringe
+          </span>
+          <p className="m-0 text-[13px] text-ink-secondary">Loading admin…</p>
+        </div>
       </div>
     );
   }

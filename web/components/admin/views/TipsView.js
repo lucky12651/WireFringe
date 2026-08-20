@@ -4,6 +4,7 @@ import { tw } from '../../../lib/tw';
 import { formatDateShort, cn } from '../../../lib/utils';
 import { TrashIcon } from '../Layout/icons';
 import { EmptyState } from '../shared/EmptyState';
+import { ScreenTitle } from '../wp/ScreenTitle';
 
 export function TipsView() {
   const [tips, setTips] = useState([]);
@@ -14,9 +15,11 @@ export function TipsView() {
   }, []);
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Confidential tips</h3>
+    <div className="wp-wrap">
+      <ScreenTitle title="Tips" />
+      <section className="postbox">
+        <h2 className="hndle">Confidential tips</h2>
+        <div className="inside">
         <p className={tw.adminSectionDesc}>Submitted from the Tip Us page. Treat as confidential.</p>
         <div className={tw.tableWrap}>
           <table className={tw.table}>
@@ -57,6 +60,7 @@ export function TipsView() {
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
     </div>

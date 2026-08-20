@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { newsroomApi, api } from '../../../lib/api';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 import { cn } from '../../../lib/utils';
 
 export function FrontpageView() {
@@ -25,57 +26,63 @@ export function FrontpageView() {
   };
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Front page</h3>
-        <p className={tw.adminSectionDesc}>
-          Pick hero stories and a breaking item. If you leave this empty, the homepage uses the newest published stories.
-        </p>
-        <div className={tw.formGroup}>
-          <label className={tw.formLabel}>Breaking story</label>
-          <select className={tw.formSelect} value={breakingId} onChange={(e) => setBreakingId(e.target.value)}>
-            <option value="">None</option>
-            {posts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
+    <div className="wp-wrap">
+      <ScreenTitle title="Front page" />
+      {hint ? <Notice type="success">{hint}</Notice> : null}
+      <section className="postbox">
+        <h2 className="hndle">Homepage layout</h2>
+        <div className="inside">
+          <table className="form-table">
+            <tbody>
+              <tr>
+                <th scope="row"><label htmlFor="fp-breaking">Breaking story</label></th>
+                <td>
+                  <select id="fp-breaking" className={cn(tw.formSelect, 'max-w-md')} value={breakingId} onChange={(e) => setBreakingId(e.target.value)}>
+                    <option value="">None</option>
+                    {posts.map((p) => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                  <span className="description">If empty, the homepage uses the newest published stories.</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <table className="wp-table">
+            <thead>
+              <tr>
+                <th>Story</th>
+                <th>Hero</th>
+                <th>Top</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.slice(0, 40).map((p) => (
+                <tr key={p.id}>
+                  <td>{p.title}</td>
+                  <td>
+                    <input type="checkbox" checked={heroIds.includes(p.id)} onChange={() => toggle(heroIds, setHeroIds, p.id)} aria-label="Hero" />
+                  </td>
+                  <td>
+                    <input type="checkbox" checked={topIds.includes(p.id)} onChange={() => toggle(topIds, setTopIds, p.id)} aria-label="Top" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="submit">
+            <button
+              type="button"
+              className={tw.primaryBtn}
+              onClick={async () => {
+                await newsroomApi.saveFrontpage({ heroIds, topIds, breakingId: breakingId || null });
+                setHint('Front page saved.');
+              }}
+            >
+              Save Changes
+            </button>
+          </p>
         </div>
-        <div className="mt-4">
-          {posts.slice(0, 40).map((p) => (
-            <div key={p.id} className="flex items-center gap-3 py-2 border-b border-line">
-              <span className="flex-1 text-sm text-ink">{p.title}</span>
-              <label className="text-xs">
-                <input
-                  type="checkbox"
-                  checked={heroIds.includes(p.id)}
-                  onChange={() => toggle(heroIds, setHeroIds, p.id)}
-                />{' '}
-                Hero
-              </label>
-              <label className="text-xs">
-                <input
-                  type="checkbox"
-                  checked={topIds.includes(p.id)}
-                  onChange={() => toggle(topIds, setTopIds, p.id)}
-                />{' '}
-                Top
-              </label>
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          className={cn(tw.primaryBtn, 'mt-4')}
-          onClick={async () => {
-            await newsroomApi.saveFrontpage({ heroIds, topIds, breakingId: breakingId || null });
-            setHint('Front page saved.');
-          }}
-        >
-          Save front page
-        </button>
-        {hint ? <p className={tw.formHintSuccess}>{hint}</p> : null}
       </section>
     </div>
   );

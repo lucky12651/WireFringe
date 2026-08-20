@@ -5,6 +5,7 @@ import { DeleteConfirmModal, SuccessToast } from '../shared';
 import { formatDateShort, postUrl, cn } from '../../../lib/utils';
 import { PlusIcon, EditIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, RefreshIcon } from '../Layout/icons';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 export function PostsView({
   posts,
@@ -213,40 +214,42 @@ export function PostsView({
   }, [posts.length]);
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className={tw.tabs}>
-            <button
-              className={cn(tw.tab, activeTab === 'published' && tw.tabActive)}
-              onClick={() => goTab('published')}
-            >
-              {botOn ? 'Bot posts' : 'All staff post'}{' '}
-              <span className="ml-1 opacity-80">{activeTab === 'published' ? postsCount : ''}</span>
+    <div className="wp-wrap">
+      <ScreenTitle title="Posts" actionHref="/admin/post" actionLabel="Add New" />
+      {successMessage ? <Notice type="success">{successMessage}</Notice> : null}
+      <section className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className={tw.tabs}>
+          {[
+            { id: 'published', label: botOn ? 'Bot posts' : 'All', count: postsCount },
+            canProcessQueue ? { id: 'queue', label: 'Queue', count: queue.length } : null,
+          ]
+            .filter(Boolean)
+            .map((tab, i) => (
+              <span key={tab.id} className="flex items-center gap-3">
+                {i > 0 ? <span className="text-line-strong">|</span> : null}
+                <button
+                  type="button"
+                  className={cn(tw.tab, activeTab === tab.id && tw.tabActive)}
+                  onClick={() => goTab(tab.id)}
+                >
+                  {tab.label}
+                  <span className="ml-1 text-ink-secondary">({tab.count})</span>
+                </button>
+              </span>
+            ))}
+        </div>
+        <div className={tw.headerActions}>
+          {activeTab === 'queue' && (
+            <button className={tw.secondaryBtn} onClick={onRefreshFeeds}>
+              <RefreshIcon size={16} /> Refresh feeds
             </button>
-            {canProcessQueue ? (
-            <button
-              className={cn(tw.tab, activeTab === 'queue' && tw.tabActive)}
-              onClick={() => goTab('queue')}
-            >
-              Queue <span className="ml-1 opacity-80">{queue.length}</span>
-            </button>
-            ) : null}
-          </div>
-          <div className={tw.headerActions}>
-            {activeTab === 'queue' && (
-              <button className={tw.secondaryBtn} onClick={onRefreshFeeds}>
-                <RefreshIcon size={16} /> Refresh feeds
-              </button>
-            )}
-            <a href="/admin/post" className={tw.primaryBtn}>
-              <PlusIcon /> New article
-            </a>
-          </div>
+          )}
         </div>
       </section>
 
-      <section className={tw.adminSection}>
+      <section className="postbox">
+        <h2 className="hndle">{activeTab === 'queue' ? 'Queue' : botOn ? 'Bot posts' : 'All Posts'}</h2>
+        <div className="inside">
         {activeTab === 'published' ? (
           <>
               <div className="flex flex-wrap items-end gap-2.5 mb-4">
@@ -305,7 +308,7 @@ export function PostsView({
                     aria-checked={botOn}
                     aria-label="Show bot posts"
                     onClick={() => setBotPosts(!botOn)}
-                    className="h-[42px] px-3 mb-0 flex items-center gap-2.5 border border-line rounded-lg bg-bg-elevated text-ink cursor-pointer select-none"
+                    className="h-8 px-2.5 mb-0 flex items-center gap-2 border border-line rounded-sm bg-bg-elevated text-ink cursor-pointer select-none"
                   >
                     <span
                       className={cn(
@@ -327,57 +330,84 @@ export function PostsView({
                 ) : null}
               </div>
             <div className={tw.tableWrap}>
-              <table className={tw.table}>
+              <table className="wp-table">
                 <thead>
                   <tr>
-                    <th className={tw.th}>Article</th>
-                    <th className={tw.th}>Category</th>
-                    <th className={tw.th}>Status</th>
-                    <th className={tw.th}>Date</th>
-                    <th className={cn(tw.th, tw.textRight)}>Actions</th>
+                    <th className="w-[42%]">Title</th>
+                    <th>Status</th>
+                    <th>Category</th>
+                    <th>Author</th>
+                    <th>Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map((p) => (
-                    <tr key={p.id}>
-                      <td className={tw.td}>
-                        <div className={tw.postCell}>
-                          <div className={tw.postThumb}>
-                            <img src={p.ogImg || '/placeholder-post.jpg'} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="min-w-0">
-                            <Link href={postUrl(p)} className="no-underline text-ink hover:text-mint">
-                              <span className="font-semibold text-sm block truncate">{p.title}</span>
-                            </Link>
-                            <span className="text-xs text-ink-tertiary">By {p.creatorName || 'Admin'}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className={tw.td}>
-                        <span className="font-mono text-xs text-ink-secondary">{p.bucket}</span>
-                      </td>
-                      <td className={tw.td}>
-                        <span className={tw.statusBadge}>
-                          {p.status || (p.date ? 'published' : 'draft')}
-                        </span>
-                      </td>
-                      <td className={tw.td}>
-                        <span className="text-ink-secondary">{formatDateShort(p.date)}</span>
-                      </td>
-                      <td className={cn(tw.td, tw.textRight)}>
-                        <div className={tw.actionGroup}>
-                          <a href={`/admin/post?id=${encodeURIComponent(p.id)}`} className={tw.iconBtn} title="Edit">
-                            <EditIcon size={16} />
-                          </a>
-                          {canDeletePublished || (p.status || (p.date ? 'published' : 'draft')) !== 'published' ? (
-                          <button className={tw.iconBtnDanger} onClick={() => handleDeleteClick(p)} title="Delete">
-                            <TrashIcon size={16} />
-                          </button>
-                          ) : null}
-                        </div>
+                  {isLoading && posts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center text-ink-secondary">
+                        Loading posts…
                       </td>
                     </tr>
-                  ))}
+                  ) : posts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center text-ink-secondary">
+                        No posts found.
+                      </td>
+                    </tr>
+                  ) : (
+                    posts.map((p) => {
+                      const st = p.status || (p.date ? 'published' : 'draft');
+                      const canTrash = canDeletePublished || st !== 'published';
+                      return (
+                        <tr key={p.id}>
+                          <td>
+                            <a
+                              href={`/admin/post?id=${encodeURIComponent(p.id)}`}
+                              className="row-title"
+                            >
+                              {p.title || '(no title)'}
+                            </a>
+                            <div className="row-actions">
+                              <a
+                                href={`/admin/post?id=${encodeURIComponent(p.id)}`}
+                                className="text-mint no-underline"
+                              >
+                                Edit
+                              </a>
+                              {' | '}
+                              <Link href={postUrl(p)} className="text-mint no-underline">
+                                {st === 'published' ? 'View' : 'Preview'}
+                              </Link>
+                              {canTrash ? (
+                                <>
+                                  {' | '}
+                                  <button
+                                    type="button"
+                                    className="border-0 bg-transparent p-0 text-[var(--danger)]"
+                                    onClick={() => handleDeleteClick(p)}
+                                  >
+                                    Trash
+                                  </button>
+                                </>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td>
+                            <span className={cn('status-pill', st)}>
+                              <i />
+                              {st}
+                            </span>
+                          </td>
+                          <td className="text-ink-secondary">{p.bucket || '—'}</td>
+                          <td className="text-ink-secondary">{p.creatorName || 'Admin'}</td>
+                          <td className="whitespace-nowrap text-ink-secondary">
+                            {st === 'published'
+                              ? `Published ${formatDateShort(p.date) || '—'}`
+                              : `Last modified ${formatDateShort(p.date) || '—'}`}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -473,6 +503,7 @@ export function PostsView({
             )}
           </div>
         )}
+        </div>
       </section>
 
       <DeleteConfirmModal

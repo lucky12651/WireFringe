@@ -46,8 +46,12 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
 
 
 def get_pending_from_queue(db: Session) -> List[NewsQueue]:
-    """Get all pending items from database news_queue."""
-    return db.query(NewsQueue).filter(NewsQueue.status == "pending").all()
+    """Pending plus retryable failures (photo/AI), not scrape-dead video/liveblogs."""
+    return (
+        db.query(NewsQueue)
+        .filter(NewsQueue.status.in_(["pending", "failed_image", "failed_gen"]))
+        .all()
+    )
 
 
 def cleanup_old_queue_items(db: Session, hours: int = 24) -> int:

@@ -5,6 +5,7 @@ import { tw } from '../../../lib/tw';
 import { cn, postUrl } from '../../../lib/utils';
 import { EmptyState } from '../shared/EmptyState';
 import { Icons } from '../Layout/icons';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 function formatCount(n) {
   const value = Number(n) || 0;
@@ -55,9 +56,10 @@ export function AnalyticsView() {
 
   if (loading) {
     return (
-      <div className={tw.adminView}>
+      <div className="wp-wrap">
+        <ScreenTitle title="Analytics" />
         <section className={tw.adminSection}>
-          <h3 className={tw.adminSectionTitle}>Analytics</h3>
+          <h3 className={tw.adminSectionTitle}>Overview</h3>
           <p className={tw.adminSectionDesc}>Loading story views…</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[0, 1, 2].map((i) => (
@@ -71,19 +73,19 @@ export function AnalyticsView() {
 
   if (error) {
     return (
-      <div className={tw.adminView}>
-        <section className={tw.adminSection}>
-          <h3 className={tw.adminSectionTitle}>Analytics</h3>
-          <p className={cn(tw.formHint, 'text-[#ff8a8a]')}>{error}</p>
-        </section>
+      <div className="wp-wrap">
+        <ScreenTitle title="Analytics" />
+        <Notice type="error">{error}</Notice>
       </div>
     );
   }
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Analytics</h3>
+    <div className="wp-wrap">
+      <ScreenTitle title="Analytics" />
+      <section className="postbox">
+        <h2 className="hndle">Overview</h2>
+        <div className="inside">
         <p className={tw.adminSectionDesc}>
           Views are counted when someone opens a published story on the site.
         </p>
@@ -108,12 +110,14 @@ export function AnalyticsView() {
             Icon={Icons.draft}
           />
         </div>
+        </div>
       </section>
 
-      <section className={tw.adminSection}>
+      <section className="postbox">
+        <h2 className="hndle">Views by section</h2>
+        <div className="inside">
         <div className="flex items-baseline justify-between gap-3 mb-4">
           <div>
-            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Views by section</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>How traffic is split across desks.</p>
           </div>
           <span className="text-[12px] text-ink-tertiary">{sectionCount}</span>
@@ -140,12 +144,14 @@ export function AnalyticsView() {
         ) : (
           <EmptyState>No section data yet. Open a published story to start counting views.</EmptyState>
         )}
+        </div>
       </section>
 
-      <section className={tw.adminSection}>
+      <section className="postbox">
+        <h2 className="hndle">Top stories</h2>
+        <div className="inside">
         <div className="flex items-baseline justify-between gap-3 mb-4">
           <div>
-            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Top stories</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>Most opened articles, ranked by views.</p>
           </div>
           <span className="text-[12px] text-ink-tertiary">{stories.length}</span>
@@ -196,6 +202,7 @@ export function AnalyticsView() {
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -14,31 +14,35 @@ export function AdminLayout({
   pendingCommentsCount,
   unreadContactCount,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <>
       <Head>
         <title>Wirefringe – Admin</title>
       </Head>
 
-      <div className={tw.pageShellAdmin}>
-        <div className="admin-xai-noise" aria-hidden="true" />
+      <div className={`${tw.pageShellAdmin} flex h-screen flex-col`}>
+        <TopBar me={me} onLogout={onLogout} onOpenMenu={() => setMenuOpen(true)} />
         <div className={tw.adminShell}>
           <Sidebar
             me={me}
             isAuthed={isAuthed}
             activeView={activeView}
-            onNavigate={onNavigate}
+            onNavigate={(id) => {
+              setMenuOpen(false);
+              onNavigate(id);
+            }}
             onLogout={onLogout}
             pendingCommentsCount={pendingCommentsCount}
             unreadContactCount={unreadContactCount}
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
           />
 
-          <main className={tw.adminContent} aria-label="Admin content">
-            <div className={tw.adminContentInner}>
-              <TopBar activeView={activeView} />
-              {children}
-            </div>
-          </main>
+          <div className={tw.adminContent} aria-label="Admin content">
+            <div className={tw.adminContentInner}>{children}</div>
+          </div>
         </div>
       </div>
     </>

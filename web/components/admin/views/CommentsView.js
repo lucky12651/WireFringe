@@ -3,6 +3,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { formatDateShort, cn } from '../../../lib/utils';
 import { CheckIcon, TrashIcon } from '../Layout/icons';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 import { REPORT_REASONS, reportReasonCategory } from '../../../lib/reportReasons';
 
 export function CommentsView({
@@ -80,15 +81,15 @@ export function CommentsView({
   }, [reports, reasonFilter]);
 
   return (
-    <div className={tw.adminView}>
-      {hint || loadError ? (
-        <p className={cn(tw.formHint, 'text-[#ff8a8a] mb-3')}>{hint || loadError}</p>
-      ) : null}
+    <div className="wp-wrap">
+      <ScreenTitle title="Comments" />
+      {hint || loadError ? <Notice type="error">{hint || loadError}</Notice> : null}
       {canModerateComments ? (
-      <section className={tw.adminSection}>
+      <section className="postbox">
+        <h2 className="hndle">Reports</h2>
+        <div className="inside">
         <div className="flex items-end justify-between gap-3 mb-4 flex-wrap">
           <div>
-            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Reports</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>
               What users reported, on which comment, and why.
             </p>
@@ -120,11 +121,11 @@ export function CommentsView({
           <table className={tw.table}>
             <thead>
               <tr>
-                <th className={tw.th}>Reporter</th>
-                <th className={tw.th}>Reason</th>
-                <th className={tw.th}>Comment</th>
-                <th className={tw.th}>On post</th>
-                <th className={cn(tw.th, tw.textRight)}> </th>
+                <th>Reporter</th>
+                <th>Reason</th>
+                <th>Comment</th>
+                <th>On post</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -187,13 +188,15 @@ export function CommentsView({
             </tbody>
           </table>
         </div>
+        </div>
       </section>
       ) : null}
 
-      <section className={tw.adminSection}>
+      <section className="postbox">
+        <h2 className="hndle">Moderation</h2>
+        <div className="inside">
         <div className="flex items-baseline justify-between gap-3 mb-4">
           <div>
-            <h3 className={cn(tw.adminSectionTitle, 'mb-1')}>Moderation</h3>
             <p className={cn(tw.adminSectionDesc, 'mb-0')}>
               {canModerateComments
                 ? 'Approve or remove comments before they appear on the site.'
@@ -208,11 +211,11 @@ export function CommentsView({
           <table className={tw.table}>
             <thead>
               <tr>
-                <th className={tw.th}>Commenter</th>
-                <th className={tw.th}>Message</th>
-                <th className={tw.th}>Post</th>
-                <th className={tw.th}>Status</th>
-                <th className={cn(tw.th, tw.textRight)}> </th>
+                <th>Commenter</th>
+                <th>Message</th>
+                <th>Post</th>
+                <th>Status</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -276,6 +279,7 @@ export function CommentsView({
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
     </div>

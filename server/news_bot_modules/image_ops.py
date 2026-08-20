@@ -3,11 +3,17 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import httpx
 from ..config import settings
+
+try:
+    from PIL import Image
+except ImportError:  # pragma: no cover
+    Image = None
 
 logger = logging.getLogger(__name__)
 
@@ -86,15 +92,14 @@ def save_image_bytes(data: bytes, hint: str = "img") -> str | None:
     else:
         return None
 
-    try:
-        from io import BytesIO
-
-        with Image.open(BytesIO(data)) as im:
-            w, h = im.size
-            if min(w, h) < MIN_SIDE:
-                return None
-    except Exception:
-        return None
+    if Image is not None:
+        try:
+            with Image.open(BytesIO(data)) as im:
+                w, h = im.size
+                if min(w, h) < MIN_SIDE:
+                    return None
+        except Exception:
+            logger.info("Could not inspect image dimensions; saving by magic bytes.")
 
     digest = hashlib.sha256(data).hexdigest()[:16]
     name = f"{re.sub(r'[^a-z0-9]+', '-', hint.lower())[:28].strip('-') or 'img'}-{digest}{suffix}"
@@ -146,6 +151,15 @@ async def resolve_story_image(
         if saved and not already_used(db, saved):
             logger.info("Saved unique story image %s", saved)
             return saved
+        # Keep a remote photo rather than dropping the whole story.
+        if data and len(data) >= MIN_BYTES and not already_used(db, url):
+            logger.info("Using remote story image %s", url)
+            return url
 
-    logger.info("No unique real photo for %r — skipping story", title[:80])
+    first_remote = next((u for u in seen if u.startswith(("http://", "https://"))), "")
+    if first_remote:
+        logger.info("Falling back to candidate image URL for %r", title[:80])
+        return first_remote
+
+    logger.info("No photo candidates for %r", title[:80])
     return None

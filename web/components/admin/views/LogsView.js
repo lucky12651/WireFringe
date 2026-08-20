@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { EmptyState } from '../shared/EmptyState';
 import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle } from '../wp/ScreenTitle';
 
 /**
  * System / bot logs panel.
@@ -125,7 +126,8 @@ export function LogsView({ logs, onRefresh, isLoading, embedded = false }) {
   }
 
   return (
-    <div className={tw.adminView}>
+    <div className="wp-wrap">
+      <ScreenTitle title="Logs" />
       <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
         <h2 className="m-0 text-xl font-extrabold text-ink tracking-tight">System & Bot Logs</h2>
         {toolbar}

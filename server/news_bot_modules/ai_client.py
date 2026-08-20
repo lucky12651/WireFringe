@@ -1,8 +1,49 @@
+import asyncio
 import logging
+
 import httpx
+
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+
+async def _chat_completions(
+    *,
+    url: str,
+    api_key: str,
+    model: str,
+    prompt: str,
+    system_prompt: str,
+    label: str,
+) -> str:
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 4096,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            if response.status_code == 429:
+                retry_after = response.headers.get("retry-after")
+                logger.warning("%s rate limit (429). retry-after=%s", label, retry_after)
+                return "ERROR_429"
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        logger.error("Error calling %s: %s", label, e)
+        return ""
+
 
 class GroqClient:
     def __init__(self):
@@ -11,38 +52,45 @@ class GroqClient:
         self.model = settings.groq_model
 
     async def generate_content(self, prompt: str, system_prompt: str = "You are a helpful assistant.") -> str:
-        if not self.api_key:
-            logger.warning("GROQ_API_KEY is not set. Skipping AI generation.")
-            return ""
+        if self.api_key:
+            delays = (0, 12, 25, 45)
+            for attempt, delay in enumerate(delays, start=1):
+                if delay:
+                    logger.info("Waiting %ss before Groq retry %s/%s", delay, attempt, len(delays))
+                    await asyncio.sleep(delay)
+                result = await _chat_completions(
+                    url=self.base_url,
+                    api_key=self.api_key,
+                    model=self.model,
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    label="Groq",
+                )
+                if result == "ERROR_429":
+                    continue
+                if result:
+                    return result
+        else:
+            logger.warning("GROQ_API_KEY is not set.")
 
-        logger.info(f"GROQ REQUEST: model={self.model}, prompt_len={len(prompt)}, system_prompt_len={len(system_prompt)}, api_key_prefix={self.api_key[:10] if self.api_key else 'None'}")
+        ollama_key = settings.ollama_api_key
+        ollama_url = (settings.ollama_api_url or "").rstrip("/")
+        if ollama_key and ollama_url:
+            if not ollama_url.endswith("/chat/completions"):
+                ollama_url = f"{ollama_url}/chat/completions"
+            logger.info("Groq unavailable; trying Ollama fallback.")
+            result = await _chat_completions(
+                url=ollama_url,
+                api_key=ollama_key,
+                model="gpt-oss:20b",
+                prompt=prompt,
+                system_prompt=system_prompt,
+                label="Ollama",
+            )
+            if result and result != "ERROR_429":
+                return result
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        return "ERROR_429" if self.api_key else ""
 
-        payload = { 
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 4096
-        }
-
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(self.base_url, headers=headers, json=payload)
-                if response.status_code == 429:
-                    logger.warning("Groq API Rate Limit (429) hit.")
-                    return "ERROR_429"
-                response.raise_for_status()
-                data = response.json()
-                return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            logger.error(f"Error calling Groq API: {e}")
-            return ""
 
 groq_client = GroqClient()

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { getTheme, setTheme, THEME_CHANGE_EVENT, THEME_KEY } from '../../lib/theme';
 
-function SunIcon() {
+function SunIcon({ size = 15 }) {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="5" />
       <line x1="12" y1="1" x2="12" y2="3" />
       <line x1="12" y1="21" x2="12" y2="23" />
@@ -18,9 +18,9 @@ function SunIcon() {
   );
 }
 
-function MoonIcon() {
+function MoonIcon({ size = 15 }) {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   );
@@ -48,10 +48,14 @@ export default function ThemeToggle({ className = '', compact = false }) {
     setThemeState(next);
   };
 
+  const iconSize = compact ? 12 : 15;
+
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1 p-1 rounded-full border border-line bg-bg-elevated shadow-sm',
+        compact
+          ? 'inline-flex h-8 items-center gap-px bg-transparent p-0'
+          : 'inline-flex items-center gap-1 rounded-full border border-line bg-bg-elevated p-1 shadow-sm',
         className
       )}
       role="group"
@@ -63,14 +67,20 @@ export default function ThemeToggle({ className = '', compact = false }) {
         aria-pressed={theme === 'light'}
         aria-label="Light mode"
         className={cn(
-          'inline-flex items-center gap-1.5 h-8 rounded-full border-0 cursor-pointer font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-200',
-          compact ? 'w-8 px-0 justify-center' : 'px-3',
+          'inline-flex cursor-pointer items-center justify-center border-0 transition-colors duration-150',
+          compact
+            ? 'size-[22px] rounded-[2px]'
+            : 'h-8 gap-1.5 rounded-full px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em]',
           theme === 'light'
-            ? 'bg-mint text-black'
-            : 'bg-transparent text-ink-tertiary hover:text-ink'
+            ? compact
+              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
+              : 'bg-mint text-black'
+            : compact
+              ? 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
+              : 'bg-transparent text-ink-tertiary hover:text-ink'
         )}
       >
-        <SunIcon />
+        <SunIcon size={iconSize} />
         {compact ? null : 'Light'}
       </button>
       <button
@@ -79,14 +89,20 @@ export default function ThemeToggle({ className = '', compact = false }) {
         aria-pressed={theme === 'dark'}
         aria-label="Dark mode"
         className={cn(
-          'inline-flex items-center gap-1.5 h-8 rounded-full border-0 cursor-pointer font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-200',
-          compact ? 'w-8 px-0 justify-center' : 'px-3',
+          'inline-flex cursor-pointer items-center justify-center border-0 transition-colors duration-150',
+          compact
+            ? 'size-[22px] rounded-[2px]'
+            : 'h-8 gap-1.5 rounded-full px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em]',
           theme === 'dark'
-            ? 'bg-mint text-black shadow-mint'
-            : 'bg-transparent text-ink-tertiary hover:text-ink'
+            ? compact
+              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
+              : 'bg-mint text-black shadow-mint'
+            : compact
+              ? 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
+              : 'bg-transparent text-ink-tertiary hover:text-ink'
         )}
       >
-        <MoonIcon />
+        <MoonIcon size={iconSize} />
         {compact ? null : 'Dark'}
       </button>
     </div>

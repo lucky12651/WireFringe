@@ -3,8 +3,8 @@ import { cn } from '../../../lib/utils';
 
 export function Table({ children, className = '', ...props }) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-white/[0.08] bg-white/[0.03] shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-      <table className={cn('w-full border-collapse text-sm text-left', className)} {...props}>
+    <div className="w-full overflow-x-auto border border-line bg-bg-elevated">
+      <table className={cn('wp-table', className)} {...props}>
         {children}
       </table>
     </div>
@@ -13,7 +13,7 @@ export function Table({ children, className = '', ...props }) {
 
 export function TableHeader({ children, className = '', ...props }) {
   return (
-    <thead className={cn('bg-white/[0.03] border-b border-white/[0.07]', className)} {...props}>
+    <thead className={className} {...props}>
       {children}
     </thead>
   );
@@ -21,7 +21,7 @@ export function TableHeader({ children, className = '', ...props }) {
 
 export function TableBody({ children, className = '', ...props }) {
   return (
-    <tbody className={cn('[&>tr:nth-child(even)]:bg-white/[0.015]', className)} {...props}>
+    <tbody className={className} {...props}>
       {children}
     </tbody>
   );
@@ -29,13 +29,7 @@ export function TableBody({ children, className = '', ...props }) {
 
 export function TableRow({ children, className = '', ...props }) {
   return (
-    <tr
-      className={cn(
-        'border-b border-white/[0.04] transition-colors duration-200 last:border-b-0 hover:bg-white/[0.04]',
-        className
-      )}
-      {...props}
-    >
+    <tr className={className} {...props}>
       {children}
     </tr>
   );
@@ -43,13 +37,7 @@ export function TableRow({ children, className = '', ...props }) {
 
 export function TableHead({ children, className = '', ...props }) {
   return (
-    <th
-      className={cn(
-        'py-3 px-4 font-semibold text-white/40 uppercase text-[10px] tracking-[0.1em]',
-        className
-      )}
-      {...props}
-    >
+    <th className={className} {...props}>
       {children}
     </th>
   );
@@ -57,7 +45,7 @@ export function TableHead({ children, className = '', ...props }) {
 
 export function TableCell({ children, className = '', ...props }) {
   return (
-    <td className={cn('py-3.5 px-4 text-[#e8e8e8] align-middle', className)} {...props}>
+    <td className={cn('align-middle', className)} {...props}>
       {children}
     </td>
   );

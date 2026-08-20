@@ -1,15 +1,14 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api, postsApi, mediaApi } from '../../lib/api';
-import { slugifyTitle, cn } from '../../lib/utils';
+import { slugifyTitle } from '../../lib/utils';
 import { tw } from '../../lib/tw';
-import BrandLogo from '../../components/BrandLogo/BrandLogo';
 import { useCategories } from '../../hooks/useCategories';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 import { accessFor } from '../../lib/access';
+import { GutenbergEditor, SettingsSection } from '../../components/admin/editor/GutenbergEditor';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -39,13 +38,19 @@ export default function AdminPostPage() {
   const [sourceName, setSourceName] = useState('');
   const [relatedIds, setRelatedIds] = useState('');
   const [revisions, setRevisions] = useState([]);
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [contentHtml, setContentHtml] = useState('');
 
   const access = accessFor(me);
   const modeLabel = postId ? 'Edit post' : 'New post';
   const viewHref = postId
     ? `/post/${encodeURIComponent(slugifyTitle(title))}`
     : '/';
+  const previewHref = postId
+    ? `/post/${encodeURIComponent(slugifyTitle(title))}?preview=true&id=${encodeURIComponent(postId)}`
+    : '';
 
   const queryId = useMemo(() => {
     if (!router.isReady) return '';
@@ -62,11 +67,21 @@ export default function AdminPostPage() {
   function exec(cmd, value = null) {
     focusEditor();
     document.execCommand(cmd, false, value);
+    if (editorRef.current) {
+      editorHtmlRef.current = editorRef.current.innerHTML;
+      setContentHtml(editorRef.current.innerHTML);
+      setDirty(true);
+    }
   }
 
   function formatBlock(tagName) {
     focusEditor();
-    document.execCommand('formatBlock', false, tagName);
+    document.execCommand('formatBlock', false, `<${tagName}>`);
+    if (editorRef.current) {
+      editorHtmlRef.current = editorRef.current.innerHTML;
+      setContentHtml(editorRef.current.innerHTML);
+      setDirty(true);
+    }
   }
 
   async function refreshMe() {
@@ -105,7 +120,9 @@ export default function AdminPostPage() {
     setRelatedIds('');
     setRevisions([]);
     editorHtmlRef.current = '';
-    if (editorRef.current) editorRef.current.innerHTML = editorHtmlRef.current;
+    setContentHtml('');
+    setDirty(false);
+    if (editorRef.current) editorRef.current.innerHTML = '';
   }
 
   function fillForm(post) {
@@ -127,6 +144,8 @@ export default function AdminPostPage() {
     setSourceName(post.sourceName || '');
     setRelatedIds((post.relatedIds || []).join(', '));
     editorHtmlRef.current = post.content || '';
+    setContentHtml(post.content || '');
+    setDirty(false);
     if (post.id) {
       postsApi.revisions(post.id).then(setRevisions).catch(() => setRevisions([]));
     }
@@ -143,7 +162,7 @@ export default function AdminPostPage() {
     fillForm(post);
   }
 
-  function collectPayload() {
+  function collectPayload(overrides = {}) {
     const content = editorRef.current ? editorRef.current.innerHTML : editorHtmlRef.current;
 
     return {
@@ -155,7 +174,7 @@ export default function AdminPostPage() {
       ogImg: ogImg.trim() ? ogImg.trim() : null,
       accentColor: normalizeAccentColor(accentColor, DEFAULT_ACCENT),
       readMinutes: readMinutes ? Number(readMinutes) : null,
-      status,
+      status: overrides.status ?? status,
       scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       tags,
       correction,
@@ -168,41 +187,63 @@ export default function AdminPostPage() {
     };
   }
 
-  async function uploadImage(file) {
-    return await mediaApi.upload(file);
-  }
-
-  async function onSave(e) {
-    e.preventDefault();
-    setHint('');
-
-    const payload = collectPayload();
-    if (!payload.title) {
-      setHint('Title is required.');
-      return;
-    }
-
-    try {
-      if (!postId) {
-        const created = await postsApi.create(payload);
-        setHint('Saved.');
-        await router.replace({ pathname: '/admin/post', query: { id: created.id } }, undefined, {
-          shallow: true,
-        });
-        fillForm(created);
-      } else {
-        const updated = await api(`/api/admin/post?id=${encodeURIComponent(postId)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        setHint('Updated.');
-        fillForm(updated);
+  const persist = useCallback(
+    async (overrides = {}) => {
+      setHint('');
+      const payload = collectPayload(overrides);
+      if (!payload.title) {
+        setHint('Title is required.');
+        return;
       }
-    } catch (err) {
-      setHint(String(err?.message || err));
-    }
-  }
+
+      setSaving(true);
+      try {
+        if (!postId) {
+          const created = await postsApi.create(payload);
+          setHint('Saved.');
+          setLastSavedAt(Date.now());
+          await router.replace({ pathname: '/admin/post', query: { id: created.id } }, undefined, {
+            shallow: true,
+          });
+          fillForm(created);
+        } else {
+          const updated = await api(`/api/admin/post?id=${encodeURIComponent(postId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          setHint(overrides.status === 'published' ? 'Published.' : 'Updated.');
+          setLastSavedAt(Date.now());
+          fillForm(updated);
+        }
+      } catch (err) {
+        setHint(String(err?.message || err));
+      } finally {
+        setSaving(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      postId,
+      title,
+      bucket,
+      excerpt,
+      me,
+      ogImg,
+      accentColor,
+      readMinutes,
+      status,
+      scheduledAt,
+      tags,
+      correction,
+      isBreaking,
+      isPinned,
+      isSponsored,
+      sourceUrl,
+      sourceName,
+      relatedIds,
+    ]
+  );
 
   async function onDelete() {
     if (!postId) return;
@@ -212,18 +253,9 @@ export default function AdminPostPage() {
     try {
       await api(`/api/admin/post?id=${encodeURIComponent(postId)}`, { method: 'DELETE' });
       setHint('Deleted.');
-      await router.replace('/admin/post');
-      setNewMode();
+      await router.replace('/admin');
     } catch (err) {
       setHint(String(err?.message || err));
-    }
-  }
-
-  async function onLogout() {
-    try {
-      await api('/api/admin/logout', { method: 'POST' });
-    } finally {
-      await router.replace('/admin');
     }
   }
 
@@ -239,7 +271,6 @@ export default function AdminPostPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Set default bucket once categories are loaded
   useEffect(() => {
     if (categoryNames.length && !bucket) {
       setBucket(categoryNames[0]);
@@ -261,7 +292,6 @@ export default function AdminPostPage() {
   }, [router.isReady, queryId, me?.id]);
 
   useEffect(() => {
-    // Keep state synced if user pastes/edits directly in the contentEditable.
     const el = editorRef.current;
     if (!el) return;
     if (editorHtmlRef.current && el.innerHTML !== editorHtmlRef.current) {
@@ -269,599 +299,266 @@ export default function AdminPostPage() {
     }
     const onInput = () => {
       editorHtmlRef.current = el.innerHTML;
+      setContentHtml(el.innerHTML);
+      setDirty(true);
     };
     el.addEventListener('input', onInput);
     return () => el.removeEventListener('input', onInput);
   }, [postId]);
 
+  function touch(setter) {
+    return (e) => {
+      setDirty(true);
+      setter(typeof e === 'object' && e?.target ? e.target.type === 'checkbox' ? e.target.checked : e.target.value : e);
+    };
+  }
+
+  async function onImageFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    setHint('Uploading image...');
+    try {
+      const out = await mediaApi.upload(file);
+      exec('insertImage', out.url);
+      setHint('Image inserted.');
+    } catch (err) {
+      setHint(String(err?.message || err));
+    }
+  }
+
+  if (!me) {
+    return (
+      <>
+        <Head>
+          <title>Wirefringe – Editor</title>
+        </Head>
+        <div className="admin-xai grid min-h-screen place-items-center bg-bg">
+          <p className="m-0 text-[13px] text-ink-secondary">Loading editor…</p>
+        </div>
+      </>
+    );
+  }
+
+  const settingsPanel = (
+    <>
+      <SettingsSection title="Status & visibility">
+        <label className="flex items-center justify-between gap-2 text-[13px]">
+          <span className="text-ink-secondary">Status</span>
+          <select className={tw.formSelect} value={status} onChange={touch(setStatus)}>
+            <option value="draft">Draft</option>
+            <option value="review">Pending review</option>
+            <option value="scheduled">Scheduled</option>
+            {access.canPublish || status === 'published' ? (
+              <option value="published" disabled={!access.canPublish}>
+                Published
+              </option>
+            ) : null}
+            {access.canUnpublish || status === 'unpublished' ? (
+              <option value="unpublished" disabled={!access.canUnpublish}>
+                Unpublished
+              </option>
+            ) : null}
+          </select>
+        </label>
+        {status === 'scheduled' ? (
+          <label className="block text-[13px]">
+            <span className="mb-1 block text-ink-secondary">Publish at</span>
+            <input className={tw.formInput} type="datetime-local" value={scheduledAt} onChange={touch(setScheduledAt)} />
+          </label>
+        ) : null}
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={isBreaking} onChange={touch(setIsBreaking)} />
+          Breaking
+        </label>
+        {access.canPin ? (
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={isPinned} onChange={touch(setIsPinned)} />
+            Pin
+          </label>
+        ) : null}
+        {access.canMarkSponsored ? (
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={isSponsored} onChange={touch(setIsSponsored)} />
+            Sponsored / branded
+          </label>
+        ) : null}
+        {access.isAuthor && status === 'published' ? (
+          <p className="m-0 text-[11px] text-ink-tertiary">This is live. An editor must unpublish it.</p>
+        ) : access.isAuthor ? (
+          <p className="m-0 text-[11px] text-ink-tertiary">Send to Review when ready. An editor publishes it.</p>
+        ) : null}
+      </SettingsSection>
+
+      <SettingsSection title="Categories">
+        <select className={tw.formSelect} value={bucket} onChange={touch(setBucket)}>
+          {categoryNames.map((b) => (
+            <option key={b}>{b}</option>
+          ))}
+        </select>
+      </SettingsSection>
+
+      <SettingsSection title="Tags">
+        <input
+          className={tw.formInput}
+          value={tags}
+          onChange={touch(setTags)}
+          placeholder="ai, markets, india"
+        />
+      </SettingsSection>
+
+      <SettingsSection title="Featured image">
+        {ogImg ? (
+          <button type="button" className="block w-full border-0 bg-transparent p-0" onClick={() => { setOgImg(''); setDirty(true); }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={ogImg} alt="" className="aspect-[3/2] w-full object-cover" />
+            <span className="mt-1 block text-center text-[11px] text-mint">Remove featured image</span>
+          </button>
+        ) : (
+          <input
+            className={tw.formInput}
+            placeholder="Image URL"
+            value={ogImg}
+            onChange={touch(setOgImg)}
+          />
+        )}
+      </SettingsSection>
+
+      <SettingsSection title="Excerpt" defaultOpen={false}>
+        <textarea
+          className={tw.formTextarea}
+          placeholder="Write an excerpt (optional)"
+          value={excerpt}
+          onChange={touch(setExcerpt)}
+        />
+      </SettingsSection>
+
+      <SettingsSection title="Story extras" defaultOpen={false}>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Read minutes</span>
+          <input className={tw.formInput} type="number" min="1" value={readMinutes} onChange={touch(setReadMinutes)} />
+        </label>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Source name</span>
+          <input className={tw.formInput} value={sourceName} onChange={touch(setSourceName)} />
+        </label>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Source URL</span>
+          <input className={tw.formInput} value={sourceUrl} onChange={touch(setSourceUrl)} />
+        </label>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Related post IDs</span>
+          <input className={tw.formInput} value={relatedIds} onChange={touch(setRelatedIds)} placeholder="id-one, id-two" />
+        </label>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Correction</span>
+          <textarea className={tw.formTextarea} value={correction} onChange={touch(setCorrection)} />
+        </label>
+      </SettingsSection>
+
+      <SettingsSection title="Header color" defaultOpen={false}>
+        <p className="m-0 mb-2 text-[11px] leading-snug text-ink-tertiary">
+          Lime-style band behind the header and hero on this post only.
+        </p>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {ACCENT_PRESETS.map((preset) => {
+            const selected = normalizeAccentColor(accentColor, '') === preset.value;
+            return (
+              <button
+                key={preset.value}
+                type="button"
+                title={preset.name}
+                aria-label={preset.name}
+                aria-pressed={selected}
+                onClick={() => {
+                  setAccentColor(preset.value);
+                  setDirty(true);
+                }}
+                className="h-7 w-7 cursor-pointer rounded-full border-0 p-0"
+                style={{
+                  background: preset.value,
+                  outline: selected ? '2px solid var(--text-primary)' : '1px solid var(--border)',
+                  outlineOffset: '2px',
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={normalizeAccentColor(accentColor, DEFAULT_ACCENT)}
+            onChange={(e) => {
+              setAccentColor(e.target.value.toUpperCase());
+              setDirty(true);
+            }}
+            className="h-9 w-9 cursor-pointer border-0 bg-transparent p-0"
+            aria-label="Custom header color"
+          />
+          <input className={tw.formInput} value={accentColor} onChange={touch(setAccentColor)} placeholder={DEFAULT_ACCENT} />
+        </div>
+      </SettingsSection>
+
+      {revisions.length ? (
+        <SettingsSection title="Revisions" defaultOpen={false}>
+          {revisions.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-2 py-1 text-[12px]">
+              <span>
+                {r.editorName || 'Editor'} · {r.status}
+              </span>
+              <button
+                type="button"
+                className="border-0 bg-transparent p-0 text-mint"
+                onClick={async () => {
+                  const updated = await postsApi.rollback(postId, r.id);
+                  fillForm(updated);
+                  setHint('Rolled back.');
+                }}
+              >
+                Rollback
+              </button>
+            </div>
+          ))}
+        </SettingsSection>
+      ) : null}
+    </>
+  );
+
   return (
     <>
       <Head>
-        <title>Wirefringe – Admin Editor</title>
+        <title>{`Wirefringe – ${modeLabel}`}</title>
       </Head>
-
-      <div className={tw.pageShellAdmin}>
-        <div className="admin-xai-noise" aria-hidden="true" />
-        <header className="border-b border-line bg-bg sticky top-0 z-50">
-          <div className="flex items-center justify-between gap-4 px-6 py-3.5 max-w-[1280px] mx-auto w-full">
-            <Link className="flex items-center gap-3 no-underline text-ink" href="/admin" aria-label="Back to admin">
-              <BrandLogo size="sm" />
-              <div>
-                <h1 className="m-0 text-base font-semibold tracking-tight">Editor</h1>
-                <span id="editorMode" className="text-xs text-ink-tertiary">{modeLabel}</span>
-              </div>
-            </Link>
-
-            <div className="flex items-center gap-3">
-              <div className={tw.adminMe} id="meLine">
-                {me ? `Signed in as ${me.displayName || me.email || me.username} (${me.role})` : ''}
-              </div>
-              <button className={tw.secondaryBtn} id="logoutBtn" type="button" onClick={onLogout}>
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <main className={tw.editorShell}>
-          <section className={tw.editorCard}>
-            <form id="editorForm" className={tw.form} onSubmit={onSave}>
-              <input type="hidden" id="postId" value={postId} readOnly />
-
-              <div className={tw.editorToolbar} role="toolbar" aria-label="Editor toolbar">
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="bold"
-                  onClick={() => exec('bold')}
-                  aria-label="Bold"
-                  title="Bold"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    B
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="italic"
-                  onClick={() => exec('italic')}
-                  aria-label="Italic"
-                  title="Italic"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    I
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="underline"
-                  onClick={() => exec('underline')}
-                  aria-label="Underline"
-                  title="Underline"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    U
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="strikeThrough"
-                  onClick={() => exec('strikeThrough')}
-                  aria-label="Strikethrough"
-                  title="Strikethrough"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    S
-                  </span>
-                </button>
-
-                <div className="w-px h-6 bg-line mx-1 self-center"></div>
-
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-block="h2"
-                  onClick={() => formatBlock('h2')}
-                  aria-label="Heading 2"
-                  title="Heading 2"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    H2
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-block="h3"
-                  onClick={() => formatBlock('h3')}
-                  aria-label="Heading 3"
-                  title="Heading 3"
-                >
-                  <span className="inline-flex items-center justify-center font-bold text-sm" aria-hidden="true">
-                    H3
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="insertUnorderedList"
-                  onClick={() => exec('insertUnorderedList')}
-                  aria-label="Bulleted list"
-                  title="Bulleted list"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="5" cy="6" r="1" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="5" cy="12" r="1" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="5" cy="18" r="1" stroke="currentColor" strokeWidth="2" />
-                      <path d="M9 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M9 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M9 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-cmd="insertOrderedList"
-                  onClick={() => exec('insertOrderedList')}
-                  aria-label="Numbered list"
-                  title="Numbered list"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="5" width="2" height="2" rx="0.4" fill="currentColor" />
-                      <rect x="4" y="11" width="2" height="2" rx="0.4" fill="currentColor" />
-                      <rect x="4" y="17" width="2" height="2" rx="0.4" fill="currentColor" />
-                      <path d="M9 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M9 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M9 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-block="blockquote"
-                  onClick={() => formatBlock('blockquote')}
-                  aria-label="Quote"
-                  title="Quote"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 17H11V11H7V7H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M13 17H17V11H13V7H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  data-block="pre"
-                  onClick={() => formatBlock('pre')}
-                  aria-label="Code block"
-                  title="Code block"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8 9L4 12L8 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M16 9L20 12L16 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M14 8L10 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </button>
-
-                <div className="w-px h-6 bg-line mx-1 self-center"></div>
-
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  id="linkBtn"
-                  onClick={() => {
-                    const url = prompt('Link URL (https://...)');
-                    if (!url) return;
-                    exec('createLink', url);
-                  }}
-                  aria-label="Insert link"
-                  title="Insert link"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  id="unlinkBtn"
-                  onClick={() => exec('unlink')}
-                  aria-label="Remove link"
-                  title="Remove link"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path d="M4 4L20 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </button>
-
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  id="imageUrlBtn"
-                  onClick={() => {
-                    const url = prompt('Image URL (https://...)');
-                    if (!url) return;
-                    exec('insertImage', url);
-                  }}
-                  aria-label="Insert image from URL"
-                  title="Insert image from URL"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="9" cy="11" r="1.5" fill="currentColor" />
-                      <path d="M20 16L15 11L7 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  className={tw.editorToolBtn}
-                  type="button"
-                  id="uploadImageBtn"
-                  onClick={() => fileInputRef.current?.click()}
-                  aria-label="Upload image"
-                  title="Upload image"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4 [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M7 9L12 4L17 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M12 4V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  id="imageFileInput"
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={async (e) => {
-                    const file = e.target.files && e.target.files[0];
-                    e.target.value = '';
-                    if (!file) return;
-
-                    setHint('Uploading image...');
-                    try {
-                      const out = await uploadImage(file);
-                      exec('insertImage', out.url);
-                      setHint('Image inserted.');
-                    } catch (err) {
-                      setHint(String(err?.message || err));
-                    }
-                  }}
-                />
-              </div>
-
-              <div
-                ref={editorRef}
-                id="editor"
-                className={tw.editor}
-                contentEditable={true}
-                spellCheck={true}
-                aria-label="Post content"
-                suppressContentEditableWarning={true}
-              ></div>
-
-              <div className="flex items-center gap-3 flex-wrap mt-4">
-                <button className={tw.primaryBtn} type="submit" id="saveBtn">
-                  Save
-                </button>
-                {postId ? (
-                  <button className={tw.secondaryBtn} type="button" id="deleteBtn" onClick={onDelete}>
-                    <span className={tw.dot} style={{ background: 'var(--danger)' }}></span>
-                    Delete
-                  </button>
-                ) : null}
-                {postId ? (
-                  <a className={tw.secondaryBtn} id="viewBtn" href={viewHref}>
-                    View
-                  </a>
-                ) : null}
-                <div className={tw.formHint} id="hint">
-                  {hint}
-                </div>
-              </div>
-            </form>
-          </section>
-
-          <aside
-            className={cn(
-              tw.editorSidebar,
-              sidebarExpanded
-                ? 'border-l border-line pl-6 max-md:border-l-0 max-md:pl-0 max-md:border-t max-md:pt-5'
-                : ''
-            )}
-            style={{
-              width: sidebarExpanded ? '280px' : '44px',
-              flexShrink: 0,
-              transition: 'width 0.25s ease',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              className={cn(
-                tw.editorSidebarHeader,
-                'flex items-center cursor-pointer mb-4',
-                sidebarExpanded ? 'justify-between pb-3 border-b border-line' : 'justify-center'
-              )}
-              onClick={() => setSidebarExpanded(!sidebarExpanded)}
-              title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-              {sidebarExpanded && <span className={cn(tw.formLabel, 'm-0')}>Metadata</span>}
-              <span
-                className="inline-flex items-center justify-center w-[22px] h-[22px] text-ink-secondary transition-transform duration-200"
-                style={{
-                  transform: sidebarExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="15,18 9,12 15,6"></polyline>
-                </svg>
-              </span>
-            </div>
-
-            {sidebarExpanded && (
-              <div className={cn(tw.editorSidebarContent, 'flex flex-col gap-3')}>
-                {/* Title field */}
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Title</label>
-                  <input
-                    className={tw.formInput}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Post title..."
-                  />
-                </div>
-
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Status</label>
-                  <select className={tw.formSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="draft">Draft</option>
-                    <option value="review">Review</option>
-                    <option value="scheduled">Scheduled</option>
-                    {access.canPublish || status === 'published' ? (
-                      <option value="published" disabled={!access.canPublish}>
-                        Published
-                      </option>
-                    ) : null}
-                    {access.canUnpublish || status === 'unpublished' ? (
-                      <option value="unpublished" disabled={!access.canUnpublish}>
-                        Unpublished
-                      </option>
-                    ) : null}
-                  </select>
-                  {access.isAuthor && status === 'published' ? (
-                    <p className="m-0 mt-1.5 text-[11px] text-ink-tertiary">
-                      This is live. You can edit the story; an editor must unpublish it.
-                    </p>
-                  ) : access.isAuthor ? (
-                    <p className="m-0 mt-1.5 text-[11px] text-ink-tertiary">
-                      Send to Review when ready. An editor publishes it.
-                    </p>
-                  ) : null}
-                </div>
-                {status === 'scheduled' ? (
-                  <div className={tw.formGroup}>
-                    <label className={tw.formLabel}>Publish at</label>
-                    <input
-                      className={tw.formInput}
-                      type="datetime-local"
-                      value={scheduledAt}
-                      onChange={(e) => setScheduledAt(e.target.value)}
-                    />
-                  </div>
-                ) : null}
-                <div className="flex flex-col gap-1.5 text-[13px]">
-                  <label><input type="checkbox" checked={isBreaking} onChange={(e) => setIsBreaking(e.target.checked)} /> Breaking</label>
-                  {access.canPin ? (
-                    <label><input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} /> Pin</label>
-                  ) : null}
-                  {access.canMarkSponsored ? (
-                    <label><input type="checkbox" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} /> Sponsored / branded</label>
-                  ) : null}
-                </div>
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Tags</label>
-                  <input className={tw.formInput} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ai, markets, india" />
-                </div>
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Correction</label>
-                  <textarea className={tw.formTextarea} value={correction} onChange={(e) => setCorrection(e.target.value)} />
-                </div>
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Source name</label>
-                  <input className={tw.formInput} value={sourceName} onChange={(e) => setSourceName(e.target.value)} />
-                </div>
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Source URL</label>
-                  <input className={tw.formInput} value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
-                </div>
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Related post IDs</label>
-                  <input className={tw.formInput} value={relatedIds} onChange={(e) => setRelatedIds(e.target.value)} placeholder="id-one, id-two" />
-                </div>
-                {postId ? (
-                  <p className="text-xs m-0">
-                    <a href={`/post/${encodeURIComponent(slugifyTitle(title))}?preview=true&id=${encodeURIComponent(postId)}`} target="_blank" rel="noreferrer">
-                      Preview unpublished
-                    </a>
-                  </p>
-                ) : null}
-                {revisions.length ? (
-                  <div>
-                    <label className={tw.formLabel}>Revisions</label>
-                    {revisions.map((r) => (
-                      <div key={r.id} className="flex justify-between text-xs py-1">
-                        <span>
-                          {r.editorName || 'Editor'} · {r.status}
-                        </span>
-                        <button
-                          type="button"
-                          className={tw.secondaryBtn}
-                          onClick={async () => {
-                            const updated = await postsApi.rollback(postId, r.id);
-                            fillForm(updated);
-                            setHint('Rolled back.');
-                          }}
-                        >
-                          Rollback
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                {/* Category & Read minutes row */}
-                <div className="flex gap-2">
-                  <div className={cn(tw.formGroup, 'flex-1')}>
-                    <label className={tw.formLabel}>Category</label>
-                    <select
-                      className={tw.formSelect}
-                      value={bucket}
-                      onChange={(e) => setBucket(e.target.value)}
-                    >
-                      {categoryNames.map((b) => (
-                        <option key={b}>{b}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className={cn(tw.formGroup, 'w-20')}>
-                    <label className={tw.formLabel}>Read min</label>
-                    <input
-                      className={tw.formInput}
-                      type="number"
-                      min="1"
-                      value={readMinutes}
-                      onChange={(e) => setReadMinutes(e.target.value)}
-                      placeholder="3"
-                    />
-                  </div>
-                </div>
-
-                {/* OpenGraph Image URL */}
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>OpenGraph Image URL (optional)</label>
-                  <input
-                    className={tw.formInput}
-                    placeholder="https://..."
-                    value={ogImg}
-                    onChange={(e) => setOgImg(e.target.value)}
-                  />
-                </div>
-
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Article header color</label>
-                  <p className="text-[11px] text-ink-tertiary m-0 mb-2 leading-snug">
-                    Lime-style band behind the header and hero on this post only.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {ACCENT_PRESETS.map((preset) => {
-                      const selected =
-                        normalizeAccentColor(accentColor, '') === preset.value;
-                      return (
-                        <button
-                          key={preset.value}
-                          type="button"
-                          title={preset.name}
-                          aria-label={preset.name}
-                          aria-pressed={selected}
-                          onClick={() => setAccentColor(preset.value)}
-                          className="w-7 h-7 rounded-full border-0 cursor-pointer p-0"
-                          style={{
-                            background: preset.value,
-                            outline: selected
-                              ? '2px solid var(--text-primary)'
-                              : '1px solid var(--border)',
-                            outlineOffset: '2px',
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={normalizeAccentColor(accentColor, DEFAULT_ACCENT)}
-                      onChange={(e) => setAccentColor(e.target.value.toUpperCase())}
-                      className="w-9 h-9 p-0 border-0 bg-transparent cursor-pointer"
-                      aria-label="Custom header color"
-                    />
-                    <input
-                      className={tw.formInput}
-                      value={accentColor}
-                      onChange={(e) => setAccentColor(e.target.value)}
-                      placeholder={DEFAULT_ACCENT}
-                    />
-                  </div>
-                  <div
-                    className="mt-2 h-10 rounded-md border border-line flex items-center px-3 font-mono text-[11px] font-bold tracking-wide uppercase text-[#111]"
-                    style={{ background: normalizeAccentColor(accentColor, DEFAULT_ACCENT) }}
-                  >
-                    Preview
-                  </div>
-                </div>
-
-                {/* Excerpt */}
-                <div className={tw.formGroup}>
-                  <label className={tw.formLabel}>Excerpt (optional)</label>
-                  <textarea
-                    className={tw.formTextarea}
-                    placeholder="If empty, excerpt is auto-generated"
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                  ></textarea>
-                </div>
-              </div>
-            )}
-          </aside>
-        </main>
-
-   
-      </div>
+      <GutenbergEditor
+        title={title}
+        onTitleChange={(v) => {
+          setTitle(v);
+          setDirty(true);
+        }}
+        status={status}
+        dirty={dirty}
+        saving={saving}
+        lastSavedAt={lastSavedAt}
+        hint={hint}
+        postId={postId}
+        viewHref={viewHref}
+        previewHref={previewHref}
+        editorRef={editorRef}
+        fileInputRef={fileInputRef}
+        exec={exec}
+        formatBlock={formatBlock}
+        onPersist={persist}
+        onDelete={onDelete}
+        onImageFile={onImageFile}
+        contentHtml={contentHtml}
+        onContentChange={(html) => {
+          editorHtmlRef.current = html;
+          setContentHtml(html);
+          setDirty(true);
+        }}
+        canPublish={Boolean(access.canPublish)}
+        settingsPanel={settingsPanel}
+      />
     </>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
-import { PlusIcon, TrashIcon } from '../Layout/icons';
+import { TrashIcon } from '../Layout/icons';
 import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 export function CategoriesView({
   categoriesWithCounts,
@@ -67,35 +68,43 @@ export function CategoriesView({
   };
 
   return (
-    <div className={tw.adminView}>
+    <div className="wp-wrap">
+      <ScreenTitle title="Categories" />
+      {successMessage ? <Notice type="success">{successMessage}</Notice> : null}
       {canManageUsers ? (
-        <section className={tw.adminSection}>
-          <h3 className={tw.adminSectionTitle}>Add category</h3>
-          <p className={tw.adminSectionDesc}>Create a bucket for the public site navigation.</p>
-          <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 max-w-[640px]">
-            <div className="flex-1 min-w-[200px]">
-              <label className={tw.formLabel}>Name</label>
-              <input
-                type="text"
-                className={cn(tw.formInput, 'mt-1.5')}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="e.g. Technology"
-              />
-            </div>
-            <button type="submit" className={tw.primaryBtn}>
-              <PlusIcon /> Add
-            </button>
-            {hint ? <p className={tw.formHint}>{hint}</p> : null}
-          </form>
+        <section className="postbox">
+          <h2 className="hndle">Add New Category</h2>
+          <div className="inside">
+            <form onSubmit={handleSubmit}>
+              <table className="form-table">
+                <tbody>
+                  <tr>
+                    <th scope="row"><label htmlFor="cat-name">Name</label></th>
+                    <td>
+                      <input
+                        id="cat-name"
+                        type="text"
+                        className={cn(tw.formInput, 'max-w-md')}
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="e.g. Technology"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {hint ? <p className={tw.formHint}>{hint}</p> : null}
+              <p className="submit">
+                <button type="submit" className={tw.primaryBtn}>Add New Category</button>
+              </p>
+            </form>
+          </div>
         </section>
       ) : null}
 
-      <section className={tw.adminSection}>
-        <div className="flex items-baseline justify-between gap-3 mb-4">
-          <h3 className={cn(tw.adminSectionTitle, 'mb-0')}>All categories</h3>
-          <span className="text-[12px] text-ink-tertiary">{categoriesWithCounts.length}</span>
-        </div>
+      <section className="postbox">
+        <h2 className="hndle">Categories <span className="font-normal text-ink-secondary">({categoriesWithCounts.length})</span></h2>
+        <div className="inside">
         <div className={tw.tableWrap}>
           <table className={tw.table}>
             <thead>
@@ -137,6 +146,7 @@ export function CategoriesView({
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
 

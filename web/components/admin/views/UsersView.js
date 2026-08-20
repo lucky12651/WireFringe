@@ -6,6 +6,7 @@ import { EmptyState } from '../shared/EmptyState';
 import { Icons, PlusIcon, TrashIcon } from '../Layout/icons';
 import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
+import { ScreenTitle, Notice } from '../wp/ScreenTitle';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -435,53 +436,50 @@ export function UsersView({
   };
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Create user</h3>
-        <p className={tw.adminSectionDesc}>Add a login account for editors, authors, or admins.</p>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end max-w-[900px]">
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Email</label>
-            <input
-              className={tw.formInput} type="email"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Password</label>
-            <input
-              className={tw.formInput} type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Min 8 characters"
-            />
-          </div>
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Role</label>
-            <select className={tw.formSelect} value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-              {ROLE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            <button type="submit" className={tw.primaryBtn}>
-              <PlusIcon /> Create
-            </button>
-            {hint ? <p className={tw.formHint}>{hint}</p> : null}
-          </div>
+    <div className="wp-wrap">
+      <ScreenTitle title="Users" />
+      {successMessage ? <Notice type="success">{successMessage}</Notice> : null}
+      <section className="postbox">
+        <h2 className="hndle">Add New User</h2>
+        <div className="inside">
+        <form onSubmit={handleSubmit}>
+          <table className="form-table">
+            <tbody>
+              <tr>
+                <th scope="row"><label htmlFor="user-email">Email</label></th>
+                <td>
+                  <input id="user-email" className={tw.formInput + ' max-w-md'} type="email" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="you@example.com" />
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><label htmlFor="user-pass">Password</label></th>
+                <td>
+                  <input id="user-pass" className={tw.formInput + ' max-w-md'} type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><label htmlFor="user-role">Role</label></th>
+                <td>
+                  <select id="user-role" className={tw.formSelect + ' max-w-md'} value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          {hint ? <p className={tw.formHint}>{hint}</p> : null}
+          <p className="submit">
+            <button type="submit" className={tw.primaryBtn}>Add New User</button>
+          </p>
         </form>
+        </div>
       </section>
 
-      <section className={tw.adminSection}>
-        <div className="flex items-baseline justify-between gap-3 mb-4">
-          <h3 className={cn(tw.adminSectionTitle, 'mb-0')}>Login accounts</h3>
-          <span className="text-[12px] text-ink-tertiary">{usersCount}</span>
-        </div>
+      <section className="postbox">
+        <h2 className="hndle">Users <span className="font-normal text-ink-secondary">({usersCount})</span></h2>
+        <div className="inside">
           <div className={tw.tableWrap}>
             <table className={tw.table}>
               <thead>
@@ -578,10 +576,12 @@ export function UsersView({
               </tbody>
             </table>
           </div>
+        </div>
       </section>
 
-      <section className={tw.adminSection}>
-          <h3 className={tw.adminSectionTitle}>Authors without an account</h3>
+      <section className="postbox">
+        <h2 className="hndle">Authors without an account</h2>
+        <div className="inside">
           <p className={tw.adminSectionDesc}>
             These names appear on posts but have no login. Create an account, transfer posts, or delete them.
           </p>
@@ -657,6 +657,7 @@ export function UsersView({
               </table>
             )}
           </div>
+        </div>
       </section>
 
       {userToDelete ? (

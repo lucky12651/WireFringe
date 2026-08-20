@@ -4,6 +4,7 @@ import { MIN_PASSWORD_LENGTH } from '../../../lib/constants';
 import { tw } from '../../../lib/tw';
 import { newsroomApi } from '../../../lib/api';
 import BrandLogo from '../../BrandLogo/BrandLogo';
+import { ScreenTitle, Notice, NavTabs } from '../wp/ScreenTitle';
 
 export function SettingsView({
   me,
@@ -25,6 +26,7 @@ export function SettingsView({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordHint, setPasswordHint] = useState('');
+  const [tab, setTab] = useState('profile');
 
   useEffect(() => {
     if (me) {
@@ -117,10 +119,23 @@ export function SettingsView({
   };
 
   return (
-    <div className={tw.adminView}>
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Public profile</h3>
-        <p className={tw.adminSectionDesc}>
+    <div className="wp-wrap">
+      <ScreenTitle title="Settings" />
+      <NavTabs
+        tabs={[
+          { id: 'profile', label: 'Profile' },
+          { id: 'security', label: 'Security' },
+          { id: 'writing', label: 'Writing' },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
+
+      {tab === 'profile' ? (
+      <section className="postbox">
+        <h2 className="hndle">Public profile</h2>
+        <div className="inside">
+        <p className="mt-0 mb-4 text-[13px] text-ink-secondary">
           Name and photo shown on your posts. Email cannot be changed.
         </p>
         <div className="flex items-center gap-4 flex-wrap mb-6">
@@ -141,133 +156,133 @@ export function SettingsView({
             <p className={tw.formHint}>{photoHint || 'JPG, PNG or GIF. Max 5MB.'}</p>
           </div>
         </div>
-        <form onSubmit={handleProfileSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[720px]">
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Email</label>
-            <input
-              type="email"
-              value={me?.email || me?.username || ''}
-              disabled
-              className={cn(tw.formInput, tw.disabledInput)}
-            />
-          </div>
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Display name</label>
-            <input
-              type="text"
-              className={tw.formInput}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Name shown on articles"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={tw.formLabel}>Author bio</label>
-            <textarea
-              className={tw.formTextarea}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Shown on your public author page"
-            />
-          </div>
-          <div className="sm:col-span-2 flex items-center gap-3">
+        <form onSubmit={handleProfileSubmit}>
+          <table className="form-table">
+            <tbody>
+              <tr>
+                <th scope="row"><label htmlFor="profile-email">Email</label></th>
+                <td>
+                  <input
+                    id="profile-email"
+                    type="email"
+                    value={me?.email || me?.username || ''}
+                    disabled
+                    className={cn(tw.formInput, tw.disabledInput, 'max-w-md')}
+                  />
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><label htmlFor="profile-name">Display name</label></th>
+                <td>
+                  <input
+                    id="profile-name"
+                    type="text"
+                    className={cn(tw.formInput, 'max-w-md')}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Name shown on articles"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><label htmlFor="profile-bio">Biographical info</label></th>
+                <td>
+                  <textarea
+                    id="profile-bio"
+                    className={cn(tw.formTextarea, 'max-w-xl')}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Shown on your public author page"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          {profileHint ? <Notice type="success">{profileHint}</Notice> : null}
+          <p className="submit">
             <button type="submit" className={tw.primaryBtn}>
-              Save profile
+              Save Changes
             </button>
-            {profileHint ? <p className={tw.formHintSuccess}>{profileHint}</p> : null}
-          </div>
+          </p>
         </form>
-      </section>
-
-      <TwoFactorBlock enabled={!!me?.totpEnabled} />
-
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Security</h3>
-        <p className={tw.adminSectionDesc}>Update the password for this account.</p>
-        <form onSubmit={handlePasswordSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[720px]">
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Current password</label>
-            <input
-              type="password"
-              className={tw.formInput}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>New password</label>
-            <input
-              type="password"
-              className={tw.formInput}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Min 8 characters"
-            />
-          </div>
-          <div className={tw.formGroup}>
-            <label className={tw.formLabel}>Confirm new password</label>
-            <input
-              type="password"
-              className={tw.formInput}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <div className="sm:col-span-3 flex items-center gap-3">
-            <button type="submit" className={tw.primaryBtn}>
-              Update password
-            </button>
-            {passwordHint ? (
-              <p className={passwordHint.includes('updated') ? tw.formHintSuccess : tw.formHint}>
-                {passwordHint}
-              </p>
-            ) : null}
-          </div>
-        </form>
-      </section>
-
-      <section className={tw.adminSection}>
-        <h3 className={tw.adminSectionTitle}>Post brand byline</h3>
-        <p className={tw.adminSectionDesc}>
-          Use the same text wordmark as the homepage instead of your name. No photo needed — it
-          follows light and dark mode automatically. Header and footer stay unchanged.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-8 items-start">
-          <div className="flex flex-col gap-2">
-            <div className="min-w-[200px] h-16 px-4 rounded-md border border-line bg-bg-elevated flex items-center justify-center">
-              <BrandLogo size="sm" />
-            </div>
-            <span className="text-[11px] text-ink-muted font-mono">Preview</span>
-          </div>
-          <div className="flex flex-col gap-3 max-w-[420px]">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={brandEnabled}
-                disabled={isSavingBrand || !onUpdateBrandByline}
-                onChange={(e) => handleBrandToggle(e.target.checked)}
-              />
-              <span>
-                <span className="block font-semibold text-ink text-sm">
-                  Show brand logo instead of your name on posts
-                </span>
-                <span className="block text-xs text-ink-secondary mt-1">
-                  When on, readers see Wire
-                  <span className="italic text-mint">F</span>
-                  ringe instead of &ldquo;{me?.displayName || 'your name'}&rdquo;.
-                </span>
-              </span>
-            </label>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wide text-ink-tertiary">
-              {brandEnabled ? 'On' : 'Off'}
-            </span>
-            {brandHint ? <p className={tw.formHintSuccess}>{brandHint}</p> : null}
-          </div>
         </div>
       </section>
+      ) : null}
+
+      {tab === 'security' ? (
+        <>
+          <TwoFactorBlock enabled={!!me?.totpEnabled} />
+          <section className="postbox">
+            <h2 className="hndle">Account password</h2>
+            <div className="inside">
+            <form onSubmit={handlePasswordSubmit}>
+              <table className="form-table">
+                <tbody>
+                  <tr>
+                    <th scope="row"><label>Current password</label></th>
+                    <td>
+                      <input type="password" className={cn(tw.formInput, 'max-w-md')} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><label>New password</label></th>
+                    <td>
+                      <input type="password" className={cn(tw.formInput, 'max-w-md')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                      <span className="description">Minimum {MIN_PASSWORD_LENGTH} characters.</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><label>Confirm new password</label></th>
+                    <td>
+                      <input type="password" className={cn(tw.formInput, 'max-w-md')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {passwordHint ? (
+                <Notice type={passwordHint.includes('updated') ? 'success' : 'error'}>{passwordHint}</Notice>
+              ) : null}
+              <p className="submit">
+                <button type="submit" className={tw.primaryBtn}>Update password</button>
+              </p>
+            </form>
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {tab === 'writing' ? (
+      <section className="postbox">
+        <h2 className="hndle">Post byline</h2>
+        <div className="inside">
+        <p className="mt-0 mb-4 text-[13px] text-ink-secondary">
+          Use the homepage wordmark instead of your name on posts.
+        </p>
+        <table className="form-table">
+          <tbody>
+            <tr>
+              <th scope="row">Brand byline</th>
+              <td>
+                <div className="mb-3 h-14 max-w-xs border border-line bg-bg-elevated px-4 flex items-center">
+                  <BrandLogo size="sm" />
+                </div>
+                <label className="inline-flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={brandEnabled}
+                    disabled={isSavingBrand || !onUpdateBrandByline}
+                    onChange={(e) => handleBrandToggle(e.target.checked)}
+                  />
+                  <span>Show brand logo instead of your name on posts</span>
+                </label>
+                {brandHint ? <Notice type="success">{brandHint}</Notice> : null}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+      ) : null}
     </div>
   );
 }
@@ -277,9 +292,10 @@ function TwoFactorBlock({ enabled }) {
   const [code, setCode] = useState('');
   const [hint, setHint] = useState(enabled ? 'Authenticator is on.' : '');
   return (
-    <section className={tw.adminSection}>
-      <h3 className={tw.adminSectionTitle}>Two-factor authentication</h3>
-      <p className={tw.adminSectionDesc}>Use an authenticator app. Turn this on before adding more staff.</p>
+    <section className="postbox">
+      <h2 className="hndle">Two-factor authentication</h2>
+      <div className="inside">
+      <p className="mt-0 mb-4 text-[13px] text-ink-secondary">Use an authenticator app. Turn this on before adding more staff.</p>
       <button
         type="button"
         className={tw.secondaryBtn}
@@ -302,6 +318,7 @@ function TwoFactorBlock({ enabled }) {
         Turn off 2FA
       </button>
       {hint ? <p className={tw.formHint}>{hint}</p> : null}
+      </div>
     </section>
   );
 }

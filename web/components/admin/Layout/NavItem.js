@@ -1,5 +1,3 @@
-// Nav Item Component - Individual navigation button
-
 import React from 'react';
 import { cn } from '../../../lib/utils';
 import { Icons } from './icons';
@@ -18,70 +16,45 @@ export function NavItem({
 
   const IconComponent = Icons[item.icon];
   const isUserNavDisabled = item.id === 'users' && isDisabled;
+  const badge =
+    item.id === 'comments' && pendingCommentsCount > 0
+      ? pendingCommentsCount
+      : item.id === 'contact' && unreadContactCount > 0
+        ? unreadContactCount
+        : 0;
 
   return (
     <button
       type="button"
       className={cn(
-        'relative border-none cursor-pointer transition-all duration-200 ease-out text-left',
-        'flex items-center',
-        collapsed
-          ? 'w-11 h-11 min-h-11 rounded-xl justify-center p-0 gap-0'
-          : 'w-full min-h-10 h-auto rounded-xl justify-start gap-3 py-2.5 px-3',
+        'relative mb-0.5 flex h-10 w-full items-center gap-2.5 rounded-sm border-none text-left text-[13px] transition-colors duration-150',
+        collapsed ? 'justify-center px-0' : 'px-2',
         isActive
-          ? 'bg-ink text-[var(--bg)] font-semibold'
-          : 'bg-transparent text-ink-tertiary hover:bg-bg-hover hover:text-ink',
-        (isDisabled || isUserNavDisabled) && 'opacity-40 cursor-not-allowed',
-        'max-[980px]:w-12 max-[980px]:h-12 max-[980px]:min-h-12 max-[980px]:justify-center max-[980px]:p-0'
+          ? 'bg-mint text-[var(--admin-accent-fg,#111)] font-medium'
+          : 'bg-transparent text-[var(--admin-rail-fg)]/85 hover:bg-[var(--admin-rail-hover)]',
+        (isDisabled || isUserNavDisabled) && 'opacity-40 cursor-not-allowed'
       )}
       onClick={() => onNavigate(item.id)}
       disabled={isDisabled || isUserNavDisabled}
       title={isUserNavDisabled ? 'Admins only' : collapsed ? item.label : ''}
     >
-      <span className="flex items-center justify-center shrink-0 w-5 h-5 [&>svg]:w-[18px] [&>svg]:h-[18px]">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-4 [&>svg]:w-4">
         <IconComponent />
       </span>
-      <span
-        className={cn(
-          'text-[13px] font-medium whitespace-nowrap overflow-hidden text-ellipsis',
-          collapsed && 'hidden',
-          'max-[980px]:hidden'
-        )}
-      >
-        {item.label}
-      </span>
-      {item.id === 'comments' && pendingCommentsCount > 0 && (
+      {!collapsed ? <span className="min-w-0 truncate">{item.label}</span> : null}
+      {badge > 0 ? (
         <span
           className={cn(
-            'font-bold text-center shrink-0 rounded-full',
+            'ml-auto min-w-[18px] rounded-sm px-1.5 py-0.5 text-center text-[10px] font-bold',
+            collapsed && 'absolute right-0.5 top-0.5 ml-0',
             isActive
-              ? 'bg-[var(--bg)] text-ink'
-              : 'bg-ink text-[var(--bg)]',
-            collapsed
-              ? 'absolute top-1 right-1 ml-0 text-[9px] py-0.5 px-1.5 min-w-4'
-              : 'ml-auto text-[10px] py-0.5 px-1.5 min-w-[18px]',
-            'max-[980px]:absolute max-[980px]:top-1.5 max-[980px]:right-1.5 max-[980px]:ml-0 max-[980px]:text-[9px] max-[980px]:py-0.5 max-[980px]:px-1.5 max-[980px]:min-w-4'
+              ? 'bg-[var(--admin-accent-fg,#111)] text-mint'
+              : 'bg-mint text-[var(--admin-accent-fg,#111)]'
           )}
         >
-          {pendingCommentsCount}
+          {badge}
         </span>
-      )}
-      {item.id === 'contact' && unreadContactCount > 0 && (
-        <span
-          className={cn(
-            'font-bold text-center shrink-0 rounded-full',
-            isActive
-              ? 'bg-[var(--bg)] text-ink'
-              : 'bg-ink text-[var(--bg)]',
-            collapsed
-              ? 'absolute top-1 right-1 ml-0 text-[9px] py-0.5 px-1.5 min-w-4'
-              : 'ml-auto text-[10px] py-0.5 px-1.5 min-w-[18px]',
-            'max-[980px]:absolute max-[980px]:top-1.5 max-[980px]:right-1.5 max-[980px]:ml-0 max-[980px]:text-[9px] max-[980px]:py-0.5 max-[980px]:px-1.5 max-[980px]:min-w-4'
-          )}
-        >
-          {unreadContactCount}
-        </span>
-      )}
+      ) : null}
     </button>
   );
 }
