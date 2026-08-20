@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
-import BrandLogo from '../../BrandLogo/BrandLogo';
 import { cn } from '../../../lib/utils';
 import { fieldErrorsFromZod } from '../../../lib/formErrors';
+import { AuthShell, authInputClass, authSubmitClass } from './AuthShell';
 
 const loginSchema = z.object({
   email: z
@@ -14,84 +14,233 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-const COLLAGE = [
-  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=70',
-  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=70',
-];
+const forgotSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Enter a valid email address'),
+});
 
-const inputClass =
-  'w-full h-[46px] px-3 border border-line-strong rounded-sm bg-bg-elevated text-ink text-[15px] outline-none transition-[border-color,box-shadow] duration-150 focus:border-mint focus:shadow-[0_0_0_3px_var(--mint-dim)]';
+const totpSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit authenticator code'),
+});
 
-export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
+export function LoginPage({
+  onLogin,
+  onLogin2fa,
+  onForgot,
+  onToggleMode,
+  error: serverError,
+  initialPanel = 'login',
+}) {
+  const [panel, setPanel] = useState(initialPanel === 'forgot' ? 'forgot' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [code, setCode] = useState('');
+  const [ticket, setTicket] = useState('');
+  const [forgotStatus, setForgotStatus] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateForm = () => {
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
     try {
       loginSchema.parse({ email, password });
       setErrors({});
-      return true;
     } catch (err) {
       setErrors(fieldErrorsFromZod(err));
-      return false;
+      return;
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
 
     setIsLoading(true);
     const result = await onLogin(email.trim(), password, rememberMe);
     setIsLoading(false);
 
-    if (!result.success && result.error) {
+    if (result?.requires2fa && result.ticket) {
+      setTicket(result.ticket);
+      setCode('');
+      setPanel('2fa');
+      setErrors({});
+      return;
+    }
+
+    if (!result?.success && result?.error) {
       setErrors({ form: result.error });
     }
   };
 
+  const handle2faSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      totpSchema.parse({ code });
+      setErrors({});
+    } catch (err) {
+      setErrors(fieldErrorsFromZod(err));
+      return;
+    }
+    if (!onLogin2fa) {
+      setErrors({ form: 'Authenticator sign-in is not available.' });
+      return;
+    }
+
+    setIsLoading(true);
+    const result = await onLogin2fa(ticket, code.trim());
+    setIsLoading(false);
+
+    if (!result?.success && result?.error) {
+      setErrors({ form: result.error });
+    }
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      forgotSchema.parse({ email });
+      setErrors({});
+    } catch (err) {
+      setErrors(fieldErrorsFromZod(err));
+      return;
+    }
+    if (!onForgot) return;
+
+    setIsLoading(true);
+    setForgotStatus('');
+    const result = await onForgot(email.trim());
+    setIsLoading(false);
+
+    if (result?.success) {
+      setForgotStatus(
+        result.resetUrl
+          ? `If that account exists, use this reset link: ${result.resetUrl}`
+          : 'If that account exists, a reset link was sent. Check your email.'
+      );
+      return;
+    }
+    setErrors({ form: result?.error || 'Could not start reset.' });
+  };
+
   return (
-    <div className="relative min-h-screen min-h-[100dvh] overflow-hidden bg-bg text-ink font-sans">
-      <div
-        className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-[3px] z-0 max-sm:grid-cols-2 max-sm:grid-rows-4"
-        aria-hidden="true"
-      >
-        {COLLAGE.map((src, i) => (
-          <div
-            key={i}
-            className={cn(
-              'relative overflow-hidden bg-bg-elevated',
-              i >= 8 && 'max-sm:hidden'
+    <AuthShell>
+      {panel === '2fa' ? (
+        <>
+          <h1 className="m-0 mb-3 text-center text-[26px] max-sm:text-[22px] font-extrabold leading-tight tracking-tight text-ink">
+            Authenticator
+            <br />
+            code
+          </h1>
+          <p className="m-0 mb-6 text-center text-xs leading-normal text-ink-secondary">
+            Open your authenticator app and enter the 6-digit code for this account.
+          </p>
+          <form onSubmit={handle2faSubmit} className="flex flex-col gap-3.5" noValidate>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="login-totp"
+                className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-ink-tertiary"
+              >
+                Authenticator code
+              </label>
+              <input
+                id="login-totp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="123456"
+                className={cn(authInputClass, 'tracking-[0.35em] text-center', errors.code && 'border-[#ff6b6b]')}
+              />
+              {errors.code ? <span className="text-xs text-[#c0392b]">{errors.code}</span> : null}
+            </div>
+            {(errors.form || serverError) && (
+              <div className="bg-[rgba(192,57,43,0.08)] border border-[rgba(192,57,43,0.28)] text-[#c0392b] py-2.5 px-3 rounded-sm text-[13px]">
+                {errors.form || serverError}
+              </div>
             )}
-          >
-            <img
-              src={src}
-              alt=""
-              loading="lazy"
-              className="w-full h-full object-cover block saturate-[0.85] brightness-[0.55]"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="absolute inset-0 z-[1] bg-black/55 backdrop-blur-[1px]" aria-hidden="true" />
-
-      <div className="relative z-[2] min-h-screen min-h-[100dvh] flex flex-col items-center justify-center pt-12 px-4 pb-[100px] max-sm:pt-8 max-sm:px-3 max-sm:pb-[110px]">
-        <div className="on-media mb-[22px] max-sm:mb-4 [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
-          <BrandLogo size="lg" className="text-white" />
-        </div>
-
-        <div className="w-[min(440px,100%)] bg-bg-card text-ink border border-line rounded p-9 px-8 pb-7 shadow-xl max-sm:p-7 max-sm:px-5 max-sm:pb-[22px]">
+            <button type="submit" className={authSubmitClass} disabled={isLoading}>
+              {isLoading ? 'Verifying…' : 'Verify and sign in'}
+            </button>
+          </form>
+          <p className="mt-[18px] mb-0 text-center text-sm text-ink-secondary">
+            <button
+              type="button"
+              className="border-none bg-transparent p-0 text-mint font-bold cursor-pointer underline underline-offset-2 hover:text-mint-hover"
+              onClick={() => {
+                setPanel('login');
+                setTicket('');
+                setCode('');
+                setErrors({});
+              }}
+            >
+              Back to sign in
+            </button>
+          </p>
+        </>
+      ) : panel === 'forgot' ? (
+        <>
+          <h1 className="m-0 mb-3 text-center text-[26px] max-sm:text-[22px] font-extrabold leading-tight tracking-tight text-ink">
+            Forgot
+            <br />
+            password?
+          </h1>
+          <p className="m-0 mb-6 text-center text-xs leading-normal text-ink-secondary">
+            Enter the email on your account. If it exists, we will send a reset link.
+          </p>
+          <form onSubmit={handleForgotSubmit} className="flex flex-col gap-3.5" noValidate>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="forgot-email"
+                className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-ink-tertiary"
+              >
+                Email
+              </label>
+              <input
+                id="forgot-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={cn(authInputClass, errors.email && 'border-[#ff6b6b]')}
+              />
+              {errors.email ? <span className="text-xs text-[#c0392b]">{errors.email}</span> : null}
+            </div>
+            {forgotStatus ? (
+              <div className="bg-[rgba(0,200,150,0.08)] border border-[rgba(0,200,150,0.28)] text-ink py-2.5 px-3 rounded-sm text-[13px] break-all">
+                {forgotStatus}
+              </div>
+            ) : null}
+            {(errors.form || serverError) && !forgotStatus ? (
+              <div className="bg-[rgba(192,57,43,0.08)] border border-[rgba(192,57,43,0.28)] text-[#c0392b] py-2.5 px-3 rounded-sm text-[13px]">
+                {errors.form || serverError}
+              </div>
+            ) : null}
+            <button type="submit" className={authSubmitClass} disabled={isLoading}>
+              {isLoading ? 'Sending…' : 'Send reset link'}
+            </button>
+          </form>
+          <p className="mt-[18px] mb-0 text-center text-sm text-ink-secondary">
+            Remembered it?{' '}
+            <button
+              type="button"
+              className="border-none bg-transparent p-0 text-mint font-bold cursor-pointer underline underline-offset-2 hover:text-mint-hover"
+              onClick={() => {
+                setPanel('login');
+                setForgotStatus('');
+                setErrors({});
+              }}
+            >
+              Sign in
+            </button>
+          </p>
+        </>
+      ) : (
+        <>
           <h1 className="m-0 mb-3 text-center text-[26px] max-sm:text-[22px] font-extrabold leading-tight tracking-tight text-ink">
             Sign in or
             <br />
@@ -102,7 +251,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
             <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link>.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
+          <form onSubmit={handleLoginSubmit} className="flex flex-col gap-3.5" noValidate>
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="login-email"
@@ -117,11 +266,9 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 autoComplete="email"
-                className={cn(inputClass, errors.email && 'border-[#ff6b6b]')}
+                className={cn(authInputClass, errors.email && 'border-[#ff6b6b]')}
               />
-              {errors.email ? (
-                <span className="text-xs text-[#c0392b]">{errors.email}</span>
-              ) : null}
+              {errors.email ? <span className="text-xs text-[#c0392b]">{errors.email}</span> : null}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -139,7 +286,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder=""
                   autoComplete="current-password"
-                  className={cn(inputClass, 'pr-16', errors.password && 'border-[#ff6b6b]')}
+                  className={cn(authInputClass, 'pr-16', errors.password && 'border-[#ff6b6b]')}
                 />
                 <button
                   type="button"
@@ -150,9 +297,7 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
-              {errors.password ? (
-                <span className="text-xs text-[#c0392b]">{errors.password}</span>
-              ) : null}
+              {errors.password ? <span className="text-xs text-[#c0392b]">{errors.password}</span> : null}
             </div>
 
             <label className="inline-flex items-center gap-2 text-[13px] text-ink-secondary cursor-pointer select-none">
@@ -171,19 +316,23 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
               </div>
             )}
 
-            <button
-              type="submit"
-              className="mt-1 h-12 w-full border-none rounded-sm bg-mint text-black font-mono text-xs font-extrabold tracking-[0.1em] uppercase cursor-pointer transition-all duration-150 enabled:hover:bg-mint-hover enabled:hover:shadow-mint enabled:hover:-translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
-              disabled={isLoading}
-            >
+            <button type="submit" className={authSubmitClass} disabled={isLoading}>
               {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
           <p className="mt-3 mb-0 text-center text-sm">
-            <Link href="/forgot-password" className="text-mint">
+            <button
+              type="button"
+              className="border-none bg-transparent p-0 text-mint font-bold cursor-pointer underline underline-offset-2 hover:text-mint-hover"
+              onClick={() => {
+                setPanel('forgot');
+                setForgotStatus('');
+                setErrors({});
+              }}
+            >
               Forgot password?
-            </Link>
+            </button>
           </p>
           <p className="mt-[18px] mb-0 text-center text-sm text-ink-secondary">
             Don&apos;t have an account?{' '}
@@ -195,24 +344,8 @@ export function LoginPage({ onLogin, onToggleMode, error: serverError }) {
               Create one
             </button>
           </p>
-        </div>
-      </div>
-
-      <footer className="on-media absolute left-0 right-0 bottom-0 z-[2] pt-4 px-5 pb-5 text-center">
-        <nav
-          className="flex flex-wrap justify-center gap-x-3.5 gap-y-2 mb-2 [&_a]:text-white/55 [&_a]:text-[11px] [&_a]:no-underline [&_a]:font-mono [&_a]:tracking-wide hover:[&_a]:text-mint"
-          aria-label="Legal"
-        >
-          <Link href="/terms">Terms of Use</Link>
-          <Link href="/privacy">Privacy Notice</Link>
-          <Link href="/cookies">Cookie Policy</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/about">About</Link>
-        </nav>
-        <p className="m-0 text-[11px] text-white/35 font-mono">
-          © {new Date().getFullYear()} Wirefringe. All rights reserved.
-        </p>
-      </footer>
-    </div>
+        </>
+      )}
+    </AuthShell>
   );
 }

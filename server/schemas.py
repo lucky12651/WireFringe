@@ -107,6 +107,14 @@ class TokenOut(BaseModel):
     user: MeOut
 
 
+class LoginOut(BaseModel):
+    access_token: str | None = None
+    token_type: str = "bearer"
+    user: MeOut | None = None
+    requires2fa: bool = False
+    ticket: str | None = None
+
+
 class UserOut(BaseModel):
     # Real accounts: positive id. Orphan authors (no login): negative synthetic id.
     id: int

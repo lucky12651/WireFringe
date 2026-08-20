@@ -103,6 +103,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, username: email, password }),
     }),
+  login2fa: (ticket, code) =>
+    api('/api/admin/login/2fa', {
+      method: 'POST',
+      body: JSON.stringify({ ticket, code }),
+    }),
   signup: (email, password, displayName) =>
     api('/api/admin/signup', {
       method: 'POST',

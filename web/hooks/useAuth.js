@@ -69,7 +69,11 @@ function useAuthState() {
       setIsLoading(true);
       setError(null);
       const res = await authApi.login(username, password);
-      
+
+      if (res?.requires2fa && res.ticket) {
+        return { success: false, requires2fa: true, ticket: res.ticket };
+      }
+
       if (res && res.access_token) {
         localStorage.setItem('token', res.access_token);
         localStorage.setItem('user', JSON.stringify(res.user));
@@ -77,10 +81,33 @@ function useAuthState() {
         setIsInitialLoading(false);
         return { success: true, user: res.user };
       }
-      
+
       return { success: false, error: 'Login failed: No token received' };
     } catch (err) {
       setError(err?.message || 'Login failed');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const login2fa = useCallback(async (ticket, code) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const res = await authApi.login2fa(ticket, code);
+
+      if (res && res.access_token) {
+        localStorage.setItem('token', res.access_token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        setMe(res.user);
+        setIsInitialLoading(false);
+        return { success: true, user: res.user };
+      }
+
+      return { success: false, error: 'Invalid authenticator code' };
+    } catch (err) {
+      setError(err?.message || 'Invalid authenticator code');
       return { success: false, error: err?.message };
     } finally {
       setIsLoading(false);
@@ -219,6 +246,7 @@ function useAuthState() {
       isAuthor,
       refreshMe,
       login,
+      login2fa,
       signup,
       logout,
       updateProfile,
@@ -241,6 +269,7 @@ function useAuthState() {
       isAuthor,
       refreshMe,
       login,
+      login2fa,
       signup,
       logout,
       updateProfile,

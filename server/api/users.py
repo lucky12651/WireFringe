@@ -11,6 +11,7 @@ from ..schemas import (
     AdminTransferPostsRequest,
     AdminUserDeleteOut,
     AdminUserDeleteRequest,
+    LoginOut,
     LoginRequest,
     MeOut,
     OrphanActionOut,
@@ -20,6 +21,7 @@ from ..schemas import (
     PasswordChangeRequest,
     ProfileUpdateRequest,
     TokenOut,
+    TwoFactorLoginIn,
     UserCreate,
     UserOut,
     UserSignup,
@@ -34,32 +36,54 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
 
-@router.post("/login", response_model=TokenOut)
+def _complete_login(request: Request, service: UserService, user_model) -> LoginOut:
+    token = create_access_token(data={"sub": str(user_model.id), "role": user_model.role})
+    request.session["user_id"] = user_model.id
+    me = service._build_me_out(user_model)
+    me.token = token
+    return LoginOut(access_token=token, token_type="bearer", user=me, requires2fa=False)
+
+
+@router.post("/login", response_model=LoginOut)
 @limiter.limit("20/minute")
 def login(
     payload: LoginRequest,
     request: Request,
     service: UserService = Depends(get_user_service),
-) -> TokenOut:
-    """Authenticate and login a user."""
+) -> LoginOut:
+    """Authenticate. If authenticator is on, return a ticket instead of a session."""
     user_model = service.authenticate_user(payload.login, payload.password)
     if user_model is None:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Generate JWT token
-    token = create_access_token(data={"sub": str(user_model.id), "role": user_model.role})
-    
-    # Store in session as well for compatibility
-    request.session["user_id"] = user_model.id
-    
-    me = service._build_me_out(user_model)
-    me.token = token
-    
-    return TokenOut(
-        access_token=token,
-        token_type="bearer",
-        user=me
-    )
+    if bool(getattr(user_model, "totp_enabled", False)) and getattr(user_model, "totp_secret", None):
+        from ..services.newsroom_service import NewsroomService
+
+        ticket = NewsroomService(service.db).issue_token(user_model.id, "2fa", minutes=5)
+        return LoginOut(requires2fa=True, ticket=ticket, token_type="bearer")
+
+    return _complete_login(request, service, user_model)
+
+
+@router.post("/login/2fa", response_model=LoginOut)
+@limiter.limit("20/minute")
+def login_2fa(
+    payload: TwoFactorLoginIn,
+    request: Request,
+    service: UserService = Depends(get_user_service),
+) -> LoginOut:
+    """Finish login with the authenticator app code."""
+    from ..services.newsroom_service import NewsroomService, _now, _verify_totp
+
+    news = NewsroomService(service.db)
+    row, user_model = news.get_valid_token_user(payload.ticket, "2fa")
+    if not bool(getattr(user_model, "totp_enabled", False)) or not getattr(user_model, "totp_secret", None):
+        raise HTTPException(status_code=400, detail="Authenticator is not enabled on this account")
+    if not _verify_totp(user_model.totp_secret, payload.code):
+        raise HTTPException(status_code=401, detail="Invalid authenticator code")
+    row.used_at = _now()
+    service.db.commit()
+    return _complete_login(request, service, user_model)
 
 
 @router.post("/signup", response_model=TokenOut)

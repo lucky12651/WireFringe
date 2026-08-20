@@ -278,18 +278,35 @@ class NewsroomService:
             ],
         }
 
-    def issue_token(self, user_id: int, purpose: str, hours: int = 24) -> str:
+    def issue_token(self, user_id: int, purpose: str, hours: int = 24, minutes: int | None = None) -> str:
         token = secrets.token_urlsafe(32)
+        delta = timedelta(minutes=minutes) if minutes is not None else timedelta(hours=hours)
         self.db.add(
             AuthToken(
                 user_id=user_id,
                 purpose=purpose,
                 token=token,
-                expires_at=_now() + timedelta(hours=hours),
+                expires_at=_now() + delta,
             )
         )
         self.db.commit()
         return token
+
+    def get_valid_token_user(self, token: str, purpose: str) -> tuple[AuthToken, User]:
+        row = self.db.execute(
+            select(AuthToken).where(AuthToken.token == token, AuthToken.purpose == purpose)
+        ).scalar_one_or_none()
+        if row is None or row.used_at is not None:
+            raise HTTPException(status_code=400, detail="Invalid or expired authenticator session")
+        exp = row.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < _now():
+            raise HTTPException(status_code=400, detail="Authenticator session expired. Sign in again.")
+        user = self.db.get(User, row.user_id)
+        if user is None:
+            raise HTTPException(status_code=400, detail="Account not found")
+        return row, user
 
     def consume_token(self, token: str, purpose: str) -> User:
         row = self.db.execute(
