@@ -42,6 +42,8 @@ class Settings(BaseSettings):
         "http://80.225.223.80:3000",
         "https://wirefringe.com",
         "http://wirefringe.com",
+        "https://www.wirefringe.com",
+        "http://www.wirefringe.com",
     ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]

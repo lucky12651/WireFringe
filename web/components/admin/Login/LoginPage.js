@@ -62,7 +62,11 @@ export function LoginPage({
     const result = await onLogin(email.trim(), password, rememberMe);
     setIsLoading(false);
 
-    if (result?.requires2fa && result.ticket) {
+    if (result?.requires2fa || result?.ticket) {
+      if (!result.ticket) {
+        setErrors({ form: result.error || 'Authenticator is on. Try signing in again.' });
+        return;
+      }
       setTicket(result.ticket);
       setCode('');
       setPanel('2fa');

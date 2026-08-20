@@ -19,7 +19,10 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    encoded = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    if isinstance(encoded, bytes):
+        return encoded.decode("utf-8")
+    return encoded
 
 
 def decode_access_token(token: str) -> dict | None:

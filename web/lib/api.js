@@ -27,18 +27,19 @@ export class ApiError extends Error {
 }
 
 export async function api(path, options = {}) {
+  const { skipAuth = false, headers: extraHeaders, ...fetchOptions } = options;
   // Use absolute URL if on server and not a full URL
   const url =
     typeof window === 'undefined' && !path.startsWith('http')
       ? `${internalApiBase()}${path}`
       : path;
 
-  // Add JWT token if available
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token =
+    !skipAuth && typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    ...(options.headers || {}),
+    ...(extraHeaders || {}),
   };
 
   if (token) {
@@ -48,7 +49,7 @@ export async function api(path, options = {}) {
   const res = await fetch(url, {
     credentials: 'include',
     headers,
-    ...options,
+    ...fetchOptions,
   });
 
   if (!res.ok) {
@@ -99,18 +100,21 @@ export async function uploadFile(path, file) {
 // Auth API
 export const authApi = {
   login: (email, password) =>
-    api('/api/admin/login', {
+    api('/api/auth/login', {
       method: 'POST',
+      skipAuth: true,
       body: JSON.stringify({ email, username: email, password }),
     }),
   login2fa: (ticket, code) =>
-    api('/api/admin/login/2fa', {
+    api('/api/auth/login/2fa', {
       method: 'POST',
+      skipAuth: true,
       body: JSON.stringify({ ticket, code }),
     }),
   signup: (email, password, displayName) =>
     api('/api/admin/signup', {
       method: 'POST',
+      skipAuth: true,
       body: JSON.stringify({ email, username: email, password, displayName }),
     }),
   logout: () => {
@@ -229,9 +233,17 @@ export const newsroomApi = {
   deleteRedirect: (id) => api(`/api/admin/redirects/${id}`, { method: 'DELETE' }),
   analytics: () => api('/api/admin/analytics', { method: 'GET' }),
   forgotPassword: (email) =>
-    api('/api/auth/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+    api('/api/auth/forgot', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify({ email }),
+    }),
   resetPassword: (token, newPassword) =>
-    api('/api/auth/reset', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+    api('/api/auth/reset', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify({ token, newPassword }),
+    }),
   verifyEmail: (token) =>
     api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token }) }),
   sendVerify: () => api('/api/me/verify-email', { method: 'POST' }),

@@ -4,6 +4,21 @@ import { accessFor } from '../lib/access';
 
 const AuthContext = createContext(null);
 
+function signInErrorMessage(err, fallback = 'Sign-in failed') {
+  const status = err?.status;
+  const raw = String(err?.message || '').trim();
+  if (status === 403 || /\b403\b/.test(raw) || /forbidden/i.test(raw)) {
+    return 'Sign-in was blocked. Wait a moment and try again.';
+  }
+  if (status === 429 || /too many/i.test(raw)) {
+    return 'Too many attempts. Wait a minute and try again.';
+  }
+  if (status === 401) {
+    return raw && !/\b401\b/.test(raw) ? raw : 'Invalid email or password';
+  }
+  return raw || fallback;
+}
+
 function useAuthState() {
   const [me, setMe] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,23 +84,28 @@ function useAuthState() {
       setIsLoading(true);
       setError(null);
       const res = await authApi.login(username, password);
-
-      if (res?.requires2fa && res.ticket) {
-        return { success: false, requires2fa: true, ticket: res.ticket };
+      const ticket = res?.ticket;
+      if (res?.requires2fa || ticket) {
+        if (!ticket) {
+          return { success: false, error: 'Authenticator is on. Sign in again and enter the code.' };
+        }
+        return { success: false, requires2fa: true, ticket };
       }
 
-      if (res && res.access_token) {
-        localStorage.setItem('token', res.access_token);
+      const access = res?.access_token || res?.accessToken;
+      if (access && res.user) {
+        localStorage.setItem('token', access);
         localStorage.setItem('user', JSON.stringify(res.user));
         setMe(res.user);
         setIsInitialLoading(false);
         return { success: true, user: res.user };
       }
 
-      return { success: false, error: 'Login failed: No token received' };
+      return { success: false, error: 'Sign-in did not complete. Try again.' };
     } catch (err) {
-      setError(err?.message || 'Login failed');
-      return { success: false, error: err?.message };
+      const msg = signInErrorMessage(err);
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
@@ -96,9 +116,10 @@ function useAuthState() {
       setIsLoading(true);
       setError(null);
       const res = await authApi.login2fa(ticket, code);
+      const access = res?.access_token || res?.accessToken;
 
-      if (res && res.access_token) {
-        localStorage.setItem('token', res.access_token);
+      if (access && res.user) {
+        localStorage.setItem('token', access);
         localStorage.setItem('user', JSON.stringify(res.user));
         setMe(res.user);
         setIsInitialLoading(false);
@@ -107,8 +128,9 @@ function useAuthState() {
 
       return { success: false, error: 'Invalid authenticator code' };
     } catch (err) {
-      setError(err?.message || 'Invalid authenticator code');
-      return { success: false, error: err?.message };
+      const msg = signInErrorMessage(err, 'Invalid authenticator code');
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }

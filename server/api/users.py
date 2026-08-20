@@ -36,7 +36,7 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
 
-def _complete_login(request: Request, service: UserService, user_model) -> LoginOut:
+def complete_login(request: Request, service: UserService, user_model) -> LoginOut:
     token = create_access_token(data={"sub": str(user_model.id), "role": user_model.role})
     request.session["user_id"] = user_model.id
     me = service._build_me_out(user_model)
@@ -44,14 +44,7 @@ def _complete_login(request: Request, service: UserService, user_model) -> Login
     return LoginOut(access_token=token, token_type="bearer", user=me, requires2fa=False)
 
 
-@router.post("/login", response_model=LoginOut)
-@limiter.limit("20/minute")
-def login(
-    payload: LoginRequest,
-    request: Request,
-    service: UserService = Depends(get_user_service),
-) -> LoginOut:
-    """Authenticate. If authenticator is on, return a ticket instead of a session."""
+def password_login(payload: LoginRequest, request: Request, service: UserService) -> LoginOut:
     user_model = service.authenticate_user(payload.login, payload.password)
     if user_model is None:
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -62,17 +55,10 @@ def login(
         ticket = NewsroomService(service.db).issue_token(user_model.id, "2fa", minutes=5)
         return LoginOut(requires2fa=True, ticket=ticket, token_type="bearer")
 
-    return _complete_login(request, service, user_model)
+    return complete_login(request, service, user_model)
 
 
-@router.post("/login/2fa", response_model=LoginOut)
-@limiter.limit("20/minute")
-def login_2fa(
-    payload: TwoFactorLoginIn,
-    request: Request,
-    service: UserService = Depends(get_user_service),
-) -> LoginOut:
-    """Finish login with the authenticator app code."""
+def twofa_login(payload: TwoFactorLoginIn, request: Request, service: UserService) -> LoginOut:
     from ..services.newsroom_service import NewsroomService, _now, _verify_totp
 
     news = NewsroomService(service.db)
@@ -83,7 +69,29 @@ def login_2fa(
         raise HTTPException(status_code=401, detail="Invalid authenticator code")
     row.used_at = _now()
     service.db.commit()
-    return _complete_login(request, service, user_model)
+    return complete_login(request, service, user_model)
+
+
+@router.post("/login", response_model=LoginOut, response_model_exclude_none=True)
+@limiter.limit("40/minute")
+def login(
+    payload: LoginRequest,
+    request: Request,
+    service: UserService = Depends(get_user_service),
+) -> LoginOut:
+    """Authenticate. If authenticator is on, return a ticket instead of a session."""
+    return password_login(payload, request, service)
+
+
+@router.post("/login/2fa", response_model=LoginOut, response_model_exclude_none=True)
+@limiter.limit("40/minute")
+def login_2fa(
+    payload: TwoFactorLoginIn,
+    request: Request,
+    service: UserService = Depends(get_user_service),
+) -> LoginOut:
+    """Finish login with the authenticator app code."""
+    return twofa_login(payload, request, service)
 
 
 @router.post("/signup", response_model=TokenOut)
