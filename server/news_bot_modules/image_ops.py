@@ -27,10 +27,25 @@ MIN_BYTES = 8_000
 MIN_SIDE = 240
 
 
-def _uploads_dir() -> Path:
+_uploads_ok: Path | None | bool = False
+
+
+def _uploads_dir() -> Path | None:
+    global _uploads_ok
+    if _uploads_ok is not False:
+        return _uploads_ok if isinstance(_uploads_ok, Path) else None
     path = Path(settings.uploads_dir)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / ".wf-write-test"
+        probe.write_bytes(b"")
+        probe.unlink(missing_ok=True)
+        _uploads_ok = path
+        return path
+    except Exception:
+        logger.info("Uploads dir %s is not writable; using remote story images.", path)
+        _uploads_ok = None
+        return None
 
 
 def is_junk_image_url(url: str | None) -> bool:
@@ -109,15 +124,18 @@ def save_image_bytes(data: bytes, hint: str = "img") -> str | None:
         except Exception:
             logger.info("Could not inspect image dimensions; saving by magic bytes.")
 
+    dest_dir = _uploads_dir()
+    if dest_dir is None:
+        return None
     digest = hashlib.sha256(data).hexdigest()[:16]
     name = f"{re.sub(r'[^a-z0-9]+', '-', hint.lower())[:28].strip('-') or 'img'}-{digest}{suffix}"
     try:
-        dest = _uploads_dir() / name
+        dest = dest_dir / name
         if not dest.exists():
             dest.write_bytes(data)
         return f"/static/uploads/{name}"
     except Exception as exc:
-        logger.warning("Could not write story image %s: %s", name, exc)
+        logger.info("Could not write story image %s: %s", name, exc)
         return None
 
 

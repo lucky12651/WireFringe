@@ -45,7 +45,16 @@ async def scrape_article(
 
         def fetch_article():
             try:
-                # Pass config to newspaper.article
+                import os
+                from pathlib import Path
+
+                cache = Path("/tmp/wirefringe-cache")
+                try:
+                    cache.mkdir(parents=True, exist_ok=True)
+                    os.environ.setdefault("HOME", str(cache))
+                    os.environ.setdefault("XDG_CACHE_HOME", str(cache))
+                except Exception:
+                    pass
                 art = newspaper.article(target_url, config=config)
                 # Need to call download() and parse() explicitly if using article() directly usually
                 # but newspaper4k's article() might be a wrapper. 

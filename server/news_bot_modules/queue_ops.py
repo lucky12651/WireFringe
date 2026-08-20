@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 
 from .utils import clean_url, is_unusable_story
 from ..models import NewsQueue, Post, RecentNewsCache
@@ -14,16 +15,20 @@ logger = logging.getLogger(__name__)
 def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
     """Save RSS items to database news_queue if they don't already exist."""
     new_count = 0
+    seen_links: set[str] = set()
     for item in items:
-        link = clean_url(item["link"])
-        title = item["title"].strip()
+        link = clean_url(item.get("link") or "")
+        if not link or link in seen_links:
+            continue
+        seen_links.add(link)
+        title = (item.get("title") or "").strip()
         cleaned_title = re.split(r' - \w+', title)[0].strip()
+
+        if is_unusable_story(title, link):
+            continue
 
         in_queue = db.query(NewsQueue).filter(NewsQueue.link == link).first()
         if in_queue:
-            continue
-
-        if is_unusable_story(title, link):
             continue
 
         # Check against recent cache for faster uniqueness check
@@ -35,16 +40,23 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
             )
         ).first()
 
-        if not is_published:
-            new_item = NewsQueue(
+        if is_published:
+            continue
+
+        db.add(
+            NewsQueue(
                 title=title,
                 link=link,
-                category=item["category"],
-                status="pending"
+                category=item.get("category") or "World",
+                status="pending",
             )
-            db.add(new_item)
+        )
+        try:
+            db.commit()
             new_count += 1
-    db.commit()
+        except IntegrityError:
+            db.rollback()
+            logger.info("Queue already has %s; skipped duplicate.", link)
     logger.info(f"💾 Step Finished: Saved {new_count} new pending feed links into structural storage.")
 
 
