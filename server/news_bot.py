@@ -25,12 +25,45 @@ from .news_bot_modules.queue_ops import (
 )
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
+from .news_bot_modules.utils import is_unusable_story
 from .services.recommendation_service import RecommendationService
 from .services.settings_service import SettingsService
+
+from sqlalchemy import text
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_wake_event: asyncio.Event | None = None
+_wake_pending = False
+
+
+def request_bot_cycle() -> None:
+    """Wake the bot immediately (e.g. after editorial / RSS settings save)."""
+    global _wake_pending
+    ev = _wake_event
+    if ev is None:
+        _wake_pending = True
+        return
+    ev.set()
+
+
+def ping_session(db) -> None:
+    """Checkout a live connection after long HTTP awaits (idle tunnel/server drops)."""
+    try:
+        db.rollback()
+        db.execute(text("SELECT 1"))
+    except Exception as e:
+        logger.warning("Resetting dead DB connection: %s", e)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 class NewsBot:
@@ -66,109 +99,165 @@ class NewsBot:
     def save_to_queue(self, db, items: list):
         return save_to_queue(db, items)
 
+    def _mark_queue(self, db, source_url: str, status: str) -> None:
+        try:
+            ping_session(db)
+            update_queue_status(db, source_url, status)
+        except Exception:
+            s = SessionLocal()
+            try:
+                update_queue_status(s, source_url, status)
+            except Exception:
+                logger.exception("Could not update queue status for %s", source_url)
+            finally:
+                s.close()
+
     async def process_item(self, db, item: NewsQueue) -> bool:
         """Process a single RSS item from the queue."""
         source_url = item.link
         category = item.category
-
-        logger.info(f"Processing: {source_url}")
-        raw_content, scraped_img, parsed_title, resolved_url, extra_images = await scrape_article(
-            source_url, self.http_client
-        )
-        logger.info(f"Scraped raw content length: {len(raw_content) if raw_content else 0}")
-
-        final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else item.title
-        final_title = re.split(r' - \w+', final_title)[0].strip()
-
-        if is_duplicate(db, source_url, resolved_url, final_title):
-            logger.info(f"Skipping duplicate: {source_url}")
-            update_queue_status(db, source_url, "duplicate")
-            return False
-
-        if not raw_content:
-            update_queue_status(db, source_url, "failed_scrape")
-            return False
-
-        # Fetch recent posts for internal linking context
-        recent_posts = db.query(Post).order_by(Post.published_at.desc()).limit(15).all()
-        internal_links = [
-            {"title": p.title, "url": f"{settings.ui_url}/post/{p.id}"} 
-            for p in recent_posts
-        ]
-
-        bot_cfg = SettingsService(db).get_bot()
-        article_data = await generate_article(
-            raw_content, source_url, category, item.title, scraped_img, parsed_title,
-            internal_links=internal_links,
-            writer_prompt=bot_cfg.get("writerPrompt"),
-            focus_note=bot_cfg.get("focusNote"),
-        )
-        if not article_data:
-            update_queue_status(db, source_url, "failed_gen")
-            return False
-
-        slug = slugify(article_data.title)
-        if db.query(Post).filter(Post.id == slug).first():
-            slug = f"{slug}-{str(uuid.uuid4())[:8]}"
-
-        from .news_bot_modules.image_ops import resolve_story_image
-
-        rss_image = getattr(item, "image", None) or ""
-        article_data.ogImg = await resolve_story_image(
-            db,
-            candidates=[scraped_img, rss_image, article_data.ogImg, *(extra_images or [])],
-            title=article_data.title,
-            category=article_data.bucket or category,
-            http_client=self.http_client,
-            unique=slug,
-        )
-        if not article_data.ogImg:
-            logger.warning("Publishing without a local photo: %s", source_url)
-
-        auto_publish = bool(bot_cfg.get("autoPublish"))
-        now = datetime.now(timezone.utc)
-        source_name = None
         try:
-            from urllib.parse import urlparse
+            if is_unusable_story(item.title, source_url):
+                logger.info("Skipping unusable story: %s", source_url)
+                self._mark_queue(db, source_url, "skipped")
+                return False
 
-            source_name = (urlparse(resolved_url).netloc or "").replace("www.", "") or None
-        except Exception:
+            logger.info(f"Processing: {source_url}")
+            raw_content, scraped_img, parsed_title, resolved_url, extra_images = await scrape_article(
+                source_url, self.http_client
+            )
+            ping_session(db)
+            logger.info(f"Scraped raw content length: {len(raw_content) if raw_content else 0}")
+
+            final_title = parsed_title if (parsed_title and len(parsed_title) > 5) else item.title
+            final_title = re.split(r' - \w+', final_title)[0].strip()
+
+            if is_duplicate(db, source_url, resolved_url, final_title):
+                logger.info(f"Skipping duplicate: {source_url}")
+                self._mark_queue(db, source_url, "duplicate")
+                return False
+
+            if not raw_content:
+                self._mark_queue(db, source_url, "failed_scrape")
+                return False
+
+            recent_posts = db.query(Post).order_by(Post.published_at.desc()).limit(15).all()
+            internal_links = [
+                {"title": p.title, "url": f"{settings.ui_url}/post/{p.id}"}
+                for p in recent_posts
+            ]
+
+            bot_cfg = SettingsService(db).get_bot()
+            article_data = await generate_article(
+                raw_content, source_url, category, item.title, scraped_img, parsed_title,
+                internal_links=internal_links,
+                writer_prompt=bot_cfg.get("writerPrompt"),
+                focus_note=bot_cfg.get("focusNote"),
+            )
+            ping_session(db)
+            if not article_data:
+                self._mark_queue(db, source_url, "failed_gen")
+                return False
+
+            keywords = article_data.keywords
+            if isinstance(keywords, list):
+                keywords = ", ".join(str(k) for k in keywords if k)
+            elif keywords is not None and not isinstance(keywords, str):
+                keywords = str(keywords)
+
+            slug = slugify(article_data.title)
+            if db.query(Post).filter(Post.id == slug).first():
+                slug = f"{slug}-{str(uuid.uuid4())[:8]}"
+
+            from .news_bot_modules.image_ops import resolve_story_image
+
+            rss_image = getattr(item, "image", None) or ""
+            article_data.ogImg = await resolve_story_image(
+                db,
+                candidates=[scraped_img, rss_image, article_data.ogImg, *(extra_images or [])],
+                title=article_data.title,
+                category=article_data.bucket or category,
+                http_client=self.http_client,
+                unique=slug,
+            )
+            ping_session(db)
+            if not article_data.ogImg:
+                logger.warning("Publishing without a local photo: %s", source_url)
+
+            auto_publish = bool(bot_cfg.get("autoPublish"))
+            now = datetime.now(timezone.utc)
             source_name = None
-        new_post = Post(
-            id=slug,
-            title=article_data.title,
-            link=resolved_url,
-            creator=article_data.creator,
-            content=article_data.content,
-            excerpt=article_data.excerpt,
-            bucket=article_data.bucket,
-            read_minutes=article_data.readMinutes,
-            og_img=article_data.ogImg,
-            meta_description=article_data.metaDescription,
-            keywords=article_data.keywords,
-            published_at=now if auto_publish else None,
-            is_bot=True,
-            is_hidden=not auto_publish or bool(bot_cfg.get("hideArticles")),
-            status="published" if auto_publish else "review",
-            source_url=resolved_url,
-            source_name=source_name,
-        )
+            try:
+                from urllib.parse import urlparse
 
-        try:
-            db.add(new_post)
-            db.commit()
+                source_name = (urlparse(resolved_url).netloc or "").replace("www.", "") or None
+            except Exception:
+                source_name = None
+            new_post = Post(
+                id=slug,
+                title=article_data.title,
+                link=resolved_url,
+                creator=article_data.creator,
+                content=article_data.content,
+                excerpt=article_data.excerpt,
+                bucket=article_data.bucket,
+                read_minutes=article_data.readMinutes,
+                og_img=article_data.ogImg,
+                meta_description=article_data.metaDescription,
+                keywords=keywords,
+                published_at=now if auto_publish else None,
+                is_bot=True,
+                is_hidden=not auto_publish or bool(bot_cfg.get("hideArticles")),
+                status="published" if auto_publish else "review",
+                source_url=resolved_url,
+                source_name=source_name,
+            )
+
+            try:
+                db.add(new_post)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Error writing schema parameters into relational storage rows: {e}")
+                ping_session(db)
+                s = SessionLocal()
+                try:
+                    s.add(Post(
+                        id=slug,
+                        title=article_data.title,
+                        link=resolved_url,
+                        creator=article_data.creator,
+                        content=article_data.content,
+                        excerpt=article_data.excerpt,
+                        bucket=article_data.bucket,
+                        read_minutes=article_data.readMinutes,
+                        og_img=article_data.ogImg,
+                        meta_description=article_data.metaDescription,
+                        keywords=keywords,
+                        published_at=now if auto_publish else None,
+                        is_bot=True,
+                        is_hidden=not auto_publish or bool(bot_cfg.get("hideArticles")),
+                        status="published" if auto_publish else "review",
+                        source_url=resolved_url,
+                        source_name=source_name,
+                    ))
+                    s.commit()
+                except Exception:
+                    s.rollback()
+                    logger.exception("Retry publish failed for %s", source_url)
+                    self._mark_queue(db, source_url, "db_error")
+                    return False
+                finally:
+                    s.close()
+
             logger.info(f"🚀 INSTANTLY PUBLISHED: {article_data.title}")
-            
-            # Add to recent cache for uniqueness check
             add_to_recent_cache(db, article_data.title, resolved_url)
-            
-            update_queue_status(db, source_url, "published")
+            self._mark_queue(db, source_url, "published")
             await self.trigger_revalidation()
             return True
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error writing schema parameters into relational storage rows: {e}")
-            update_queue_status(db, source_url, "db_error")
+        except Exception:
+            logger.exception("process_item crashed for %s", source_url)
+            self._mark_queue(db, source_url, "failed_gen")
             return False
 
     async def run_cycle(self):
@@ -196,6 +285,13 @@ class NewsBot:
             max_age_hours = int(bot_cfg.get("maxAgeHours") or 6)
             feeds = active_feeds(bot_cfg)
             logger.info("Fetching %s enabled editorial feeds", len(feeds))
+            if not feeds:
+                logger.warning(
+                    "No RSS feeds are active after country/section filters "
+                    "(countries=%s sections=%s). Editorial settings are blocking harvest.",
+                    bot_cfg.get("countries"),
+                    bot_cfg.get("sections"),
+                )
             all_items = []
             for feed in feeds:
                 items = await fetch_rss_items(
@@ -258,7 +354,12 @@ class NewsBot:
                     if attempts >= max_attempts:
                         break
                     attempts += 1
-                    success = await self.process_item(db, item)
+                    try:
+                        success = await self.process_item(db, item)
+                    except Exception:
+                        logger.exception("Unhandled error processing %s", getattr(item, "link", "?"))
+                        success = False
+                    ping_session(db)
                     if success:
                         success_count += 1
                     else:
@@ -284,6 +385,12 @@ class NewsBot:
                     f"is not the scheduled 20:30 UTC (2 AM IST)."
                 )
 
+        except Exception:
+            logger.exception("NewsBot cycle failed")
+            try:
+                db.rollback()
+            except Exception:
+                pass
         finally:
             db.close()
         logger.info("NewsBot loop segment complete.")
@@ -293,11 +400,20 @@ class NewsBot:
 
 
 async def start_news_bot_loop():
+    global _wake_event, _wake_pending
     bot = NewsBot()
+    _wake_event = asyncio.Event()
+    if _wake_pending:
+        _wake_pending = False
+        _wake_event.set()
     try:
         while True:
-            await bot.run_cycle()
-            # Read sleep interval from settings each cycle
+            try:
+                await bot.run_cycle()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("NewsBot cycle crashed; will retry after sleep.")
             sleep_seconds = 3600
             try:
                 db = SessionLocal()
@@ -308,9 +424,20 @@ async def start_news_bot_loop():
             except Exception as e:
                 logger.warning(f"Could not read bot sleepSeconds; using 3600: {e}")
             sleep_seconds = max(60, sleep_seconds)
+            woke = _wake_event.is_set()
+            _wake_event.clear()
+            if woke:
+                logger.info("NewsBot woken early by settings change; starting a cycle.")
+                continue
             logger.info(f"Sleeping for {sleep_seconds} seconds...")
-            await asyncio.sleep(sleep_seconds)
+            try:
+                await asyncio.wait_for(_wake_event.wait(), timeout=sleep_seconds)
+                logger.info("NewsBot woken early by settings change; starting a cycle.")
+            except asyncio.TimeoutError:
+                pass
     except asyncio.CancelledError:
         logger.info("NewsBot engine routine safely interrupted.")
+        raise
     finally:
+        _wake_event = None
         await bot.close()

@@ -250,6 +250,12 @@ async def generate_article(
             content = data.get('content', '').strip()
             meta_description = data.get('meta_description', '')
             keywords = data.get('keywords', '')
+            if isinstance(keywords, list):
+                keywords = ", ".join(str(k) for k in keywords if k)
+            elif keywords is not None and not isinstance(keywords, str):
+                keywords = str(keywords)
+            if not isinstance(content, str):
+                content = str(content or "")
             
             if not content:
                 logger.warning(f"AI returned empty paraphrased content for {source_url}. Using source copy.")

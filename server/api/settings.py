@@ -160,6 +160,12 @@ def admin_update_bot(
     data = payload.model_dump(exclude_unset=True)
     cfg = service.update_bot(data)
     stats = service.get_bot_stats()
+    try:
+        from ..news_bot import request_bot_cycle
+
+        request_bot_cycle()
+    except Exception:
+        pass
     return {**cfg, "stats": stats}
 
 

@@ -5,6 +5,27 @@ from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 logger = logging.getLogger(__name__)
 
+# Liveblogs, video pages, and affiliate coupon posts are not usable articles.
+JUNK_STORY_URL_RE = re.compile(
+    r"/live[-_]?blog|/live[-_]?(updates|score|streaming)|live-score|"
+    r"/video[s]?/|/watch-|/web-stories/|/gallery/|/short[s]?/|"
+    r"coupon|promo[-_]?code",
+    re.I,
+)
+JUNK_STORY_TITLE_RE = re.compile(
+    r"\b(coupon codes?|promo codes?|live score|live streaming|live telecast|"
+    r"live updates|live blog|web stories?)\b",
+    re.I,
+)
+
+
+def is_unusable_story(title: str | None, url: str | None) -> bool:
+    if url and JUNK_STORY_URL_RE.search(url):
+        return True
+    if title and JUNK_STORY_TITLE_RE.search(title):
+        return True
+    return False
+
 
 def clean_url(url: str) -> str:
     """Remove common tracking parameters and fragments from URL."""

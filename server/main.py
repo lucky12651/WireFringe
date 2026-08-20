@@ -67,8 +67,20 @@ async def lifespan(app: FastAPI):
     if settings.revalidate_secret == "dev-revalidate-secret":
         logger.warning("SECURITY WARNING: Using default REVALIDATE_SECRET. Please change it in .env!")
 
-    # Start the news bot loop in the background
-    bot_task = asyncio.create_task(start_news_bot_loop())
+    # Start the news bot loop in the background. Restart it if one cycle
+    # throws — FastAPI staying up with a dead bot is how publishing silently stops.
+    async def _supervised_news_bot():
+        while True:
+            try:
+                await start_news_bot_loop()
+                logger.error("NewsBot loop returned unexpectedly; restarting in 15s.")
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("NewsBot loop crashed; restarting in 15s.")
+            await asyncio.sleep(15)
+
+    bot_task = asyncio.create_task(_supervised_news_bot())
     yield
     # Shutdown logic
     bot_task.cancel()

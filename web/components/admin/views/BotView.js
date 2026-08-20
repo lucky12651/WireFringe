@@ -172,10 +172,26 @@ export function BotView({
   };
 
   const toggleFeed = (id) => {
-    setField(
-      'feeds',
-      form.feeds.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f))
-    );
+    dirtyRef.current = true;
+    setForm((prev) => {
+      const feed = prev.feeds.find((f) => f.id === id);
+      const enabling = feed && !feed.enabled;
+      const feeds = prev.feeds.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f));
+      let countries = prev.countries;
+      let sections = prev.sections;
+      // Enabling a feed must also keep its country/section selected, otherwise
+      // the server harvests nothing from it after Save.
+      if (enabling && feed) {
+        if (feed.country && !countries.includes(feed.country)) {
+          countries = [...countries, feed.country];
+        }
+        if (feed.section && !sections.includes(feed.section)) {
+          sections = [...sections, feed.section];
+        }
+      }
+      return { ...prev, feeds, countries, sections };
+    });
+    setHint('');
   };
 
   const addCustomFeed = () => {
@@ -185,17 +201,31 @@ export function BotView({
       return;
     }
     const id = `custom-${Date.now()}`;
-    setField('feeds', [
-      ...form.feeds,
-      {
-        id,
-        url,
-        label: customFeed.label.trim() || 'Custom feed',
-        country: customFeed.country,
-        section: customFeed.section,
-        enabled: true,
-      },
-    ]);
+    dirtyRef.current = true;
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        feeds: [
+          ...prev.feeds,
+          {
+            id,
+            url,
+            label: customFeed.label.trim() || 'Custom feed',
+            country: customFeed.country,
+            section: customFeed.section,
+            enabled: true,
+          },
+        ],
+      };
+      if (customFeed.country && !next.countries.includes(customFeed.country)) {
+        next.countries = [...next.countries, customFeed.country];
+      }
+      if (customFeed.section && !next.sections.includes(customFeed.section)) {
+        next.sections = [...next.sections, customFeed.section];
+      }
+      return next;
+    });
+    setHint('');
     setCustomFeed({ label: '', url: '', country: 'world', section: 'World' });
   };
 

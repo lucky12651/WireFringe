@@ -6,73 +6,122 @@ from email.utils import parsedate_to_datetime
 
 import httpx
 
+from .utils import is_unusable_story
+
 logger = logging.getLogger(__name__)
+
+
+def _local_tag(tag: str) -> str:
+    if not isinstance(tag, str):
+        return ""
+    return tag.split("}", 1)[-1] if "}" in tag else tag
+
+
+def _child(el, name: str):
+    for child in list(el):
+        if _local_tag(child.tag) == name:
+            return child
+    return None
+
+
+def _children(el, name: str):
+    return [c for c in list(el) if _local_tag(c.tag) == name]
+
+
+def _text(el) -> str:
+    if el is None:
+        return ""
+    return (el.text or "").strip()
+
+
+def _parse_date(raw: str):
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        dt = parsedate_to_datetime(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        pass
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
+
+
+def _entry_link(el) -> str:
+    for link_el in _children(el, "link"):
+        href = (link_el.get("href") or _text(link_el)).strip()
+        rel = (link_el.get("rel") or "alternate").lower()
+        if href.startswith("http") and rel in ("alternate", ""):
+            return href
+    for link_el in _children(el, "link"):
+        href = (link_el.get("href") or _text(link_el)).strip()
+        if href.startswith("http"):
+            return href
+    guid = _text(_child(el, "guid") or _child(el, "id"))
+    return guid if guid.startswith("http") else ""
+
+
+def _entry_image(el) -> str:
+    enc = _child(el, "enclosure")
+    if enc is not None and "image" in (enc.get("type") or ""):
+        return (enc.get("url") or "").strip()
+    for child in list(el):
+        if _local_tag(child.tag) in ("content", "thumbnail") and child.get("url"):
+            typ = (child.get("type") or "").lower()
+            if not typ or "image" in typ:
+                return (child.get("url") or "").strip()
+    return ""
+
+
+def _entry_date(el):
+    for name in ("pubDate", "published", "updated", "date"):
+        dt = _parse_date(_text(_child(el, name)))
+        if dt:
+            return dt
+    return None
 
 
 async def fetch_rss_items(
     category: str, url: str, http_client: httpx.AsyncClient, max_age_hours: int = 6
 ) -> List[Dict[str, str]]:
-    """Fetch and parse RSS items with fallback link extraction."""
+    """Fetch RSS 2.0 and Atom feeds. Verge/similar Atom feeds have <entry>, not <item>."""
     try:
         response = await http_client.get(url)
         response.raise_for_status()
         root = ET.fromstring(response.content)
 
-        ns = {
-            'content': 'http://purl.org/rss/1.0/modules/content/',
-            'media': 'http://search.yahoo.com/mrss/'
-        }
-
-        items = []
-        found_elements = root.findall(".//item")
-        logger.info(f"🔍 Found {len(found_elements)} raw XML items for category: {category}")
+        entries = [el for el in root.iter() if _local_tag(el.tag) in ("item", "entry")]
+        logger.info(f"🔍 Found {len(entries)} raw XML items for category: {category}")
 
         now = datetime.now(timezone.utc)
         hours = max(1, min(int(max_age_hours or 6), 72))
-        one_hour_ago = now - timedelta(hours=hours)
+        cutoff = now - timedelta(hours=hours)
 
-        for item in found_elements:
-            # Check publication date - only take news under 1 hour old
-            pub_date_el = item.find("pubDate")
-            if pub_date_el is not None and pub_date_el.text:
-                try:
-                    pub_date = parsedate_to_datetime(pub_date_el.text)
-                    if pub_date < one_hour_ago:
-                        continue
-                except Exception:
-                    # If date parsing fails, we skip to be safe (strictly latest news)
-                    continue
-            else:
-                # If no pubDate is present, we skip it as we can't verify it's "latest"
+        items = []
+        for el in entries:
+            pub_date = _entry_date(el)
+            if pub_date is None or pub_date < cutoff:
                 continue
 
-            title_el = item.find("title")
-            link_el = item.find("link")
-
-            title = title_el.text if title_el is not None else "No Title"
-            link = link_el.text if link_el is not None else ""
-
+            title = _text(_child(el, "title")) or "No Title"
+            link = _entry_link(el)
             if not link:
-                guid_el = item.find("guid")
-                if guid_el is not None and guid_el.text and guid_el.text.startswith("http"):
-                    link = guid_el.text
-
-            if link:
-                image = ""
-                enc = item.find("enclosure")
-                if enc is not None and "image" in (enc.get("type") or ""):
-                    image = enc.get("url") or ""
-                media = item.find("{http://search.yahoo.com/mrss/}content") or item.find(
-                    "{http://search.yahoo.com/mrss/}thumbnail"
-                )
-                if media is not None:
-                    image = image or media.get("url") or ""
-                items.append({
-                    "title": title.strip(),
-                    "link": link.strip(),
-                    "category": category,
-                    "image": image.strip(),
-                })
+                continue
+            if is_unusable_story(title, link):
+                continue
+            items.append({
+                "title": title.strip(),
+                "link": link.strip(),
+                "category": category,
+                "image": _entry_image(el),
+            })
         return items
     except Exception as e:
         logger.error(f"Error fetching RSS for {category}: {e}")

@@ -5,7 +5,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from .utils import clean_url
+from .utils import clean_url, is_unusable_story
 from ..models import NewsQueue, Post, RecentNewsCache
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,9 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
 
         in_queue = db.query(NewsQueue).filter(NewsQueue.link == link).first()
         if in_queue:
+            continue
+
+        if is_unusable_story(title, link):
             continue
 
         # Check against recent cache for faster uniqueness check
@@ -45,13 +48,33 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
     logger.info(f"💾 Step Finished: Saved {new_count} new pending feed links into structural storage.")
 
 
-def get_pending_from_queue(db: Session) -> List[NewsQueue]:
-    """Pending plus retryable failures (photo/AI), not scrape-dead video/liveblogs."""
-    return (
+def get_pending_from_queue(db: Session, limit: int = 24) -> List[NewsQueue]:
+    """Newest pending first, then a few recent photo/AI failures. Skip junk URLs."""
+    pending = (
         db.query(NewsQueue)
-        .filter(NewsQueue.status.in_(["pending", "failed_image", "failed_gen"]))
+        .filter(NewsQueue.status == "pending")
+        .order_by(NewsQueue.created_at.desc())
+        .limit(limit)
         .all()
     )
+    remaining = max(0, limit - len(pending))
+    retries = []
+    if remaining:
+        retries = (
+            db.query(NewsQueue)
+            .filter(NewsQueue.status.in_(["failed_image", "failed_gen"]))
+            .order_by(NewsQueue.created_at.desc())
+            .limit(remaining)
+            .all()
+        )
+
+    usable: List[NewsQueue] = []
+    for item in [*pending, *retries]:
+        if is_unusable_story(item.title, item.link):
+            update_queue_status(db, item.link, "skipped")
+            continue
+        usable.append(item)
+    return usable
 
 
 def cleanup_old_queue_items(db: Session, hours: int = 24) -> int:

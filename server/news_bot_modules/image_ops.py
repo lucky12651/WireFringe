@@ -76,7 +76,15 @@ def already_used(db, url: str) -> bool:
 
     if not url:
         return False
-    return db.query(Post.id).filter(Post.og_img == url).first() is not None
+    try:
+        return db.query(Post.id).filter(Post.og_img == url).first() is not None
+    except Exception as exc:
+        logger.info("already_used query failed: %s", exc)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return False
 
 
 def save_image_bytes(data: bytes, hint: str = "img") -> str | None:
@@ -103,10 +111,14 @@ def save_image_bytes(data: bytes, hint: str = "img") -> str | None:
 
     digest = hashlib.sha256(data).hexdigest()[:16]
     name = f"{re.sub(r'[^a-z0-9]+', '-', hint.lower())[:28].strip('-') or 'img'}-{digest}{suffix}"
-    dest = _uploads_dir() / name
-    if not dest.exists():
-        dest.write_bytes(data)
-    return f"/static/uploads/{name}"
+    try:
+        dest = _uploads_dir() / name
+        if not dest.exists():
+            dest.write_bytes(data)
+        return f"/static/uploads/{name}"
+    except Exception as exc:
+        logger.warning("Could not write story image %s: %s", name, exc)
+        return None
 
 
 async def download_image(http_client: httpx.AsyncClient, url: str) -> bytes | None:
@@ -137,29 +149,33 @@ async def resolve_story_image(
     category: str,
     http_client: httpx.AsyncClient,
     unique: str = "",
-) -> str:
-    seen: set[str] = set()
-    for raw in candidates:
-        url = (raw or "").strip()
-        if not url or url in seen or is_junk_image_url(url):
-            continue
-        seen.add(url)
-        if already_used(db, url):
-            continue
-        data = await download_image(http_client, url)
-        saved = save_image_bytes(data or b"", hint=title[:24]) if data else None
-        if saved and not already_used(db, saved):
-            logger.info("Saved unique story image %s", saved)
-            return saved
-        # Keep a remote photo rather than dropping the whole story.
-        if data and len(data) >= MIN_BYTES and not already_used(db, url):
-            logger.info("Using remote story image %s", url)
-            return url
+) -> str | None:
+    try:
+        seen: set[str] = set()
+        for raw in candidates:
+            url = (raw or "").strip()
+            if not url or url in seen or is_junk_image_url(url):
+                continue
+            seen.add(url)
+            if already_used(db, url):
+                continue
+            data = await download_image(http_client, url)
+            saved = save_image_bytes(data or b"", hint=title[:24]) if data else None
+            if saved and not already_used(db, saved):
+                logger.info("Saved unique story image %s", saved)
+                return saved
+            # Keep a remote photo rather than dropping the whole story.
+            if data and len(data) >= MIN_BYTES and not already_used(db, url):
+                logger.info("Using remote story image %s", url)
+                return url
 
-    first_remote = next((u for u in seen if u.startswith(("http://", "https://"))), "")
-    if first_remote:
-        logger.info("Falling back to candidate image URL for %r", title[:80])
-        return first_remote
+        first_remote = next((u for u in seen if u.startswith(("http://", "https://"))), "")
+        if first_remote:
+            logger.info("Falling back to candidate image URL for %r", title[:80])
+            return first_remote
 
-    logger.info("No photo candidates for %r", title[:80])
-    return None
+        logger.info("No photo candidates for %r", title[:80])
+        return None
+    except Exception as exc:
+        logger.warning("resolve_story_image failed for %r: %s", (title or "")[:80], exc)
+        return None
