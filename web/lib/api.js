@@ -100,21 +100,18 @@ export async function uploadFile(path, file) {
 // Auth API
 export const authApi = {
   login: (email, password) =>
-    api('/api/auth/login', {
+    api('/api/admin/login', {
       method: 'POST',
-      skipAuth: true,
       body: JSON.stringify({ email, username: email, password }),
     }),
   login2fa: (ticket, code) =>
-    api('/api/auth/login/2fa', {
+    api('/api/admin/login/2fa', {
       method: 'POST',
-      skipAuth: true,
       body: JSON.stringify({ ticket, code }),
     }),
   signup: (email, password, displayName) =>
     api('/api/admin/signup', {
       method: 'POST',
-      skipAuth: true,
       body: JSON.stringify({ email, username: email, password, displayName }),
     }),
   logout: () => {

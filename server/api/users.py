@@ -73,7 +73,7 @@ def twofa_login(payload: TwoFactorLoginIn, request: Request, service: UserServic
 
 
 @router.post("/login", response_model=LoginOut, response_model_exclude_none=True)
-@limiter.limit("40/minute")
+@limiter.limit("20/minute")
 def login(
     payload: LoginRequest,
     request: Request,
@@ -84,7 +84,7 @@ def login(
 
 
 @router.post("/login/2fa", response_model=LoginOut, response_model_exclude_none=True)
-@limiter.limit("40/minute")
+@limiter.limit("20/minute")
 def login_2fa(
     payload: TwoFactorLoginIn,
     request: Request,

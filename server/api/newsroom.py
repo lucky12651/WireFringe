@@ -9,9 +9,6 @@ from ..schemas import (
     FollowIn,
     FollowOut,
     ForgotPasswordIn,
-    LoginOut,
-    LoginRequest,
-    TwoFactorLoginIn,
     FrontpageIn,
     MastheadIn,
     NewsletterIssueCreate,
@@ -345,31 +342,6 @@ def public_author(slug: str, posts: PostService = Depends(get_posts)) -> dict:
 @router.get("/feed.xml")
 def rss_feed(posts: PostService = Depends(get_posts)) -> Response:
     return Response(content=posts.build_rss(), media_type="application/rss+xml")
-
-
-@router.post("/auth/login", response_model=LoginOut, response_model_exclude_none=True)
-def public_login(
-    payload: LoginRequest,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> LoginOut:
-    """Public sign-in (not under /api/admin, so WAF/fail2ban does not treat it as a failed admin login)."""
-    from .users import password_login
-    from ..services import UserService
-
-    return password_login(payload, request, UserService(db))
-
-
-@router.post("/auth/login/2fa", response_model=LoginOut, response_model_exclude_none=True)
-def public_login_2fa(
-    payload: TwoFactorLoginIn,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> LoginOut:
-    from .users import twofa_login
-    from ..services import UserService
-
-    return twofa_login(payload, request, UserService(db))
 
 
 @router.post("/auth/forgot")
