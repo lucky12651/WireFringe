@@ -27,11 +27,11 @@ export default function BannerPost({ post, router, onOpenComments, sidebarPosts,
     <div className="post-design-banner bg-bg text-ink">
       <ReadingProgress color="var(--mint)" />
 
-      <section className="relative overflow-hidden bg-[#5b1be4]">
+      <section className="post-banner-hero relative overflow-hidden bg-[#5b1be4] text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute -top-2.5 left-1/2 -translate-x-1/2 select-none whitespace-nowrap font-heading text-[100px] font-black italic leading-none tracking-[-0.06em] md:text-[160px]"
-          style={{ color: 'transparent', WebkitTextStroke: '2.5px rgba(0,0,0,0.22)' }}
+          style={{ color: 'transparent', WebkitTextStroke: '2.5px rgba(255,255,255,0.22)' }}
         >
           {SITE_NAME}
         </div>
@@ -64,11 +64,11 @@ export default function BannerPost({ post, router, onOpenComments, sidebarPosts,
           </div>
           <div>
             <TagPills post={post} tone="purple" />
-            <h1 className="mb-4 font-heading text-[clamp(40px,6.5vw,72px)] font-black leading-[0.94] tracking-[-0.03em] text-black [text-wrap:pretty]">
+            <h1 className="banner-hero-title mb-4 font-heading text-[clamp(40px,6.5vw,72px)] font-black leading-[0.94] tracking-[-0.03em] [text-wrap:pretty]">
               {post.title}
             </h1>
             {excerpt ? (
-              <p className="m-0 max-w-[640px] text-[16.5px] leading-[1.5] text-black/70 [text-wrap:pretty]">{excerpt}</p>
+              <p className="banner-hero-dek m-0 max-w-[640px] text-[16.5px] leading-[1.5] [text-wrap:pretty]">{excerpt}</p>
             ) : null}
           </div>
         </div>
@@ -77,11 +77,11 @@ export default function BannerPost({ post, router, onOpenComments, sidebarPosts,
           <HeroImage src={post.ogImg} ratio="16/7.5" />
         </div>
         <div className={`${PAGE} pb-5 pt-2.5`}>
-          <p className="m-0 font-mono text-[11px] italic text-black/50">{post.bucket || 'Wirefringe'}</p>
+          <p className="m-0 font-mono text-[11px] italic text-white/50">{post.bucket || 'Wirefringe'}</p>
         </div>
       </section>
 
-      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="purple">
+      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain">
         <article>
           <div className="mb-8 border-b border-line pb-5">
             <AuthorBioRow post={post} />

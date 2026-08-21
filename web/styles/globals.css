@@ -361,6 +361,42 @@ header.post-header-inverse .bg-ink {
   background-color: #ffffff;
 }
 
+/* Feature banner purple hero: white type in both light and dark. */
+.post-banner-hero,
+.post-banner-hero h1,
+.post-banner-hero h2,
+.post-banner-hero h3,
+.post-banner-hero p,
+.post-banner-hero a,
+.post-banner-hero .text-ink,
+.post-banner-hero .text-ink-secondary,
+.post-banner-hero .text-ink-tertiary,
+.post-banner-hero .text-ink-dek,
+.post-banner-hero .text-ink-muted,
+.post-banner-hero .text-ink-soft {
+  color: #ffffff;
+}
+.post-banner-hero .banner-hero-title {
+  color: #ffffff;
+}
+.post-banner-hero .banner-hero-dek {
+  color: rgba(255, 255, 255, 0.82);
+}
+html[data-theme='light'] .post-banner-hero,
+html[data-theme='light'] .post-banner-hero h1,
+html[data-theme='light'] .post-banner-hero p,
+html[data-theme='light'] .post-banner-hero a,
+html[data-theme='dark'] .post-banner-hero,
+html[data-theme='dark'] .post-banner-hero h1,
+html[data-theme='dark'] .post-banner-hero p,
+html[data-theme='dark'] .post-banner-hero a {
+  color: #ffffff;
+}
+html[data-theme='light'] .post-banner-hero .banner-hero-dek,
+html[data-theme='dark'] .post-banner-hero .banner-hero-dek {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 /* Same homepage --bg in both themes. 90% solid color, 10% frost. */
 .site-header-bar {
   background-color: color-mix(in srgb, var(--bg) 90%, transparent);
