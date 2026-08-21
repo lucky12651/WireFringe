@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..dependencies import get_db
-from ..models import User
+from ..models import MediaAsset, User
 
 router = APIRouter(tags=["assets"])
 
@@ -73,3 +73,25 @@ def get_user_brand_logo(user_id: int, db: Session = Depends(get_db)):
         return FileResponse(path)
 
     raise HTTPException(status_code=404, detail="Brand logo not found")
+
+
+@router.get("/media/{name}")
+def get_media_asset(name: str, db: Session = Depends(get_db)):
+    """Public editor/media image. Disk first, then Postgres (RushDeploy)."""
+    safe = Path(str(name or "")).name
+    if not safe or safe in (".", ".."):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    path = settings.uploads_dir / safe
+    if path.is_file():
+        return FileResponse(path)
+
+    row = db.get(MediaAsset, safe)
+    if row is None or not row.data:
+        raise HTTPException(status_code=404, detail="Not found")
+    media_type = (row.content_type or "image/jpeg").split(";")[0]
+    return Response(
+        content=bytes(row.data),
+        media_type=media_type,
+        headers={"Cache-Control": "public, max-age=604800"},
+    )

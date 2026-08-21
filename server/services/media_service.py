@@ -5,8 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
+from sqlalchemy.orm import Session
 
 from ..config import settings
+from ..models import MediaAsset
 from ..schemas import MediaFileOut
 
 
@@ -74,39 +76,73 @@ class MediaService:
 
         return data, content_type, suffix
 
-    async def store_uploaded_image(self, file: UploadFile) -> str:
-        """Store an uploaded image file on disk (post media library)."""
+    def _try_write_disk(self, name: str, data: bytes) -> str | None:
+        try:
+            self.uploads_dir.mkdir(parents=True, exist_ok=True)
+            dest = self.uploads_dir / name
+            dest.write_bytes(data)
+            return f"/static/uploads/{name}"
+        except OSError:
+            return None
+
+    async def store_uploaded_image(self, file: UploadFile, db: Session | None = None) -> str:
+        """Store an uploaded image. Disk if writable; otherwise Postgres (RushDeploy)."""
         data, content_type, suffix = await self.read_validated_image(file)
-
-        self.uploads_dir.mkdir(parents=True, exist_ok=True)
         name = f"{uuid.uuid4().hex}{suffix}"
-        dest = self.uploads_dir / name
-        dest.write_bytes(data)
 
-        return f"/static/uploads/{name}"
+        disk_url = self._try_write_disk(name, data)
+        if disk_url:
+            return disk_url
 
-    def list_media_files(self) -> list[MediaFileOut]:
-        """List all uploaded media files."""
-        self.uploads_dir.mkdir(parents=True, exist_ok=True)
-
-        items: list[MediaFileOut] = []
-        for p in self.uploads_dir.glob("*"):
-            if not p.is_file():
-                continue
-            name = p.name
-            if name.startswith("."):
-                continue
-
-            st = p.stat()
-            modified = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc)
-            items.append(
-                MediaFileOut(
-                    name=name,
-                    url=f"/static/uploads/{name}",
-                    size=int(st.st_size),
-                    modifiedAt=modified,
-                )
+        if db is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Upload folder is not writable on this server.",
             )
+        db.add(
+            MediaAsset(
+                id=name,
+                content_type=content_type,
+                data=data,
+                created_at=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+        return f"/api/media/{name}"
 
-        items.sort(key=lambda x: x.modifiedAt, reverse=True)
+    def list_media_files(self, db: Session | None = None) -> list[MediaFileOut]:
+        """List uploaded media from disk and the database."""
+        items: list[MediaFileOut] = []
+        try:
+            self.uploads_dir.mkdir(parents=True, exist_ok=True)
+            for p in self.uploads_dir.glob("*"):
+                if not p.is_file() or p.name.startswith("."):
+                    continue
+                st = p.stat()
+                items.append(
+                    MediaFileOut(
+                        name=p.name,
+                        url=f"/static/uploads/{p.name}",
+                        size=int(st.st_size),
+                        modifiedAt=datetime.fromtimestamp(st.st_mtime, tz=timezone.utc),
+                    )
+                )
+        except OSError:
+            pass
+
+        if db is not None:
+            seen = {i.name for i in items}
+            for row in db.query(MediaAsset).order_by(MediaAsset.created_at.desc()).all():
+                if row.id in seen:
+                    continue
+                items.append(
+                    MediaFileOut(
+                        name=row.id,
+                        url=f"/api/media/{row.id}",
+                        size=len(row.data or b""),
+                        modifiedAt=row.created_at,
+                    )
+                )
+
+        items.sort(key=lambda x: x.modifiedAt or datetime.now(timezone.utc), reverse=True)
         return items

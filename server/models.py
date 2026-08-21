@@ -199,6 +199,17 @@ class RecentNewsCache(Base):
     link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
  
+class MediaAsset(Base):
+    """Editor/media-library images. Stored in Postgres so RushDeploy disks can stay read-only."""
+
+    __tablename__ = "media_assets"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    content_type: Mapped[str] = mapped_column(String, nullable=False, default="image/jpeg")
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+
 class BotLog(Base):
     __tablename__ = "bot_logs"
 

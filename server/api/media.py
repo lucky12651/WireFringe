@@ -24,7 +24,7 @@ async def admin_upload_image(
     """Upload an image file."""
     user = require_user(request, db)
     require_newsroom(user)
-    url = await service.store_uploaded_image(file)
+    url = await service.store_uploaded_image(file, db)
     return {"url": url}
 
 
@@ -37,4 +37,4 @@ def admin_list_media(
     """List all uploaded media files."""
     user = require_user(request, db)
     require_newsroom(user)
-    return service.list_media_files()
+    return service.list_media_files(db)

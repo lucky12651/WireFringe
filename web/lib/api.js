@@ -79,9 +79,14 @@ export async function uploadFile(path, file) {
   const fd = new FormData();
   fd.append('file', file);
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const res = await fetch(path, {
     method: 'POST',
     credentials: 'include',
+    headers,
     body: fd,
   });
 

@@ -105,6 +105,14 @@ CREATE_TABLES = [
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS media_assets (
+        id VARCHAR PRIMARY KEY,
+        content_type VARCHAR NOT NULL DEFAULT 'image/jpeg',
+        data BYTEA NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+    """,
 ]
 
 
