@@ -131,6 +131,46 @@ export function usePosts(initialLimit = 20, { enabled = true } = {}) {
     }
   }, [refreshPosts]);
 
+  const bulkDeletePosts = useCallback(async (ids) => {
+    try {
+      setIsActionLoading(true);
+      setActionError(null);
+      const list = (ids || []).map((id) => String(id || '').trim()).filter(Boolean);
+      if (!list.length) {
+        return { success: false, error: 'No posts selected' };
+      }
+      let res;
+      try {
+        res = await postsApi.bulkDelete(list);
+      } catch (err) {
+        if (err?.status !== 404 && err?.status !== 405) throw err;
+        let deleted = 0;
+        let skipped = 0;
+        for (const id of list) {
+          try {
+            await postsApi.delete(id);
+            deleted += 1;
+          } catch (_) {
+            skipped += 1;
+          }
+        }
+        res = { deleted, skipped, missing: 0 };
+      }
+      await refreshPosts();
+      return {
+        success: true,
+        deleted: res?.deleted || 0,
+        skipped: res?.skipped || 0,
+        missing: res?.missing || 0,
+      };
+    } catch (err) {
+      setActionError(err?.message || 'Failed to delete posts');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [refreshPosts]);
+
   const publishPost = useCallback(async (id) => {
     try {
       setIsActionLoading(true);
@@ -285,6 +325,7 @@ export function usePosts(initialLimit = 20, { enabled = true } = {}) {
       createPost,
       updatePost,
       deletePost,
+      bulkDeletePosts,
       publishPost,
       processQueueItem,
       deleteQueueItem,
@@ -319,6 +360,7 @@ export function usePosts(initialLimit = 20, { enabled = true } = {}) {
       createPost,
       updatePost,
       deletePost,
+      bulkDeletePosts,
       publishPost,
       processQueueItem,
       deleteQueueItem,

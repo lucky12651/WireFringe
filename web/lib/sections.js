@@ -3,7 +3,6 @@ export const SECTIONS = [
   { slug: 'ai', name: 'AI', buckets: ['AI & Future Tech'] },
   { slug: 'business', name: 'Business', buckets: ['Business & Markets'] },
   { slug: 'finance', name: 'Finance', buckets: ['Personal Finance'] },
-  { slug: 'india', name: 'India', buckets: ['India News'] },
   { slug: 'sports', name: 'Sports', buckets: ['Sports'] },
 ];
 

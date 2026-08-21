@@ -13,7 +13,7 @@ export default function AboutPage() {
       <h2>Who we are</h2>
       <p>
         <strong>{SITE_NAME}</strong> is an independent online publication focused on technology,
-        artificial intelligence, business and markets, personal finance, India and world news,
+        artificial intelligence, business and markets, personal finance, world news,
         sports, and culture. We publish original reporting, explainers, and analysis for readers
         who want clear, useful context — not noise.
       </p>
@@ -36,7 +36,7 @@ export default function AboutPage() {
           <strong>Personal Finance</strong> — tax, savings, prices, and practical money guidance
         </li>
         <li>
-          <strong>India News &amp; World News</strong> — politics, policy, and major headlines
+          <strong>World News</strong> — politics, policy, and major headlines
         </li>
         <li>
           <strong>Sports</strong> — scores, transfers, and stories from the field

@@ -16,7 +16,7 @@ def test_email_helper():
 
 def test_sections_exist():
     assert "tech" in SECTIONS
-    assert "india" in SECTIONS
+    assert "india" not in SECTIONS
 
 
 def test_post_designs():

@@ -36,10 +36,89 @@ import {
   MastheadView,
 } from '../components/admin/views';
 
+const DASH_POST_SOURCES = ['all', 'bot', 'editorial'];
+
+function utcDay(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function dashMonthWindows(count = 6) {
+  const now = new Date();
+  const months = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i + 1, 0));
+    months.push({
+      key: `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, '0')}`,
+      from: utcDay(start),
+      to: utcDay(last),
+    });
+  }
+  return months;
+}
+
+function monthLabel(key) {
+  const [yStr, mStr] = String(key || '').split('-');
+  const year = Number(yStr);
+  const monthIndex = Number(mStr) - 1;
+  if (Number.isFinite(year) && monthIndex >= 0 && monthIndex <= 11) {
+    return new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' });
+  }
+  return key;
+}
+
+async function countPublishedPosts(source, from, to) {
+  const params = new URLSearchParams({
+    offset: '0',
+    limit: '1',
+    source,
+    status: 'published',
+    date_from: from,
+  });
+  if (to) params.set('date_to', to);
+  const res = await fetcher(`/api/admin/posts?${params.toString()}`);
+  return Number(res?.total) || 0;
+}
+
+async function fetchAllDashPostStats() {
+  const now = new Date();
+  const from30 = new Date(now);
+  from30.setUTCDate(from30.getUTCDate() - 30);
+  const from60 = new Date(now);
+  from60.setUTCDate(from60.getUTCDate() - 60);
+  const months = dashMonthWindows(6);
+  const from30Day = utcDay(from30);
+  const from60Day = utcDay(from60);
+
+  const entries = await Promise.all(
+    DASH_POST_SOURCES.map(async (source) => {
+      const [current, prev, ...monthCounts] = await Promise.all([
+        countPublishedPosts(source, from30Day),
+        countPublishedPosts(source, from60Day, from30Day),
+        ...months.map((month) => countPublishedPosts(source, month.from, month.to)),
+      ]);
+      return [
+        source,
+        {
+          current,
+          prev,
+          months: months.map((month, index) => ({
+            key: month.key,
+            label: monthLabel(month.key),
+            count: monthCounts[index],
+          })),
+        },
+      ];
+    })
+  );
+  return Object.fromEntries(entries);
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [activeView, setActiveView] = useState('dashboard');
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [dashPostsSource, setDashPostsSource] = useState('all');
 
   // Initialize hooks
   const auth = useAuth();
@@ -61,43 +140,71 @@ export default function AdminPage() {
     { revalidateOnFocus: false }
   );
 
-  const { data: postGrowthCounts } = useSWR(
-    shouldLoadDashboardStats ? '/api/admin/stats/post-growth?days=30' : null,
-    fetcher,
+  const dashSourceParam = dashPostsSource === 'bot' || dashPostsSource === 'editorial' ? dashPostsSource : 'all';
+  const { data: dashPostStats } = useSWR(
+    shouldLoadDashboardStats ? 'dash-post-stats-all-sources' : null,
+    fetchAllDashPostStats,
     { revalidateOnFocus: false }
   );
 
-  const { data: postsByMonthCounts } = useSWR(
-    shouldLoadDashboardStats ? '/api/admin/stats/posts-by-month?months=6' : null,
+  const { data: botPostCounts } = useSWR(
+    shouldLoadDashboardStats && access?.isDesk ? '/api/admin/stats/bot-posts' : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  );
+  const { data: botPostsFallback } = useSWR(
+    shouldLoadDashboardStats && access?.isDesk && botPostCounts == null
+      ? '/api/admin/posts?offset=0&limit=1&source=bot&status=published'
+      : null,
     fetcher,
     { revalidateOnFocus: false }
   );
+  const botPublishedCount = Number(botPostCounts?.published ?? botPostsFallback?.total) || 0;
+
+  const selectedPostStats = dashPostStats?.[dashSourceParam] || null;
 
   const dashboardPostGrowth30 = useMemo(() => {
-    const current = Number(postGrowthCounts?.current);
-    const prev = Number(postGrowthCounts?.prev);
-    if (!Number.isFinite(current) || !Number.isFinite(prev)) return null;
-    return { current, prev, delta: pctChange(current, prev) };
-  }, [postGrowthCounts]);
+    const current = Number(selectedPostStats?.current);
+    const prev = Number(selectedPostStats?.prev);
+    return {
+      current: Number.isFinite(current) ? current : 0,
+      prev: Number.isFinite(prev) ? prev : 0,
+      delta: pctChange(
+        Number.isFinite(current) ? current : 0,
+        Number.isFinite(prev) ? prev : 0
+      ),
+    };
+  }, [selectedPostStats]);
 
   const dashboardPostsByMonth = useMemo(() => {
-    if (!Array.isArray(postsByMonthCounts)) return null;
-    return postsByMonthCounts.map((m) => {
-      const key = String(m?.key || '').trim();
-      const rawCount = Number(m?.count || 0);
-      const count = Number.isFinite(rawCount) ? rawCount : 0;
+    const fallback = dashMonthWindows(6).map((month) => ({
+      key: month.key,
+      label: monthLabel(month.key),
+      count: 0,
+    }));
+    const rows = selectedPostStats?.months;
+    if (!Array.isArray(rows) || !rows.length) return fallback;
+    const byKey = new Map(rows.map((row) => [row.key, Number(row.count) || 0]));
+    return fallback.map((month) => ({
+      ...month,
+      count: byKey.has(month.key) ? byKey.get(month.key) : month.count,
+    }));
+  }, [selectedPostStats]);
 
-      const [yStr, mStr] = String(key).split('-');
-      const year = Number(yStr);
-      const monthIndex = Number(mStr) - 1;
-      const label =
-        Number.isFinite(year) && monthIndex >= 0 && monthIndex <= 11
-          ? new Date(year, monthIndex, 1).toLocaleString('en-US', { month: 'short' })
-          : key;
-
-      return { key, label, count };
-    });
-  }, [postsByMonthCounts]);
+  const postsChartMax = useMemo(() => {
+    if (!dashPostStats) {
+      return Math.max(0, ...dashboardPostsByMonth.map((m) => Number(m.count) || 0));
+    }
+    return Math.max(
+      0,
+      ...Object.values(dashPostStats).flatMap((stats) =>
+        (stats?.months || []).map((month) => Number(month.count) || 0)
+      )
+    );
+  }, [dashPostStats, dashboardPostsByMonth]);
 
   const creatorCountsOverride = useMemo(() => {
     if (!Array.isArray(postsByMemberCounts)) return null;
@@ -242,17 +349,26 @@ export default function AdminPage() {
             queueCount={posts.queue.length}
             pendingCommentsCount={comments.pendingCount}
             canViewPendingCommentsCount={canViewPendingCommentsCount}
-            postGrowth30={dashboardPostGrowth30 || posts.postGrowth30}
-            postsByMonth={dashboardPostsByMonth || posts.postsByMonth}
+            postGrowth30={dashboardPostGrowth30}
+            postsByMonth={dashboardPostsByMonth}
+            postsChartMax={postsChartMax}
             trendingComments={comments.trendingComments}
             trendingHint={comments.error}
             memberStats={users.memberStats}
             latestPosts={posts.latestPosts}
             recentCache={posts.recentCache}
             mediaCount={media.mediaCount}
+            botPublishedCount={botPublishedCount}
+            postsSource={dashPostsSource}
+            onPostsSourceChange={setDashPostsSource}
             me={me}
             access={access}
-            onNavigate={setActiveView}
+            onNavigate={(view, extra) => {
+              if (view === 'posts') {
+                posts.setSource(extra?.source === 'bot' ? 'bot' : 'editorial');
+              }
+              setActiveView(view);
+            }}
           />
         );
 
@@ -263,6 +379,7 @@ export default function AdminPage() {
             postsCount={posts.postsCount}
             onPublish={posts.publishPost}
             onDelete={posts.deletePost}
+            onBulkDelete={posts.bulkDeletePosts}
             onProcessQueue={posts.processQueueItem}
             onDeleteQueue={posts.deleteQueueItem}
             onBulkDeleteQueue={posts.bulkDeleteQueueItems}

@@ -6,7 +6,7 @@ export const SITE_NAME = 'Wirefringe';
 export const SITE_LEGAL_NAME = 'Wirefringe';
 export const SITE_TAGLINE = 'Tech, science, culture — and how technology makes us feel.';
 export const SITE_DESCRIPTION =
-  'Wirefringe is an independent digital publication covering technology, AI, business, personal finance, India news, sports, and culture.';
+  'Wirefringe is an independent digital publication covering technology, AI, business, personal finance, sports, and culture.';
 
 /** Public site URL (no trailing slash). Override with NEXT_PUBLIC_SITE_URL in production. */
 export const SITE_URL =

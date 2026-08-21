@@ -60,7 +60,6 @@ export const SECTIONS = [
   'AI & Future Tech',
   'Business & Markets',
   'Personal Finance',
-  'India News',
   'Sports',
   'World',
 ];

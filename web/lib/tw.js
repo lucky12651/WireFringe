@@ -24,6 +24,8 @@ export const tw = {
     'button-primary inline-flex items-center justify-center gap-1.5 min-h-[30px] px-2.5 border border-mint rounded-[3px] bg-mint text-[var(--admin-accent-fg,#111)] text-[13px] font-normal cursor-pointer no-underline hover:bg-mint-hover disabled:opacity-50 disabled:cursor-not-allowed',
   secondaryBtn:
     'inline-flex items-center justify-center gap-1.5 min-h-[30px] px-2.5 border border-line-strong rounded-[3px] bg-bg-elevated text-ink text-[13px] font-normal cursor-pointer no-underline hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed',
+  dangerBtn:
+    'inline-flex items-center justify-center gap-1.5 min-h-[30px] px-2.5 border border-[var(--danger)] rounded-[3px] bg-transparent text-[var(--danger)] text-[13px] font-normal cursor-pointer no-underline hover:bg-[var(--danger-soft)] disabled:opacity-50 disabled:cursor-not-allowed',
   iconBtn:
     'inline-flex items-center justify-center w-8 h-8 rounded-sm border-0 bg-transparent text-ink-secondary cursor-pointer no-underline transition-colors hover:text-ink hover:bg-bg-hover',
   iconBtnDanger:

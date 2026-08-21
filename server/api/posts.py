@@ -9,6 +9,9 @@ from sqlalchemy.orm import Session
 from ..dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff
 from ..models import User
 from ..schemas import (
+    BotPostCountsOut,
+    BulkDeletePostsIn,
+    BulkDeletePostsOut,
     CreatorCountOut,
     MonthCountOut,
     NewsQueueItem,
@@ -98,6 +101,17 @@ def related_posts(post_id: str, service: PostService = Depends(get_post_service)
 # Admin post endpoints
 
 
+def _dash_source(raw: str | None) -> str:
+    kind = (raw or "all").strip().lower()
+    if kind in {"combined", "both"}:
+        return "all"
+    if kind in {"non-bot", "nonbot", "human"}:
+        return "editorial"
+    if kind in {"all", "bot", "editorial"}:
+        return kind
+    return "all"
+
+
 def _parse_day(raw: str | None, *, end: bool = False):
     value = (raw or "").strip()
     if not value:
@@ -173,13 +187,29 @@ def admin_post_growth_stats(
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
     days: int = 30,
+    source: str = "all",
 ) -> PostGrowthCountsOut:
     """Dashboard helper: post growth (last N days vs previous N days)."""
     user = require_user(request, db)
     require_newsroom(user)
     creator = user.username if user.role == "author" else None
     days = max(1, min(int(days or 30), 365))
-    return service.get_post_growth_counts(days, creator)
+    kind = "all" if creator else _dash_source(source)
+    return service.get_post_growth_counts(days, creator, kind)
+
+
+@router.get("/admin/stats/bot-posts", response_model=BotPostCountsOut)
+def admin_bot_post_stats(
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> BotPostCountsOut:
+    """Dashboard helper: published and total bot-authored posts."""
+    user = require_user(request, db)
+    require_newsroom(user)
+    if user.role == "author":
+        return BotPostCountsOut(published=0, total=0)
+    return service.get_bot_post_counts()
 
 
 @router.get("/admin/stats/posts-by-month", response_model=list[MonthCountOut])
@@ -188,13 +218,15 @@ def admin_posts_by_month_stats(
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
     months: int = 6,
+    source: str = "all",
 ) -> list[MonthCountOut]:
     """Dashboard helper: posts per month for the last N months."""
     user = require_user(request, db)
     require_newsroom(user)
     creator = user.username if user.role == "author" else None
     months = max(1, min(int(months or 6), 24))
-    return service.get_posts_by_month_counts(months, creator)
+    kind = "all" if creator else _dash_source(source)
+    return service.get_posts_by_month_counts(months, creator, kind)
 
 
 @router.get("/admin/posts/queue", response_model=list[NewsQueueItem])
@@ -482,6 +514,19 @@ def admin_publish_post_query(
     user = require_user(request, db)
     require_staff(user)
     return service.publish_post(id, user)
+
+
+@router.post("/admin/posts/bulk-delete", response_model=BulkDeletePostsOut)
+def admin_bulk_delete_posts(
+    payload: BulkDeletePostsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: PostService = Depends(get_post_service),
+) -> BulkDeletePostsOut:
+    """Delete many posts at once."""
+    user = require_user(request, db)
+    require_newsroom(user)
+    return BulkDeletePostsOut(**service.delete_posts_bulk(payload.ids, user))
 
 
 @router.delete("/admin/posts/{post_id}")

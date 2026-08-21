@@ -14,7 +14,6 @@ const NAV = [
   { label: 'AI', href: '/section/ai' },
   { label: 'Business', href: '/section/business' },
   { label: 'Finance', href: '/section/finance' },
-  { label: 'India', href: '/section/india' },
   { label: 'Sports', href: '/section/sports' },
 ];
 
@@ -26,7 +25,6 @@ const DRAWER_SECTIONS = [
       { label: 'AI', href: '/section/ai' },
       { label: 'Business', href: '/section/business' },
       { label: 'Finance', href: '/section/finance' },
-      { label: 'India', href: '/section/india' },
       { label: 'Sports', href: '/section/sports' },
       { label: 'Masthead', href: '/masthead' },
       { label: 'Sourcing', href: '/sourcing' },

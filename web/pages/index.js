@@ -23,7 +23,6 @@ const CATEGORIES = [
   'Tech',
   'Business & Markets',
   'Personal Finance',
-  'India News',
   'Sports',
 ];
 
@@ -152,7 +151,6 @@ export default function HomePage({ initialPosts }) {
   const packageC = filtered
     .filter((p) => ['Business & Markets', 'Business'].includes(p.bucket))
     .slice(0, 4);
-  const packageB = filtered.filter((p) => p.bucket === 'India News').slice(0, 4);
   const packageD = filtered
     .filter((p) => ['Personal Finance', 'Gadgets'].includes(p.bucket))
     .slice(0, 4);
@@ -182,7 +180,6 @@ export default function HomePage({ initialPosts }) {
   };
   const catBiz = filtered.filter((p) => p.bucket === 'Business & Markets').slice(0, 4);
   const catFinance = filtered.filter((p) => p.bucket === 'Personal Finance').slice(0, 4);
-  const catIndia = filtered.filter((p) => p.bucket === 'India News').slice(0, 4);
   const catSports = filtered.filter((p) => p.bucket === 'Sports').slice(0, 4);
 
   return (
@@ -287,13 +284,6 @@ export default function HomePage({ initialPosts }) {
                         <PackageRule />
                         <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">Most Popular</h2>
                       </Reveal>
-                    )}
-                    {packageB.length > 0 && (
-                      <PackageBlock
-                        title="India desk"
-                        subtitle="Politics, policy, and national headlines from across the country."
-                        posts={packageB}
-                      />
                     )}
                     {packageD.length > 0 && (
                       <PackageBlock

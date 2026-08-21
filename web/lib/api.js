@@ -169,6 +169,11 @@ export const postsApi = {
     }),
   delete: (id) =>
     api(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  bulkDelete: (ids) =>
+    api('/api/admin/posts/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
   publish: (id) =>
     api(`/api/admin/post/publish?id=${encodeURIComponent(id)}`, { method: 'POST' }),
   processQueueItem: (link) =>

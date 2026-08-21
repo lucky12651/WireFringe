@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { EmptyState } from '../shared/EmptyState';
 import { DeleteConfirmModal, SuccessToast } from '../shared';
@@ -12,6 +12,7 @@ export function PostsView({
   postsCount,
   onPublish,
   onDelete,
+  onBulkDelete,
   onProcessQueue,
   onDeleteQueue,
   onBulkDeleteQueue,
@@ -55,11 +56,14 @@ export function PostsView({
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingLinks, setProcessingLinks] = useState(new Set());
   const [selectedQueueLinks, setSelectedQueueLinks] = useState(new Set());
+  const [selectedPostIds, setSelectedPostIds] = useState(new Set());
+  const selectAllPostsRef = useRef(null);
 
   // Delete confirmation state
   const [postToDelete, setPostToDelete] = useState(null);
   const [queueItemToDelete, setQueueItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [bulkPostsDelete, setBulkPostsDelete] = useState(false);
 
   // Success toast state
   const [successMessage, setSuccessMessage] = useState(null);
@@ -69,13 +73,78 @@ export function PostsView({
   const hasNext = page < totalPages - 1;
   const hasPrev = page > 0;
 
+  const postStatus = (post) => post?.status || (post?.date ? 'published' : 'draft');
+  const canTrashPost = (post) => canDeletePublished || postStatus(post) !== 'published';
+  const selectablePostIds = useMemo(
+    () => (posts || []).filter(canTrashPost).map((p) => p.id),
+    [posts, canDeletePublished]
+  );
+  const allSelectableSelected =
+    selectablePostIds.length > 0 && selectablePostIds.every((id) => selectedPostIds.has(id));
+
+  useEffect(() => {
+    setSelectedPostIds(new Set());
+  }, [page, source, filters.q, filters.status, filters.dateFrom, filters.dateTo]);
+
+  useEffect(() => {
+    const el = selectAllPostsRef.current;
+    if (!el) return;
+    el.indeterminate = selectedPostIds.size > 0 && !allSelectableSelected;
+  }, [selectedPostIds, allSelectableSelected]);
+
+  const toggleSelectAllPosts = () => {
+    if (allSelectableSelected) {
+      setSelectedPostIds(new Set());
+    } else {
+      setSelectedPostIds(new Set(selectablePostIds));
+    }
+  };
+
+  const toggleSelectPost = (id, allowed) => {
+    if (!allowed) return;
+    setSelectedPostIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleDeleteClick = (post) => {
     setDeleteError('');
     setPostToDelete(post);
   };
 
+  const handleBulkDeletePostsClick = () => {
+    if (selectedPostIds.size === 0) return;
+    setDeleteError('');
+    setBulkPostsDelete(true);
+  };
+
   const handleConfirmDelete = async () => {
-    if (postToDelete) {
+    if (bulkPostsDelete) {
+      setIsDeleting(true);
+      try {
+        const ids = Array.from(selectedPostIds);
+        const result = await onBulkDelete?.(ids);
+        if (result?.success === false) {
+          setDeleteError(result.error || 'Failed to delete posts.');
+          return;
+        }
+        const deleted = result?.deleted ?? ids.length;
+        const skipped = result?.skipped || 0;
+        setDeleteError('');
+        setBulkPostsDelete(false);
+        setSelectedPostIds(new Set());
+        setSuccessMessage(
+          skipped
+            ? `Deleted ${deleted} post${deleted === 1 ? '' : 's'}. ${skipped} could not be deleted.`
+            : `Deleted ${deleted} selected post${deleted === 1 ? '' : 's'}.`
+        );
+      } finally {
+        setIsDeleting(false);
+      }
+    } else if (postToDelete) {
       const deletedTitle = postToDelete.title;
       setIsDeleting(true);
       try {
@@ -86,6 +155,11 @@ export function PostsView({
         }
         setDeleteError('');
         setPostToDelete(null);
+        setSelectedPostIds((prev) => {
+          const next = new Set(prev);
+          next.delete(postToDelete.id);
+          return next;
+        });
         setSuccessMessage(`"${deletedTitle}" has been deleted successfully.`);
       } finally {
         setIsDeleting(false);
@@ -117,6 +191,7 @@ export function PostsView({
     setPostToDelete(null);
     setQueueItemToDelete(null);
     setBulkQueueDelete(false);
+    setBulkPostsDelete(false);
     setDeleteError('');
   };
 
@@ -329,10 +404,34 @@ export function PostsView({
                   </button>
                 ) : null}
               </div>
+            <div className="mb-3 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-[13px] text-ink-secondary cursor-pointer">
+                <input
+                  ref={selectAllPostsRef}
+                  type="checkbox"
+                  checked={allSelectableSelected}
+                  onChange={toggleSelectAllPosts}
+                  id="select-all-posts"
+                  disabled={selectablePostIds.length === 0}
+                />
+                Select all
+              </label>
+              {selectedPostIds.size > 0 ? (
+                <div className="flex items-center gap-3 text-[13px] text-ink-secondary">
+                  <span>{selectedPostIds.size} selected</span>
+                  <button type="button" className={tw.dangerBtn} onClick={handleBulkDeletePostsClick}>
+                    Delete
+                  </button>
+                </div>
+              ) : null}
+            </div>
             <div className={tw.tableWrap}>
               <table className="wp-table">
                 <thead>
                   <tr>
+                    <th className="check-column">
+                      <span className="sr-only">Select</span>
+                    </th>
                     <th className="w-[42%]">Title</th>
                     <th>Status</th>
                     <th>Category</th>
@@ -343,22 +442,31 @@ export function PostsView({
                 <tbody>
                   {isLoading && posts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-ink-secondary">
+                      <td colSpan={6} className="py-10 text-center text-ink-secondary">
                         Loading posts…
                       </td>
                     </tr>
                   ) : posts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-ink-secondary">
+                      <td colSpan={6} className="py-10 text-center text-ink-secondary">
                         No posts found.
                       </td>
                     </tr>
                   ) : (
                     posts.map((p) => {
-                      const st = p.status || (p.date ? 'published' : 'draft');
-                      const canTrash = canDeletePublished || st !== 'published';
+                      const st = postStatus(p);
+                      const canTrash = canTrashPost(p);
                       return (
                         <tr key={p.id}>
+                          <td className="check-column">
+                            <input
+                              type="checkbox"
+                              checked={selectedPostIds.has(p.id)}
+                              disabled={!canTrash}
+                              onChange={() => toggleSelectPost(p.id, canTrash)}
+                              aria-label={`Select ${p.title || 'post'}`}
+                            />
+                          </td>
                           <td>
                             <a
                               href={`/admin/post?id=${encodeURIComponent(p.id)}`}
@@ -507,10 +615,12 @@ export function PostsView({
       </section>
 
       <DeleteConfirmModal
-        isOpen={!!postToDelete || !!queueItemToDelete || bulkQueueDelete}
+        isOpen={!!postToDelete || !!queueItemToDelete || bulkQueueDelete || bulkPostsDelete}
         title="Confirm Deletion"
         message={
-          bulkQueueDelete
+          bulkPostsDelete
+            ? `Are you sure you want to delete ${selectedPostIds.size} selected post${selectedPostIds.size === 1 ? '' : 's'}?`
+            : bulkQueueDelete
             ? `Are you sure you want to remove ${selectedQueueLinks.size} selected items from the queue?`
             : `Are you sure you want to remove "${postToDelete?.title || queueItemToDelete?.title}"?`
         }

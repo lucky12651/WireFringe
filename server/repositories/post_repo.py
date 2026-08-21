@@ -205,27 +205,44 @@ class PostRepository(BaseRepository[Post]):
         rows = self.db.execute(query).all()
         return [(str(r.username), int(r.count)) for r in rows]
 
-    def count_published_since(self, since: datetime, creator: str | None = None) -> int:
+    def count_published_since(
+        self,
+        since: datetime,
+        creator: str | None = None,
+        source: str | None = "all",
+    ) -> int:
         """Count published posts since a given datetime (inclusive)."""
-        stmt = select(func.count(Post.id)).where(Post.published_at.is_not(None)).where(
-            Post.published_at >= since
+        stmt = (
+            select(func.count(Post.id))
+            .where(Post.published_at.is_not(None))
+            .where(func.lower(func.coalesce(Post.status, "")) == "published")
+            .where(Post.published_at >= since)
         )
         if creator:
             stmt = stmt.where(Post.creator == creator)
+        else:
+            stmt = self._apply_source(stmt, source or "all")
         return int(self.db.execute(stmt).scalar() or 0)
 
     def count_published_between(
-        self, start: datetime, end: datetime, creator: str | None = None
+        self,
+        start: datetime,
+        end: datetime,
+        creator: str | None = None,
+        source: str | None = "all",
     ) -> int:
         """Count published posts in [start, end)."""
         stmt = (
             select(func.count(Post.id))
             .where(Post.published_at.is_not(None))
+            .where(func.lower(func.coalesce(Post.status, "")) == "published")
             .where(Post.published_at >= start)
             .where(Post.published_at < end)
         )
         if creator:
             stmt = stmt.where(Post.creator == creator)
+        else:
+            stmt = self._apply_source(stmt, source or "all")
         return int(self.db.execute(stmt).scalar() or 0)
 
     def count_published_by_month(
@@ -233,6 +250,7 @@ class PostRepository(BaseRepository[Post]):
         since: datetime,
         until: datetime | None = None,
         creator: str | None = None,
+        source: str | None = "all",
     ) -> list[tuple[str, int]]:
         """Count published posts grouped by month.
 
@@ -246,12 +264,15 @@ class PostRepository(BaseRepository[Post]):
                 func.count(Post.id).label("count"),
             )
             .where(Post.published_at.is_not(None))
+            .where(func.lower(func.coalesce(Post.status, "")) == "published")
             .where(Post.published_at >= since)
         )
         if until is not None:
             stmt = stmt.where(Post.published_at < until)
         if creator:
             stmt = stmt.where(Post.creator == creator)
+        else:
+            stmt = self._apply_source(stmt, source or "all")
         stmt = stmt.group_by(month_key).order_by(month_key.asc())
 
         rows = self.db.execute(stmt).all()

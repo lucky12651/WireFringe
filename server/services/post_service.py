@@ -27,6 +27,7 @@ from ..models import (
 )
 from ..repositories import CommentRepository, PostRepository, UserRepository
 from ..schemas import (
+    BotPostCountsOut,
     CreatorCountOut,
     MonthCountOut,
     NewsQueueItem,
@@ -262,21 +263,41 @@ class PostService:
         rows = self.post_repo.count_by_creator(creator)
         return [CreatorCountOut(username=username, count=count) for username, count in rows]
 
+    def get_bot_post_counts(self) -> BotPostCountsOut:
+        """Count bot-authored posts for the dashboard glance."""
+        total = int(
+            self.db.scalar(select(func.count()).select_from(Post).where(Post.is_bot.is_(True)))
+            or 0
+        )
+        published = int(
+            self.db.scalar(
+                select(func.count())
+                .select_from(Post)
+                .where(
+                    Post.is_bot.is_(True),
+                    func.lower(func.coalesce(Post.status, "")) == "published",
+                )
+            )
+            or 0
+        )
+        return BotPostCountsOut(published=published, total=total)
+
     def get_post_growth_counts(
-        self, days: int = 30, creator: str | None = None
+        self, days: int = 30, creator: str | None = None, source: str | None = "all"
     ) -> PostGrowthCountsOut:
         """Count published posts in the last N days vs previous N days."""
         days = max(1, min(int(days or 30), 365))
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         start_current = now - timedelta(days=days)
         start_prev = now - timedelta(days=2 * days)
+        kind = "all" if creator else (source or "all")
 
-        current = self.post_repo.count_published_since(start_current, creator)
-        prev = self.post_repo.count_published_between(start_prev, start_current, creator)
+        current = self.post_repo.count_published_since(start_current, creator, kind)
+        prev = self.post_repo.count_published_between(start_prev, start_current, creator, kind)
         return PostGrowthCountsOut(current=current, prev=prev)
 
     def get_posts_by_month_counts(
-        self, months: int = 6, creator: str | None = None
+        self, months: int = 6, creator: str | None = None, source: str | None = "all"
     ) -> list[MonthCountOut]:
         """Count published posts per month for the last N months (inclusive)."""
         months = max(1, min(int(months or 6), 24))
@@ -301,7 +322,9 @@ class PostService:
             y1 += 1
         until = datetime(int(y1), int(m1), 1)
 
-        rows = self.post_repo.count_published_by_month(since, until, creator)
+        rows = self.post_repo.count_published_by_month(
+            since, until, creator, source if creator else (source or "all")
+        )
         count_by_key = {k: int(c) for k, c in rows}
         return [MonthCountOut(key=k, count=int(count_by_key.get(k, 0))) for k in keys]
 
@@ -782,41 +805,48 @@ class PostService:
         parts.append("</channel></rss>")
         return "".join(parts)
 
+    def _assert_can_delete_post(self, post: Post, user: User) -> None:
+        if user.role == "author" and (post.creator or "").strip() != user.username:
+            raise HTTPException(status_code=403, detail="Not allowed")
+        if user.role == "author" and (getattr(post, "status", None) or "") == "published":
+            raise HTTPException(status_code=403, detail="Ask an editor to unpublish before deleting")
+
+    def _purge_post(self, post: Post) -> None:
+        """Remove a post and related rows. Caller owns the transaction."""
+        pid = str(post.id)
+        # Detach the loaded row so SQLAlchemy does not emit its own DELETE
+        # before the child tables are cleared.
+        self.db.expunge(post)
+        self.db.execute(
+            text(
+                "DELETE FROM comment_votes WHERE comment_id IN "
+                "(SELECT id FROM comments WHERE post_id = :pid)"
+            ),
+            {"pid": pid},
+        )
+        self.db.execute(
+            text(
+                "DELETE FROM comment_reports WHERE comment_id IN "
+                "(SELECT id FROM comments WHERE post_id = :pid)"
+            ),
+            {"pid": pid},
+        )
+        self.db.execute(text("DELETE FROM comments WHERE post_id = :pid"), {"pid": pid})
+        self.db.execute(text("DELETE FROM user_interactions WHERE post_id = :pid"), {"pid": pid})
+        self.db.execute(text("DELETE FROM personalized_feeds WHERE post_id = :pid"), {"pid": pid})
+        self.db.execute(text("DELETE FROM post_revisions WHERE post_id = :pid"), {"pid": pid})
+        self.db.execute(text("DELETE FROM posts WHERE id = :pid"), {"pid": pid})
+
     def delete_post(self, post_id: str, user: User) -> None:
         """Delete a post and every row that still points at it."""
         post = self.post_repo.get(post_id)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
 
-        if user.role == "author" and (post.creator or "").strip() != user.username:
-            raise HTTPException(status_code=403, detail="Not allowed")
-        if user.role == "author" and (getattr(post, "status", None) or "") == "published":
-            raise HTTPException(status_code=403, detail="Ask an editor to unpublish before deleting")
+        self._assert_can_delete_post(post, user)
 
-        pid = str(post.id)
         try:
-            # Detach the loaded row so SQLAlchemy does not emit its own DELETE
-            # before the child tables are cleared.
-            self.db.expunge(post)
-            self.db.execute(
-                text(
-                    "DELETE FROM comment_votes WHERE comment_id IN "
-                    "(SELECT id FROM comments WHERE post_id = :pid)"
-                ),
-                {"pid": pid},
-            )
-            self.db.execute(
-                text(
-                    "DELETE FROM comment_reports WHERE comment_id IN "
-                    "(SELECT id FROM comments WHERE post_id = :pid)"
-                ),
-                {"pid": pid},
-            )
-            self.db.execute(text("DELETE FROM comments WHERE post_id = :pid"), {"pid": pid})
-            self.db.execute(text("DELETE FROM user_interactions WHERE post_id = :pid"), {"pid": pid})
-            self.db.execute(text("DELETE FROM personalized_feeds WHERE post_id = :pid"), {"pid": pid})
-            self.db.execute(text("DELETE FROM post_revisions WHERE post_id = :pid"), {"pid": pid})
-            self.db.execute(text("DELETE FROM posts WHERE id = :pid"), {"pid": pid})
+            self._purge_post(post)
             self.db.commit()
         except IntegrityError as exc:
             self.db.rollback()
@@ -827,3 +857,42 @@ class PostService:
         except Exception:
             self.db.rollback()
             raise
+
+    def delete_posts_bulk(self, post_ids: list[str], user: User) -> dict:
+        """Delete many posts in one transaction. Skips missing or forbidden ids."""
+        seen: list[str] = []
+        for raw in post_ids:
+            pid = str(raw or "").strip()
+            if pid and pid not in seen:
+                seen.append(pid)
+        if not seen:
+            raise HTTPException(status_code=400, detail="No post ids provided")
+
+        deleted = 0
+        skipped = 0
+        missing = 0
+        try:
+            for pid in seen:
+                post = self.post_repo.get(pid)
+                if post is None:
+                    missing += 1
+                    continue
+                try:
+                    self._assert_can_delete_post(post, user)
+                except HTTPException:
+                    skipped += 1
+                    continue
+                self._purge_post(post)
+                deleted += 1
+            self.db.commit()
+        except IntegrityError as exc:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Could not delete these posts because related records still point at them.",
+            ) from exc
+        except Exception:
+            self.db.rollback()
+            raise
+
+        return {"ok": True, "deleted": deleted, "skipped": skipped, "missing": missing}

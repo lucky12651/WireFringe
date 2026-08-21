@@ -110,9 +110,9 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
         "name": "India desk",
         "subtitle": "Politics, policy, and national headlines from across the country.",
         "kind": "package",
-        "enabled": True,
+        "enabled": False,
         "system": False,
-        "showHome": True,
+        "showHome": False,
         "showHeader": False,
         "showSidebar": False,
         "homeOrder": 40,
@@ -216,9 +216,9 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
         "name": "Latest from India News",
         "subtitle": "",
         "kind": "category_row",
-        "enabled": True,
+        "enabled": False,
         "system": False,
-        "showHome": True,
+        "showHome": False,
         "showHeader": False,
         "showSidebar": False,
         "homeOrder": 100,
@@ -320,11 +320,11 @@ DEFAULT_SECTIONS: list[dict[str, Any]] = [
         "name": "India",
         "subtitle": "Section page and header link.",
         "kind": "page",
-        "enabled": True,
+        "enabled": False,
         "system": False,
         "showHome": False,
-        "showHeader": True,
-        "showSidebar": True,
+        "showHeader": False,
+        "showSidebar": False,
         "homeOrder": 0,
         "headerOrder": 50,
         "sidebarOrder": 50,
@@ -374,6 +374,38 @@ KINDS = ("package", "category_row", "most_popular", "hero", "page", "stream")
 def slugify(value: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
     return s or str(uuid.uuid4())[:8]
+
+
+_RETIRED_INDIA_SECTION_IDS = {"india-desk", "latest-india", "nav-india"}
+_RETIRED_INDIA_NAMES = {"India", "India desk", "Latest from India News"}
+
+
+def _is_india_public_section(section: dict[str, Any]) -> bool:
+    if section.get("id") in _RETIRED_INDIA_SECTION_IDS:
+        return True
+    if str(section.get("pageSlug") or "") == "india":
+        return True
+    return str(section.get("name") or "") in _RETIRED_INDIA_NAMES
+
+
+def _retire_india_public_sections(data: dict[str, Any]) -> bool:
+    """Hide India from header, homepage, sidebar, and /section/india."""
+    changed = False
+    for section in data.get("sections") or []:
+        if not _is_india_public_section(section):
+            continue
+        if (
+            section.get("enabled")
+            or section.get("showHeader")
+            or section.get("showHome")
+            or section.get("showSidebar")
+        ):
+            section["enabled"] = False
+            section["showHeader"] = False
+            section["showHome"] = False
+            section["showSidebar"] = False
+            changed = True
+    return changed
 
 
 def default_catalog() -> dict[str, Any]:
@@ -453,10 +485,13 @@ class CatalogService:
             cats = default_catalog()["categories"]
         if not secs:
             secs = default_catalog()["sections"]
-        return {
+        data = {
             "categories": [_norm_category(c, i) for i, c in enumerate(cats) if isinstance(c, dict)],
             "sections": [_norm_section(s, i) for i, s in enumerate(secs) if isinstance(s, dict)],
         }
+        if seed and _retire_india_public_sections(data):
+            return self.save(data)
+        return data
 
     def save(self, payload: dict[str, Any]) -> dict[str, Any]:
         cats_in = payload.get("categories") if isinstance(payload.get("categories"), list) else []

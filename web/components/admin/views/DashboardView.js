@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { postUrl } from '../../../lib/utils';
 import { newsroomApi } from '../../../lib/api';
@@ -8,6 +8,53 @@ import { ScreenTitle, Postbox } from '../wp/ScreenTitle';
 function formatCount(n) {
   const value = Number(n) || 0;
   return value.toLocaleString('en-US');
+}
+
+function useAnimatedNumber(value, duration = 450) {
+  const target = Number(value) || 0;
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  shownRef.current = shown;
+
+  useEffect(() => {
+    const from = shownRef.current;
+    const to = target;
+    if (from === to) return undefined;
+    const started = performance.now();
+    let frame = 0;
+    const tick = (now) => {
+      const t = Math.min(1, (now - started) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      setShown(Math.round(from + (to - from) * eased));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return shown;
+}
+
+function MonthChartRow({ label, count, max }) {
+  const shown = useAnimatedNumber(count);
+  const pct = max > 0 ? Math.round((Number(count) / max) * 100) : 0;
+  return (
+    <tr>
+      <td className="whitespace-nowrap text-ink-secondary">{shortMonth(label)}</td>
+      <td>
+        <div
+          className="h-[8px] max-w-[140px] overflow-hidden bg-[var(--chip)]"
+          title={`${label}: ${count}`}
+        >
+          <div
+            className="h-full bg-mint transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </td>
+      <td className="text-right tabular-nums">{shown}</td>
+    </tr>
+  );
 }
 
 function shortMonth(label) {
@@ -28,12 +75,16 @@ export function DashboardView({
   pendingCommentsCount,
   canViewPendingCommentsCount,
   postsByMonth,
+  postsChartMax,
   postGrowth30,
   trendingComments,
   trendingHint,
   latestPosts,
   recentCache,
   mediaCount,
+  botPublishedCount,
+  postsSource = 'all',
+  onPostsSourceChange,
   memberStats,
   me,
   access,
@@ -63,7 +114,12 @@ export function DashboardView({
   }, []);
 
   const months = Array.isArray(postsByMonth) ? postsByMonth : [];
-  const maxMonth = Math.max(0, ...months.map((m) => Number(m.count) || 0));
+  const maxMonth = Math.max(
+    0,
+    Number(postsChartMax) || 0,
+    ...months.map((m) => Number(m.count) || 0)
+  );
+  const shownGrowth = useAnimatedNumber(postGrowth30?.current ?? 0);
 
   const pendingComments =
     canViewPendingCommentsCount !== false ? Number(pendingCommentsCount) || 0 : 0;
@@ -79,6 +135,15 @@ export function DashboardView({
           value: published,
           sub: isAuthor ? 'Your live articles' : 'Live articles',
           go: 'posts',
+        }
+      : null,
+    dash.showSiteStats && !isAuthor
+      ? {
+          label: 'Bot published',
+          value: Number(botPublishedCount) || 0,
+          sub: 'News bot articles',
+          go: 'posts',
+          extra: { source: 'bot' },
         }
       : null,
     dash.showPendingComments
@@ -123,7 +188,7 @@ export function DashboardView({
                   <button
                     type="button"
                     className="border-0 bg-transparent p-0 text-left text-[14px] text-mint hover:underline"
-                    onClick={() => onNavigate?.(stat.go)}
+                    onClick={() => onNavigate?.(stat.go, stat.extra)}
                   >
                     <b className="text-ink">{stat.value}</b> {stat.label.toLowerCase()}
                   </button>
@@ -186,57 +251,64 @@ export function DashboardView({
         <div>
           {dash.showGrowth ? (
             <Postbox title="Posts">
-              {postGrowth30?.current != null ? (
-                <p className="mt-0 mb-3 text-[14px]">
-                  <b className="text-[18px] font-normal">{postGrowth30.current}</b>
-                  {' '}published in the last 30 days
-                  {growthDelta != null && Number.isFinite(growthDelta) ? (
-                    <span className="text-ink-secondary">
-                      {' '}
-                      ({growthDelta > 0 ? '+' : ''}
-                      {growthDelta}% vs previous)
-                    </span>
-                  ) : null}
-                </p>
+              {!isAuthor ? (
+                <fieldset className="m-0 mb-3 border-0 p-0">
+                  <legend className="sr-only">Post source</legend>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px]">
+                    {[
+                      { id: 'all', label: 'Combined posts' },
+                      { id: 'bot', label: 'Bot posts' },
+                      { id: 'editorial', label: 'Non-bot posts' },
+                    ].map((opt) => (
+                      <label key={opt.id} className="inline-flex cursor-pointer items-center gap-1.5 text-ink">
+                        <input
+                          type="radio"
+                          name="dash-posts-source"
+                          value={opt.id}
+                          checked={postsSource === opt.id}
+                          onChange={() => onPostsSourceChange?.(opt.id)}
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
               ) : null}
-              {months.length === 0 ? (
-                <p className="m-0 text-ink-secondary">No posts published yet.</p>
-              ) : (
-                <table className="wp-table" aria-label="Posts published by month">
-                  <thead>
-                    <tr>
-                      <th>Month</th>
-                      <th className="w-[52%]"> </th>
-                      <th className="text-right">Posts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {months.map((m) => {
-                      const count = Number(m.count) || 0;
-                      const pct = maxMonth ? Math.round((count / maxMonth) * 100) : 0;
-                      return (
-                        <tr key={m.key || m.label}>
-                          <td className="whitespace-nowrap text-ink-secondary">
-                            {shortMonth(m.label)}
-                          </td>
-                          <td>
-                            <div
-                              className="h-[8px] max-w-[140px] bg-[var(--chip)]"
-                              title={`${m.label}: ${count}`}
-                            >
-                              <div
-                                className="h-full bg-mint"
-                                style={{ width: `${count > 0 ? Math.max(pct, 6) : 0}%` }}
-                              />
-                            </div>
-                          </td>
-                          <td className="text-right tabular-nums">{count}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+              <p className="mt-0 mb-3 text-[14px]">
+                <b className="text-[18px] font-normal tabular-nums">{shownGrowth}</b>
+                {' '}
+                {postsSource === 'bot'
+                  ? 'bot posts published in the last 30 days'
+                  : postsSource === 'editorial'
+                    ? 'non-bot posts published in the last 30 days'
+                    : 'published in the last 30 days'}
+                {growthDelta != null && Number.isFinite(growthDelta) ? (
+                  <span className="text-ink-secondary">
+                    {' '}
+                    ({growthDelta > 0 ? '+' : ''}
+                    {growthDelta}% vs previous)
+                  </span>
+                ) : null}
+              </p>
+              <table className="wp-table" aria-label="Posts published by month">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th className="w-[52%]"> </th>
+                    <th className="text-right">Posts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {months.map((m) => (
+                    <MonthChartRow
+                      key={m.key || m.label}
+                      label={m.label}
+                      count={Number(m.count) || 0}
+                      max={maxMonth}
+                    />
+                  ))}
+                </tbody>
+              </table>
             </Postbox>
           ) : (
             <Postbox title="Your desk">

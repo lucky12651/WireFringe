@@ -46,7 +46,6 @@ SECTIONS = {
     "ai": ["AI & Future Tech"],
     "business": ["Business & Markets"],
     "finance": ["Personal Finance"],
-    "india": ["India News"],
     "sports": ["Sports"],
 }
 

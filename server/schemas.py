@@ -56,6 +56,17 @@ class PaginatedPostsOut(BaseModel):
     total: int
 
 
+class BulkDeletePostsIn(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=100)
+
+
+class BulkDeletePostsOut(BaseModel):
+    ok: bool = True
+    deleted: int = 0
+    skipped: int = 0
+    missing: int = 0
+
+
 class CreatorCountOut(BaseModel):
     username: str
     count: int
@@ -64,6 +75,11 @@ class CreatorCountOut(BaseModel):
 class PostGrowthCountsOut(BaseModel):
     current: int
     prev: int
+
+
+class BotPostCountsOut(BaseModel):
+    published: int = 0
+    total: int = 0
 
 
 class MonthCountOut(BaseModel):

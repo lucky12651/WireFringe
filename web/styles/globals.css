@@ -681,6 +681,11 @@ html[data-theme='light'] .admin-modal-overlay {
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
+.wp-table .check-column {
+  width: 32px;
+  padding-right: 0;
+  vertical-align: middle;
+}
 .wp-table tr:hover td {
   background: var(--bg-hover);
 }
