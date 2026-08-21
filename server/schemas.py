@@ -476,7 +476,7 @@ class TipOut(BaseModel):
 
 
 class FollowIn(BaseModel):
-    kind: Literal["topic", "author"]
+    kind: Literal["topic", "author", "post"]
     target: str = Field(..., min_length=1, max_length=160)
 
 

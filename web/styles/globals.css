@@ -1310,6 +1310,7 @@ html[data-theme='light'] .admin-modal-overlay {
     @apply border-l-2 border-mint pl-4 my-6 text-ink-secondary italic;
   }
   .article-body img, .article-body figure { @apply my-8 rounded-md max-w-full; }
+  .article-body img { cursor: zoom-in; }
   .article-body figcaption { @apply text-sm text-ink-tertiary mt-2 text-center; }
   .article-body pre {
     @apply font-mono text-sm bg-bg-elevated border border-line p-4 rounded-md overflow-x-auto mb-5;
@@ -1345,6 +1346,35 @@ html[data-theme='light'] .admin-modal-overlay {
     color: var(--mint);
     text-decoration-color: var(--mint-dim);
   }
+  .article-body h2 {
+    scroll-margin-top: calc(var(--header-height, 96px) + 16px);
+  }
+  @media (min-width: 1001px) {
+    .article-body .pull-quote {
+      float: right;
+      width: min(42%, 16rem);
+      margin: 0.35em 0 1.1em 1.35em;
+      clear: right;
+    }
+    .article-body .pull-quote blockquote,
+    .article-body .pull-quote {
+      border-left: 3px solid var(--mint);
+      padding-left: 14px;
+      font-size: 1.05em;
+      font-style: italic;
+      color: var(--text-primary);
+    }
+  }
+  @media print {
+    header, footer, aside, nav, .reader-view > .sticky, [class*='AdUnit'], .progress-bar {
+      display: none !important;
+    }
+    .reader-article, .article-body {
+      max-width: none !important;
+      color: #111 !important;
+    }
+  }
+
   .article-body .drop-cap p::first-letter {
     float: left;
     font-family: var(--font-heading);

@@ -208,14 +208,6 @@ export default function HomePage({ initialPosts }) {
               aria-hidden="true"
             />
             <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-line max-[1000px]:pb-7">
-              {frontpage?.breaking ? (
-                <Link
-                  href={postUrl(frontpage.breaking)}
-                  className="block mb-4 px-3 py-2 bg-[#c0392b] text-white no-underline text-[13px] font-semibold"
-                >
-                  Breaking: {frontpage.breaking.title}
-                </Link>
-              ) : null}
               <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
@@ -453,6 +445,11 @@ function CategoryRow({ title, posts, href }) {
             <h3 className="text-[15.5px] font-extrabold leading-snug text-ink mb-2.5 tracking-tight transition-colors group-hover:text-mint">
               {post.title}
             </h3>
+            {excerpt(post, 90) ? (
+              <p className="m-0 mb-2 line-clamp-2 max-h-0 overflow-hidden text-[13px] leading-snug text-ink-secondary opacity-0 transition-all duration-300 group-hover:max-h-16 group-hover:opacity-100">
+                {excerpt(post, 90)}
+              </p>
+            ) : null}
             <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
               <AuthorByline post={post} size="sm" />
             </div>

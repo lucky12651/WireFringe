@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks';
 import { cn } from '../../lib/utils';
@@ -44,17 +45,45 @@ const ITEMS = [
   { id: 'account', label: 'Account', href: '/account', Icon: AccountIcon, match: (path) => path.startsWith('/account') || path.startsWith('/login') || path.startsWith('/signup') },
 ];
 
+function ShareNavIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7" />
+      <path d="M16 6l-4-4-4 4" />
+      <path d="M12 2v14" />
+    </svg>
+  );
+}
+
 export default function MobileBottomNav() {
   const router = useRouter();
   const { me } = useAuth();
   const path = String(router.asPath || router.pathname || '/').split('?')[0];
+  const onPost = path.startsWith('/post/');
+
+  const sharePost = async () => {
+    const shareData = { title: document.title, url: window.location.href };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        /* cancelled */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-[10900] min-[1001px]:hidden border-t border-line bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] backdrop-blur-[8px] pb-[env(safe-area-inset-bottom)]"
       aria-label="Primary"
     >
-      <ul className="grid grid-cols-4 m-0 p-0 list-none h-[58px]">
+      <ul className={`grid m-0 p-0 list-none h-[58px] ${onPost ? 'grid-cols-5' : 'grid-cols-4'}`}>
         {ITEMS.map((item) => {
           const active = item.match(path);
           const href =
@@ -63,7 +92,21 @@ export default function MobileBottomNav() {
               : item.href;
           const Icon = item.Icon;
           return (
-            <li key={item.id} className="min-w-0">
+            <Fragment key={item.id}>
+            {onPost && item.id === 'foryou' ? (
+              <li className="min-w-0">
+                <button
+                  type="button"
+                  onClick={sharePost}
+                  className="relative flex h-full w-full flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 text-ink-muted"
+                  aria-label="Share"
+                >
+                  <ShareNavIcon />
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.08em] leading-none">Share</span>
+                </button>
+              </li>
+            ) : null}
+            <li className="min-w-0">
               <Link
                 href={href}
                 className={cn(
@@ -81,6 +124,7 @@ export default function MobileBottomNav() {
                 </span>
               </Link>
             </li>
+            </Fragment>
           );
         })}
       </ul>

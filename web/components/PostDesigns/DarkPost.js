@@ -8,7 +8,6 @@ import {
   AuthorBioRow,
   HeroImage,
   PAGE,
-  ReadingProgress,
   ShareCluster,
   StoryFlags,
   StoryFooter,
@@ -18,18 +17,30 @@ import {
   Watermark,
   authorBits,
 } from './shared';
+import { KeyPoints, UpdatedStamp } from './reading';
+import { heroCredit } from '../../lib/articleExtras';
 
-export default function DarkPost({ post, router, onOpenComments, sidebarPosts, moreInBucket }) {
+export default function DarkPost({
+  post,
+  router,
+  onOpenComments,
+  sidebarPosts,
+  moreInBucket,
+  headings,
+  keyPoints,
+  prevPost,
+  nextPost,
+  onReader,
+}) {
   const excerpt = postExcerpt(post, 220);
   const { name } = authorBits(post);
 
   return (
     <div className="post-design-dark bg-bg text-ink">
-      <ReadingProgress color="var(--mint)" />
       <Watermark />
 
       <div className={`relative z-[2] ${PAGE} mt-[-50px]`}>
-        <HeroImage src={post.ogImg} ratio="16/7" />
+        <HeroImage src={post.ogImg} ratio="16/7" credit={heroCredit(post)} />
       </div>
 
       <div className={`${PAGE} pt-7`}>
@@ -59,9 +70,11 @@ export default function DarkPost({ post, router, onOpenComments, sidebarPosts, m
         <ShareCluster post={post} onOpenComments={onOpenComments} commentCount={post.commentCount} />
       </div>
 
-      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain">
+      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain" headings={headings}>
         <article>
+          <UpdatedStamp post={post} />
           <StoryFlags post={post} />
+          <KeyPoints points={keyPoints} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
             html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
@@ -69,7 +82,14 @@ export default function DarkPost({ post, router, onOpenComments, sidebarPosts, m
             className="article-body--dark"
           />
           <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-          <StoryFooter post={post} router={router} onOpenComments={onOpenComments} />
+          <StoryFooter
+            post={post}
+            router={router}
+            onOpenComments={onOpenComments}
+            prevPost={prevPost}
+            nextPost={nextPost}
+            onReader={onReader}
+          />
         </article>
       </StoryShell>
     </div>

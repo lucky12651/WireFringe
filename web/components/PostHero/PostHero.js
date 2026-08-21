@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { postExcerpt } from '../../lib/utils';
 import AuthorByline from '../AuthorByline/AuthorByline';
 import { Watermark } from '../PostDesigns/shared';
+import { FadeImg } from '../PostDesigns/reading';
+import { heroCredit } from '../../lib/articleExtras';
 
 function formatPubDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -70,7 +72,7 @@ export default function PostHero({ post, commentCount = 0, onOpenComments }) {
         <div className="relative">
           <div className="border-[10px] md:border-[12px] border-[#1a1a1a] bg-[#0c0c0f] aspect-square overflow-hidden">
             {post?.ogImg ? (
-              <img src={post.ogImg} alt="" className="w-full h-full object-cover" />
+              <FadeImg src={post.ogImg} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full min-h-[200px] bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
             )}
@@ -78,7 +80,9 @@ export default function PostHero({ post, commentCount = 0, onOpenComments }) {
           <p className="font-mono text-xs text-black/60 mt-3 tracking-wide">
             {bucket}
             {post?.date ? ` · ${formatPubDate(post.date)}` : ''}
+            {post?.readMinutes ? ` · ${post.readMinutes} min read` : ''}
           </p>
+          <p className="m-0 mt-1 text-[11px] italic text-black/50">{heroCredit(post)}</p>
         </div>
 
         <div

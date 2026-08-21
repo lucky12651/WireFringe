@@ -8,6 +8,8 @@ import {
   loadAdsenseConfig,
 } from '../../lib/ads';
 import { cn } from '../../lib/utils';
+import { injectHeadingIds } from '../../lib/articleExtras';
+import { ImageLightbox } from '../PostDesigns/reading';
 
 /**
  * Normalize CMS / WordPress-style HTML into clean block paragraphs.
@@ -109,7 +111,9 @@ function isParagraphBlock(html) {
 }
 
 export default function ArticleBody({ html, className = '', magazine = false }) {
-  const blocks = useMemo(() => splitHtmlBlocks(html), [html]);
+  const prepared = useMemo(() => injectHeadingIds(html), [html]);
+  const blocks = useMemo(() => splitHtmlBlocks(prepared), [prepared]);
+  const [lightbox, setLightbox] = useState('');
   const [adCfg, setAdCfg] = useState({
     enabled: true,
     inArticleEnabled: true,
@@ -151,10 +155,11 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
       const isFirstPara = !firstParaDone && isParagraphBlock(block);
       if (isFirstPara) firstParaDone = true;
 
+      const isQuote = /^<blockquote/i.test(String(block || '').trim());
       out.push(
         <div
           key={`b-${idx}`}
-          className={cn(isFirstPara && magazine && 'drop-cap')}
+          className={cn(isFirstPara && magazine && 'drop-cap', isQuote && 'pull-quote')}
           dangerouslySetInnerHTML={{ __html: block }}
         />
       );
@@ -200,5 +205,16 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
     );
   }
 
-  return <div className={bodyClass}>{nodes}</div>;
+  return (
+    <div
+      className={bodyClass}
+      onClick={(e) => {
+        const img = e.target.closest?.('img');
+        if (img?.src && img.closest('.article-body')) setLightbox(img.src);
+      }}
+    >
+      {nodes}
+      {lightbox ? <ImageLightbox src={lightbox} onClose={() => setLightbox('')} /> : null}
+    </div>
+  );
 }

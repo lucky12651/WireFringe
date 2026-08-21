@@ -287,7 +287,7 @@ class UserFollow(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    kind: Mapped[str] = mapped_column(String, nullable=False)  # topic | author
+    kind: Mapped[str] = mapped_column(String, nullable=False)  # topic | author | post
     target: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 

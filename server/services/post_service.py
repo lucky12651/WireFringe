@@ -527,11 +527,13 @@ class PostService:
 
             topics = {_key(f.target) for f in follows if f.kind == "topic" and (f.target or "").strip()}
             authors = {_key(f.target) for f in follows if f.kind == "author" and (f.target or "").strip()}
+            saved = {str(f.target).strip() for f in follows if f.kind == "post" and (f.target or "").strip()}
             public = self.list_posts(public=True)
             picked = [
                 p
                 for p in public
-                if _key(p.bucket) in topics
+                if str(p.id) in saved
+                or _key(p.bucket) in topics
                 or _key(p.creatorName) in authors
                 or _key(p.creator) in authors
             ]

@@ -14,6 +14,8 @@ import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl } from '../lib/utils';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
 import { normalizePostDesign, postHeaderConfig } from '../lib/postDesigns';
+import { extractHeadings, extractKeyPoints, neighborsInCategory } from '../lib/articleExtras';
+import { ReaderView } from '../components/PostDesigns/reading';
 import { useAuth } from '../hooks';
 
 export async function getServerSideProps(context) {
@@ -78,6 +80,7 @@ export default function PostPage({
   const router = useRouter();
   const { me } = useAuth();
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [readerOpen, setReaderOpen] = useState(false);
 
   const slugFromPath = useMemo(() => {
     if (!router.isReady) return '';
@@ -210,6 +213,19 @@ export default function PostPage({
   const isMagazine = !post || design === 'magazine';
   const headerCfg = postHeaderConfig(design, post?.accentColor);
   const openComments = () => setCommentsOpen(true);
+  const headings = useMemo(() => extractHeadings(post?.content || ''), [post?.content]);
+  const keyPoints = useMemo(() => extractKeyPoints(post?.content || ''), [post?.content]);
+  const { prev: prevPost, next: nextPost } = useMemo(
+    () => (post ? neighborsInCategory(post, latest) : { prev: null, next: null }),
+    [post, latest]
+  );
+  const reading = {
+    headings,
+    keyPoints,
+    prevPost,
+    nextPost,
+    onReader: () => setReaderOpen(true),
+  };
 
   return (
     <Layout
@@ -220,6 +236,11 @@ export default function PostPage({
       accentColor={headerCfg.accent || (isMagazine ? accent : null)}
       headerVariant={post ? headerCfg.variant : 'theme'}
       articleTitle={post && !loading && !error ? post.title : ''}
+      articlePostId={post && !loading && !error ? post.id : ''}
+      articleReadMinutes={post?.readMinutes || 0}
+      articleCommentCount={post?.commentCount || 0}
+      onOpenComments={openComments}
+      onReaderView={() => setReaderOpen(true)}
       fullWidth
       mainClassName={!isMagazine ? '!pt-0 md:!pt-0' : ''}
       headerHero={
@@ -252,6 +273,7 @@ export default function PostPage({
                 onOpenComments={openComments}
                 sidebarPosts={sidebarPosts}
                 moreInBucket={moreInBucket}
+                {...reading}
               />
             ) : design === 'banner' ? (
               <BannerPost
@@ -260,6 +282,7 @@ export default function PostPage({
                 onOpenComments={openComments}
                 sidebarPosts={sidebarPosts}
                 moreInBucket={moreInBucket}
+                {...reading}
               />
             ) : design === 'dark' ? (
               <DarkPost
@@ -268,6 +291,7 @@ export default function PostPage({
                 onOpenComments={openComments}
                 sidebarPosts={sidebarPosts}
                 moreInBucket={moreInBucket}
+                {...reading}
               />
             ) : (
               <MagazinePost
@@ -276,8 +300,11 @@ export default function PostPage({
                 onOpenComments={openComments}
                 sidebarPosts={sidebarPosts}
                 moreInBucket={moreInBucket}
+                {...reading}
               />
             )}
+
+            {readerOpen ? <ReaderView post={post} onClose={() => setReaderOpen(false)} /> : null}
 
             <CommentDrawer
               open={commentsOpen}

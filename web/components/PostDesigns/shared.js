@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { postExcerpt, postUrl } from '../../lib/utils';
+import { postExcerpt, postUrl, cn } from '../../lib/utils';
 import { authorPath, sectionPath } from '../../lib/sections';
 import { SITE_NAME } from '../../lib/site';
 import AuthorByline from '../AuthorByline/AuthorByline';
@@ -8,6 +8,7 @@ import FollowBar from '../FollowBar/FollowBar';
 import { CommentsCta } from '../CommentDrawer/CommentDrawer';
 import AdUnit from '../AdUnit/AdUnit';
 import { AD_SLOTS } from '../../lib/ads';
+import { FadeImg, PrevNext, TableOfContents } from './reading';
 
 export const PAGE = 'max-w-[1360px] mx-auto px-5 md:px-10';
 
@@ -61,8 +62,12 @@ export function ReadingProgress({ color = '#00d4aa' }) {
   return (
     <div
       aria-hidden
-      className="fixed top-0 left-0 z-[12000] h-[3px] transition-[width] duration-100 ease-linear"
-      style={{ width: `${width}%`, background: color }}
+      className="fixed left-0 z-[10950] h-[3px] transition-[width] duration-100 ease-linear"
+      style={{
+        width: `${width}%`,
+        background: color,
+        top: 'var(--header-height, 52px)',
+      }}
     />
   );
 }
@@ -281,7 +286,7 @@ export function AuthorBioRow({ post }) {
   );
 }
 
-export function StoryFooter({ post, router, onOpenComments }) {
+export function StoryFooter({ post, router, onOpenComments, prevPost, nextPost, onReader }) {
   return (
     <>
       <CommentsCta count={post.commentCount} onClick={onOpenComments} />
@@ -295,19 +300,36 @@ export function StoryFooter({ post, router, onOpenComments }) {
           ))}
         </p>
       ) : null}
+      {onReader ? (
+        <p className="mt-4">
+          <button
+            type="button"
+            className="border-0 bg-transparent p-0 font-mono text-[11px] font-bold uppercase tracking-wide text-mint"
+            onClick={onReader}
+          >
+            Reader view / Print
+          </button>
+        </p>
+      ) : null}
       <FollowBar topic={post.bucket || 'News'} author={post.creatorName || post.creator} loginNext={router.asPath} />
+      <PrevNext prev={prevPost} next={nextPost} />
     </>
   );
 }
 
-export function HeroImage({ src, ratio = '16/9', className = '' }) {
+export function HeroImage({ src, ratio = '16/9', className = '', credit = '', creditClassName = '' }) {
   return (
-    <div className={`relative w-full overflow-hidden bg-bg-elevated ${className}`} style={{ aspectRatio: ratio }}>
-      {src ? (
-        <img src={src} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <div className="h-full w-full bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
-      )}
+    <div className={className}>
+      <div className="relative w-full overflow-hidden bg-bg-elevated" style={{ aspectRatio: ratio }}>
+        {src ? (
+          <FadeImg src={src} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
+        )}
+      </div>
+      {credit ? (
+        <p className={cn('m-0 mt-2 text-[11px] italic text-ink-tertiary', creditClassName)}>{credit}</p>
+      ) : null}
     </div>
   );
 }
@@ -325,7 +347,7 @@ export function StoryMeta({ post, className = '' }) {
   );
 }
 
-export function MostPopularRail({ posts = [], showMark = false }) {
+export function MostPopularRail({ posts = [], showMark = false, headings = [] }) {
   const list = (posts || []).slice(0, 6);
   return (
     <aside className="relative min-w-0 min-[1001px]:self-stretch">
@@ -337,6 +359,7 @@ export function MostPopularRail({ posts = [], showMark = false }) {
             <span>W</span>
           </span>
         ) : null}
+        <TableOfContents headings={headings} />
         <h3 className="relative z-[1] font-mono text-[13px] tracking-[0.06em] uppercase text-mint font-bold mt-4 mb-1.5">
           Most Popular
         </h3>
@@ -365,7 +388,9 @@ export function MostPopularRail({ posts = [], showMark = false }) {
 export function MoreStoriesBand({ post, moreInBucket = [], sidebarPosts = [], tone = 'plain' }) {
   const stories = (moreInBucket || []).slice(0, 3);
   const tops = (sidebarPosts || []).slice(0, 3);
-  if (!stories.length && !tops.length) return null;
+  const fallback = (sidebarPosts || []).filter((p) => !stories.some((s) => s.id === p.id)).slice(0, 3);
+  const cards = stories.length ? stories : fallback;
+  const empty = !cards.length && !tops.length;
 
   const mint = tone === 'mint';
   const purple = tone === 'purple';
@@ -386,13 +411,22 @@ export function MoreStoriesBand({ post, moreInBucket = [], sidebarPosts = [], to
       <div className={`${PAGE} grid grid-cols-1 min-[1001px]:grid-cols-[1fr_280px] gap-8 min-[1001px]:gap-12`}>
         <div>
           <h3 className={`text-[14px] font-semibold mb-4 ${kicker}`}>
-            More in{' '}
-            <Link href={catHref} className="underline underline-offset-2">
-              {post?.bucket || 'News'}
-            </Link>
+            {stories.length ? (
+              <>
+                More in{' '}
+                <Link href={catHref} className="underline underline-offset-2">
+                  {post?.bucket || 'News'}
+                </Link>
+              </>
+            ) : (
+              'More from Wirefringe'
+            )}
           </h3>
+          {empty ? (
+            <p className="m-0 text-[14px] text-ink-secondary">More stories from the newsroom will land here.</p>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-3 gap-x-5 gap-y-5">
-            {stories.map((p) => (
+            {cards.map((p) => (
               <Link key={p.id} href={postUrl(p)} className="group block text-inherit">
                 <div className={`aspect-[16/9] mb-2 overflow-hidden ${mint || purple ? 'bg-black/10' : 'bg-bg-hover'}`}>
                   {p.ogImg ? (
@@ -410,6 +444,7 @@ export function MoreStoriesBand({ post, moreInBucket = [], sidebarPosts = [], to
               </Link>
             ))}
           </div>
+          )}
         </div>
         <aside>
           <h3 className={`text-[14px] font-extrabold mb-1 ${kicker}`}>Top Stories</h3>
@@ -438,13 +473,21 @@ export function MoreStoriesBand({ post, moreInBucket = [], sidebarPosts = [], to
   );
 }
 
-export function StoryShell({ children, sidebarPosts, moreInBucket, post, bandTone = 'plain', showMark = false }) {
+export function StoryShell({
+  children,
+  sidebarPosts,
+  moreInBucket,
+  post,
+  bandTone = 'plain',
+  showMark = false,
+  headings = [],
+}) {
   return (
     <>
       <div className={`${PAGE} pt-10 md:pt-12 pb-6`}>
         <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_320px] gap-12 min-[1001px]:gap-[70px] items-start min-[1001px]:items-stretch">
           <div className="min-w-0">{children}</div>
-          <MostPopularRail posts={sidebarPosts} showMark={showMark} />
+          <MostPopularRail posts={sidebarPosts} showMark={showMark} headings={headings} />
         </div>
       </div>
       <MoreStoriesBand post={post} moreInBucket={moreInBucket} sidebarPosts={sidebarPosts} tone={bandTone} />

@@ -7,7 +7,7 @@ import { SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
-import { fetcher } from '../../lib/api';
+import { fetcher, newsroomApi } from '../../lib/api';
 
 const NAV = [
   { label: 'Tech', href: '/section/tech' },
@@ -55,9 +55,16 @@ export default function Header({
   accentColor = null,
   articleTitle = '',
   headerVariant = 'theme',
+  articlePostId = '',
+  articleReadMinutes = 0,
+  articleCommentCount = 0,
+  onOpenComments,
 }) {
   const router = useRouter();
-  const { logout: authLogout } = useAuth();
+  const { logout: authLogout, me } = useAuth();
+  const { data: follows, mutate: mutateFollows } = useSWR(me ? '/api/me/follows' : null, fetcher, {
+    revalidateOnFocus: false,
+  });
   const { data: catalog } = useSWR('/api/catalog', fetcher, { revalidateOnFocus: false });
   const navItems =
     Array.isArray(catalog?.header) && catalog.header.length
@@ -67,6 +74,7 @@ export default function Header({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
   const searchRef = useRef(null);
   const headerRef = useRef(null);
   const compactRef = useRef(false);
@@ -111,6 +119,11 @@ export default function Header({
     const apply = () => {
       const next = window.scrollY > 24;
       setScrolled((prev) => (prev === next ? prev : next));
+      if (articleTitle) {
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - doc.clientHeight;
+        setReadProgress(max > 0 ? Math.min(100, (doc.scrollTop / max) * 100) : 0);
+      }
       frame = 0;
     };
     const onScroll = () => {
@@ -240,8 +253,15 @@ export default function Header({
         className={headerClass}
         style={painted && accentColor ? { backgroundColor: accentColor } : undefined}
       >
+        {articleTitle ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[3px] bg-mint"
+            style={{ width: `${readProgress}%` }}
+          />
+        ) : null}
         {compact ? (
-          <div className="relative flex h-[52px] w-full max-w-site mx-auto items-center gap-3 px-4 md:px-6">
+          <div className="relative flex h-[52px] w-full max-w-site mx-auto items-center gap-2 px-4 md:px-6 md:gap-3">
             <Link
               href="/"
               className="flex items-center no-underline text-ink shrink-0"
@@ -251,7 +271,49 @@ export default function Header({
             </Link>
             <span className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold text-ink">
               {articleTitle}
+              {articleReadMinutes ? (
+                <span className="ml-2 font-mono text-[10px] font-bold uppercase tracking-wide opacity-70">
+                  {articleReadMinutes} min
+                </span>
+              ) : null}
             </span>
+            {articlePostId ? (
+              <button
+                type="button"
+                className={iconBtn}
+                aria-label="Save story"
+                title="Save"
+                onClick={async () => {
+                  if (!me) {
+                    router.push(`/login?next=${encodeURIComponent(router.asPath || '/')}`);
+                    return;
+                  }
+                  const saved = (follows || []).some((f) => f.kind === 'post' && String(f.target) === String(articlePostId));
+                  try {
+                    if (saved) await newsroomApi.unfollow('post', articlePostId);
+                    else await newsroomApi.follow('post', articlePostId);
+                    mutateFollows();
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              >
+                <BookmarkIcon filled={(follows || []).some((f) => f.kind === 'post' && String(f.target) === String(articlePostId))} />
+              </button>
+            ) : null}
+            {onOpenComments ? (
+              <button
+                type="button"
+                className="inline-flex items-center overflow-hidden rounded-full border-[1.5px] border-current text-ink hover:border-mint hover:text-mint"
+                onClick={onOpenComments}
+                aria-label="Comments"
+              >
+                <span className="bg-mint px-2 py-0.5 text-[10px] font-extrabold text-black">
+                  {Number(articleCommentCount) || 0}
+                </span>
+                <span className="hidden px-2 py-0.5 text-[10px] font-semibold sm:inline">Comments</span>
+              </button>
+            ) : null}
             {actionIcons}
           </div>
         ) : (
@@ -488,6 +550,14 @@ export default function Header({
         </div>
       </aside>
     </>
+  );
+}
+
+function BookmarkIcon({ filled }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M6 4h12a1 1 0 0 1 1 1v16l-7-4-7 4V5a1 1 0 0 1 1-1z" />
+    </svg>
   );
 }
 

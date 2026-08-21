@@ -9,6 +9,7 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '../../lib/site';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 import { useAuth } from '../../hooks';
 import { cn } from '../../lib/utils';
+import BreakingStrip from '../BreakingStrip/BreakingStrip';
 
 export default function Layout({
   children,
@@ -24,6 +25,11 @@ export default function Layout({
   mainClassName = '',
   articleTitle = '',
   headerVariant = 'theme',
+  articlePostId = '',
+  articleReadMinutes = 0,
+  articleCommentCount = 0,
+  onOpenComments,
+  onReaderView,
 }) {
   const { me } = useAuth();
   const headerUser = me || null;
@@ -52,7 +58,13 @@ export default function Layout({
           accentColor={accent}
           articleTitle={articleTitle}
           headerVariant={headerVariant}
+          articlePostId={articlePostId}
+          articleReadMinutes={articleReadMinutes}
+          articleCommentCount={articleCommentCount}
+          onOpenComments={onOpenComments}
+          onReaderView={onReaderView}
         />
+        <BreakingStrip />
         {headerHero ? (
           <div className="relative mt-[calc(var(--header-height)*-1)] pt-[var(--header-height)]">
             {headerHero}

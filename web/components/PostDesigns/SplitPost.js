@@ -8,7 +8,6 @@ import {
   AuthorBioRow,
   HeroImage,
   PAGE,
-  ReadingProgress,
   ShareCluster,
   StoryFlags,
   StoryFooter,
@@ -18,14 +17,26 @@ import {
   Watermark,
   authorBits,
 } from './shared';
+import { KeyPoints, UpdatedStamp } from './reading';
+import { heroCredit } from '../../lib/articleExtras';
 
-export default function SplitPost({ post, router, onOpenComments, sidebarPosts, moreInBucket }) {
+export default function SplitPost({
+  post,
+  router,
+  onOpenComments,
+  sidebarPosts,
+  moreInBucket,
+  headings,
+  keyPoints,
+  prevPost,
+  nextPost,
+  onReader,
+}) {
   const excerpt = postExcerpt(post, 220);
   const { name } = authorBits(post);
 
   return (
     <div className="post-design-split bg-bg text-ink">
-      <ReadingProgress color="var(--mint)" />
       <Watermark />
 
       <header className={`${PAGE} pt-6 md:pt-8`}>
@@ -36,7 +47,7 @@ export default function SplitPost({ post, router, onOpenComments, sidebarPosts, 
       </header>
 
       <div className={`${PAGE} grid grid-cols-1 items-start gap-8 md:grid-cols-[minmax(260px,42%)_1fr] md:gap-12`}>
-        <HeroImage src={post.ogImg} ratio="4/5" />
+        <HeroImage src={post.ogImg} ratio="4/5" credit={heroCredit(post)} />
         <div className="md:pt-4">
           {excerpt ? (
             <p className="mb-7 text-[clamp(1.15rem,2.2vw,1.65rem)] font-normal leading-[1.45] text-ink-dek [text-wrap:pretty]">
@@ -61,12 +72,14 @@ export default function SplitPost({ post, router, onOpenComments, sidebarPosts, 
         <p className="m-0 text-[11px] italic text-ink-tertiary">{post.bucket || 'Wirefringe'}</p>
       </div>
 
-      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain">
+      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain" headings={headings}>
         <article>
+          <UpdatedStamp post={post} />
           <div className="mb-8 border-y border-line py-5">
             <AuthorBioRow post={post} />
           </div>
           <StoryFlags post={post} />
+          <KeyPoints points={keyPoints} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
             html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
@@ -74,7 +87,14 @@ export default function SplitPost({ post, router, onOpenComments, sidebarPosts, 
             className="article-body--split"
           />
           <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-          <StoryFooter post={post} router={router} onOpenComments={onOpenComments} />
+          <StoryFooter
+            post={post}
+            router={router}
+            onOpenComments={onOpenComments}
+            prevPost={prevPost}
+            nextPost={nextPost}
+            onReader={onReader}
+          />
         </article>
       </StoryShell>
     </div>

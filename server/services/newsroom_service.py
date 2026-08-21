@@ -201,7 +201,7 @@ class NewsroomService:
 
     def follow(self, user_id: int, kind: str, target: str) -> FollowOut:
         t = (target or "").strip()
-        if kind not in {"topic", "author"} or not t:
+        if kind not in {"topic", "author", "post"} or not t:
             raise HTTPException(status_code=400, detail="Invalid follow")
         existing = self.db.execute(
             select(UserFollow).where(

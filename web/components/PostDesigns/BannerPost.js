@@ -9,7 +9,6 @@ import {
   AuthorBioRow,
   HeroImage,
   PAGE,
-  ReadingProgress,
   ShareCluster,
   StoryFlags,
   StoryFooter,
@@ -18,15 +17,26 @@ import {
   TagPills,
   authorBits,
 } from './shared';
+import { KeyPoints, UpdatedStamp } from './reading';
+import { heroCredit } from '../../lib/articleExtras';
 
-export default function BannerPost({ post, router, onOpenComments, sidebarPosts, moreInBucket }) {
+export default function BannerPost({
+  post,
+  router,
+  onOpenComments,
+  sidebarPosts,
+  moreInBucket,
+  headings,
+  keyPoints,
+  prevPost,
+  nextPost,
+  onReader,
+}) {
   const excerpt = postExcerpt(post, 220);
   const { name } = authorBits(post);
 
   return (
     <div className="post-design-banner bg-bg text-ink">
-      <ReadingProgress color="var(--mint)" />
-
       <section className="post-banner-hero relative overflow-hidden bg-[#5b1be4] text-white">
         <div
           aria-hidden
@@ -74,19 +84,21 @@ export default function BannerPost({ post, router, onOpenComments, sidebarPosts,
         </div>
 
         <div className={`${PAGE}`}>
-          <HeroImage src={post.ogImg} ratio="16/7.5" />
+          <HeroImage src={post.ogImg} ratio="16/7.5" credit={heroCredit(post)} creditClassName="text-white/50" />
         </div>
         <div className={`${PAGE} pb-5 pt-2.5`}>
           <p className="m-0 font-mono text-[11px] italic text-white/50">{post.bucket || 'Wirefringe'}</p>
         </div>
       </section>
 
-      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain">
+      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="plain" headings={headings}>
         <article>
+          <UpdatedStamp post={post} />
           <div className="mb-8 border-b border-line pb-5">
             <AuthorBioRow post={post} />
           </div>
           <StoryFlags post={post} />
+          <KeyPoints points={keyPoints} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
             html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
@@ -94,7 +106,14 @@ export default function BannerPost({ post, router, onOpenComments, sidebarPosts,
             className="article-body--banner"
           />
           <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-          <StoryFooter post={post} router={router} onOpenComments={onOpenComments} />
+          <StoryFooter
+            post={post}
+            router={router}
+            onOpenComments={onOpenComments}
+            prevPost={prevPost}
+            nextPost={nextPost}
+            onReader={onReader}
+          />
         </article>
       </StoryShell>
     </div>
