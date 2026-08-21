@@ -8,7 +8,7 @@ import { nextQuery, safeNextPath } from '../lib/utils';
 function destinationAfterAuth(router, user) {
   const next = safeNextPath(router.query?.next, '');
   if (next) return next;
-  return user?.role === 'user' ? '/' : '/admin';
+  return user?.role === 'user' && !user?.canRunBot ? '/' : '/admin';
 }
 
 export default function LoginPageContainer() {

@@ -57,6 +57,8 @@ class Post(Base):
     view_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     extra_categories: Mapped[str | None] = mapped_column(Text, nullable=True)
     featured_in: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Which newsroom account's bot published this story (per-user News Bot).
+    bot_user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
 
 class User(Base):
@@ -92,6 +94,9 @@ class User(Base):
     notify_editorial: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     totp_secret: Mapped[str | None] = mapped_column(String, nullable=True)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # When True, this account can open News Bot and publish bot stories under their byline.
+    can_run_bot: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
@@ -156,13 +161,15 @@ class Category(Base):
 
 class NewsQueue(Base):
     __tablename__ = "news_queue"
+    __table_args__ = (UniqueConstraint("user_id", "link", name="uq_news_queue_user_link"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
-    link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    link: Mapped[str] = mapped_column(String, nullable=False, index=True)
     category: Mapped[str] = mapped_column(String, nullable=False)
     dest_section: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
 
@@ -196,10 +203,12 @@ class PersonalizedFeed(Base):
 
 class RecentNewsCache(Base):
     __tablename__ = "recent_news_cache"
+    __table_args__ = (UniqueConstraint("user_id", "link", name="uq_recent_news_cache_user_link"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String, nullable=False, index=True)
-    link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    link: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
  
 class MediaAsset(Base):
@@ -220,6 +229,7 @@ class BotLog(Base):
     level: Mapped[str] = mapped_column(String, nullable=False, default="INFO")
     message: Mapped[str] = mapped_column(Text, nullable=False)
     module: Mapped[str | None] = mapped_column(String, nullable=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
 

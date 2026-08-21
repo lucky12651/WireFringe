@@ -16,6 +16,7 @@ export function UsersView({
   onDelete,
   onSetPassword,
   onSetRole,
+  onSetBotAccess,
   onTransferPosts,
   onClaimOrphan,
   onReassignOrphan,
@@ -44,6 +45,10 @@ export function UsersView({
   const [roleValue, setRoleValue] = useState('editor');
   const [roleHint, setRoleHint] = useState('');
   const [isSavingRole, setIsSavingRole] = useState(false);
+
+  const [botUser, setBotUser] = useState(null);
+  const [botHint, setBotHint] = useState('');
+  const [isSavingBot, setIsSavingBot] = useState(false);
 
   // Orphan author management
   const [claimAuthor, setClaimAuthor] = useState(null);
@@ -92,6 +97,7 @@ export function UsersView({
   const UserAvatarIcon = Icons.users;
   const KeyIcon = Icons.key;
   const ShieldIcon = Icons.shield;
+  const BotIcon = Icons.bot;
 
   const transferCandidates = useMemo(() => {
     const excludeId = transferUser?.id || userToDelete?.id;
@@ -292,6 +298,46 @@ export function UsersView({
       }
     } finally {
       setIsSavingRole(false);
+    }
+  };
+
+  const userHasBotAccess = (user) => {
+    const role = String(user?.role || '').toLowerCase();
+    if (role === 'admin') return true;
+    return Boolean(user?.canRunBot);
+  };
+
+  const openBotModal = (user) => {
+    setBotUser(user);
+    setBotHint('');
+  };
+
+  const closeBotModal = () => {
+    if (isSavingBot) return;
+    setBotUser(null);
+    setBotHint('');
+  };
+
+  const handleSaveBotAccess = async (e) => {
+    e.preventDefault();
+    if (!botUser || !onSetBotAccess) return;
+    const enable = !userHasBotAccess(botUser);
+    setIsSavingBot(true);
+    setBotHint('');
+    try {
+      const result = await onSetBotAccess(botUser.id, enable);
+      if (result.success) {
+        setSuccessMessage(
+          enable
+            ? `News Bot access granted to "${botUser.displayName || botUser.username}".`
+            : `News Bot access removed from "${botUser.displayName || botUser.username}".`
+        );
+        setBotUser(null);
+      } else {
+        setBotHint(result.error || 'Failed to update bot access.');
+      }
+    } finally {
+      setIsSavingBot(false);
     }
   };
 
@@ -525,7 +571,14 @@ export function UsersView({
                         </div>
                       </td>
                       <td className={tw.td}>
-                        <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>{user.role}</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>{user.role}</span>
+                          {String(user.role || '').toLowerCase() !== 'admin' && userHasBotAccess(user) ? (
+                            <span className={cn(tw.statusBadge, 'bg-bg-hover text-ink-secondary border border-line')}>
+                              Bot
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className={tw.td}>
                         <span className={tw.textMuted}>{Number(user.postCount) || 0}</span>
@@ -541,6 +594,24 @@ export function UsersView({
                           >
                             Transfer posts
                           </button>
+                          {String(user.role || '').toLowerCase() !== 'admin' ? (
+                            <button
+                              type="button"
+                              className={tw.secondaryBtn}
+                              style={{ padding: '6px 10px', fontSize: 12 }}
+                              onClick={() => openBotModal(user)}
+                              title={
+                                userHasBotAccess(user)
+                                  ? 'Remove News Bot access'
+                                  : 'Give this user News Bot access'
+                              }
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <BotIcon size={14} />
+                                {userHasBotAccess(user) ? 'Revoke bot' : 'Grant bot'}
+                              </span>
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             className={tw.iconBtn}
@@ -908,6 +979,55 @@ export function UsersView({
                 </ActionButton>
                 <ActionButton type="submit" size="sm" disabled={isSavingRole}>
                   {isSavingRole ? 'Saving…' : 'Update Role'}
+                </ActionButton>
+              </div>
+            </form>
+      </AdminModal>
+      ) : null}
+
+      {botUser ? (
+      <AdminModal open onClose={isSavingBot ? undefined : closeBotModal}>
+            <div className={tw.modalHeader}>
+              <h3 className={tw.modalTitle}>
+                {userHasBotAccess(botUser) ? 'Revoke News Bot access' : 'Grant News Bot access'}
+              </h3>
+            </div>
+            <form onSubmit={handleSaveBotAccess}>
+              <div className={tw.modalBody}>
+                {userHasBotAccess(botUser) ? (
+                  <p>
+                    Remove News Bot access from{' '}
+                    <strong className="text-ink">{botUser.displayName || botUser.username}</strong>.
+                    They will no longer see the News Bot tab.
+                  </p>
+                ) : (
+                  <p>
+                    Let <strong className="text-ink">{botUser.displayName || botUser.username}</strong>{' '}
+                    open News Bot from their account. New bot stories they run will publish under
+                    their byline. They need an Author or Editor role to sign in to admin.
+                  </p>
+                )}
+                {botHint ? (
+                  <p className={tw.formHint} style={{ marginTop: 8 }}>
+                    {botHint}
+                  </p>
+                ) : null}
+              </div>
+              <div className={tw.modalActions}>
+                <ActionButton
+                  type="button"
+                  size="sm"
+                  onClick={closeBotModal}
+                  disabled={isSavingBot}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton type="submit" size="sm" disabled={isSavingBot}>
+                  {isSavingBot
+                    ? 'Saving…'
+                    : userHasBotAccess(botUser)
+                      ? 'Revoke access'
+                      : 'Grant access'}
                 </ActionButton>
               </div>
             </form>

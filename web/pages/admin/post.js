@@ -94,7 +94,7 @@ export default function AdminPostPage() {
   async function refreshMe() {
     try {
       const out = await api('/api/admin/me', { method: 'GET' });
-      if (out && out.role === 'user') {
+      if (out && out.role === 'user' && !out.canRunBot) {
         router.replace('/');
         return false;
       }

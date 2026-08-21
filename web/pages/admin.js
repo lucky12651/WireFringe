@@ -222,10 +222,16 @@ export default function AdminPage() {
 
   // Restrict access for normal users
   useEffect(() => {
-    if (isAuthed && me?.role === 'user') {
+    if (isAuthed && me?.role === 'user' && !me?.canRunBot) {
       router.replace('/');
     }
   }, [isAuthed, me, router]);
+
+  useEffect(() => {
+    if (!isAuthed || !me) return;
+    if (access.canAccessView(activeView)) return;
+    setActiveView(access.canRunBot ? 'bot' : 'dashboard');
+  }, [isAuthed, me, activeView, access]);
 
   // Load initial data when user is authenticated
   useEffect(() => {
@@ -284,13 +290,13 @@ export default function AdminPage() {
   const handleLogin = async (username, password) => {
     const result = await auth.login(username, password);
     if (result.success) {
-      // Redirect normal users to home
-      if (result.user?.role === 'user') {
+      // Redirect normal readers home unless they have News Bot access
+      if (result.user?.role === 'user' && !result.user?.canRunBot) {
         router.push('/');
         return result;
       }
 
-      setActiveView('dashboard');
+      setActiveView(result.user?.canRunBot && result.user?.role === 'user' ? 'bot' : 'dashboard');
       // Load data after login
       await Promise.all([
         posts.refreshPosts(),
@@ -481,6 +487,7 @@ export default function AdminPage() {
             onDelete={users.deleteUser}
             onSetPassword={users.setUserPassword}
             onSetRole={users.setUserRole}
+            onSetBotAccess={users.setUserBotAccess}
             onTransferPosts={users.transferPosts}
             onClaimOrphan={users.claimOrphan}
             onReassignOrphan={users.reassignOrphan}
@@ -579,7 +586,7 @@ export default function AdminPage() {
   }
 
   // Double guard: If user is authenticated but role is 'user', don't render anything while redirecting
-  if (me?.role === 'user') {
+  if (me?.role === 'user' && !me?.canRunBot) {
     return null;
   }
 

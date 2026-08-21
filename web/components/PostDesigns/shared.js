@@ -243,22 +243,6 @@ export function StoryFlags({ post }) {
           <p className="m-0 mt-2 whitespace-pre-wrap">{post.correction}</p>
         </div>
       ) : null}
-      {post?.sourceUrl || post?.sourceName || post?.isBot ? (
-        <p className="m-0 mb-5 text-[13px] text-ink-secondary">
-          Rewritten from{' '}
-          {post.sourceUrl ? (
-            <a href={post.sourceUrl} className="text-mint" target="_blank" rel="noreferrer">
-              {post.sourceName || post.sourceUrl}
-            </a>
-          ) : (
-            <span>{post.sourceName || 'a partner wire'}</span>
-          )}
-          . Editors review these stories before they go live.{' '}
-          <Link href="/sourcing" className="text-ink">
-            Sourcing policy
-          </Link>
-        </p>
-      ) : null}
     </>
   );
 }

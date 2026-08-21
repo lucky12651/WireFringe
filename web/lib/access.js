@@ -31,7 +31,18 @@ export function roleOf(user) {
   return String(user?.role || user || '').trim().toLowerCase();
 }
 
+export function hasBotAccess(userOrRole) {
+  if (userOrRole && typeof userOrRole === 'object') {
+    if (roleOf(userOrRole) === 'admin') return true;
+    return Boolean(userOrRole.canRunBot);
+  }
+  return roleOf(userOrRole) === 'admin';
+}
+
 export function canAccessView(userOrRole, viewId) {
+  if (viewId === 'bot' || viewId === 'logs') {
+    return hasBotAccess(userOrRole);
+  }
   const role = roleOf(userOrRole);
   const allowed = VIEW_ROLES[viewId];
   if (!allowed) return false;
@@ -45,6 +56,7 @@ export function accessFor(userOrRole) {
   const isAuthor = role === 'author';
   const isDesk = isAdmin || isEditor;
   const isNewsroom = isAdmin || isEditor || isAuthor;
+  const botAccess = hasBotAccess(userOrRole);
 
   return {
     role,
@@ -53,10 +65,10 @@ export function accessFor(userOrRole) {
     isAuthor,
     isDesk,
     isNewsroom,
-    canAccessView: (viewId) => canAccessView(role, viewId),
+    canAccessView: (viewId) => canAccessView(userOrRole, viewId),
     canManageUsers: isAdmin,
     canManageSystem: isAdmin,
-    canRunBot: isAdmin,
+    canRunBot: botAccess,
     canManageAds: isAdmin,
     canManageRedirects: isAdmin,
     canEditMasthead: isAdmin,
@@ -64,7 +76,7 @@ export function accessFor(userOrRole) {
     canProgramHomepage: isDesk,
     canSeeAnalytics: isDesk,
     canSeeInbox: isDesk,
-    canProcessQueue: isDesk,
+    canProcessQueue: isDesk || botAccess,
     canPublish: isDesk,
     canUnpublish: isDesk,
     canPin: isDesk,
@@ -73,7 +85,7 @@ export function accessFor(userOrRole) {
     canDeleteOwnDraft: isNewsroom,
     canModerateComments: isDesk,
     canSeeReports: isDesk,
-    canSeeBotCache: isAdmin,
+    canSeeBotCache: botAccess,
     dashboard: {
       showSiteStats: isDesk,
       showMyStats: isAuthor,
@@ -82,7 +94,7 @@ export function accessFor(userOrRole) {
       showMedia: isNewsroom,
       showGrowth: isDesk,
       showCommentsTrend: isDesk,
-      showBotCache: isAdmin,
+      showBotCache: botAccess,
       showMemberStats: isAdmin,
     },
     label:
@@ -97,9 +109,15 @@ export function accessFor(userOrRole) {
       isAdmin
         ? 'You can see every dashboard number, manage staff, ads, and the news bot.'
         : isEditor
-          ? 'You run the desk: all stories, comments, contact, tips, front page, and analytics. You cannot manage users or the bot.'
+          ? botAccess
+            ? 'You run the desk: all stories, comments, contact, tips, front page, and analytics. You can also use the news bot.'
+            : 'You run the desk: all stories, comments, contact, tips, front page, and analytics. You cannot manage users or the bot.'
           : isAuthor
-            ? 'You see only your own articles and comments. Save as draft or send to review — an editor publishes.'
-            : '',
+            ? botAccess
+              ? 'You see your own articles and comments, and you can use the news bot for your account.'
+              : 'You see only your own articles and comments. Save as draft or send to review — an editor publishes.'
+            : botAccess
+              ? 'You can use the news bot from this account.'
+              : '',
   };
 }

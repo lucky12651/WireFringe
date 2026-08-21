@@ -80,6 +80,21 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
     }
   }, [refreshUsers]);
 
+  const setUserBotAccess = useCallback(async (id, enabled) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updated = await usersApi.setBotAccess(id, enabled);
+      await refreshUsers();
+      return { success: true, user: updated };
+    } catch (err) {
+      setError(err?.message || 'Failed to update bot access');
+      return { success: false, error: err?.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refreshUsers]);
+
   const transferPosts = useCallback(
     async (id, transferToUserId) => {
       try {
@@ -185,6 +200,7 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      setUserBotAccess,
       transferPosts,
       claimOrphan,
       reassignOrphan,
@@ -204,6 +220,7 @@ export function useUsers(posts = [], creatorCountsOverride = null) {
       deleteUser,
       setUserPassword,
       setUserRole,
+      setUserBotAccess,
       transferPosts,
       claimOrphan,
       reassignOrphan,

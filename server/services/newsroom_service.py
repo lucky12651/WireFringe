@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
 from fastapi import HTTPException
-from sqlalchemy import delete, desc, func, or_, select
+from sqlalchemy import case, delete, desc, func, literal, or_, select
 from sqlalchemy.orm import Session
 
 from ..auth import find_user_by_login, hash_password
@@ -34,7 +34,7 @@ from ..schemas import (
     RedirectOut,
     TipOut,
 )
-from .settings_service import SettingsService
+from .settings_service import BOT_CREATOR_KEYS, SettingsService
 
 logger = logging.getLogger(__name__)
 
@@ -272,10 +272,72 @@ class NewsroomService:
             "bySection": [
                 {"bucket": b or "Unknown", "posts": int(c or 0), "views": int(v or 0)} for b, c, v in by_section
             ],
+            "byUser": self._analytics_by_user(),
             "topStories": [
                 {"id": i, "title": t, "bucket": b, "views": int(v or 0)} for i, t, b, v in top
             ],
         }
+
+    def _analytics_by_user(self) -> list[dict]:
+        creator_key = func.lower(
+            func.coalesce(func.nullif(func.trim(Post.creator), ""), literal("unknown"))
+        )
+        published = case((func.lower(func.coalesce(Post.status, "")) == "published", 1), else_=0)
+        rows = self.db.execute(
+            select(
+                creator_key.label("creator"),
+                func.count(Post.id),
+                func.coalesce(func.sum(published), 0),
+                func.coalesce(func.sum(Post.view_count), 0),
+            ).group_by(creator_key)
+        ).all()
+        counts = {
+            str(creator or "unknown"): (int(total or 0), int(pub or 0), int(views or 0))
+            for creator, total, pub, views in rows
+        }
+
+        users = self.db.execute(select(User).order_by(User.username.asc())).scalars().all()
+        seen: set[str] = set()
+        out: list[dict] = []
+        for user in users:
+            username = str(user.username or "").strip()
+            if not username:
+                continue
+            key = username.lower()
+            seen.add(key)
+            total, published_count, views = counts.get(key, (0, 0, 0))
+            display = str(user.display_name or "").strip() or username
+            out.append(
+                {
+                    "username": username,
+                    "displayName": display,
+                    "role": str(user.role or "user"),
+                    "posts": total,
+                    "published": published_count,
+                    "views": views,
+                }
+            )
+
+        bot_keys = {str(k).strip().lower() for k in BOT_CREATOR_KEYS}
+        for key, (total, published_count, views) in counts.items():
+            if key in seen:
+                continue
+            label = "Unknown" if key == "unknown" else key
+            role = "bot" if key in bot_keys else "unassigned"
+            display = "WireFringe" if key in {"wirefringe", "wire fringe"} else label
+            out.append(
+                {
+                    "username": display if role == "bot" else label,
+                    "displayName": display,
+                    "role": role,
+                    "posts": total,
+                    "published": published_count,
+                    "views": views,
+                }
+            )
+
+        out.sort(key=lambda row: (-int(row["posts"]), -int(row["published"]), str(row["username"]).lower()))
+        return out
 
     def issue_token(self, user_id: int, purpose: str, hours: int = 24, minutes: int | None = None) -> str:
         token = secrets.token_urlsafe(32)

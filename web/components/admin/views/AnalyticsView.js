@@ -12,6 +12,13 @@ function formatCount(n) {
   return value.toLocaleString('en-US');
 }
 
+function formatRole(role) {
+  const value = String(role || '').trim().toLowerCase();
+  if (!value) return 'Member';
+  if (value === 'unassigned') return 'No account';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function AnalyticsView() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -49,10 +56,22 @@ export function AnalyticsView() {
   }, [data]);
 
   const stories = Array.isArray(data?.topStories) ? data.topStories : [];
+  const users = useMemo(() => {
+    const rows = Array.isArray(data?.byUser) ? data.byUser : [];
+    const maxPosts = Math.max(1, ...rows.map((r) => Number(r.posts) || 0));
+    return rows
+      .slice()
+      .sort((a, b) => (Number(b.posts) || 0) - (Number(a.posts) || 0))
+      .map((row) => ({
+        ...row,
+        pct: Math.round(((Number(row.posts) || 0) / maxPosts) * 100),
+      }));
+  }, [data]);
   const totalViews = Number(data?.totalViews) || 0;
   const totalPosts = sections.reduce((sum, row) => sum + (Number(row.posts) || 0), 0);
   const sectionCount = sections.length;
   const topViews = Number(stories[0]?.views) || 0;
+  const usersWithPosts = users.filter((row) => (Number(row.posts) || 0) > 0).length;
 
   if (loading) {
     return (
@@ -90,7 +109,7 @@ export function AnalyticsView() {
           Views are counted when someone opens a published story on the site.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           <StatTile
             label="Total views"
             value={formatCount(totalViews)}
@@ -102,6 +121,12 @@ export function AnalyticsView() {
             value={formatCount(totalPosts)}
             hint={`${sectionCount} section${sectionCount === 1 ? '' : 's'}`}
             Icon={Icons.posts}
+          />
+          <StatTile
+            label="Users with posts"
+            value={formatCount(usersWithPosts)}
+            hint={`${formatCount(users.length)} account${users.length === 1 ? '' : 's'} total`}
+            Icon={Icons.users}
           />
           <StatTile
             label="Top story"
@@ -144,6 +169,84 @@ export function AnalyticsView() {
         ) : (
           <EmptyState>No section data yet. Open a published story to start counting views.</EmptyState>
         )}
+        </div>
+      </section>
+
+      <section className="postbox">
+        <h2 className="hndle">Posts by user</h2>
+        <div className="inside">
+          <div className="flex items-baseline justify-between gap-3 mb-4">
+            <p className={cn(tw.adminSectionDesc, 'mb-0')}>
+              How many stories each account has written, plus views on those stories.
+            </p>
+            <span className="text-[12px] text-ink-tertiary">{users.length}</span>
+          </div>
+          {users.length ? (
+            <div className={tw.tableWrap}>
+              <table className={cn(tw.table, 'table-fixed')}>
+                <colgroup>
+                  <col />
+                  <col className="w-[120px]" />
+                  <col className="w-[88px]" />
+                  <col className="w-[110px]" />
+                  <col className="w-[28%]" />
+                  <col className="w-[88px]" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>User</th>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>Role</th>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>Posts</th>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>Published</th>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>Share</th>
+                    <th className={cn(tw.th, 'whitespace-nowrap')}>Views</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((row) => {
+                    const name = row.displayName || row.username || 'Unknown';
+                    const handle = row.username && row.username !== name ? row.username : '';
+                    return (
+                      <tr key={row.username}>
+                        <td className={cn(tw.td, 'align-middle min-w-0')}>
+                          <div className="flex min-w-0 items-baseline gap-2">
+                            <span className="font-semibold text-ink shrink-0">{name}</span>
+                            {handle ? (
+                              <span className="min-w-0 truncate text-[12px] text-ink-tertiary">@{handle}</span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className={cn(tw.td, 'align-middle whitespace-nowrap')}>
+                          <span className={cn(tw.statusBadge, 'bg-mint/10 text-mint border border-mint/25')}>
+                            {formatRole(row.role)}
+                          </span>
+                        </td>
+                        <td className={cn(tw.td, 'align-middle whitespace-nowrap font-semibold tabular-nums text-ink')}>
+                          {formatCount(row.posts)}
+                        </td>
+                        <td className={cn(tw.td, 'align-middle whitespace-nowrap tabular-nums text-ink-secondary')}>
+                          {formatCount(row.published)}
+                        </td>
+                        <td className={cn(tw.td, 'align-middle')}>
+                          <div className="h-2 w-full rounded-full bg-bg-hover border border-line overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-mint"
+                              style={{ width: `${Math.max(row.posts ? 6 : 0, row.pct)}%` }}
+                            />
+                          </div>
+                        </td>
+                        <td className={cn(tw.td, 'align-middle whitespace-nowrap tabular-nums text-ink')}>
+                          {formatCount(row.views)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState>No user post counts yet.</EmptyState>
+          )}
         </div>
       </section>
 

@@ -5,7 +5,7 @@ import { tw } from '../../../lib/tw';
 import { ScreenTitle } from '../wp/ScreenTitle';
 
 /**
- * System / bot logs panel.
+ * Per-account News Bot logs panel.
  * Use as a full page (`embedded={false}`) or inside News Bot tabs (`embedded`).
  */
 export function LogsView({ logs, onRefresh, isLoading, embedded = false }) {

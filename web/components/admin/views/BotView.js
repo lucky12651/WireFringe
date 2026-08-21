@@ -416,6 +416,10 @@ export function BotView({
   return (
     <div className="wp-wrap">
       <ScreenTitle title="News Bot" />
+      <Notice type="info">
+        This News Bot belongs only to {settings?.ownerName || 'your account'}. Feeds, logs, the
+        queue, and bot stories stay separate from every other user.
+      </Notice>
       {hint ? <Notice type={hintOk ? 'success' : 'error'}>{hint}</Notice> : null}
       <NavTabs
         tabs={[

@@ -6,6 +6,7 @@ from slowapi.util import get_remote_address
 from ..auth import create_access_token
 from ..dependencies import get_db, require_admin, require_user
 from ..schemas import (
+    AdminBotAccessRequest,
     AdminPasswordSetRequest,
     AdminRoleUpdateRequest,
     AdminTransferPostsRequest,
@@ -289,6 +290,20 @@ def admin_set_user_role(
     user = require_user(request, db)
     require_admin(user)
     return service.admin_set_role(user_id, payload.role, user)
+
+
+@router.put("/users/{user_id}/bot-access", response_model=UserOut)
+def admin_set_user_bot_access(
+    user_id: int,
+    payload: AdminBotAccessRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+) -> UserOut:
+    """Admin grants or revokes News Bot access for another account."""
+    user = require_user(request, db)
+    require_admin(user)
+    return service.admin_set_bot_access(user_id, payload.enabled, user)
 
 
 @router.post("/users/{user_id:int}/transfer-posts", response_model=OrphanActionOut)

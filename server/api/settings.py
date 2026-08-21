@@ -5,7 +5,8 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_admin, require_user
+from ..bot_scope import bot_byline, bot_user_scope
+from ..dependencies import get_db, require_admin, require_bot_access, require_user
 from ..services.settings_service import SettingsService
 
 router = APIRouter()
@@ -142,10 +143,16 @@ def admin_get_bot(
     service: SettingsService = Depends(get_settings_service),
 ) -> dict:
     user = require_user(request, db)
-    require_admin(user)
-    cfg = service.get_bot()
-    stats = service.get_bot_stats()
-    return {**cfg, "stats": stats}
+    require_bot_access(user)
+    with bot_user_scope(user.id):
+        cfg = service.get_bot(user)
+        stats = service.get_bot_stats(user)
+    return {
+        **cfg,
+        "stats": stats,
+        "ownerId": user.id,
+        "ownerName": bot_byline(user),
+    }
 
 
 @router.put("/admin/bot")
@@ -156,17 +163,24 @@ def admin_update_bot(
     service: SettingsService = Depends(get_settings_service),
 ) -> dict:
     user = require_user(request, db)
-    require_admin(user)
+    require_bot_access(user)
     data = payload.model_dump(exclude_unset=True)
-    cfg = service.update_bot(data)
-    stats = service.get_bot_stats()
+    with bot_user_scope(user.id):
+        service.update_bot(data, user=user)
+        cfg = service.set_bot_operator(user)
+        stats = service.get_bot_stats(user)
     try:
         from ..news_bot import request_bot_cycle
 
         request_bot_cycle()
     except Exception:
         pass
-    return {**cfg, "stats": stats}
+    return {
+        **cfg,
+        "stats": stats,
+        "ownerId": user.id,
+        "ownerName": bot_byline(user),
+    }
 
 
 @router.post("/admin/bot/hide-articles")
@@ -177,8 +191,10 @@ def admin_hide_bot_articles(
 ) -> dict:
     """Hide all bot-generated articles from the public site."""
     user = require_user(request, db)
-    require_admin(user)
-    return service.set_bot_articles_hidden(True)
+    require_bot_access(user)
+    with bot_user_scope(user.id):
+        service.set_bot_operator(user)
+        return service.set_bot_articles_hidden(True, user=user)
 
 
 @router.post("/admin/bot/unhide-articles")
@@ -189,5 +205,7 @@ def admin_unhide_bot_articles(
 ) -> dict:
     """Unhide all bot-generated articles on the public site."""
     user = require_user(request, db)
-    require_admin(user)
-    return service.set_bot_articles_hidden(False)
+    require_bot_access(user)
+    with bot_user_scope(user.id):
+        service.set_bot_operator(user)
+        return service.set_bot_articles_hidden(False, user=user)

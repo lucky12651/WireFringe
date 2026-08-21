@@ -50,6 +50,10 @@ class UserService:
             notifyReplies=bool(getattr(user, "notify_replies", True)),
             notifyEditorial=bool(getattr(user, "notify_editorial", True)),
             totpEnabled=bool(getattr(user, "totp_enabled", False)),
+            canRunBot=bool(
+                getattr(user, "can_run_bot", False)
+                or (user.role or "").strip().lower() == "admin"
+            ),
         )
 
     def _post_counts_by_creator_key(self) -> dict[str, tuple[str, int]]:
@@ -88,6 +92,10 @@ class UserService:
             brandLogoUrl=(getattr(user, "brand_logo_url", None) or None),
             postCount=int(post_count or 0),
             isOrphan=False,
+            canRunBot=bool(
+                getattr(user, "can_run_bot", False)
+                or (user.role or "").strip().lower() == "admin"
+            ),
         )
 
     def authenticate_user(self, username: str, password: str) -> User | None:
@@ -479,6 +487,26 @@ class UserService:
             )
 
         target.role = new_role
+        updated = self.user_repo.update(target)
+        return self._build_user_out(updated)
+
+    def admin_set_bot_access(self, user_id: int, enabled: bool, admin: User) -> UserOut:
+        """Grant or revoke News Bot access for another login account."""
+        if (admin.role or "").strip().lower() != "admin":
+            raise HTTPException(status_code=403, detail="Admin required")
+
+        target = self.user_repo.get(user_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        role = (target.role or "").strip().lower()
+        if role == "admin":
+            raise HTTPException(
+                status_code=400,
+                detail="Admins already have News Bot access",
+            )
+
+        target.can_run_bot = bool(enabled)
         updated = self.user_repo.update(target)
         return self._build_user_out(updated)
 

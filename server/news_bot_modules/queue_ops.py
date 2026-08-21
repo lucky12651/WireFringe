@@ -7,13 +7,22 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
 from .utils import clean_url, is_unusable_story
-from ..models import NewsQueue, Post, RecentNewsCache
+from ..models import NewsQueue, RecentNewsCache
 
 logger = logging.getLogger(__name__)
 
 
-def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
-    """Save RSS items to database news_queue if they don't already exist."""
+def _uid(user_id) -> int | None:
+    try:
+        n = int(user_id)
+        return n if n else None
+    except (TypeError, ValueError):
+        return None
+
+
+def save_to_queue(db: Session, items: List[Dict[str, str]], user_id: int | None = None) -> None:
+    """Save RSS items to this account's news_queue if they don't already exist."""
+    uid = _uid(user_id)
     new_count = 0
     seen_links: set[str] = set()
     for item in items:
@@ -22,25 +31,29 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
             continue
         seen_links.add(link)
         title = (item.get("title") or "").strip()
-        cleaned_title = re.split(r' - \w+', title)[0].strip()
+        cleaned_title = re.split(r" - \w+", title)[0].strip()
 
         if is_unusable_story(title, link):
             continue
 
-        in_queue = db.query(NewsQueue).filter(NewsQueue.link == link).first()
-        if in_queue:
+        q = db.query(NewsQueue).filter(NewsQueue.link == link)
+        q = q.filter(NewsQueue.user_id == uid) if uid else q.filter(NewsQueue.user_id.is_(None))
+        if q.first():
             continue
 
-        # Check against recent cache for faster uniqueness check
-        is_published = db.query(RecentNewsCache).filter(
+        cache_q = db.query(RecentNewsCache).filter(
             or_(
                 RecentNewsCache.link == link,
                 RecentNewsCache.title == title,
-                RecentNewsCache.title == cleaned_title
+                RecentNewsCache.title == cleaned_title,
             )
-        ).first()
-
-        if is_published:
+        )
+        cache_q = (
+            cache_q.filter(RecentNewsCache.user_id == uid)
+            if uid
+            else cache_q.filter(RecentNewsCache.user_id.is_(None))
+        )
+        if cache_q.first():
             continue
 
         db.add(
@@ -50,6 +63,7 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
                 category=item.get("category") or "World",
                 dest_section=(item.get("dest_section") or None),
                 status="pending",
+                user_id=uid,
             )
         )
         try:
@@ -58,14 +72,16 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
         except IntegrityError:
             db.rollback()
             logger.info("Queue already has %s; skipped duplicate.", link)
-    logger.info(f"💾 Step Finished: Saved {new_count} new pending feed links into structural storage.")
+    logger.info("💾 Step Finished: Saved %s new pending feed links into structural storage.", new_count)
 
 
-def get_pending_from_queue(db: Session, limit: int = 24) -> List[NewsQueue]:
+def get_pending_from_queue(db: Session, limit: int = 24, user_id: int | None = None) -> List[NewsQueue]:
     """Newest pending first, then a few recent photo/AI failures. Skip junk URLs."""
+    uid = _uid(user_id)
+    owner = NewsQueue.user_id == uid if uid else NewsQueue.user_id.is_(None)
     pending = (
         db.query(NewsQueue)
-        .filter(NewsQueue.status == "pending")
+        .filter(NewsQueue.status == "pending", owner)
         .order_by(NewsQueue.created_at.desc())
         .limit(limit)
         .all()
@@ -75,7 +91,7 @@ def get_pending_from_queue(db: Session, limit: int = 24) -> List[NewsQueue]:
     if remaining:
         retries = (
             db.query(NewsQueue)
-            .filter(NewsQueue.status.in_(["failed_image", "failed_gen"]))
+            .filter(NewsQueue.status.in_(["failed_image", "failed_gen"]), owner)
             .order_by(NewsQueue.created_at.desc())
             .limit(remaining)
             .all()
@@ -84,64 +100,78 @@ def get_pending_from_queue(db: Session, limit: int = 24) -> List[NewsQueue]:
     usable: List[NewsQueue] = []
     for item in [*pending, *retries]:
         if is_unusable_story(item.title, item.link):
-            update_queue_status(db, item.link, "skipped")
+            update_queue_status(db, item.link, "skipped", user_id=uid)
             continue
         usable.append(item)
     return usable
 
 
-def cleanup_old_queue_items(db: Session, hours: int = 24) -> int:
-    """Delete items from news_queue that are older than specified hours."""
+def cleanup_old_queue_items(db: Session, hours: int = 24, user_id: int | None = None) -> int:
+    """Delete this account's queue rows older than the given hours."""
+    uid = _uid(user_id)
     threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-    # Filter out items older than threshold. 
-    # Note: we use >= if we want to keep them, but here we want to delete them.
-    deleted = db.query(NewsQueue).filter(NewsQueue.created_at < threshold).delete()
+    q = db.query(NewsQueue).filter(NewsQueue.created_at < threshold)
+    q = q.filter(NewsQueue.user_id == uid) if uid else q.filter(NewsQueue.user_id.is_(None))
+    deleted = q.delete(synchronize_session=False)
     db.commit()
     if deleted > 0:
-        logger.info(f"🧹 Cleaned up {deleted} old items from the news queue (> {hours}h old).")
+        logger.info("🧹 Cleaned up %s old items from the news queue (> %sh old).", deleted, hours)
     return deleted
 
 
-def update_queue_status(db: Session, link: str, status: str) -> None:
-    """Update the status of a specific link in database news_queue."""
-    item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
+def update_queue_status(db: Session, link: str, status: str, user_id: int | None = None) -> None:
+    """Update the status of a specific link in this account's news_queue."""
+    uid = _uid(user_id)
+    q = db.query(NewsQueue).filter(NewsQueue.link == link)
+    q = q.filter(NewsQueue.user_id == uid) if uid else q.filter(NewsQueue.user_id.is_(None))
+    item = q.first()
     if item:
         item.status = status
         db.commit()
 
 
-def is_duplicate(db: Session, source_url: str, resolved_url: str = None, title: str = None) -> bool:
-    """Check if post is a duplicate by link (original or resolved) or title using recent cache."""
+def is_duplicate(
+    db: Session,
+    source_url: str,
+    resolved_url: str = None,
+    title: str = None,
+    user_id: int | None = None,
+) -> bool:
+    """Check if this account already published the story (recent cache)."""
+    uid = _uid(user_id)
     filters = [RecentNewsCache.link == source_url]
     if resolved_url and resolved_url != source_url:
         filters.append(RecentNewsCache.link == resolved_url)
-
     if title:
         filters.append(RecentNewsCache.title == title)
-
     query = db.query(RecentNewsCache).filter(or_(*filters))
+    query = query.filter(RecentNewsCache.user_id == uid) if uid else query.filter(RecentNewsCache.user_id.is_(None))
     return query.first() is not None
 
 
-def add_to_recent_cache(db: Session, title: str, link: str) -> None:
-    """Add a published post to the recent cache."""
+def add_to_recent_cache(db: Session, title: str, link: str, user_id: int | None = None) -> None:
+    """Add a published post to this account's recent cache."""
+    uid = _uid(user_id)
     try:
-        # Check if already in cache to avoid UniqueConstraint errors
-        existing = db.query(RecentNewsCache).filter(RecentNewsCache.link == link).first()
+        q = db.query(RecentNewsCache).filter(RecentNewsCache.link == link)
+        q = q.filter(RecentNewsCache.user_id == uid) if uid else q.filter(RecentNewsCache.user_id.is_(None))
+        existing = q.first()
         if not existing:
-            new_cache_item = RecentNewsCache(title=title, link=link)
-            db.add(new_cache_item)
+            db.add(RecentNewsCache(title=title, link=link, user_id=uid))
             db.commit()
     except Exception as e:
         db.rollback()
-        logger.error(f"Error adding to recent cache: {e}")
+        logger.error("Error adding to recent cache: %s", e)
 
 
-def cleanup_recent_cache(db: Session, hours: int = 2) -> int:
-    """Delete items from recent_news_cache that are older than specified hours."""
+def cleanup_recent_cache(db: Session, hours: int = 2, user_id: int | None = None) -> int:
+    """Delete this account's recent-cache rows older than the given hours."""
+    uid = _uid(user_id)
     threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-    deleted = db.query(RecentNewsCache).filter(RecentNewsCache.created_at < threshold).delete()
+    q = db.query(RecentNewsCache).filter(RecentNewsCache.created_at < threshold)
+    q = q.filter(RecentNewsCache.user_id == uid) if uid else q.filter(RecentNewsCache.user_id.is_(None))
+    deleted = q.delete(synchronize_session=False)
     db.commit()
     if deleted > 0:
-        logger.info(f"🧹 Cleaned up {deleted} items from the recent news cache (> {hours}h old).")
+        logger.info("🧹 Cleaned up %s items from the recent news cache (> %sh old).", deleted, hours)
     return deleted

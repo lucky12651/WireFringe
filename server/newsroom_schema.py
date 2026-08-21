@@ -25,6 +25,7 @@ POST_COLUMNS = {
     "extra_categories": "TEXT",
     "featured_in": "TEXT",
     "design": "VARCHAR",
+    "bot_user_id": "INTEGER REFERENCES users(id)",
 }
 
 USER_COLUMNS = {
@@ -34,6 +35,7 @@ USER_COLUMNS = {
     "notify_editorial": "BOOLEAN NOT NULL DEFAULT TRUE",
     "totp_secret": "VARCHAR",
     "totp_enabled": "BOOLEAN NOT NULL DEFAULT FALSE",
+    "can_run_bot": "BOOLEAN NOT NULL DEFAULT FALSE",
 }
 
 CREATE_TABLES = [
@@ -183,5 +185,66 @@ def apply_newsroom_schema() -> None:
             qcols = {c["name"] for c in inspector.get_columns("news_queue")}
             if "dest_section" not in qcols:
                 conn.execute(text("ALTER TABLE news_queue ADD COLUMN dest_section VARCHAR"))
+            if "user_id" not in qcols:
+                conn.execute(text("ALTER TABLE news_queue ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            conn.execute(text("ALTER TABLE news_queue DROP CONSTRAINT IF EXISTS news_queue_link_key"))
+            conn.execute(text("DROP INDEX IF EXISTS news_queue_link_key"))
+            conn.execute(
+                text(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_news_queue_user_link
+                    ON news_queue ((COALESCE(user_id, 0)), link)
+                    """
+                )
+            )
+
+        if "recent_news_cache" in tables:
+            ccols = {c["name"] for c in inspector.get_columns("recent_news_cache")}
+            if "user_id" not in ccols:
+                conn.execute(text("ALTER TABLE recent_news_cache ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            conn.execute(text("ALTER TABLE recent_news_cache DROP CONSTRAINT IF EXISTS recent_news_cache_link_key"))
+            conn.execute(text("DROP INDEX IF EXISTS recent_news_cache_link_key"))
+            conn.execute(
+                text(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS uq_recent_news_cache_user_link
+                    ON recent_news_cache ((COALESCE(user_id, 0)), link)
+                    """
+                )
+            )
+
+        if "bot_logs" in tables:
+            lcols = {c["name"] for c in inspector.get_columns("bot_logs")}
+            if "user_id" not in lcols:
+                conn.execute(text("ALTER TABLE bot_logs ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+
+        owner_id = conn.execute(
+            text(
+                """
+                SELECT id FROM users
+                WHERE lower(role) = 'admin'
+                ORDER BY id ASC
+                LIMIT 1
+                """
+            )
+        ).scalar()
+        if owner_id is not None:
+            conn.execute(text("UPDATE news_queue SET user_id = :uid WHERE user_id IS NULL"), {"uid": owner_id})
+            conn.execute(
+                text("UPDATE recent_news_cache SET user_id = :uid WHERE user_id IS NULL"),
+                {"uid": owner_id},
+            )
+            conn.execute(text("UPDATE bot_logs SET user_id = :uid WHERE user_id IS NULL"), {"uid": owner_id})
+            conn.execute(
+                text(
+                    """
+                    UPDATE posts
+                    SET bot_user_id = :uid
+                    WHERE bot_user_id IS NULL
+                      AND COALESCE(is_bot, FALSE) = TRUE
+                    """
+                ),
+                {"uid": owner_id},
+            )
 
     logger.info("Newsroom schema applied.")

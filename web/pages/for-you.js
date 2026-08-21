@@ -73,7 +73,7 @@ export default function ForYouPage() {
         <div className="pb-0 bg-transparent">
           <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
             <div
-              className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-dotted border-line pointer-events-none z-[1]"
+              className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] w-0 border-l-2 border-dotted border-line-strong pointer-events-none z-[1]"
               aria-hidden="true"
             />
             <div className="min-w-0 pt-6 pr-0 pb-16 min-[1001px]:pr-9">
@@ -92,7 +92,7 @@ export default function ForYouPage() {
               {posts.slice(5).map((post) => (
                 <article
                   key={post.id}
-                  className="group pt-[22px] pb-[22px] border-b border-dotted border-line"
+                  className="group pt-[22px] pb-[22px] border-b-2 border-dotted border-line-strong"
                 >
                   <div className="flex items-center gap-2.5 mb-3">
                     <AuthorByline

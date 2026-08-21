@@ -109,14 +109,14 @@ export default function HeroSection({ posts = [] }) {
       </Link>
 
       {grid.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-dotted border-line mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t-2 border-dotted border-line-strong mt-2">
           {grid.map((post, i) => (
             <article
               key={post.id}
               className={cn(
-                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b border-dotted border-line transition-colors hover:bg-bg-hover/40',
+                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b-2 border-dotted border-line-strong transition-colors hover:bg-bg-hover/40',
                 i % 2 === 0
-                  ? 'md:pr-[22px] md:border-r md:border-dotted md:border-line md:pl-0'
+                  ? 'md:pr-[22px] md:border-r-2 md:border-dotted md:border-line-strong md:pl-0'
                   : 'md:pl-[22px] md:pr-0',
                 'px-0'
               )}

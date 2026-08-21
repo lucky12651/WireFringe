@@ -118,6 +118,7 @@ class MeOut(BaseModel):
     notifyReplies: bool = True
     notifyEditorial: bool = True
     totpEnabled: bool = False
+    canRunBot: bool = False
 
 
 class TokenOut(BaseModel):
@@ -147,6 +148,7 @@ class UserOut(BaseModel):
     # Extended for admin user management
     postCount: int = 0
     isOrphan: bool = False  # True when posts.creator has no matching users row
+    canRunBot: bool = False
 
 
 class UserCreate(BaseModel):
@@ -242,6 +244,12 @@ class AdminRoleUpdateRequest(BaseModel):
     """Admin changes another user's role."""
 
     role: str = Field(..., min_length=1, max_length=32)
+
+
+class AdminBotAccessRequest(BaseModel):
+    """Admin grants or revokes News Bot access for another account."""
+
+    enabled: bool
 
 
 class AdminUserDeleteRequest(BaseModel):

@@ -148,7 +148,7 @@ export default function StreamFeed({
             return (
               <article
                 key={post.id}
-                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b border-dotted border-line animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-bg-hover/50 hover:rounded-sm"
+                className="group pt-[22px] pr-1 pb-[22px] pl-0 border-b-2 border-dotted border-line-strong animate-fade-up shrink-0 transition-colors last:border-b-0 last:pb-2 hover:bg-bg-hover/50 hover:rounded-sm"
               >
                 <div className="flex items-center gap-2.5 mb-3">
                   <AuthorByline
@@ -313,7 +313,7 @@ export default function StreamFeed({
       )}
 
       {showNewsletter && NewsletterComponent ? (
-        <div id="newsletter" className="mt-3 pt-3.5 border-t border-dotted border-line shrink-0">
+        <div id="newsletter" className="mt-3 pt-3.5 border-t-2 border-dotted border-line-strong shrink-0">
           {NewsletterComponent}
         </div>
       ) : null}

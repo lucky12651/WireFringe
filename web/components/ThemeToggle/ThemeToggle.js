@@ -48,62 +48,87 @@ export default function ThemeToggle({ className = '', compact = false }) {
     setThemeState(next);
   };
 
-  const iconSize = compact ? 12 : 15;
+  const iconSize = compact ? 12 : 14;
+  const isLight = theme === 'light';
+
+  if (compact) {
+    return (
+      <div
+        className={cn('inline-flex h-8 items-center gap-px bg-transparent p-0', className)}
+        role="group"
+        aria-label="Color theme"
+      >
+        <button
+          type="button"
+          onClick={() => choose('light')}
+          aria-pressed={isLight}
+          aria-label="Light mode"
+          className={cn(
+            'inline-flex size-[22px] cursor-pointer items-center justify-center rounded-[2px] border-0 transition-colors duration-150',
+            isLight
+              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
+              : 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
+          )}
+        >
+          <SunIcon size={iconSize} />
+        </button>
+        <button
+          type="button"
+          onClick={() => choose('dark')}
+          aria-pressed={!isLight}
+          aria-label="Dark mode"
+          className={cn(
+            'inline-flex size-[22px] cursor-pointer items-center justify-center rounded-[2px] border-0 transition-colors duration-150',
+            !isLight
+              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
+              : 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
+          )}
+        >
+          <MoonIcon size={iconSize} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
-        compact
-          ? 'inline-flex h-8 items-center gap-px bg-transparent p-0'
-          : 'inline-flex items-center gap-1 rounded-full border border-line bg-bg-elevated p-1 shadow-sm',
+        'relative isolate grid h-10 w-full grid-cols-2 items-stretch overflow-hidden rounded-pill border border-line bg-bg-secondary p-[3px]',
         className
       )}
       role="group"
       aria-label="Color theme"
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-[3px] z-0 w-[calc(50%-3px)] rounded-pill bg-mint shadow-mint transition-[left] duration-200 ease-out"
+        style={{ left: isLight ? '3px' : '50%' }}
+      />
       <button
         type="button"
         onClick={() => choose('light')}
-        aria-pressed={theme === 'light'}
+        aria-pressed={isLight}
         aria-label="Light mode"
         className={cn(
-          'inline-flex cursor-pointer items-center justify-center border-0 transition-colors duration-150',
-          compact
-            ? 'size-[22px] rounded-[2px]'
-            : 'h-8 gap-1.5 rounded-full px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em]',
-          theme === 'light'
-            ? compact
-              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
-              : 'bg-mint text-black'
-            : compact
-              ? 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
-              : 'bg-transparent text-ink-tertiary hover:text-ink'
+          'relative z-[1] inline-flex min-w-0 appearance-none cursor-pointer items-center justify-center gap-1.5 rounded-pill border-0 bg-transparent font-mono text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-150',
+          isLight ? 'text-black' : 'text-ink-muted hover:text-ink'
         )}
       >
         <SunIcon size={iconSize} />
-        {compact ? null : 'Light'}
+        Light
       </button>
       <button
         type="button"
         onClick={() => choose('dark')}
-        aria-pressed={theme === 'dark'}
+        aria-pressed={!isLight}
         aria-label="Dark mode"
         className={cn(
-          'inline-flex cursor-pointer items-center justify-center border-0 transition-colors duration-150',
-          compact
-            ? 'size-[22px] rounded-[2px]'
-            : 'h-8 gap-1.5 rounded-full px-3 font-mono text-[10px] font-bold uppercase tracking-[0.1em]',
-          theme === 'dark'
-            ? compact
-              ? 'bg-mint text-[var(--admin-accent-fg,#111)]'
-              : 'bg-mint text-black shadow-mint'
-            : compact
-              ? 'bg-transparent text-[var(--admin-rail-muted,#8a8a8a)] hover:bg-[var(--admin-rail-hover)] hover:text-[var(--admin-rail-fg,#fff)]'
-              : 'bg-transparent text-ink-tertiary hover:text-ink'
+          'relative z-[1] inline-flex min-w-0 appearance-none cursor-pointer items-center justify-center gap-1.5 rounded-pill border-0 bg-transparent font-mono text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-150',
+          !isLight ? 'text-black' : 'text-ink-muted hover:text-ink'
         )}
       >
         <MoonIcon size={iconSize} />
-        {compact ? null : 'Dark'}
+        Dark
       </button>
     </div>
   );

@@ -1,47 +1,43 @@
 import logging
+
+from .bot_scope import current_bot_user_id
 from .db import SessionLocal
 from .models import BotLog
 
+
 class DBHandler(logging.Handler):
-    """
-    A custom logging handler that writes log records to the database.
-    """
+    """Write bot-cycle log records to the database, scoped to the current bot account."""
+
     def emit(self, record):
-        # Avoid infinite recursion if the DB operation itself logs something
-        if record.name == 'sqlalchemy.engine':
+        if record.name == "sqlalchemy.engine":
             return
-            
+        user_id = current_bot_user_id.get()
+        if user_id is None:
+            return
+
         try:
             db = SessionLocal()
             log_entry = BotLog(
                 level=record.levelname,
                 message=self.format(record),
-                module=record.module
+                module=record.module,
+                user_id=int(user_id),
             )
             db.add(log_entry)
             db.commit()
             db.close()
         except Exception:
-            # If database logging fails, we don't want to crash the application.
-            # We could log to stderr here if needed.
             pass
 
+
 def setup_db_logging():
-    """
-    Configure database logging handler.
-    """
-    logger = logging.getLogger() # root logger
-    
-    # Check if DBHandler is already added to avoid duplicates
+    logger = logging.getLogger()
+
     for handler in logger.handlers:
         if isinstance(handler, DBHandler):
             return
-            
+
     db_handler = DBHandler()
     db_handler.setLevel(logging.INFO)
-    
-    # Optional: Use a specific format for DB logs
-    formatter = logging.Formatter('%(message)s')
-    db_handler.setFormatter(formatter)
-    
+    db_handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(db_handler)

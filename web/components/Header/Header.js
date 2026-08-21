@@ -496,7 +496,7 @@ export default function Header({
               </button>
             </div>
           )}
-          <ThemeToggle className="w-full justify-center mb-7" />
+          <ThemeToggle className="mb-7" />
           {(catalog?.header?.length
             ? [
                 { title: 'Sections', items: catalog.header.map((s) => ({ label: s.label, href: s.href })) },

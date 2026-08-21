@@ -6,7 +6,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff
+from ..bot_scope import bot_user_scope
+from ..dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff, require_staff_or_bot
 from ..models import User
 from ..schemas import (
     BotPostCountsOut,
@@ -237,8 +238,8 @@ def admin_get_news_queue(
 ) -> list[NewsQueueItem]:
     """Get pending news from CSV queue."""
     user = require_user(request, db)
-    require_staff(user)
-    return service.get_news_queue()
+    require_staff_or_bot(user)
+    return service.get_news_queue(user_id=user.id)
 
 
 @router.post("/admin/posts/queue/process")
@@ -249,19 +250,26 @@ async def admin_process_queue_item(
 ):
     """Manually trigger processing of a queue item."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
+    from ..services.settings_service import SettingsService
+    SettingsService(db).set_bot_operator(user)
     
     from ..news_bot import NewsBot
     bot = NewsBot()
     try:
         # Find the item in DB
         from ..models import NewsQueue
-        item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
+        item = (
+            db.query(NewsQueue)
+            .filter(NewsQueue.link == link, NewsQueue.user_id == user.id)
+            .first()
+        )
         if not item:
             raise HTTPException(status_code=404, detail="Queue item not found")
         
-        logger.info(f"Manual process triggered for: {link}")
-        success = await bot.process_item(db, item)
+        with bot_user_scope(user.id):
+            logger.info(f"Manual process triggered for: {link}")
+            success = await bot.process_item(db, item, user=user)
         
         if not success:
             # Refresh item to get latest status (e.g. failed_scrape)
@@ -289,9 +297,13 @@ def admin_delete_queue_item(
 ):
     """Delete an item from the news queue."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
     from ..models import NewsQueue
-    item = db.query(NewsQueue).filter(NewsQueue.link == link).first()
+    item = (
+        db.query(NewsQueue)
+        .filter(NewsQueue.link == link, NewsQueue.user_id == user.id)
+        .first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="Queue item not found")
     
@@ -308,9 +320,11 @@ def admin_bulk_delete_queue_items(
 ):
     """Bulk delete items from the news queue."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
     from ..models import NewsQueue
-    db.query(NewsQueue).filter(NewsQueue.link.in_(links)).delete(synchronize_session=False)
+    db.query(NewsQueue).filter(
+        NewsQueue.link.in_(links), NewsQueue.user_id == user.id
+    ).delete(synchronize_session=False)
     db.commit()
     return {"success": True}
 
@@ -323,21 +337,26 @@ async def admin_bulk_process_queue_items(
 ):
     """Bulk process items from the news queue."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
+    from ..services.settings_service import SettingsService
+    SettingsService(db).set_bot_operator(user)
     
     from ..news_bot import NewsBot
     bot = NewsBot()
     results = []
     try:
         from ..models import NewsQueue
-        items = db.query(NewsQueue).filter(NewsQueue.link.in_(links)).all()
+        items = (
+            db.query(NewsQueue)
+            .filter(NewsQueue.link.in_(links), NewsQueue.user_id == user.id)
+            .all()
+        )
         
-        for item in items:
-            success = await bot.process_item(db, item)
-            results.append({"link": item.link, "success": success})
-            # Add a small delay to be polite to target servers during bulk processing
-            await asyncio.sleep(2)
-            
+        with bot_user_scope(user.id):
+            for item in items:
+                success = await bot.process_item(db, item, user=user)
+                results.append({"link": item.link, "success": success})
+                await asyncio.sleep(2)
         return {"success": True, "results": results}
     finally:
         await bot.close()
@@ -350,9 +369,15 @@ def admin_get_recent_cache(
 ) -> list[RecentCacheItem]:
     """Get recently published items from cache."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
     from ..models import RecentNewsCache
-    items = db.query(RecentNewsCache).order_by(RecentNewsCache.created_at.desc()).limit(50).all()
+    items = (
+        db.query(RecentNewsCache)
+        .filter(RecentNewsCache.user_id == user.id)
+        .order_by(RecentNewsCache.created_at.desc())
+        .limit(50)
+        .all()
+    )
     return [
         RecentCacheItem(
             title=item.title,
@@ -370,7 +395,9 @@ async def admin_refresh_queue_feeds(
 ):
     """Manually trigger RSS feed collection to find new links."""
     user = require_user(request, db)
-    require_staff(user)
+    require_staff_or_bot(user)
+    from ..services.settings_service import SettingsService as _BotSettings
+    _BotSettings(db).set_bot_operator(user)
     
     from ..news_bot import NewsBot
     from ..news_bot_modules.bot_catalog import active_feeds
@@ -379,17 +406,18 @@ async def admin_refresh_queue_feeds(
 
     bot = NewsBot()
     try:
-        cfg = SettingsService(db).get_bot()
-        all_items = []
-        for feed in active_feeds(cfg):
-            items = await fetch_rss_items(
-                feed["section"],
-                feed["url"],
-                bot.http_client,
-                max_age_hours=int(cfg.get("maxAgeHours") or 6),
-            )
-            all_items.extend(items[:10])
-        bot.save_to_queue(db, all_items)
+        with bot_user_scope(user.id):
+            cfg = SettingsService(db).get_bot(user)
+            all_items = []
+            for feed in active_feeds(cfg):
+                items = await fetch_rss_items(
+                    feed["section"],
+                    feed["url"],
+                    bot.http_client,
+                    max_age_hours=int(cfg.get("maxAgeHours") or 6),
+                )
+                all_items.extend(items[:10])
+            bot.save_to_queue(db, all_items, user_id=user.id)
         return {"success": True, "count": len(all_items)}
     finally:
         await bot.close()

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from ..models import AppSetting, Post
+from ..bot_scope import bot_byline, bot_settings_key
+from ..models import AppSetting, Post, User
 from ..news_bot_modules.bot_catalog import (
     COUNTRIES,
     DEFAULT_FOCUS_NOTE,
@@ -66,6 +68,8 @@ DEFAULT_BOT: dict[str, Any] = {
     "feeds": list(FEED_CATALOG),
     "writerPrompt": DEFAULT_WRITER_PROMPT,
     "focusNote": DEFAULT_FOCUS_NOTE,
+    "publishCreator": "Wirefringe",
+    "operatorUserId": None,
 }
 
 ADSENSE_KEY = "adsense"
@@ -220,12 +224,22 @@ class SettingsService:
             "adsTxt": cfg.get("adsTxt") or "",
         }
 
-    # ── News Bot ─────────────────────────────────────────────
+    # ── News Bot (per account) ────────────────────────────────
 
-    def get_bot(self) -> dict[str, Any]:
-        data = self._load_json(BOT_KEY, DEFAULT_BOT)
+    def _bot_uid(self, user=None, user_id: int | None = None) -> int | None:
+        try:
+            uid = int(user_id or getattr(user, "id", 0) or 0)
+        except (TypeError, ValueError):
+            uid = 0
+        return uid or None
+
+    def _legacy_bot_owner_id(self) -> int | None:
+        return self.db.execute(
+            select(User.id).where(func.lower(User.role) == "admin").order_by(User.id.asc()).limit(1)
+        ).scalar_one_or_none()
+
+    def _normalize_bot(self, data: dict[str, Any]) -> dict[str, Any]:
         data["feeds"] = merge_feed_catalog(data.get("feeds"))
-        # Keep saved empty lists / blank prompt. Defaults already fill missing keys.
         if not isinstance(data.get("countries"), list):
             data["countries"] = list(DEFAULT_BOT["countries"])
         if not isinstance(data.get("sections"), list):
@@ -237,8 +251,40 @@ class SettingsService:
         data["catalog"] = {"countries": COUNTRIES, "sections": SECTIONS}
         return data
 
-    def update_bot(self, payload: dict[str, Any]) -> dict[str, Any]:
-        current = self.get_bot()
+    def _fresh_bot_defaults(self) -> dict[str, Any]:
+        data = copy.deepcopy(DEFAULT_BOT)
+        data["enabled"] = False
+        return data
+
+    def get_bot(self, user=None, user_id: int | None = None) -> dict[str, Any]:
+        uid = self._bot_uid(user, user_id)
+        if not uid:
+            return self._normalize_bot(self._fresh_bot_defaults())
+
+        key = bot_settings_key(uid)
+        raw = self._get_raw(key)
+        if not raw:
+            owner = self._legacy_bot_owner_id()
+            if owner and int(owner) == uid:
+                legacy = self._get_raw(BOT_KEY)
+                if legacy:
+                    self._set_raw(key, legacy)
+                    raw = legacy
+        if not raw:
+            return self._normalize_bot(self._fresh_bot_defaults())
+        return self._normalize_bot(self._load_json(key, DEFAULT_BOT))
+
+    def _save_bot(self, data: dict[str, Any], user=None, user_id: int | None = None) -> dict[str, Any]:
+        uid = self._bot_uid(user, user_id)
+        payload = dict(data)
+        payload.pop("catalog", None)
+        if not uid:
+            return self._normalize_bot(payload)
+        self._save_json(bot_settings_key(uid), payload)
+        return self.get_bot(user=user, user_id=uid)
+
+    def update_bot(self, payload: dict[str, Any], user=None) -> dict[str, Any]:
+        current = self.get_bot(user)
         current.pop("catalog", None)
         prev_hide = bool(current.get("hideArticles"))
         int_keys = {
@@ -274,27 +320,46 @@ class SettingsService:
                 val = [str(x).strip() for x in (val or []) if str(x).strip() in SECTIONS]
             elif k == "feeds":
                 val = merge_feed_catalog(val if isinstance(val, list) else [])
+            elif k == "publishCreator":
+                val = str(val or "").strip()[:80] or bot_byline(user)
+            elif k == "operatorUserId":
+                try:
+                    val = int(val) if val not in (None, "") else None
+                except (TypeError, ValueError):
+                    val = current.get("operatorUserId")
             current[k] = val
-        saved = self._save_json(BOT_KEY, current)
+        saved = self._save_bot(current, user)
         if "hideArticles" in payload and bool(saved.get("hideArticles")) != prev_hide:
-            self.set_bot_articles_hidden(bool(saved.get("hideArticles")), sync_setting=False)
-        return self.get_bot()
+            self.set_bot_articles_hidden(bool(saved.get("hideArticles")), user=user, sync_setting=False)
+        return self.get_bot(user)
 
-    def get_bot_stats(self) -> dict[str, Any]:
-        self._retag_bot_posts_from_creators()
-        hide_articles = bool(self.get_bot().get("hideArticles"))
-        total_bot = (
-            self.db.query(Post).filter(Post.is_bot.is_(True)).count()
-        )
-        # "On site" = what /api/posts actually returns (published + not hidden).
+    def set_bot_operator(self, user) -> dict[str, Any]:
+        """Stamp this account as the bot owner and use their byline."""
+        current = self.get_bot(user)
+        current.pop("catalog", None)
+        current["publishCreator"] = bot_byline(user)
+        try:
+            current["operatorUserId"] = int(getattr(user, "id"))
+        except (TypeError, ValueError):
+            current["operatorUserId"] = None
+        self._save_bot(current, user)
+        return self.get_bot(user)
+
+    def _posts_for_bot_user(self, user):
+        uid = self._bot_uid(user)
+        if not uid:
+            return self.db.query(Post).filter(Post.id.is_(None))
+        return self.db.query(Post).filter(Post.bot_user_id == uid)
+
+    def get_bot_stats(self, user=None) -> dict[str, Any]:
+        hide_articles = bool(self.get_bot(user).get("hideArticles"))
+        q = self._posts_for_bot_user(user)
+        total_bot = q.count()
         on_site = (
-            self.db.query(Post)
-            .filter(
-                Post.is_bot.is_(True),
+            q.filter(
                 Post.is_hidden.is_(False),
                 func.lower(Post.status) == "published",
-            )
-            .count()
+            ).count()
         )
         visible_bot = 0 if hide_articles else on_site
         hidden_bot = max(0, total_bot - visible_bot)
@@ -325,40 +390,20 @@ class SettingsService:
         return int(result or 0)
 
     def set_bot_articles_hidden(
-        self, hidden: bool, *, sync_setting: bool = True
+        self, hidden: bool, *, user=None, sync_setting: bool = True
     ) -> dict[str, Any]:
-        # Catch untagged bot posts first (e.g. creator=Wirefringe, is_bot=false)
-        self._retag_bot_posts_from_creators()
-
         live = or_(
             func.lower(Post.status) == "published",
             func.lower(Post.status) == "unpublished",
             Post.published_at.isnot(None),
         )
+        owned = self._posts_for_bot_user(user).filter(live)
 
         if hidden:
-            # Only flag visibility. Do not change status — unpublish-on-hide
-            # left posts stuck off the public site after the toggle was turned off.
-            updated = (
-                self.db.query(Post)
-                .filter(Post.is_bot.is_(True), live)
-                .update({Post.is_hidden: True}, synchronize_session=False)
-            )
+            updated = owned.update({Post.is_hidden: True}, synchronize_session=False)
         else:
-            # Bring previously live bot posts back onto the public site.
-            # Public listing requires status=published AND is_hidden=false.
-            # Draft / review / scheduled rows are left in the pipeline.
             updated = (
-                self.db.query(Post)
-                .filter(Post.is_bot.is_(True), live)
-                .filter(
-                    or_(
-                        func.lower(Post.status) == "published",
-                        func.lower(Post.status) == "unpublished",
-                        Post.published_at.isnot(None),
-                    )
-                )
-                .filter(func.lower(Post.status).notin_(["draft", "review", "scheduled"]))
+                owned.filter(func.lower(Post.status).notin_(["draft", "review", "scheduled"]))
                 .update(
                     {Post.is_hidden: False, Post.status: "published"},
                     synchronize_session=False,
@@ -366,24 +411,17 @@ class SettingsService:
             )
 
         if sync_setting:
-            bot = self.get_bot()
+            bot = self.get_bot(user)
             bot.pop("catalog", None)
             bot["hideArticles"] = bool(hidden)
-            row = self.db.get(AppSetting, BOT_KEY)
-            now = datetime.now(timezone.utc)
-            payload = json.dumps(bot, ensure_ascii=False)
-            if row is None:
-                self.db.add(AppSetting(key=BOT_KEY, value=payload, updated_at=now))
-            else:
-                row.value = payload
-                row.updated_at = now
+            self._save_bot(bot, user)
 
         self.db.commit()
         self._trigger_site_revalidate()
         return {
             "updated": int(updated or 0),
             "hidden": bool(hidden),
-            **self.get_bot_stats(),
+            **self.get_bot_stats(user),
         }
 
     def _trigger_site_revalidate(self) -> None:

@@ -295,6 +295,11 @@ export const usersApi = {
       method: 'PUT',
       body: JSON.stringify({ role }),
     }),
+  setBotAccess: (id, enabled) =>
+    api(`/api/admin/users/${encodeURIComponent(id)}/bot-access`, {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: Boolean(enabled) }),
+    }),
   /**
    * Delete a user.
    * @param {number|string} id

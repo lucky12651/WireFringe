@@ -211,13 +211,12 @@ class PostService:
         return self.comment_repo.count_approved_by_post_ids(ids)
 
     def _public_list_flags(self) -> tuple[bool, bool]:
-        """Return (public_only, hide_bot) for public feed filtering."""
-        try:
-            bot = SettingsService(self.db).get_bot()
-            hide_bot = bool(bot.get("hideArticles"))
-        except Exception:
-            hide_bot = False
-        return True, hide_bot
+        """Return (public_only, hide_bot) for public feed filtering.
+
+        Per-account hide is stored on each post as is_hidden, so the extra
+        global hide_bot flag is no longer applied here.
+        """
+        return True, False
 
     def list_posts(self, *, public: bool = True) -> list[PostOut]:
         """List posts. Public listing respects hidden/bot visibility settings."""
@@ -336,15 +335,6 @@ class PostService:
             return False
         if post.published_at is None and status != "published":
             return False
-        try:
-            if SettingsService(self.db).get_bot().get("hideArticles"):
-                if getattr(post, "is_bot", False):
-                    return False
-                creator = (post.creator or "").strip().lower()
-                if creator in BOT_CREATOR_KEYS:
-                    return False
-        except Exception:
-            pass
         return True
 
     def publish_due_scheduled(self) -> int:
@@ -525,11 +515,6 @@ class PostService:
             .filter(PersonalizedFeed.user_id == user_id)
             .filter(Post.is_hidden.is_(False), Post.status == "published")
         )
-        try:
-            if SettingsService(self.db).get_bot().get("hideArticles"):
-                q = q.filter(Post.is_bot.is_(False))
-        except Exception:
-            pass
         recs = (
             q.order_by(PersonalizedFeed.score.desc(), Post.published_at.desc())
             .limit(limit)
@@ -566,9 +551,14 @@ class PostService:
         # 3. No follows yet
         return []
 
-    def get_news_queue(self) -> list[NewsQueueItem]:
-        """Get all pending or failed news from the database queue."""
-        items = self.db.query(NewsQueue).filter(NewsQueue.status.in_(["pending", "failed_scrape", "failed_gen", "db_error"])).all()
+    def get_news_queue(self, user_id: int | None = None) -> list[NewsQueueItem]:
+        """Get pending or failed news from this account's queue."""
+        q = self.db.query(NewsQueue).filter(
+            NewsQueue.status.in_(["pending", "failed_scrape", "failed_gen", "db_error"])
+        )
+        if user_id:
+            q = q.filter(NewsQueue.user_id == int(user_id))
+        items = q.all()
         return [
             NewsQueueItem(
                 title=item.title,

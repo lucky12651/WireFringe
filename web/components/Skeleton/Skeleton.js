@@ -15,7 +15,7 @@ export function HomeSkeleton() {
       aria-label="Loading homepage"
     >
       <div
-        className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] border-l border-dotted border-line pointer-events-none"
+        className="hidden min-[1001px]:block absolute top-0 bottom-0 right-[var(--stream-width,380px)] border-l-2 border-dotted border-line-strong pointer-events-none"
         aria-hidden="true"
       />
       <div className="min-w-0 pr-0 min-[1001px]:pr-9">
@@ -55,7 +55,7 @@ export function HomeSkeleton() {
         {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="grid grid-cols-[1fr_72px] gap-3 py-4 border-b border-dotted border-line"
+            className="grid grid-cols-[1fr_72px] gap-3 py-4 border-b-2 border-dotted border-line-strong"
           >
             <div>
               <Bone className="h-3 mb-3" style={{ width: '35%' }} />

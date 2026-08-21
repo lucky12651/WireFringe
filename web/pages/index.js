@@ -130,8 +130,8 @@ export default function HomePage({ initialPosts }) {
     ...p,
     date: p.date ? new Date(p.date) : null,
   }));
-  const heroPosts = (programmedHero.length ? programmedHero : filtered.slice(0, 5));
-  const latestFeed = (filtered.slice(5).length ? filtered.slice(5) : filtered).slice(0, 20);
+  const heroPosts = programmedHero.length ? programmedHero : filtered.slice(0, 5);
+  const latestFeed = useMemo(() => filtered.slice(0, 20), [filtered]);
   const followingFeed = useMemo(
     () => filtered.filter((p) => postMatchesFollows(p, follows)).slice(0, 30),
     [filtered, follows]
@@ -201,10 +201,10 @@ export default function HomePage({ initialPosts }) {
         <div className="pb-0 bg-transparent">
           <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
             <div
-              className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-dotted border-line pointer-events-none z-[1]"
+              className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l-2 border-dotted border-line-strong pointer-events-none z-[1]"
               aria-hidden="true"
             />
-            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-dotted max-[1000px]:border-line max-[1000px]:pb-7">
+            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b-2 max-[1000px]:border-dotted max-[1000px]:border-line-strong max-[1000px]:pb-7">
               <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
@@ -227,7 +227,7 @@ export default function HomePage({ initialPosts }) {
                             {mostRead.map((post, idx) => (
                               <li
                                 key={post.id}
-                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-line"
+                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b-2 border-dotted border-line-strong"
                               >
                                 <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent">
                                   {idx + 1}
@@ -369,7 +369,7 @@ function PackageBlock({ title, subtitle, posts }) {
             <Link
               key={post.id}
               href={postUrl(post)}
-              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b border-dotted border-line text-inherit rounded-sm transition-colors hover:bg-bg-hover/60 ${idx === 0 ? 'pt-0' : ''}`}
+              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b-2 border-dotted border-line-strong text-inherit rounded-sm transition-colors hover:bg-bg-hover/60 ${idx === 0 ? 'pt-0' : ''}`}
             >
               <div>
                 <h4 className="text-[16.5px] font-extrabold leading-snug text-ink mb-1.5 transition-colors tracking-tight group-hover:text-mint">
