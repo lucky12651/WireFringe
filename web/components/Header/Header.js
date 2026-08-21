@@ -7,7 +7,6 @@ import { SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
-import { getTheme, THEME_CHANGE_EVENT } from '../../lib/theme';
 import { fetcher } from '../../lib/api';
 
 const NAV = [
@@ -54,6 +53,8 @@ export default function Header({
   onCategoryChange,
   user = null,
   accentColor = null,
+  articleTitle = '',
+  headerVariant = 'theme',
 }) {
   const router = useRouter();
   const { logout: authLogout } = useAuth();
@@ -66,16 +67,9 @@ export default function Header({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [theme, setTheme] = useState('dark');
   const searchRef = useRef(null);
   const headerRef = useRef(null);
-
-  useEffect(() => {
-    const sync = () => setTheme(getTheme());
-    sync();
-    window.addEventListener(THEME_CHANGE_EVENT, sync);
-    return () => window.removeEventListener(THEME_CHANGE_EVENT, sync);
-  }, []);
+  const compactRef = useRef(false);
 
   useEffect(() => setLocalSearch(searchQuery), [searchQuery]);
   useEffect(() => {
@@ -107,14 +101,15 @@ export default function Header({
   }, [menuOpen]);
 
   useEffect(() => {
-    if (!accentColor || typeof window === 'undefined') {
+    const track = Boolean(articleTitle || accentColor);
+    if (!track || typeof window === 'undefined') {
       setScrolled(false);
       return;
     }
 
     let frame = 0;
     const apply = () => {
-      const next = window.scrollY > 16;
+      const next = window.scrollY > 24;
       setScrolled((prev) => (prev === next ? prev : next));
       frame = 0;
     };
@@ -129,13 +124,17 @@ export default function Header({
       window.removeEventListener('scroll', onScroll);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [accentColor]);
+  }, [articleTitle, accentColor]);
+
+  const compact = Boolean(articleTitle) && scrolled;
+  compactRef.current = compact;
 
   useEffect(() => {
     const el = headerRef.current;
     if (!el || typeof window === 'undefined') return;
 
     const applyHeight = () => {
+      if (compactRef.current) return;
       const h = Math.ceil(el.getBoundingClientRect().height);
       if (h > 0) document.documentElement.style.setProperty('--header-height', `${h}px`);
     };
@@ -148,7 +147,7 @@ export default function Header({
       ro.disconnect();
       window.removeEventListener('resize', applyHeight);
     };
-  }, [searchOpen, accentColor]);
+  }, [searchOpen, accentColor, articleTitle]);
 
   const goCat = (cat) => {
     setMenuOpen(false);
@@ -174,140 +173,170 @@ export default function Header({
     }
   };
 
+  const painted =
+    headerVariant === 'solid' || headerVariant === 'solid-inverse' || headerVariant === 'overlay';
+
+  const headerClass = cn(
+    'sticky top-0 z-[11000] w-full',
+    headerVariant === 'solid' && 'post-header-solid on-accent',
+    headerVariant === 'overlay' && !compact && 'post-header on-accent',
+    headerVariant === 'overlay' && compact && 'post-header-solid on-accent',
+    headerVariant === 'solid-inverse' && 'post-header-solid post-header-inverse',
+    !painted && 'site-header-bar'
+  );
+
+  const iconBtn =
+    'inline-flex w-[34px] h-[30px] items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10';
+
+  const actionIcons = (
+    <span className="inline-flex items-center shrink-0">
+      <button
+        type="button"
+        className={cn(iconBtn, 'hidden min-[1001px]:inline-flex')}
+        aria-label="Search"
+        onClick={() => {
+          setSearchOpen((v) => !v);
+          setTimeout(() => searchRef.current?.focus(), 40);
+        }}
+      >
+        <SearchIcon />
+      </button>
+      <button type="button" className={iconBtn} aria-label="Notifications">
+        <BellIcon />
+      </button>
+      <button
+        type="button"
+        className="group w-8 h-7 inline-flex flex-col items-center justify-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((v) => !v)}
+      >
+        <span
+          className={cn(
+            'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
+            menuOpen && 'translate-y-[5.5px] rotate-45'
+          )}
+        />
+        <span
+          className={cn(
+            'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
+            menuOpen && 'opacity-0 w-0'
+          )}
+        />
+        <span
+          className={cn(
+            'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
+            menuOpen && '-translate-y-[5.5px] -rotate-45'
+          )}
+        />
+      </button>
+    </span>
+  );
+
   return (
     <>
       <header
         ref={headerRef}
-        className={cn(
-          'sticky top-0 z-[11000] w-full',
-          accentColor && !scrolled && 'post-header',
-          accentColor && !scrolled && theme === 'light' && 'on-accent',
-          accentColor && scrolled && 'post-header post-header-scrolled',
-          (!accentColor || scrolled) && 'site-header-bar'
-        )}
+        className={headerClass}
+        style={painted && accentColor ? { backgroundColor: accentColor } : undefined}
       >
-        <div className="relative w-full max-w-site mx-auto px-4 pt-1.5 pb-1.5 box-border md:px-6 md:pt-2 md:pb-1.5">
-          <div className="hidden min-[1001px]:flex justify-end items-center gap-3.5 w-full mb-1">
-            <a
-              href="#newsletter"
-              className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
+        {compact ? (
+          <div className="relative flex h-[52px] w-full max-w-site mx-auto items-center gap-3 px-4 md:px-6">
+            <Link
+              href="/"
+              className="flex items-center no-underline text-ink shrink-0"
+              onClick={() => setMenuOpen(false)}
             >
-              SUBSCRIBE
-            </a>
-            {user ? (
-              <Link
-                href="/account"
-                className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
-              >
-                <UserIcon />
-                <span>ACCOUNT</span>
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
-              >
-                <UserIcon />
-                <span>SIGN IN</span>
-              </Link>
-            )}
+              <BrandLogo size="sm" />
+            </Link>
+            <span className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold text-ink">
+              {articleTitle}
+            </span>
+            {actionIcons}
           </div>
-
-          <div className="w-full flex justify-stretch">
-            <nav
-              className="flex items-end justify-between flex-nowrap w-full gap-4"
-              aria-label="Main"
-            >
-              <Link
-                href="/"
-                className="flex items-center no-underline text-ink shrink-0 max-md:text-xl pb-[7px]"
-                onClick={() => setMenuOpen(false)}
+        ) : (
+          <div className="relative w-full max-w-site mx-auto px-4 pt-1.5 pb-1.5 box-border md:px-6 md:pt-2 md:pb-1.5">
+            <div className="hidden min-[1001px]:flex justify-end items-center gap-3.5 w-full mb-1">
+              <a
+                href="#newsletter"
+                className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
               >
-                <BrandLogo size="md" />
-              </Link>
+                SUBSCRIBE
+              </a>
+              {user ? (
+                <Link
+                  href="/account"
+                  className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
+                >
+                  <UserIcon />
+                  <span>ACCOUNT</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 bg-transparent border-0 text-mint font-mono text-[10px] font-semibold tracking-[0.08em] uppercase cursor-pointer p-0 no-underline whitespace-nowrap transition-opacity hover:opacity-85 [&_svg]:text-mint"
+                >
+                  <UserIcon />
+                  <span>SIGN IN</span>
+                </Link>
+              )}
+            </div>
 
-              <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 border-b-[1.5px] border-mint pb-[7px]">
-                <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
-                  {navItems.map((item, index) => (
-                    <span key={item.label} className="inline-flex items-center">
-                      {index > 0 ? (
-                        <span
-                          className="text-ink-tertiary text-sm ml-[5px] mr-px select-none leading-none"
-                          aria-hidden="true"
+            <div className="w-full flex justify-stretch">
+              <nav
+                className="flex items-end justify-between flex-nowrap w-full gap-4"
+                aria-label="Main"
+              >
+                <Link
+                  href="/"
+                  className="flex items-center no-underline text-ink shrink-0 max-md:text-xl pb-[7px]"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <BrandLogo size="md" />
+                </Link>
+
+                <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 border-b-[1.5px] border-mint pb-[7px]">
+                  <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
+                    {navItems.map((item, index) => (
+                      <span key={item.label} className="inline-flex items-center">
+                        {index > 0 ? (
+                          <span
+                            className="text-ink-tertiary text-sm ml-[5px] mr-px select-none leading-none"
+                            aria-hidden="true"
+                          >
+                            /
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          className={cn(
+                            'appearance-none bg-transparent border-0 text-ink text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
+                            'hover:text-mint'
+                          )}
+                          onClick={() => goHref(item.href)}
                         >
-                          /
-                        </span>
-                      ) : null}
-                      <button
-                        type="button"
-                        className={cn(
-                          'appearance-none bg-transparent border-0 text-ink text-[14.5px] font-semibold px-2 py-0.5 cursor-pointer whitespace-nowrap font-sans transition-colors leading-tight tracking-tight',
-                          'hover:text-mint'
-                        )}
-                        onClick={() => goHref(item.href)}
-                      >
-                        {item.label}
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                          {item.label}
+                        </button>
+                      </span>
+                    ))}
+                  </div>
 
-                <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-line">
-                  <button
-                    type="button"
-                    className="hidden min-[1001px]:inline-flex w-[34px] h-[30px] items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
-                    aria-label="Search"
-                    onClick={() => {
-                      setSearchOpen((v) => !v);
-                      setTimeout(() => searchRef.current?.focus(), 40);
-                    }}
-                  >
-                    <SearchIcon />
-                  </button>
-                  <button
-                    type="button"
-                    className="w-[34px] h-[30px] inline-flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer p-0 rounded-md transition-all hover:text-mint hover:bg-mint/10"
-                    aria-label="Notifications"
-                  >
-                    <BellIcon />
-                  </button>
-                  <button
-                    type="button"
-                    className="group w-8 h-7 inline-flex flex-col items-center justify-center gap-1 bg-transparent border-0 cursor-pointer p-0"
-                    aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-                    aria-expanded={menuOpen}
-                    onClick={() => setMenuOpen((v) => !v)}
-                  >
-                    <span
-                      className={cn(
-                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
-                        menuOpen && 'translate-y-[5.5px] rotate-45'
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
-                        menuOpen && 'opacity-0 w-0'
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'block w-[18px] h-[1.5px] bg-ink transition-all duration-200 group-hover:bg-mint',
-                        menuOpen && '-translate-y-[5.5px] -rotate-45'
-                      )}
-                    />
-                  </button>
-                </span>
-              </div>
-            </nav>
+                  <span className="inline-flex items-center shrink-0 pl-0 min-[1001px]:pl-2.5 min-[1001px]:ml-0.5 min-[1001px]:border-l min-[1001px]:border-line">
+                    {actionIcons}
+                  </span>
+                </div>
+              </nav>
+            </div>
           </div>
-        </div>
+        )}
 
         {searchOpen && (
           <div
             className={cn(
               'border-t px-5 pt-3 pb-3.5 animate-drop-in',
-              accentColor && !scrolled ? 'border-black/10 bg-transparent' : 'border-line-light bg-bg'
+              painted && !compact && headerVariant !== 'theme'
+                ? 'border-black/10 bg-transparent'
+                : 'border-line-light bg-bg'
             )}
           >
             <form

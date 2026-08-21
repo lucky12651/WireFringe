@@ -333,10 +333,32 @@ html[data-theme='light'] .enabled\:hover\:shadow-mint:hover:enabled {
   transform: rotate(-90deg);
 }
 
-/* Post header is its own bar: clear over the hero, then theme glass on scroll. */
+/* Post header is its own bar: clear over the hero, then solid post color on scroll. */
 .post-header {
   background-color: transparent;
   transition: background-color 280ms ease, backdrop-filter 280ms ease;
+}
+
+header.post-header-solid {
+  background-color: var(--header-accent, #def23a);
+  transition: background-color 280ms ease;
+}
+
+header.post-header-inverse,
+header.post-header-inverse .text-ink,
+header.post-header-inverse .text-ink-secondary,
+header.post-header-inverse .text-ink-tertiary,
+header.post-header-inverse .text-ink-muted,
+header.post-header-inverse .text-ink-soft,
+header.post-header-inverse .text-ink-dek {
+  color: #ffffff;
+}
+header.post-header-inverse .text-ink-tertiary,
+header.post-header-inverse .text-ink-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+header.post-header-inverse .bg-ink {
+  background-color: #ffffff;
 }
 
 /* Same homepage --bg in both themes. 90% solid color, 10% frost. */
@@ -346,21 +368,10 @@ html[data-theme='light'] .enabled\:hover\:shadow-mint:hover:enabled {
   -webkit-backdrop-filter: blur(2px);
 }
 
-/* Dark mode post header: keep type white (do not use on-accent black). */
-html[data-theme='dark'] header.on-accent,
-html[data-theme='dark'] header.on-accent .text-ink,
-html[data-theme='dark'] header.on-accent .text-ink-secondary,
-html[data-theme='dark'] header.on-accent .text-ink-tertiary,
-html[data-theme='dark'] header.on-accent .text-ink-muted,
-html[data-theme='dark'] header.on-accent .text-ink-soft,
-html[data-theme='dark'] header.on-accent .text-ink-dek {
-  color: var(--text-primary);
-}
-
 html[data-theme='dark'] header.on-accent {
-  --mint: #3cffd0;
-  --mint-hover: #5fffe0;
-  --mint-dim: rgba(60, 255, 208, 0.12);
+  --mint: #0b8f72;
+  --mint-hover: #087a61;
+  --mint-dim: rgba(11, 143, 114, 0.12);
 }
 
 /* Comments drawer uses site mint: neon on dark, forest on light. */
@@ -1308,124 +1319,54 @@ html[data-theme='light'] .admin-modal-overlay {
     color: var(--mint);
   }
 
-  .post-design-light {
-    --bg: #ffffff;
-    --bg-elevated: #f6f6f6;
-    --text-primary: #1a1a1a;
-    --text-secondary: #333333;
-    --text-tertiary: #888888;
-    --text-muted: #888888;
-    --text-soft: #444444;
-    --text-dek: #333333;
-    --border: #e0e0e0;
-    --mint: #00d4aa;
-    --mint-hover: #00ffcc;
-    --mint-dim: rgba(0, 212, 170, 0.35);
-    color: #1a1a1a;
-  }
-
-  .post-design-dark {
-    --bg: #111111;
-    --bg-elevated: #1a1a1a;
-    --text-primary: #f0f0f0;
-    --text-secondary: #a0a0a0;
-    --text-tertiary: #6a6a6a;
-    --text-muted: #6a6a6a;
-    --text-soft: #bbbbbb;
-    --text-dek: #cccccc;
-    --border: #2a2a2a;
-    --mint: #00d4aa;
-    --mint-hover: #00ffcc;
-    --mint-dim: rgba(0, 212, 170, 0.35);
-    color: #f0f0f0;
-  }
-
   .article-body.article-body--split,
-  .article-body.article-body--banner {
+  .article-body.article-body--banner,
+  .article-body.article-body--dark {
     font-family: var(--font-sans);
-    font-size: 17px;
-    line-height: 1.78;
+    font-size: 1.1875rem;
+    line-height: 1.75;
     max-width: 42rem;
-    color: #333;
+    color: var(--text-dek);
   }
   .article-body.article-body--split p,
-  .article-body.article-body--banner p {
+  .article-body.article-body--banner p,
+  .article-body.article-body--dark p {
     margin-bottom: 22px;
   }
   .article-body.article-body--split a,
-  .article-body.article-body--banner a {
-    color: #5b1be4;
+  .article-body.article-body--banner a,
+  .article-body.article-body--dark a {
+    color: var(--mint);
     text-decoration: underline;
-    text-decoration-color: rgba(91, 27, 228, 0.3);
+    text-decoration-color: var(--mint-dim);
     text-underline-offset: 3px;
   }
   .article-body.article-body--split a:hover,
-  .article-body.article-body--banner a:hover {
-    text-decoration-color: #5b1be4;
+  .article-body.article-body--banner a:hover,
+  .article-body.article-body--dark a:hover {
+    text-decoration-color: var(--mint);
   }
   .article-body.article-body--split h2,
-  .article-body.article-body--banner h2 {
+  .article-body.article-body--banner h2,
+  .article-body.article-body--dark h2 {
     font-family: var(--font-heading);
     font-size: 22px;
     font-weight: 800;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin: 36px 0 14px;
     line-height: 1.3;
     letter-spacing: 0;
     padding: 0;
   }
   .article-body.article-body--split blockquote,
-  .article-body.article-body--banner blockquote {
-    border-left: 3px solid #5b1be4;
-    padding: 2px 0 2px 20px;
-    margin: 28px 0;
-    font-size: 18.5px;
-    font-style: italic;
-    color: #333;
-  }
-  .post-design-light .article-body .drop-cap p::first-letter {
-    color: #1a1a1a;
-  }
-
-  .article-body.article-body--dark {
-    font-family: var(--font-sans);
-    font-size: 17px;
-    line-height: 1.78;
-    max-width: 42rem;
-    color: #ccc;
-  }
-  .article-body.article-body--dark p {
-    margin-bottom: 22px;
-  }
-  .article-body.article-body--dark a {
-    color: #00d4aa;
-    text-decoration: underline;
-    text-decoration-color: rgba(0, 212, 170, 0.35);
-    text-underline-offset: 3px;
-  }
-  .article-body.article-body--dark a:hover {
-    text-decoration-color: #00d4aa;
-  }
-  .article-body.article-body--dark h2 {
-    font-family: var(--font-heading);
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-    margin: 36px 0 14px;
-    line-height: 1.3;
-    letter-spacing: 0;
-    padding: 0;
-  }
+  .article-body.article-body--banner blockquote,
   .article-body.article-body--dark blockquote {
-    border-left: 3px solid #00d4aa;
+    border-left: 3px solid var(--mint);
     padding: 2px 0 2px 20px;
     margin: 28px 0;
     font-size: 18.5px;
     font-style: italic;
-    color: #ddd;
-  }
-  .post-design-dark .article-body .drop-cap p::first-letter {
-    color: #fff;
+    color: var(--text-dek);
   }
 
   .static-content {

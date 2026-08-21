@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { postExcerpt } from '../../lib/utils';
+import { postExcerpt, postUrl } from '../../lib/utils';
 import { authorPath, sectionPath } from '../../lib/sections';
 import { SITE_NAME } from '../../lib/site';
 import AuthorByline from '../AuthorByline/AuthorByline';
 import FollowBar from '../FollowBar/FollowBar';
 import { CommentsCta } from '../CommentDrawer/CommentDrawer';
+import AdUnit from '../AdUnit/AdUnit';
+import { AD_SLOTS } from '../../lib/ads';
+
+export const PAGE = 'max-w-[1360px] mx-auto px-5 md:px-10';
 
 export function formatPubDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -63,51 +67,15 @@ export function ReadingProgress({ color = '#00d4aa' }) {
   );
 }
 
-export function StickyTitleBar({ title, tone = 'light' }) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 320);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const dark = tone === 'dark' || tone === 'purple';
-  const bg =
-    tone === 'purple'
-      ? 'bg-[rgba(91,27,228,0.97)] text-white'
-      : tone === 'dark'
-        ? 'bg-[rgba(17,17,17,0.97)] text-white border-b border-[#2a2a2a]'
-        : 'bg-white/97 text-[#1a1a1a] border-b border-[#e0e0e0]';
-
-  return (
-    <div
-      className={`fixed left-0 right-0 top-[var(--header-height,96px)] z-[200] h-[52px] items-center gap-4 px-6 backdrop-blur-[8px] ${bg} ${
-        show ? 'flex' : 'hidden'
-      }`}
-    >
-      <Link
-        href="/"
-        className={`shrink-0 font-heading text-[18px] font-black italic tracking-[-0.04em] ${
-          dark ? 'text-white' : 'text-[#3ae0b5]'
-        }`}
-      >
-        {SITE_NAME}
-      </Link>
-      <span className={`min-w-0 flex-1 truncate text-center text-[13px] font-semibold ${dark ? 'text-white/80' : 'text-[#333]'}`}>
-        {title}
-      </span>
-    </div>
-  );
-}
-
-export function Watermark({ text = SITE_NAME, stroke = 'rgba(58,224,181,0.28)', className = '' }) {
+export function Watermark({ text = SITE_NAME, stroke, className = '' }) {
   return (
     <div className={`relative h-[110px] overflow-hidden pointer-events-none select-none ${className}`}>
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-heading text-[80px] md:text-[155px] font-black italic leading-none tracking-[-0.06em]"
-        style={{ color: 'transparent', WebkitTextStroke: `2.5px ${stroke}` }}
+        style={{
+          color: 'transparent',
+          WebkitTextStroke: `2.5px ${stroke || 'color-mix(in srgb, var(--mint) 32%, transparent)'}`,
+        }}
       >
         {text}
       </div>
@@ -125,9 +93,7 @@ export function TagPills({ post, extra = [], tone = 'light' }) {
   const text =
     tone === 'purple'
       ? 'text-white/75 hover:text-white'
-      : tone === 'dark'
-        ? 'text-[#a0a0a0] hover:text-[#00d4aa]'
-        : 'text-[#5b1be4] hover:opacity-70';
+      : 'text-ink-secondary hover:text-ink';
 
   return (
     <div className="mb-3.5 flex flex-wrap gap-2.5">
@@ -135,9 +101,9 @@ export function TagPills({ post, extra = [], tone = 'light' }) {
         <Link
           key={tag}
           href={tag === bucket ? sectionPath(bucket) : `/search?q=${encodeURIComponent(tag)}`}
-          className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.14em] ${text}`}
+          className={`group inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.14em] ${text}`}
         >
-          <span className="inline-flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#00d4aa] text-[10px] font-black leading-none text-[#00d4aa] transition-transform hover:rotate-90">
+          <span className="inline-flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-mint text-[10px] font-black leading-none text-mint transition-transform group-hover:rotate-90">
             +
           </span>
           {tag}
@@ -200,13 +166,10 @@ export function ShareCluster({ post, onOpenComments, commentCount = 0, tone = 'l
     copyLink();
   };
 
-  const dark = tone === 'dark' || tone === 'purple';
-  const btn =
-    tone === 'purple'
-      ? 'border-white/30 text-white/75 hover:border-white/70 hover:text-white'
-      : tone === 'dark'
-        ? 'border-[#2a2a2a] text-[#a0a0a0] hover:border-[#666] hover:text-white'
-        : 'border-[#d0d0d0] text-[#5b1be4] hover:border-[#5b1be4] hover:bg-[rgba(91,27,228,0.05)]';
+  const onPurple = tone === 'purple';
+  const btn = onPurple
+    ? 'border-white/30 text-white/75 hover:border-white/70 hover:text-white'
+    : 'border-line text-ink-secondary hover:border-mint hover:text-ink';
 
   return (
     <>
@@ -233,7 +196,7 @@ export function ShareCluster({ post, onOpenComments, commentCount = 0, tone = 'l
             type="button"
             onClick={onOpenComments}
             className={`inline-flex items-center overflow-hidden rounded-full border-[1.5px] ${
-              dark ? 'border-white/30 hover:border-[#00d4aa]' : 'border-[#d0d0d0] hover:border-[#00d4aa]'
+              onPurple ? 'border-white/30 hover:border-[#00d4aa]' : 'border-line hover:border-mint'
             }`}
           >
             <span className="bg-[#00d4aa] px-2.5 py-1 text-[11px] font-extrabold text-black">
@@ -252,42 +215,41 @@ export function ShareCluster({ post, onOpenComments, commentCount = 0, tone = 'l
   );
 }
 
-export function StoryFlags({ post, tone = 'light' }) {
-  const muted = tone === 'dark' ? 'text-[#a0a0a0]' : 'text-[#888]';
-  const body = tone === 'dark' ? 'text-[#ccc]' : 'text-[#333]';
+export function StoryFlags({ post }) {
   return (
     <>
       {post?.isBreaking ? (
         <p className="m-0 mb-3 text-[12px] font-bold uppercase tracking-wide text-[#c0392b]">Breaking</p>
       ) : null}
       {post?.isSponsored ? (
-        <p className={`m-0 mb-3 text-[12px] font-bold uppercase tracking-wide ${muted}`}>Paid / branded content</p>
+        <p className="m-0 mb-3 text-[12px] font-bold uppercase tracking-wide text-ink-tertiary">
+          Paid / branded content
+        </p>
       ) : null}
       {post?.correction ? (
-        <div
-          className={`mb-6 border border-[#e8b342] bg-[#e8b342]/10 p-4 text-[14px] ${
-            tone === 'dark' ? 'text-[#f0f0f0]' : 'text-[#1a1a1a]'
-          }`}
-        >
+        <div className="mb-6 border border-[#e8b342] bg-[#e8b342]/10 p-4 text-[14px] text-ink">
           <strong>Correction</strong>
           {post.correctedAt || post.updatedAt ? (
-            <span className={muted}> · {new Date(post.correctedAt || post.updatedAt).toLocaleString()}</span>
+            <span className="text-ink-tertiary">
+              {' '}
+              · {new Date(post.correctedAt || post.updatedAt).toLocaleString()}
+            </span>
           ) : null}
           <p className="m-0 mt-2 whitespace-pre-wrap">{post.correction}</p>
         </div>
       ) : null}
       {post?.sourceUrl || post?.sourceName || post?.isBot ? (
-        <p className={`m-0 mb-5 text-[13px] ${muted}`}>
+        <p className="m-0 mb-5 text-[13px] text-ink-secondary">
           Rewritten from{' '}
           {post.sourceUrl ? (
-            <a href={post.sourceUrl} className="text-[#00d4aa]" target="_blank" rel="noreferrer">
+            <a href={post.sourceUrl} className="text-mint" target="_blank" rel="noreferrer">
               {post.sourceName || post.sourceUrl}
             </a>
           ) : (
             <span>{post.sourceName || 'a partner wire'}</span>
           )}
           . Editors review these stories before they go live.{' '}
-          <Link href="/sourcing" className={body}>
+          <Link href="/sourcing" className="text-ink">
             Sourcing policy
           </Link>
         </p>
@@ -296,10 +258,9 @@ export function StoryFlags({ post, tone = 'light' }) {
   );
 }
 
-export function AuthorBioRow({ post, tone = 'light' }) {
+export function AuthorBioRow({ post }) {
   const { name, avatarUrl, initials } = authorBits(post);
   if (!name) return null;
-  const secondary = tone === 'dark' ? 'text-[#a0a0a0]' : 'text-[#333]';
   return (
     <div className="flex items-center gap-3">
       {avatarUrl ? (
@@ -309,10 +270,10 @@ export function AuthorBioRow({ post, tone = 'light' }) {
           {initials}
         </div>
       )}
-      <p className={`m-0 text-[12.5px] leading-relaxed ${secondary}`}>
+      <p className="m-0 text-[12.5px] leading-relaxed text-ink-dek">
         <AuthorByline post={post} name={name} avatarUrl={avatarUrl} size="md" label="" className="inline-flex" />{' '}
         covers <Link href={sectionPath(post.bucket)}>{post.bucket || 'the news'}</Link> at Wirefringe.{' '}
-        <Link href={authorPath(post)} className="font-semibold text-[#00d4aa]">
+        <Link href={authorPath(post)} className="font-semibold text-mint">
           More by {name}
         </Link>
       </p>
@@ -320,16 +281,15 @@ export function AuthorBioRow({ post, tone = 'light' }) {
   );
 }
 
-export function StoryFooter({ post, router, onOpenComments, tone = 'light' }) {
-  const tagColor = tone === 'dark' ? 'text-[#00d4aa]' : 'text-[#5b1be4]';
+export function StoryFooter({ post, router, onOpenComments }) {
   return (
     <>
       <CommentsCta count={post.commentCount} onClick={onOpenComments} />
       {(post.tags || []).length ? (
-        <p className={`mt-6 text-[13px] ${tone === 'dark' ? 'text-[#a0a0a0]' : 'text-[#888]'}`}>
+        <p className="mt-6 text-[13px] text-ink-secondary">
           Tags:{' '}
           {post.tags.map((tag) => (
-            <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`} className={`mr-2 ${tagColor}`}>
+            <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`} className="mr-2 text-mint">
               {tag}
             </Link>
           ))}
@@ -342,12 +302,152 @@ export function StoryFooter({ post, router, onOpenComments, tone = 'light' }) {
 
 export function HeroImage({ src, ratio = '16/9', className = '' }) {
   return (
-    <div className={`relative w-full overflow-hidden bg-[#0c0c0c] ${className}`} style={{ aspectRatio: ratio }}>
+    <div className={`relative w-full overflow-hidden bg-bg-elevated ${className}`} style={{ aspectRatio: ratio }}>
       {src ? (
         <img src={src} alt="" className="h-full w-full object-cover" />
       ) : (
         <div className="h-full w-full bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
       )}
     </div>
+  );
+}
+
+export function StoryMeta({ post, className = '' }) {
+  const mins = Number(post?.readMinutes) || 0;
+  const date = post?.date ? formatPubDate(post.date) : '';
+  if (!date && !mins) return null;
+  return (
+    <p className={`m-0 text-[12px] text-ink-tertiary ${className}`}>
+      {date}
+      {date && mins ? ' · ' : ''}
+      {mins ? `${mins} min read` : ''}
+    </p>
+  );
+}
+
+export function MostPopularRail({ posts = [], showMark = false }) {
+  const list = (posts || []).slice(0, 6);
+  return (
+    <aside className="relative min-w-0 min-[1001px]:self-stretch">
+      <AdUnit variant="sidebar" slot={AD_SLOTS.sidebar} label="Advertisement" />
+      <div className="relative pt-2 max-[1000px]:static min-[1001px]:sticky min-[1001px]:top-[calc(var(--header-height,96px)+16px)] min-[1001px]:z-[2]">
+        {showMark ? (
+          <span className="wf-mark pointer-events-none select-none hidden min-[1001px]:flex" aria-hidden="true">
+            <span>F</span>
+            <span>W</span>
+          </span>
+        ) : null}
+        <h3 className="relative z-[1] font-mono text-[13px] tracking-[0.06em] uppercase text-mint font-bold mt-4 mb-1.5">
+          Most Popular
+        </h3>
+        {list.length ? (
+          <ol className="relative z-[1] list-none m-0 p-0">
+            {list.map((p, index) => (
+              <li key={p.id} className="border-t border-line py-[18px] last:border-b">
+                <Link
+                  href={postUrl(p)}
+                  className="flex gap-3 no-underline text-ink font-sans font-bold text-base leading-snug hover:text-mint"
+                >
+                  <span className="font-mono text-mint font-bold shrink-0">{index + 1}.</span>
+                  <span>{p.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="relative z-[1] m-0 mt-3 text-[13px] text-ink-tertiary">More stories coming soon.</p>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+export function MoreStoriesBand({ post, moreInBucket = [], sidebarPosts = [], tone = 'plain' }) {
+  const stories = (moreInBucket || []).slice(0, 3);
+  const tops = (sidebarPosts || []).slice(0, 3);
+  if (!stories.length && !tops.length) return null;
+
+  const mint = tone === 'mint';
+  const purple = tone === 'purple';
+  const wrap = mint
+    ? 'on-accent bg-[#5FF2C0] text-[#111] py-10 mt-8'
+    : purple
+      ? 'bg-[#5b1be4] text-white py-10 mt-8'
+      : 'border-t border-line bg-bg-elevated py-10 mt-8 text-ink';
+  const kicker = mint ? 'text-[#111]' : purple ? 'text-white' : 'text-ink';
+  const linkHover = mint ? 'group-hover:text-[#0b8f72]' : purple ? 'group-hover:text-[#00d4aa]' : 'group-hover:text-mint';
+  const cardTitle = mint ? 'text-[#111]' : purple ? 'text-white' : 'text-ink';
+  const rule = mint ? 'border-black/15' : purple ? 'border-white/20' : 'border-line';
+  const dateCls = mint ? 'text-black/55' : purple ? 'text-white/55' : 'text-ink-tertiary';
+  const catHref = `/?category=${encodeURIComponent(slugifyCategory(post?.bucket || 'news'))}`;
+
+  return (
+    <section className={wrap}>
+      <div className={`${PAGE} grid grid-cols-1 min-[1001px]:grid-cols-[1fr_280px] gap-8 min-[1001px]:gap-12`}>
+        <div>
+          <h3 className={`text-[14px] font-semibold mb-4 ${kicker}`}>
+            More in{' '}
+            <Link href={catHref} className="underline underline-offset-2">
+              {post?.bucket || 'News'}
+            </Link>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-3 gap-x-5 gap-y-5">
+            {stories.map((p) => (
+              <Link key={p.id} href={postUrl(p)} className="group block text-inherit">
+                <div className={`aspect-[16/9] mb-2 overflow-hidden ${mint || purple ? 'bg-black/10' : 'bg-bg-hover'}`}>
+                  {p.ogImg ? (
+                    <img
+                      src={p.ogImg}
+                      alt=""
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : null}
+                </div>
+                <h4 className={`m-0 font-sans font-extrabold text-sm leading-snug line-clamp-2 ${cardTitle} ${linkHover}`}>
+                  {p.title}
+                </h4>
+              </Link>
+            ))}
+          </div>
+        </div>
+        <aside>
+          <h3 className={`text-[14px] font-extrabold mb-1 ${kicker}`}>Top Stories</h3>
+          <ul className="list-none m-0 p-0">
+            {tops.map((p) => (
+              <li key={p.id} className={`border-t ${rule} py-2.5`}>
+                {p.date ? (
+                  <span className={`block font-mono text-[10.5px] mb-0.5 ${dateCls}`}>
+                    {new Date(p.date)
+                      .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      .toUpperCase()}
+                  </span>
+                ) : null}
+                <Link
+                  href={postUrl(p)}
+                  className={`font-sans font-extrabold text-sm leading-snug line-clamp-2 ${cardTitle} hover:opacity-80`}
+                >
+                  {p.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+export function StoryShell({ children, sidebarPosts, moreInBucket, post, bandTone = 'plain', showMark = false }) {
+  return (
+    <>
+      <div className={`${PAGE} pt-10 md:pt-12 pb-6`}>
+        <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_320px] gap-12 min-[1001px]:gap-[70px] items-start min-[1001px]:items-stretch">
+          <div className="min-w-0">{children}</div>
+          <MostPopularRail posts={sidebarPosts} showMark={showMark} />
+        </div>
+      </div>
+      <MoreStoriesBand post={post} moreInBucket={moreInBucket} sidebarPosts={sidebarPosts} tone={bandTone} />
+    </>
   );
 }

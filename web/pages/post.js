@@ -13,7 +13,7 @@ import DarkPost from '../components/PostDesigns/DarkPost';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl } from '../lib/utils';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
-import { normalizePostDesign } from '../lib/postDesigns';
+import { normalizePostDesign, postHeaderConfig } from '../lib/postDesigns';
 import { useAuth } from '../hooks';
 
 export async function getServerSideProps(context) {
@@ -195,22 +195,6 @@ export default function PostPage({
     return (latest || []).filter((p) => String(p?.id || '') !== currentId).slice(0, 6);
   }, [latest, id, post]);
 
-  const authorName = useMemo(() => {
-    const name = String(post?.creatorName || post?.creator || '').trim();
-    return name || '';
-  }, [post]);
-
-  const authorAvatarUrl = useMemo(() => {
-    const url = String(post?.creatorAvatarUrl || '').trim();
-    return url || '';
-  }, [post]);
-
-  const authorInitials = useMemo(() => {
-    const parts = authorName.split(/\s+/).filter(Boolean);
-    if (!parts.length) return 'W';
-    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-  }, [authorName]);
-
   const moreInBucket = useMemo(() => {
     const currentId = String(post?.id || id || '');
     const bucket = post?.bucket;
@@ -224,6 +208,7 @@ export default function PostPage({
   const accent = normalizeAccentColor(post?.accentColor, DEFAULT_ACCENT);
   const design = normalizePostDesign(post?.design);
   const isMagazine = !post || design === 'magazine';
+  const headerCfg = postHeaderConfig(design, post?.accentColor);
   const openComments = () => setCommentsOpen(true);
 
   return (
@@ -232,7 +217,9 @@ export default function PostPage({
       description={post?.metaDescription || post?.excerpt || undefined}
       keywords={post?.keywords || undefined}
       headerProps={{ user: me, activeCategory: post?.bucket || 'All' }}
-      accentColor={isMagazine ? accent : null}
+      accentColor={headerCfg.accent || (isMagazine ? accent : null)}
+      headerVariant={post ? headerCfg.variant : 'theme'}
+      articleTitle={post && !loading && !error ? post.title : ''}
       fullWidth
       mainClassName={!isMagazine ? '!pt-0 md:!pt-0' : ''}
       headerHero={
@@ -259,19 +246,34 @@ export default function PostPage({
         ) : post ? (
           <>
             {design === 'split' ? (
-              <SplitPost post={post} router={router} onOpenComments={openComments} />
+              <SplitPost
+                post={post}
+                router={router}
+                onOpenComments={openComments}
+                sidebarPosts={sidebarPosts}
+                moreInBucket={moreInBucket}
+              />
             ) : design === 'banner' ? (
-              <BannerPost post={post} router={router} onOpenComments={openComments} />
+              <BannerPost
+                post={post}
+                router={router}
+                onOpenComments={openComments}
+                sidebarPosts={sidebarPosts}
+                moreInBucket={moreInBucket}
+              />
             ) : design === 'dark' ? (
-              <DarkPost post={post} router={router} onOpenComments={openComments} />
+              <DarkPost
+                post={post}
+                router={router}
+                onOpenComments={openComments}
+                sidebarPosts={sidebarPosts}
+                moreInBucket={moreInBucket}
+              />
             ) : (
               <MagazinePost
                 post={post}
                 router={router}
                 onOpenComments={openComments}
-                authorName={authorName}
-                authorAvatarUrl={authorAvatarUrl}
-                authorInitials={authorInitials}
                 sidebarPosts={sidebarPosts}
                 moreInBucket={moreInBucket}
               />

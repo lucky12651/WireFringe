@@ -22,6 +22,8 @@ export default function Layout({
   fullWidth = false,
   shellClassName = '',
   mainClassName = '',
+  articleTitle = '',
+  headerVariant = 'theme',
 }) {
   const { me } = useAuth();
   const headerUser = me || null;
@@ -44,7 +46,13 @@ export default function Layout({
         className={cn('min-h-screen flex flex-col bg-transparent text-ink', shellClassName)}
         style={accent ? { '--header-accent': accent } : undefined}
       >
-        <Header {...headerProps} user={headerUser} accentColor={accent} />
+        <Header
+          {...headerProps}
+          user={headerUser}
+          accentColor={accent}
+          articleTitle={articleTitle}
+          headerVariant={headerVariant}
+        />
         {headerHero ? (
           <div className="relative mt-[calc(var(--header-height)*-1)] pt-[var(--header-height)]">
             {headerHero}

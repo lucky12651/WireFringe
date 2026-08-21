@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { postExcerpt } from '../../lib/utils';
 import AuthorByline from '../AuthorByline/AuthorByline';
+import { Watermark } from '../PostDesigns/shared';
 
 function formatPubDate(date) {
   if (!date || Number.isNaN(date.getTime?.())) return '';
@@ -63,8 +64,9 @@ export default function PostHero({ post, commentCount = 0, onOpenComments }) {
     'inline-flex items-center justify-center w-9 h-9 rounded-full text-[#111] bg-transparent border-0 cursor-pointer transition-colors hover:bg-black/10';
 
   return (
-    <section className="on-accent bg-[var(--header-accent,#DEF23A)] text-[#111] pb-2">
-      <div className="max-w-[1360px] mx-auto px-5 md:px-10 pt-8 pb-2 grid grid-cols-1 min-[1001px]:grid-cols-[1fr_1.05fr] gap-7 min-[1001px]:gap-14 items-start">
+    <section className="on-accent relative overflow-hidden bg-[var(--header-accent,#DEF23A)] text-[#111] pb-2">
+      <Watermark stroke="rgba(0,0,0,0.18)" />
+      <div className="max-w-[1360px] mx-auto px-5 md:px-10 pt-2 pb-2 grid grid-cols-1 min-[1001px]:grid-cols-[1fr_1.05fr] gap-7 min-[1001px]:gap-14 items-start">
         <div className="relative">
           <div className="border-[10px] md:border-[12px] border-[#1a1a1a] bg-[#0c0c0f] aspect-square overflow-hidden">
             {post?.ogImg ? (

@@ -1,4 +1,7 @@
+import { DEFAULT_ACCENT, normalizeAccentColor } from './accents';
+
 export const DEFAULT_POST_DESIGN = 'magazine';
+export const BANNER_ACCENT = '#5B1BE4';
 
 export const POST_DESIGNS = [
   {
@@ -30,4 +33,24 @@ export function normalizePostDesign(value) {
     .trim()
     .toLowerCase();
   return POST_DESIGN_IDS.includes(v) ? v : DEFAULT_POST_DESIGN;
+}
+
+/**
+ * Header chrome for a public post:
+ * - solid: post accent fill + dark type (magazine lime)
+ * - solid-inverse: post accent fill + light type (banner purple)
+ * - theme: follows light/dark mode
+ */
+export function postHeaderConfig(design, postAccent) {
+  const d = normalizePostDesign(design);
+  if (d === 'magazine') {
+    return {
+      accent: normalizeAccentColor(postAccent, DEFAULT_ACCENT),
+      variant: 'solid',
+    };
+  }
+  if (d === 'banner') {
+    return { accent: BANNER_ACCENT, variant: 'solid-inverse' };
+  }
+  return { accent: null, variant: 'theme' };
 }

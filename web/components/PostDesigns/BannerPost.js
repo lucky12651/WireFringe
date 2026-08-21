@@ -8,24 +8,24 @@ import { SITE_NAME } from '../../lib/site';
 import {
   AuthorBioRow,
   HeroImage,
+  PAGE,
   ReadingProgress,
   ShareCluster,
-  StickyTitleBar,
   StoryFlags,
   StoryFooter,
+  StoryMeta,
+  StoryShell,
   TagPills,
-  formatPubDate,
   authorBits,
 } from './shared';
 
-export default function BannerPost({ post, router, onOpenComments }) {
+export default function BannerPost({ post, router, onOpenComments, sidebarPosts, moreInBucket }) {
   const excerpt = postExcerpt(post, 220);
   const { name } = authorBits(post);
 
   return (
-    <div className="post-design-banner">
-      <ReadingProgress color="#00d4aa" />
-      <StickyTitleBar title={post.title} tone="purple" />
+    <div className="post-design-banner bg-bg text-ink">
+      <ReadingProgress color="var(--mint)" />
 
       <section className="relative overflow-hidden bg-[#5b1be4]">
         <div
@@ -36,17 +36,25 @@ export default function BannerPost({ post, router, onOpenComments }) {
           {SITE_NAME}
         </div>
 
-        <div className="relative z-[2] mx-auto grid max-w-[900px] grid-cols-1 gap-6 px-6 pb-7 pt-10 md:grid-cols-[220px_1fr] md:gap-6">
+        <div className={`relative z-[2] ${PAGE} grid grid-cols-1 gap-6 pb-7 pt-10 md:grid-cols-[240px_1fr] md:gap-10`}>
           <div className="pt-1.5">
             {name ? (
               <p className="m-0 mb-0.5 text-[13px] text-white/75">
                 By{' '}
-                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-white">
+                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-white hover:text-[#00d4aa]">
                   {name}
                 </Link>
               </p>
             ) : null}
-            {post.date ? <p className="mb-3.5 text-[11.5px] text-white/55">{formatPubDate(post.date)}</p> : null}
+            {post.date || post.readMinutes ? (
+              <p className="mb-3.5 text-[11.5px] text-white/55">
+                {post.date ? new Date(post.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                {post.date && post.readMinutes ? ' · ' : ''}
+                {post.readMinutes ? `${post.readMinutes} min read` : ''}
+              </p>
+            ) : (
+              <StoryMeta post={post} className="mb-3.5 !text-white/55" />
+            )}
             <ShareCluster
               post={post}
               onOpenComments={onOpenComments}
@@ -56,29 +64,29 @@ export default function BannerPost({ post, router, onOpenComments }) {
           </div>
           <div>
             <TagPills post={post} tone="purple" />
-            <h1 className="mb-4 font-heading text-[clamp(40px,7vw,72px)] font-black leading-[0.92] tracking-[-0.03em] text-black">
+            <h1 className="mb-4 font-heading text-[clamp(40px,6.5vw,72px)] font-black leading-[0.94] tracking-[-0.03em] text-black [text-wrap:pretty]">
               {post.title}
             </h1>
             {excerpt ? (
-              <p className="m-0 max-w-[560px] text-[16.5px] leading-normal text-black/70">{excerpt}</p>
+              <p className="m-0 max-w-[640px] text-[16.5px] leading-[1.5] text-black/70 [text-wrap:pretty]">{excerpt}</p>
             ) : null}
           </div>
         </div>
 
-        <div className="mx-auto max-w-[900px] px-6">
+        <div className={`${PAGE}`}>
           <HeroImage src={post.ogImg} ratio="16/7.5" />
         </div>
-        <div className="mx-auto max-w-[900px] px-6 pb-4 pt-2.5">
+        <div className={`${PAGE} pb-5 pt-2.5`}>
           <p className="m-0 font-mono text-[11px] italic text-black/50">{post.bucket || 'Wirefringe'}</p>
         </div>
       </section>
 
-      <div className="post-design-light bg-white text-[#1a1a1a]">
-        <div className="mx-auto flex max-w-[680px] items-center gap-3 border-b border-[#e0e0e0] px-6 py-6">
-          <AuthorBioRow post={post} tone="light" />
-        </div>
-        <div className="mx-auto max-w-[680px] px-6 pb-16 pt-9">
-          <StoryFlags post={post} tone="light" />
+      <StoryShell post={post} sidebarPosts={sidebarPosts} moreInBucket={moreInBucket} bandTone="purple">
+        <article>
+          <div className="mb-8 border-b border-line pb-5">
+            <AuthorBioRow post={post} />
+          </div>
+          <StoryFlags post={post} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
             html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
@@ -86,9 +94,9 @@ export default function BannerPost({ post, router, onOpenComments }) {
             className="article-body--banner"
           />
           <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-          <StoryFooter post={post} router={router} onOpenComments={onOpenComments} tone="light" />
-        </div>
-      </div>
+          <StoryFooter post={post} router={router} onOpenComments={onOpenComments} />
+        </article>
+      </StoryShell>
     </div>
   );
 }
