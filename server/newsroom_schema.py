@@ -24,6 +24,7 @@ POST_COLUMNS = {
     "view_count": "INTEGER NOT NULL DEFAULT 0",
     "extra_categories": "TEXT",
     "featured_in": "TEXT",
+    "design": "VARCHAR",
 }
 
 USER_COLUMNS = {

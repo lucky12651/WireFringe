@@ -23,6 +23,7 @@ class PostOut(BaseModel):
     readMinutes: int | None = None
     ogImg: str | None = None
     accentColor: str | None = None
+    design: str = "magazine"
     metaDescription: str | None = None
     keywords: str | None = None
     # Approved public comments only (pending do not count)
@@ -257,6 +258,7 @@ class PostUpsert(BaseModel):
     creator: str | None = None
     ogImg: str | None = None
     accentColor: str | None = None
+    design: str | None = None
     readMinutes: int | None = None
     metaDescription: str | None = None
     keywords: str | None = None

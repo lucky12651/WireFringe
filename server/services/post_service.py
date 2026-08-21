@@ -38,6 +38,21 @@ from .settings_service import BOT_CREATOR_KEYS, SettingsService
 
 _ACCENT_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
+POST_DESIGNS = ("magazine", "split", "banner", "dark")
+DEFAULT_POST_DESIGN = "magazine"
+
+
+def normalize_post_design(value: str | None) -> str:
+    """Accept one of the four public article layouts. Anything else → magazine."""
+    v = str(value or "").strip().lower()
+    return v if v in POST_DESIGNS else DEFAULT_POST_DESIGN
+
+
+def random_post_design() -> str:
+    import random
+
+    return random.choice(POST_DESIGNS)
+
 
 def normalize_accent_color(value: str | None) -> str | None:
     """Accept #RRGGBB only. Empty/invalid → None (site default on the frontend)."""
@@ -135,6 +150,7 @@ class PostService:
             readMinutes=post.read_minutes,
             ogImg=post.og_img,
             accentColor=getattr(post, "accent_color", None) or None,
+            design=normalize_post_design(getattr(post, "design", None)),
             metaDescription=post.meta_description,
             keywords=post.keywords,
             commentCount=comment_count,
@@ -389,6 +405,7 @@ class PostService:
             read_minutes=payload.readMinutes or 1,
             og_img=payload.ogImg,
             accent_color=normalize_accent_color(payload.accentColor),
+            design=normalize_post_design(payload.design),
             meta_description=payload.metaDescription,
             keywords=payload.keywords,
             published_at=published_at,
@@ -428,6 +445,8 @@ class PostService:
         post.og_img = payload.ogImg or post.og_img
         if "accentColor" in payload.model_fields_set:
             post.accent_color = normalize_accent_color(payload.accentColor)
+        if "design" in payload.model_fields_set:
+            post.design = normalize_post_design(payload.design)
         post.read_minutes = payload.readMinutes or post.read_minutes
         post.meta_description = payload.metaDescription or post.meta_description
         post.keywords = payload.keywords or post.keywords

@@ -9,7 +9,9 @@ import { useCategories } from '../../hooks/useCategories';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 import { accessFor } from '../../lib/access';
 import { GutenbergEditor, SettingsSection } from '../../components/admin/editor/GutenbergEditor';
+import DesignPicker from '../../components/admin/editor/DesignPicker';
 import { MultiSelect } from '../../components/admin/wp/MultiSelect';
+import { DEFAULT_POST_DESIGN, normalizePostDesign } from '../../lib/postDesigns';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function AdminPostPage() {
   const [siteCatalog, setSiteCatalog] = useState({ categories: [], sections: [] });
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
+  const [design, setDesign] = useState(DEFAULT_POST_DESIGN);
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
   const [excerpt, setExcerpt] = useState('');
   const [status, setStatus] = useState('draft');
@@ -111,6 +114,7 @@ export default function AdminPostPage() {
     setExtraCategories([]);
     setFeaturedIn([]);
     setOgImg('');
+    setDesign(DEFAULT_POST_DESIGN);
     setAccentColor(DEFAULT_ACCENT);
     setReadMinutes('');
     setExcerpt('');
@@ -138,6 +142,7 @@ export default function AdminPostPage() {
     setExtraCategories(post.extraCategories || []);
     setFeaturedIn(post.featuredIn || []);
     setOgImg(post.ogImg || '');
+    setDesign(normalizePostDesign(post.design));
     setAccentColor(normalizeAccentColor(post.accentColor, DEFAULT_ACCENT));
     setReadMinutes(post.readMinutes ? String(post.readMinutes) : '');
     setExcerpt(post.excerpt || '');
@@ -182,6 +187,7 @@ export default function AdminPostPage() {
       excerpt: excerpt.trim() ? excerpt.trim() : null,
       creator: me ? me.username : null,
       ogImg: ogImg.trim() ? ogImg.trim() : null,
+      design: normalizePostDesign(design),
       accentColor: normalizeAccentColor(accentColor, DEFAULT_ACCENT),
       readMinutes: readMinutes ? Number(readMinutes) : null,
       status: overrides.status ?? status,
@@ -242,6 +248,7 @@ export default function AdminPostPage() {
       excerpt,
       me,
       ogImg,
+      design,
       accentColor,
       readMinutes,
       status,
@@ -408,6 +415,19 @@ export default function AdminPostPage() {
         ) : null}
       </SettingsSection>
 
+      <SettingsSection title="Post design">
+        <p className="m-0 mb-3 text-[12px] text-ink-secondary">
+          How this story looks on the public post page. The news bot picks one of these at random when it auto-publishes.
+        </p>
+        <DesignPicker
+          value={design}
+          onChange={(id) => {
+            setDesign(id);
+            setDirty(true);
+          }}
+        />
+      </SettingsSection>
+
       <SettingsSection title="Placement">
         <p className="m-0 mb-3 text-[12px] text-ink-secondary">
           Category is the topic. Sections decide where this post appears on the site.
@@ -518,7 +538,7 @@ export default function AdminPostPage() {
 
       <SettingsSection title="Header color" defaultOpen={false}>
         <p className="m-0 mb-2 text-[11px] leading-snug text-ink-tertiary">
-          Lime-style band behind the header and hero on this post only.
+          Lime-style band behind the header and hero on the Magazine design.
         </p>
         <div className="mb-2 flex flex-wrap gap-1.5">
           {ACCENT_PRESETS.map((preset) => {

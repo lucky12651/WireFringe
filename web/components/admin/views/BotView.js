@@ -471,7 +471,7 @@ export function BotView({
                   <ToggleField
                     on={!!form.autoPublish}
                     title="Auto-publish bot stories"
-                    description="When off, finished stories wait in Review."
+                    description="When off, finished stories wait in Review. Each bot story gets a random post design (magazine, split, banner, or dark)."
                     onToggle={() => handleAutoPublishToggle()}
                   />
                 </td>

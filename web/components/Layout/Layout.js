@@ -8,6 +8,7 @@ import { ArchivesIcon, SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '../../lib/site';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 import { useAuth } from '../../hooks';
+import { cn } from '../../lib/utils';
 
 export default function Layout({
   children,
@@ -19,6 +20,8 @@ export default function Layout({
   accentColor = null,
   headerHero = null,
   fullWidth = false,
+  shellClassName = '',
+  mainClassName = '',
 }) {
   const { me } = useAuth();
   const headerUser = me || null;
@@ -38,7 +41,7 @@ export default function Layout({
       </Head>
 
       <div
-        className="min-h-screen flex flex-col bg-transparent text-ink"
+        className={cn('min-h-screen flex flex-col bg-transparent text-ink', shellClassName)}
         style={accent ? { '--header-accent': accent } : undefined}
       >
         <Header {...headerProps} user={headerUser} accentColor={accent} />
@@ -48,7 +51,13 @@ export default function Layout({
           </div>
         ) : null}
         {showAdRails ? <AdRails /> : null}
-        <main className="flex-1 bg-transparent pt-4 md:pt-5 pb-[calc(var(--bottom-nav-height)+12px)] min-[1001px]:pb-0" id="content">
+        <main
+          className={cn(
+            'flex-1 bg-transparent pt-4 md:pt-5 pb-[calc(var(--bottom-nav-height)+12px)] min-[1001px]:pb-0',
+            mainClassName
+          )}
+          id="content"
+        >
           <div className={fullWidth ? 'w-full' : 'max-w-site mx-auto w-full px-4 sm:px-7'}>
             {children}
           </div>

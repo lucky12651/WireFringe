@@ -28,6 +28,9 @@ class Post(Base):
     # Public article hero/header band color (e.g. #DEF23A). Null = site default lime.
     accent_color: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Public article layout: magazine | split | banner | dark. Null = magazine.
+    design: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # SEO Fields
     meta_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     keywords: Mapped[str | None] = mapped_column(Text, nullable=True)  # Comma-separated

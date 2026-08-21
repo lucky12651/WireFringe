@@ -28,6 +28,7 @@ from .news_bot_modules.article_generator import generate_article
 from .news_bot_modules.utils import is_unusable_story
 from .services.recommendation_service import RecommendationService
 from .services.settings_service import SettingsService
+from .services.post_service import random_post_design
 
 from sqlalchemy import text
 
@@ -200,6 +201,8 @@ class NewsBot:
 
                 featured_in = _json.dumps([dest_section])
             bucket = (item.category or article_data.bucket or "Tech").strip()
+            picked_design = random_post_design()
+            logger.info("Assigned post design %s for %s", picked_design, article_data.title)
             new_post = Post(
                 id=slug,
                 title=article_data.title,
@@ -219,6 +222,7 @@ class NewsBot:
                 source_url=resolved_url,
                 source_name=source_name,
                 featured_in=featured_in,
+                design=picked_design,
             )
 
             try:
@@ -249,6 +253,7 @@ class NewsBot:
                         source_url=resolved_url,
                         source_name=source_name,
                         featured_in=featured_in,
+                        design=picked_design,
                     ))
                     s.commit()
                 except Exception:
@@ -259,7 +264,7 @@ class NewsBot:
                 finally:
                     s.close()
 
-            logger.info(f"🚀 INSTANTLY PUBLISHED: {article_data.title}")
+            logger.info("🚀 INSTANTLY PUBLISHED [%s]: %s", picked_design, article_data.title)
             add_to_recent_cache(db, article_data.title, resolved_url)
             self._mark_queue(db, source_url, "published")
             await self.trigger_revalidation()

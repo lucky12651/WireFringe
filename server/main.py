@@ -505,6 +505,8 @@ def _ensure_post_accent_column() -> None:
         existing = {c["name"] for c in inspector.get_columns("posts")}
         if "accent_color" not in existing:
             conn.execute(text("ALTER TABLE posts ADD COLUMN accent_color VARCHAR"))
+        if "design" not in existing:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN design VARCHAR"))
 
 
 # Create the application instance
