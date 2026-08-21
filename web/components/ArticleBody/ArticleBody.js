@@ -9,110 +9,20 @@ import {
 } from '../../lib/ads';
 import { cn } from '../../lib/utils';
 import { injectHeadingIds } from '../../lib/articleExtras';
+import {
+  decoratePullQuote,
+  isParagraphBlock,
+  prepareArticleHtml,
+  splitHtmlBlocks,
+} from '../../lib/articleHtml';
 import { ImageLightbox } from '../PostDesigns/reading';
 
-/**
- * Normalize CMS / WordPress-style HTML into clean block paragraphs.
- * Many posts use <!-- wp:paragraph -->… without real <p> tags.
- */
-function normalizeContentHtml(html) {
-  let raw = String(html || '').trim();
-  if (!raw) return '';
-
-  if (/<!--\s*wp:/i.test(raw)) {
-    raw = raw.replace(
-      /<!--\s*wp:paragraph(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:paragraph\s*-->/gi,
-      (_, inner) => {
-        const t = String(inner || '').trim();
-        if (!t) return '';
-        if (/^<p[\s>]/i.test(t)) return t;
-        return `<p>${t}</p>`;
-      }
-    );
-    raw = raw.replace(
-      /<!--\s*wp:heading(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:heading\s*-->/gi,
-      (_, inner) => String(inner || '').trim()
-    );
-    raw = raw.replace(
-      /<!--\s*wp:(?:image|list|quote|embed|html|separator|spacer|group|columns|column)(?:\s+\{[^}]*\})?\s*-->([\s\S]*?)<!--\s*\/wp:\w+\s*-->/gi,
-      (_, inner) => String(inner || '').trim()
-    );
-    raw = raw.replace(/<!--\s*\/?wp:[^>]*-->/gi, '');
-  }
-
-  if (!/<\/p>/i.test(raw) && /<br\s*\/?>\s*<br\s*\/?>/i.test(raw)) {
-    const parts = raw
-      .split(/<br\s*\/?>\s*<br\s*\/?>/i)
-      .map((s) => s.replace(/<br\s*\/?>/gi, ' ').trim())
-      .filter(Boolean);
-    if (parts.length > 1) {
-      raw = parts.map((p) => (/^<p[\s>]/i.test(p) ? p : `<p>${p}</p>`)).join('\n');
-    }
-  }
-
-  if (!/<[a-z][\s\S]*>/i.test(raw)) {
-    const paras = raw
-      .split(/\n\s*\n+/)
-      .map((s) => s.replace(/\n/g, ' ').trim())
-      .filter(Boolean);
-    if (paras.length) {
-      raw = paras.map((p) => `<p>${p}</p>`).join('\n');
-    }
-  }
-
-  return raw.trim();
-}
-
-function splitHtmlBlocks(html) {
-  const raw = normalizeContentHtml(html);
-  if (!raw) return [];
-
-  if (/<\/p>/i.test(raw)) {
-    const chunks = raw
-      .split(/(<\/p>)/i)
-      .reduce((acc, part, i, arr) => {
-        if (/^<\/p>$/i.test(part)) return acc;
-        const next = arr[i + 1];
-        const block = next && /^<\/p>$/i.test(next) ? part + next : part;
-        const t = block.trim();
-        if (t) acc.push(t);
-        return acc;
-      }, []);
-    if (chunks.length > 1) return chunks;
-    if (chunks.length === 1) return chunks;
-  }
-
-  const parts = raw
-    .split(/(?=<(?:p|h[1-6]|blockquote|ul|ol|figure|div|hr|pre|table)\b)/i)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (parts.length > 1) return parts;
-
-  const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  if (!plain) return [raw];
-  const sentences = plain.split(/(?<=[.!?])\s+/).filter((s) => s.length > 20);
-  if (sentences.length >= 2) {
-    const groups = [];
-    for (let i = 0; i < sentences.length; i += 2) {
-      const chunk = sentences.slice(i, i + 2).join(' ');
-      groups.push(`<p>${chunk}</p>`);
-    }
-    return groups;
-  }
-  return [`<p>${plain}</p>`];
-}
-
-function isParagraphBlock(html) {
-  const s = String(html || '').trim();
-  if (/^<p[\s>]/i.test(s) || /<\/p>/i.test(s)) return true;
-  if (/^<h[1-6]/i.test(s) || /^<(?:ul|ol|figure|pre|table|hr)\b/i.test(s)) return false;
-  const text = s.replace(/<[^>]+>/g, '').trim();
-  return text.length > 80;
-}
-
-export default function ArticleBody({ html, className = '', magazine = false }) {
-  const prepared = useMemo(() => injectHeadingIds(html), [html]);
-  const blocks = useMemo(() => splitHtmlBlocks(prepared), [prepared]);
+export default function ArticleBody({ html, title = '', className = '', magazine = false }) {
+  const prepared = useMemo(
+    () => injectHeadingIds(prepareArticleHtml(html, title)),
+    [html, title]
+  );
+  const blocks = useMemo(() => decoratePullQuote(splitHtmlBlocks(prepared)), [prepared]);
   const [lightbox, setLightbox] = useState('');
   const [adCfg, setAdCfg] = useState({
     enabled: true,
@@ -151,15 +61,21 @@ export default function ArticleBody({ html, className = '', magazine = false }) 
     let firstParaDone = false;
     const insertAds = adCfg.enabled && adCfg.inArticleEnabled && adCfg.maxAds > 0;
 
-    blocks.forEach((block, idx) => {
+    blocks.forEach((item, idx) => {
+      const block = typeof item === 'string' ? item : item.html;
+      const pull = typeof item === 'object' && item.pull;
       const isFirstPara = !firstParaDone && isParagraphBlock(block);
       if (isFirstPara) firstParaDone = true;
 
-      const isQuote = /^<blockquote/i.test(String(block || '').trim());
+      const isQuote = pull || /^<blockquote/i.test(String(block || '').trim());
       out.push(
         <div
           key={`b-${idx}`}
-          className={cn(isFirstPara && magazine && 'drop-cap', isQuote && 'pull-quote')}
+          className={cn(
+            isFirstPara && 'article-lead',
+            isFirstPara && magazine && 'drop-cap',
+            isQuote && 'pull-quote'
+          )}
           dangerouslySetInnerHTML={{ __html: block }}
         />
       );

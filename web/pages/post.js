@@ -15,6 +15,7 @@ import { slugifyTitle, postUrl } from '../lib/utils';
 import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
 import { normalizePostDesign, postHeaderConfig } from '../lib/postDesigns';
 import { extractHeadings, extractKeyPoints, neighborsInCategory } from '../lib/articleExtras';
+import { prepareArticleHtml } from '../lib/articleHtml';
 import { ReaderView } from '../components/PostDesigns/reading';
 import { useAuth } from '../hooks';
 
@@ -213,8 +214,12 @@ export default function PostPage({
   const isMagazine = !post || design === 'magazine';
   const headerCfg = postHeaderConfig(design, post?.accentColor);
   const openComments = () => setCommentsOpen(true);
-  const headings = useMemo(() => extractHeadings(post?.content || ''), [post?.content]);
-  const keyPoints = useMemo(() => extractKeyPoints(post?.content || ''), [post?.content]);
+  const bodyHtml = useMemo(
+    () => prepareArticleHtml(post?.content || '', post?.title || ''),
+    [post?.content, post?.title]
+  );
+  const headings = useMemo(() => extractHeadings(bodyHtml), [bodyHtml]);
+  const keyPoints = useMemo(() => extractKeyPoints(bodyHtml), [bodyHtml]);
   const { prev: prevPost, next: nextPost } = useMemo(
     () => (post ? neighborsInCategory(post, latest) : { prev: null, next: null }),
     [post, latest]
@@ -224,6 +229,7 @@ export default function PostPage({
     keyPoints,
     prevPost,
     nextPost,
+    bodyHtml,
     onReader: () => setReaderOpen(true),
   };
 

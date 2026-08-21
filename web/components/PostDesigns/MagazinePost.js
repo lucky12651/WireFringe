@@ -20,6 +20,7 @@ export default function MagazinePost({
   keyPoints,
   prevPost,
   nextPost,
+  bodyHtml,
   onReader,
 }) {
   return (
@@ -41,7 +42,8 @@ export default function MagazinePost({
           <KeyPoints points={keyPoints} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
-            html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+            html={bodyHtml || post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+            title={post.title}
             magazine
             className="article-body--verge"
           />

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { postUrl, stripHtml, cn } from '../../lib/utils';
 import { relativeUpdated, shouldShowUpdated } from '../../lib/articleExtras';
+import { prepareArticleHtml } from '../../lib/articleHtml';
 
 export function FadeImg({ src, alt = '', className = '', ...rest }) {
   const [on, setOn] = useState(!src);
@@ -20,11 +21,11 @@ export function FadeImg({ src, alt = '', className = '', ...rest }) {
 export function KeyPoints({ points = [] }) {
   if (!points.length) return null;
   return (
-    <aside className="mb-8 border border-line bg-bg-elevated px-5 py-4">
+    <aside className="mb-9 border-l-[3px] border-mint bg-bg-elevated px-5 py-4">
       <p className="m-0 mb-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-mint">Key points</p>
-      <ul className="m-0 list-disc space-y-1.5 pl-5">
+      <ul className="m-0 list-none space-y-2 p-0">
         {points.map((p) => (
-          <li key={p} className="text-[14.5px] leading-snug text-ink-dek">
+          <li key={p} className="relative pl-4 text-[15px] leading-snug text-ink-dek before:absolute before:left-0 before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-mint">
             {p}
           </li>
         ))}
@@ -122,7 +123,7 @@ export function ReaderView({ post, onClose }) {
   }, [onClose]);
 
   if (typeof document === 'undefined') return null;
-  const html = post?.content || `<p>${stripHtml(post?.excerpt || '')}</p>`;
+  const html = prepareArticleHtml(post?.content || '', post?.title || '') || `<p>${stripHtml(post?.excerpt || '')}</p>`;
   return createPortal(
     <div className="reader-view fixed inset-0 z-[12500] overflow-y-auto bg-bg text-ink">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-bg px-4 py-3">

@@ -27,7 +27,9 @@ export function injectHeadingIds(html) {
 }
 
 export function extractKeyPoints(html, max = 3) {
-  const headings = extractHeadings(html).map((h) => h.text).filter((t) => t.length > 8 && t.length < 110);
+  const headings = extractHeadings(html)
+    .map((h) => h.text)
+    .filter((t) => t.length > 8 && t.length < 110 && !/\$\s*\d/.test(t) && !/%\s*off/i.test(t));
   if (headings.length >= max) return headings.slice(0, max);
   const paras = String(html || '')
     .split(/<\/p>/i)

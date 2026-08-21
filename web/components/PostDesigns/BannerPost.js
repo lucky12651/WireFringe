@@ -30,6 +30,7 @@ export default function BannerPost({
   keyPoints,
   prevPost,
   nextPost,
+  bodyHtml,
   onReader,
 }) {
   const excerpt = postExcerpt(post, 220);
@@ -101,7 +102,8 @@ export default function BannerPost({
           <KeyPoints points={keyPoints} />
           <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
           <ArticleBody
-            html={post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+            html={bodyHtml || post.content || `<p>${stripHtml(post.excerpt || '')}</p>`}
+            title={post.title}
             magazine
             className="article-body--banner"
           />
