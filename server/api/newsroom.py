@@ -63,6 +63,43 @@ def public_frontpage(
     }
 
 
+@router.get("/catalog")
+def public_catalog(db: Session = Depends(get_db)) -> dict:
+    from ..services.catalog_service import CatalogService
+
+    svc = CatalogService(db)
+    data = svc.public()
+    return {
+        **data,
+        "header": svc.header_nav(),
+        "sidebar": svc.sidebar_nav(),
+        "home": svc.home_sections(),
+    }
+
+
+@router.get("/admin/catalog")
+def admin_get_catalog(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    require_staff(require_user(request, db))
+    from ..services.catalog_service import CatalogService
+
+    return CatalogService(db).get()
+
+
+@router.put("/admin/catalog")
+def admin_save_catalog(
+    payload: dict,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    require_staff(require_user(request, db))
+    from ..services.catalog_service import CatalogService
+
+    return CatalogService(db).save(payload or {})
+
+
 @router.put("/admin/frontpage")
 def admin_save_frontpage(
     payload: FrontpageIn,
@@ -279,11 +316,24 @@ def public_search(q: str = "", posts: PostService = Depends(get_posts)) -> list:
 
 
 @router.get("/section/{slug}")
-def posts_by_section(slug: str, posts: PostService = Depends(get_posts)) -> dict:
-    buckets = SECTIONS.get((slug or "").strip().lower())
+def posts_by_section(
+    slug: str,
+    posts: PostService = Depends(get_posts),
+    db: Session = Depends(get_db),
+) -> dict:
+    from ..services.catalog_service import CatalogService
+
+    key = (slug or "").strip().lower()
+    buckets = CatalogService(db).section_buckets().get(key) or SECTIONS.get(key)
     if not buckets:
         raise HTTPException(status_code=404, detail="Unknown section")
-    items = [p for p in posts.list_posts(public=True) if p.bucket in buckets]
+    bucket_set = set(buckets)
+    items = []
+    for p in posts.list_posts(public=True):
+        extra = getattr(p, "extraCategories", None) or []
+        names = {str(p.bucket or "").strip(), *[str(x) for x in extra]}
+        if names.intersection(bucket_set):
+            items.append(p)
     return {"slug": slug, "buckets": buckets, "posts": items}
 
 

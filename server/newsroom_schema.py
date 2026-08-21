@@ -22,6 +22,8 @@ POST_COLUMNS = {
     "tags": "TEXT",
     "related_ids": "TEXT",
     "view_count": "INTEGER NOT NULL DEFAULT 0",
+    "extra_categories": "TEXT",
+    "featured_in": "TEXT",
 }
 
 USER_COLUMNS = {
@@ -167,5 +169,10 @@ def apply_newsroom_schema() -> None:
 
         for stmt in CREATE_TABLES:
             conn.execute(text(stmt))
+
+        if "news_queue" in tables:
+            qcols = {c["name"] for c in inspector.get_columns("news_queue")}
+            if "dest_section" not in qcols:
+                conn.execute(text("ALTER TABLE news_queue ADD COLUMN dest_section VARCHAR"))
 
     logger.info("Newsroom schema applied.")

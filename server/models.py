@@ -52,6 +52,8 @@ class Post(Base):
     tags: Mapped[str | None] = mapped_column(Text, nullable=True)
     related_ids: Mapped[str | None] = mapped_column(Text, nullable=True)
     view_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    extra_categories: Mapped[str | None] = mapped_column(Text, nullable=True)
+    featured_in: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class User(Base):
@@ -156,6 +158,7 @@ class NewsQueue(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     link: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     category: Mapped[str] = mapped_column(String, nullable=False)
+    dest_section: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 

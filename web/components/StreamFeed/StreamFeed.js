@@ -30,6 +30,7 @@ export default function StreamFeed({
   followsLoading = false,
   showNewsletter = true,
   NewsletterComponent = null,
+  topics = [],
 }) {
   const emptyState = (() => {
     if (feedTab === 'following' && !user) {
@@ -122,6 +123,19 @@ export default function StreamFeed({
       <p className="m-0 mb-3 text-center font-mono text-[10px] tracking-[0.08em] uppercase text-ink-muted shrink-0">
         {feedTab === 'following' ? 'From topics and authors you follow' : 'Newest stories'}
       </p>
+      {Array.isArray(topics) && topics.length ? (
+        <div className="flex flex-wrap gap-1.5 mb-3 shrink-0">
+          {topics.map((t) => (
+            <Link
+              key={t.id || t.href}
+              href={t.href || '/'}
+              className="font-mono text-[10px] tracking-wide uppercase no-underline px-2 py-1 rounded-pill border border-line text-ink-secondary hover:border-mint hover:text-mint"
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {emptyState ? (
         emptyState

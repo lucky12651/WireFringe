@@ -196,6 +196,10 @@ export const postsApi = {
 };
 
 export const newsroomApi = {
+  catalog: () => api('/api/catalog', { method: 'GET' }),
+  getCatalog: () => api('/api/admin/catalog', { method: 'GET' }),
+  saveCatalog: (payload) =>
+    api('/api/admin/catalog', { method: 'PUT', body: JSON.stringify(payload) }),
   frontpage: () => api('/api/frontpage', { method: 'GET' }),
   saveFrontpage: (payload) =>
     api('/api/admin/frontpage', { method: 'PUT', body: JSON.stringify(payload) }),

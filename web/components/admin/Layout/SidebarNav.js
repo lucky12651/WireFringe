@@ -6,7 +6,7 @@ import { canAccessView } from '../../../lib/access';
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'posts', label: 'Posts', icon: 'posts' },
-  { id: 'categories', label: 'Categories', icon: 'categories' },
+  { id: 'categories', label: 'Sections', icon: 'categories' },
   { id: 'media', label: 'Media', icon: 'media' },
   { id: 'comments', label: 'Comments', icon: 'comments' },
   { id: 'contact', label: 'Contact', icon: 'contact' },

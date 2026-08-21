@@ -77,6 +77,7 @@ export default function HomePage({ initialPosts }) {
     revalidateOnFocus: false,
   });
   const { data: frontpage } = useSWR('/api/frontpage', fetcher, { revalidateOnFocus: false });
+  const { data: catalog } = useSWR('/api/catalog', fetcher, { revalidateOnFocus: false });
 
   const posts = useMemo(
     () => (postsData || []).map((p) => ({ ...p, date: p.date ? new Date(p.date) : null })),
@@ -158,6 +159,27 @@ export default function HomePage({ initialPosts }) {
 
   const catTech = filtered.filter((p) => p.bucket === 'Tech').slice(0, 4);
   const catAI = filtered.filter((p) => p.bucket === 'AI & Future Tech').slice(0, 4);
+  const catalogHome = Array.isArray(catalog?.home) ? catalog.home.filter((s) => s.kind !== 'hero') : [];
+
+  const postsForSection = (section) => {
+    const cats = new Set(section.categories || []);
+    const featured = filtered.filter((p) => (p.featuredIn || []).includes(section.id));
+    const rest = filtered.filter((p) => {
+      if ((p.featuredIn || []).includes(section.id)) return false;
+      if (!cats.size) return true;
+      const bags = [p.bucket, ...(p.extraCategories || [])];
+      return bags.some((b) => cats.has(b));
+    });
+    const seen = new Set();
+    const out = [];
+    for (const p of [...featured, ...rest]) {
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      out.push(p);
+      if (out.length >= (section.maxPosts || 4)) break;
+    }
+    return out;
+  };
   const catBiz = filtered.filter((p) => p.bucket === 'Business & Markets').slice(0, 4);
   const catFinance = filtered.filter((p) => p.bucket === 'Personal Finance').slice(0, 4);
   const catIndia = filtered.filter((p) => p.bucket === 'India News').slice(0, 4);
@@ -202,125 +224,98 @@ export default function HomePage({ initialPosts }) {
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
 
-              {packageA.length > 0 && (
-                <PackageBlock
-                  title="AI frontline"
-                  subtitle="Enterprise AI, cyber security, and the tools rewriting how we work."
-                  posts={packageA}
-                />
-              )}
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-              </div>
-
-              {packageC.length > 0 && (
-                <PackageBlock
-                  title="Market pulse"
-                  subtitle="Business moves, markets, and the strategy stories behind the numbers."
-                  posts={packageC}
-                />
-              )}
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
-              </div>
-
-              {mostRead.length > 0 && (
-                <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
-                  <PackageRule />
-                  <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">Most Popular</h2>
-                  <ol className="list-none m-3 mt-3 p-0">
-                    {mostRead.map((post, i) => (
-                      <li
-                        key={post.id}
-                        className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-line"
-                      >
-                        <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent">
-                          {i + 1}
-                        </span>
-                        <div>
-                          <Link
-                            href={postUrl(post)}
-                            className="text-lg font-extrabold leading-snug text-ink block mb-2 tracking-tight transition-colors group-hover:text-mint"
-                          >
-                            {post.title}
-                          </Link>
-                          <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
-                            <AuthorByline post={post} size="sm" />
-                            <span className="text-ink-muted">{formatDate(post.date)}</span>
-                          </div>
+              {catalogHome.length
+                ? catalogHome.map((sec, i) => (
+                    <div key={sec.id}>
+                      {sec.kind === 'package' ? (
+                        <PackageBlock title={sec.name} subtitle={sec.subtitle} posts={postsForSection(sec)} />
+                      ) : null}
+                      {sec.kind === 'most_popular' && mostRead.length ? (
+                        <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
+                          <PackageRule />
+                          <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">{sec.name || 'Most Popular'}</h2>
+                          <ol className="list-none m-3 mt-3 p-0">
+                            {mostRead.map((post, idx) => (
+                              <li
+                                key={post.id}
+                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b border-dotted border-line"
+                              >
+                                <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent">
+                                  {idx + 1}
+                                </span>
+                                <div>
+                                  <Link
+                                    href={postUrl(post)}
+                                    className="text-lg font-extrabold leading-snug text-ink block mb-2 tracking-tight transition-colors group-hover:text-mint"
+                                  >
+                                    {post.title}
+                                  </Link>
+                                  <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
+                                    <AuthorByline post={post} size="sm" />
+                                    <span className="text-ink-muted">{formatDate(post.date)}</span>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        </Reveal>
+                      ) : null}
+                      {sec.kind === 'category_row' ? (
+                        <CategoryRow title={sec.name} posts={postsForSection(sec)} href={sec.href} />
+                      ) : null}
+                      {i % 2 === 1 ? (
+                        <div className="my-7 mb-8 w-full">
+                          <AdUnit
+                            variant={i % 4 === 1 ? 'multipath' : 'banner'}
+                            slot={i % 4 === 1 ? AD_SLOTS.multipath : AD_SLOTS.leaderboard}
+                            label="Advertisement"
+                          />
                         </div>
-                      </li>
-                    ))}
-                  </ol>
-                </Reveal>
-              )}
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-              </div>
-
-              {packageB.length > 0 && (
-                <PackageBlock
-                  title="India desk"
-                  subtitle="Politics, policy, and national headlines from across the country."
-                  posts={packageB}
-                />
-              )}
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
-              </div>
-
-              {packageD.length > 0 && (
-                <PackageBlock
-                  title="Wallet watch"
-                  subtitle="Personal finance, tax, gold, and money moves that hit home."
-                  posts={packageD}
-                />
-              )}
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-              </div>
-
-              <CategoryRow title="Latest from Tech" posts={catTech} href="/?category=tech" />
-              <CategoryRow
-                title="Latest from AI & Future Tech"
-                posts={catAI}
-                href="/?category=ai-future-tech"
-              />
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
-              </div>
-
-              <CategoryRow
-                title="Latest from Business & Markets"
-                posts={catBiz}
-                href="/?category=business-markets"
-              />
-              <CategoryRow
-                title="Latest from Personal Finance"
-                posts={catFinance}
-                href="/?category=personal-finance"
-              />
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="multipath" slot={AD_SLOTS.multipath} label="Advertisement" />
-              </div>
-
-              <CategoryRow
-                title="Latest from India News"
-                posts={catIndia}
-                href="/?category=india-news"
-              />
-              <CategoryRow title="Latest from Sports" posts={catSports} href="/?category=sports" />
-
-              <div className="my-7 mb-8 w-full">
-                <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
-              </div>
+                      ) : null}
+                    </div>
+                  ))
+                : (
+                  <>
+                    {packageA.length > 0 && (
+                      <PackageBlock
+                        title="AI frontline"
+                        subtitle="Enterprise AI, cyber security, and the tools rewriting how we work."
+                        posts={packageA}
+                      />
+                    )}
+                    {packageC.length > 0 && (
+                      <PackageBlock
+                        title="Market pulse"
+                        subtitle="Business moves, markets, and the strategy stories behind the numbers."
+                        posts={packageC}
+                      />
+                    )}
+                    {mostRead.length > 0 && (
+                      <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
+                        <PackageRule />
+                        <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">Most Popular</h2>
+                      </Reveal>
+                    )}
+                    {packageB.length > 0 && (
+                      <PackageBlock
+                        title="India desk"
+                        subtitle="Politics, policy, and national headlines from across the country."
+                        posts={packageB}
+                      />
+                    )}
+                    {packageD.length > 0 && (
+                      <PackageBlock
+                        title="Wallet watch"
+                        subtitle="Personal finance, tax, gold, and money moves that hit home."
+                        posts={packageD}
+                      />
+                    )}
+                    <CategoryRow title="Latest from Tech" posts={catTech} href="/?category=tech" />
+                    <CategoryRow title="Latest from AI & Future Tech" posts={catAI} href="/?category=ai-future-tech" />
+                    <CategoryRow title="Latest from Business & Markets" posts={catBiz} href="/?category=business-markets" />
+                    <CategoryRow title="Latest from Personal Finance" posts={catFinance} href="/?category=personal-finance" />
+                  </>
+                )}
             </div>
 
             <div className="min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-bg max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
@@ -331,6 +326,7 @@ export default function HomePage({ initialPosts }) {
                 user={user}
                 followCount={Array.isArray(follows) ? follows.length : 0}
                 followsLoading={Boolean(user) && followsLoading}
+                topics={catalog?.sidebar || []}
                 NewsletterComponent={<NewsletterSignup />}
               />
             </div>

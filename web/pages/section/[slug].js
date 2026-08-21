@@ -2,16 +2,23 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import Layout from '../../components/Layout/Layout';
-import { fetcher } from '../../lib/api';
+import { api, fetcher } from '../../lib/api';
 import { postUrl, postExcerpt } from '../../lib/utils';
 import { SECTIONS } from '../../lib/sections';
 import AuthorByline from '../../components/AuthorByline/AuthorByline';
 
 export async function getServerSideProps({ params }) {
   const slug = String(params?.slug || '').toLowerCase();
-  const section = SECTIONS.find((s) => s.slug === slug);
-  if (!section) return { notFound: true };
-  return { props: { slug, name: section.name } };
+  const hardcoded = SECTIONS.find((s) => s.slug === slug);
+  try {
+    const cat = await api('/api/catalog');
+    const page = (cat.sections || []).find((s) => s.pageSlug === slug && s.enabled);
+    if (page) return { props: { slug, name: page.name } };
+  } catch {
+    // Fall back to the built-in section list if the catalog API is down.
+  }
+  if (hardcoded) return { props: { slug, name: hardcoded.name } };
+  return { notFound: true };
 }
 
 export default function SectionPage({ slug, name }) {

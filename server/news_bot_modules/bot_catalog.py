@@ -73,6 +73,9 @@ def merge_feed_catalog(saved: list | None) -> list[dict]:
                 row["label"] = str(cur["label"]).strip()
             if str(cur.get("section") or "").strip() in SECTIONS:
                 row["section"] = str(cur["section"]).strip()
+            for k in ("destinationCategory", "destinationSection", "sourceName", "sourceCategory", "lastFetch"):
+                if cur.get(k) not in (None, ""):
+                    row[k] = cur[k]
         out.append(row)
     for extra in by_id.values():
         url = str(extra.get("url") or "").strip()
@@ -86,6 +89,11 @@ def merge_feed_catalog(saved: list | None) -> list[dict]:
                 "label": str(extra.get("label") or "Custom feed").strip()[:80],
                 "url": url,
                 "enabled": bool(extra.get("enabled", True)),
+                "destinationCategory": str(extra.get("destinationCategory") or extra.get("section") or ""),
+                "destinationSection": str(extra.get("destinationSection") or ""),
+                "sourceName": str(extra.get("sourceName") or extra.get("label") or ""),
+                "sourceCategory": str(extra.get("sourceCategory") or ""),
+                "lastFetch": extra.get("lastFetch") or "",
             }
         )
     return out

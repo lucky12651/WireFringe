@@ -2,13 +2,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { api, postsApi, mediaApi } from '../../lib/api';
+import { api, postsApi, mediaApi, newsroomApi } from '../../lib/api';
 import { slugifyTitle } from '../../lib/utils';
 import { tw } from '../../lib/tw';
 import { useCategories } from '../../hooks/useCategories';
 import { ACCENT_PRESETS, DEFAULT_ACCENT, normalizeAccentColor } from '../../lib/accents';
 import { accessFor } from '../../lib/access';
 import { GutenbergEditor, SettingsSection } from '../../components/admin/editor/GutenbergEditor';
+import { MultiSelect } from '../../components/admin/wp/MultiSelect';
 
 export default function AdminPostPage() {
   const router = useRouter();
@@ -23,6 +24,9 @@ export default function AdminPostPage() {
   const [title, setTitle] = useState('');
   const { categoryNames, refreshCategories } = useCategories();
   const [bucket, setBucket] = useState('');
+  const [extraCategories, setExtraCategories] = useState([]);
+  const [featuredIn, setFeaturedIn] = useState([]);
+  const [siteCatalog, setSiteCatalog] = useState({ categories: [], sections: [] });
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
@@ -104,6 +108,8 @@ export default function AdminPostPage() {
     setPostId('');
     setTitle('');
     setBucket('Tech');
+    setExtraCategories([]);
+    setFeaturedIn([]);
     setOgImg('');
     setAccentColor(DEFAULT_ACCENT);
     setReadMinutes('');
@@ -129,6 +135,8 @@ export default function AdminPostPage() {
     setPostId(post.id);
     setTitle(post.title || '');
     setBucket(post.bucket || 'Tech');
+    setExtraCategories(post.extraCategories || []);
+    setFeaturedIn(post.featuredIn || []);
     setOgImg(post.ogImg || '');
     setAccentColor(normalizeAccentColor(post.accentColor, DEFAULT_ACCENT));
     setReadMinutes(post.readMinutes ? String(post.readMinutes) : '');
@@ -168,6 +176,8 @@ export default function AdminPostPage() {
     return {
       title: title.trim(),
       bucket,
+      extraCategories,
+      featuredIn,
       content,
       excerpt: excerpt.trim() ? excerpt.trim() : null,
       creator: me ? me.username : null,
@@ -227,6 +237,8 @@ export default function AdminPostPage() {
       postId,
       title,
       bucket,
+      extraCategories,
+      featuredIn,
       excerpt,
       me,
       ogImg,
@@ -262,6 +274,12 @@ export default function AdminPostPage() {
   useEffect(() => {
     (async () => {
       await refreshCategories();
+      try {
+        const cat = await newsroomApi.getCatalog();
+        setSiteCatalog({ categories: cat.categories || [], sections: cat.sections || [] });
+      } catch {
+        // Keep using the categories hook if the catalog is not seeded yet.
+      }
       const ok = await refreshMe();
       if (!ok) {
         router.replace('/admin');
@@ -390,12 +408,54 @@ export default function AdminPostPage() {
         ) : null}
       </SettingsSection>
 
-      <SettingsSection title="Categories">
-        <select className={tw.formSelect} value={bucket} onChange={touch(setBucket)}>
-          {categoryNames.map((b) => (
-            <option key={b}>{b}</option>
-          ))}
-        </select>
+      <SettingsSection title="Placement">
+        <p className="m-0 mb-3 text-[12px] text-ink-secondary">
+          Category is the topic. Sections decide where this post appears on the site.
+        </p>
+        <label className="mb-3 block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Primary category</span>
+          <select className={tw.formSelect} value={bucket} onChange={touch(setBucket)}>
+            {(siteCatalog.categories?.length
+              ? siteCatalog.categories.filter((c) => c.enabled !== false).map((c) => c.name)
+              : categoryNames
+            ).map((b) => (
+              <option key={b}>{b}</option>
+            ))}
+          </select>
+        </label>
+        <label className="mb-3 block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Additional categories</span>
+          <MultiSelect
+            options={(siteCatalog.categories || []).filter((c) => c.enabled !== false && c.name !== bucket).map((c) => c.name)}
+            value={extraCategories}
+            onChange={(v) => {
+              setExtraCategories(v);
+              setDirty(true);
+            }}
+            placeholder="Search categories…"
+          />
+        </label>
+        <label className="block text-[13px]">
+          <span className="mb-1 block text-ink-secondary">Pin to homepage / header / sidebar sections</span>
+          <MultiSelect
+            options={(siteCatalog.sections || []).filter((s) => s.enabled !== false && s.kind !== 'stream')}
+            value={featuredIn}
+            onChange={(v) => {
+              setFeaturedIn(v);
+              setDirty(true);
+            }}
+            placeholder="Search sections…"
+            getId={(o) => o.id}
+            getLabel={(o) => {
+              const places = [
+                o.showHome ? 'home' : null,
+                o.showHeader ? 'header' : null,
+                o.showSidebar ? 'sidebar' : null,
+              ].filter(Boolean);
+              return `${o.name}${places.length ? ` (${places.join(', ')})` : ''}`;
+            }}
+          />
+        </label>
       </SettingsSection>
 
       <SettingsSection title="Tags">

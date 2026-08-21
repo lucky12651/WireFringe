@@ -3,6 +3,7 @@ import { LogsView } from './LogsView';
 import { cn } from '../../../lib/utils';
 import { tw } from '../../../lib/tw';
 import { ScreenTitle, NavTabs, Notice, ToggleField } from '../wp/ScreenTitle';
+import { newsroomApi } from '../../../lib/api';
 
 const EMPTY_FORM = {
   enabled: true,
@@ -104,7 +105,12 @@ export function BotView({
     url: '',
     country: 'world',
     section: 'World',
+    sourceName: '',
+    destinationCategory: '',
+    destinationSection: '',
+    sourceCategory: '',
   });
+  const [siteCatalog, setSiteCatalog] = useState({ categories: [], sections: [] });
 
   const dirtyRef = useRef(false);
   const acceptServerRef = useRef(true);
@@ -128,6 +134,10 @@ export function BotView({
   useEffect(() => {
     acceptServerRef.current = true;
     onRefresh?.();
+    newsroomApi
+      .catalog()
+      .then((d) => setSiteCatalog({ categories: d.categories || [], sections: d.sections || [] }))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -212,6 +222,10 @@ export function BotView({
             url,
             label: customFeed.label.trim() || 'Custom feed',
             country: customFeed.country,
+            sourceName: customFeed.sourceName.trim() || customFeed.label.trim(),
+            destinationCategory: customFeed.destinationCategory || customFeed.section,
+            destinationSection: customFeed.destinationSection || '',
+            sourceCategory: customFeed.sourceCategory || '',
             section: customFeed.section,
             enabled: true,
           },
@@ -226,7 +240,25 @@ export function BotView({
       return next;
     });
     setHint('');
-    setCustomFeed({ label: '', url: '', country: 'world', section: 'World' });
+    setCustomFeed({
+      label: '',
+      url: '',
+      country: 'world',
+      section: 'World',
+      sourceName: '',
+      destinationCategory: '',
+      destinationSection: '',
+      sourceCategory: '',
+    });
+  };
+
+  const patchFeed = (id, field, value) => {
+    dirtyRef.current = true;
+    setForm((prev) => ({
+      ...prev,
+      feeds: prev.feeds.map((f) => (f.id === id ? { ...f, [field]: value } : f)),
+    }));
+    setHint('');
   };
 
   const removeFeed = (id) => {
@@ -580,9 +612,11 @@ export function BotView({
             <thead>
               <tr>
                 <th className="w-10">On</th>
-                <th>Feed</th>
-                <th>Country</th>
-                <th>Section</th>
+                <th>Feed / source</th>
+                <th>Dest. category</th>
+                <th>Dest. section</th>
+                <th>Source category</th>
+                <th>Last fetch</th>
                 <th></th>
               </tr>
             </thead>
@@ -604,9 +638,54 @@ export function BotView({
                         </span>
                       ) : null}
                       <div className="text-[12px] text-ink-secondary break-all">{feed.url}</div>
+                      <div className="mt-1 text-[12px] text-ink-secondary">
+                        Source:{' '}
+                        <input
+                          className={cn(tw.formInput, 'mt-1 max-w-xs')}
+                          value={feed.sourceName || ''}
+                          onChange={(e) => patchFeed(feed.id, 'sourceName', e.target.value)}
+                          placeholder={feed.label}
+                        />
+                      </div>
                     </td>
-                    <td className="text-ink-secondary">{feed.country}</td>
-                    <td className="text-ink-secondary">{feed.section}</td>
+                    <td>
+                      <select
+                        className={cn(tw.formSelect, 'min-w-[140px]')}
+                        value={feed.destinationCategory || feed.section || ''}
+                        onChange={(e) => patchFeed(feed.id, 'destinationCategory', e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {(siteCatalog.categories || []).filter((c) => c.enabled !== false).map((c) => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                        {(catalog.sections || EMPTY_FORM.sections).map((s) => (
+                          <option key={`bot-${s}`} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        className={cn(tw.formSelect, 'min-w-[140px]')}
+                        value={feed.destinationSection || ''}
+                        onChange={(e) => patchFeed(feed.id, 'destinationSection', e.target.value)}
+                      >
+                        <option value="">Default from category</option>
+                        {(siteCatalog.sections || []).filter((s) => s.enabled !== false && s.kind !== 'stream').map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        className={cn(tw.formInput, 'min-w-[120px]')}
+                        value={feed.sourceCategory || ''}
+                        onChange={(e) => patchFeed(feed.id, 'sourceCategory', e.target.value)}
+                        placeholder="optional filter"
+                      />
+                    </td>
+                    <td className="text-[12px] text-ink-secondary whitespace-nowrap">
+                      {feed.lastFetch ? String(feed.lastFetch).replace('T', ' ').slice(0, 16) : '—'}
+                    </td>
                     <td>
                       {String(feed.id).startsWith('custom-') ? (
                         <button type="button" className="border-0 bg-transparent p-0 text-[var(--danger)]" onClick={() => removeFeed(feed.id)}>
@@ -636,6 +715,18 @@ export function BotView({
                       <select className={cn(tw.formSelect, 'w-auto')} value={customFeed.section} onChange={(e) => setCustomFeed((p) => ({ ...p, section: e.target.value }))}>
                         {(catalog.sections || EMPTY_FORM.sections).map((s) => (
                           <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <select className={cn(tw.formSelect, 'w-auto')} value={customFeed.destinationCategory} onChange={(e) => setCustomFeed((p) => ({ ...p, destinationCategory: e.target.value }))}>
+                        <option value="">Dest. category</option>
+                        {(siteCatalog.categories || []).filter((c) => c.enabled !== false).map((c) => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                      <select className={cn(tw.formSelect, 'w-auto')} value={customFeed.destinationSection} onChange={(e) => setCustomFeed((p) => ({ ...p, destinationSection: e.target.value }))}>
+                        <option value="">Dest. section</option>
+                        {(siteCatalog.sections || []).filter((s) => s.enabled !== false && s.kind !== 'stream').map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                       </select>
                       <button type="button" className={tw.secondaryBtn} onClick={addCustomFeed}>Add feed</button>

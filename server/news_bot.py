@@ -193,6 +193,13 @@ class NewsBot:
                 source_name = (urlparse(resolved_url).netloc or "").replace("www.", "") or None
             except Exception:
                 source_name = None
+            dest_section = (getattr(item, "dest_section", None) or "").strip()
+            featured_in = None
+            if dest_section:
+                import json as _json
+
+                featured_in = _json.dumps([dest_section])
+            bucket = (item.category or article_data.bucket or "Tech").strip()
             new_post = Post(
                 id=slug,
                 title=article_data.title,
@@ -200,7 +207,7 @@ class NewsBot:
                 creator=article_data.creator,
                 content=article_data.content,
                 excerpt=article_data.excerpt,
-                bucket=article_data.bucket,
+                bucket=bucket,
                 read_minutes=article_data.readMinutes,
                 og_img=article_data.ogImg,
                 meta_description=article_data.metaDescription,
@@ -211,6 +218,7 @@ class NewsBot:
                 status="published" if auto_publish else "review",
                 source_url=resolved_url,
                 source_name=source_name,
+                featured_in=featured_in,
             )
 
             try:
@@ -229,7 +237,7 @@ class NewsBot:
                         creator=article_data.creator,
                         content=article_data.content,
                         excerpt=article_data.excerpt,
-                        bucket=article_data.bucket,
+                        bucket=bucket,
                         read_minutes=article_data.readMinutes,
                         og_img=article_data.ogImg,
                         meta_description=article_data.metaDescription,
@@ -240,6 +248,7 @@ class NewsBot:
                         status="published" if auto_publish else "review",
                         source_url=resolved_url,
                         source_name=source_name,
+                        featured_in=featured_in,
                     ))
                     s.commit()
                 except Exception:
@@ -293,11 +302,29 @@ class NewsBot:
                     bot_cfg.get("sections"),
                 )
             all_items = []
+            harvested_at = datetime.now(timezone.utc).isoformat()
             for feed in feeds:
                 items = await fetch_rss_items(
                     feed["section"], feed["url"], self.http_client, max_age_hours=max_age_hours
                 )
-                all_items.extend(items[:max_items_per_feed])
+                dest_cat = str(feed.get("destinationCategory") or feed.get("section") or "").strip()
+                dest_sec = str(feed.get("destinationSection") or "").strip()
+                src_cat = str(feed.get("sourceCategory") or "").strip().lower()
+                kept = 0
+                for it in items:
+                    if src_cat:
+                        hay = f"{it.get('source_category') or ''} {it.get('title') or ''}".lower()
+                        if src_cat not in hay:
+                            continue
+                    if dest_cat:
+                        it["category"] = dest_cat
+                    if dest_sec:
+                        it["dest_section"] = dest_sec
+                    all_items.append(it)
+                    kept += 1
+                    if kept >= max_items_per_feed:
+                        break
+                feed["lastFetch"] = harvested_at
 
             logger.info("Syncing discovered items into the staging database queue...")
             self.save_to_queue(db, all_items)

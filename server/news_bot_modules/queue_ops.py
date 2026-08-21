@@ -48,6 +48,7 @@ def save_to_queue(db: Session, items: List[Dict[str, str]]) -> None:
                 title=title,
                 link=link,
                 category=item.get("category") or "World",
+                dest_section=(item.get("dest_section") or None),
                 status="pending",
             )
         )

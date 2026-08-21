@@ -53,6 +53,17 @@ async def lifespan(app: FastAPI):
 
         apply_newsroom_schema()
         _seed_default_categories()
+        try:
+            from .db import SessionLocal as _SessionLocal
+            from .services.catalog_service import CatalogService
+
+            _cdb = _SessionLocal()
+            try:
+                CatalogService(_cdb).get(seed=True)
+            finally:
+                _cdb.close()
+        except Exception as _ce:
+            logger.warning("Catalog seed skipped: %s", _ce)
         settings.uploads_dir.mkdir(parents=True, exist_ok=True)
         _migrate_disk_avatars_into_db()
         logger.info("Schema upgrades / seed complete.")

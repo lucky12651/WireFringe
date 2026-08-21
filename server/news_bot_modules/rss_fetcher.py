@@ -120,6 +120,7 @@ async def fetch_rss_items(
                 "title": title.strip(),
                 "link": link.strip(),
                 "category": category,
+                "source_category": _text(_child(el, "category")),
                 "image": _entry_image(el),
             })
         return items

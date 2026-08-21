@@ -156,7 +156,32 @@ class PostService:
             viewCount=int(getattr(post, "view_count", 0) or 0),
             authorSlug=author_slug,
             authorBio=author_bio,
+            extraCategories=self._json_list(getattr(post, "extra_categories", None)),
+            featuredIn=self._json_list(getattr(post, "featured_in", None)),
         )
+
+    @staticmethod
+    def _json_list(raw) -> list[str]:
+        import json
+
+        if not raw:
+            return []
+        if isinstance(raw, list):
+            return [str(x).strip() for x in raw if str(x).strip()]
+        try:
+            data = json.loads(raw)
+            if isinstance(data, list):
+                return [str(x).strip() for x in data if str(x).strip()]
+        except Exception:
+            pass
+        return [x.strip() for x in str(raw).split(",") if x.strip()]
+
+    @staticmethod
+    def _dump_list(values: list[str] | None) -> str | None:
+        import json
+
+        items = [str(x).strip() for x in (values or []) if str(x).strip()]
+        return json.dumps(items) if items else None
 
     @staticmethod
     def _split_csv(raw: str | None) -> list[str]:
@@ -377,6 +402,8 @@ class PostService:
             source_name=payload.sourceName,
             tags=payload.tags,
             related_ids=payload.relatedIds,
+            extra_categories=self._dump_list(payload.extraCategories),
+            featured_in=self._dump_list(payload.featuredIn),
             is_hidden=status not in {"published"},
             updated_at=now,
         )
@@ -404,6 +431,10 @@ class PostService:
         post.read_minutes = payload.readMinutes or post.read_minutes
         post.meta_description = payload.metaDescription or post.meta_description
         post.keywords = payload.keywords or post.keywords
+        if payload.extraCategories is not None:
+            post.extra_categories = self._dump_list(payload.extraCategories)
+        if payload.featuredIn is not None:
+            post.featured_in = self._dump_list(payload.featuredIn)
         if payload.status:
             self._apply_status(post, payload.status, payload.scheduledAt, user)
         if payload.scheduledAt is not None:

@@ -46,6 +46,8 @@ class PostOut(BaseModel):
     viewCount: int = 0
     authorSlug: str | None = None
     authorBio: str | None = None
+    extraCategories: list[str] = Field(default_factory=list)
+    featuredIn: list[str] = Field(default_factory=list)
 
 
 class PaginatedPostsOut(BaseModel):
@@ -268,6 +270,8 @@ class PostUpsert(BaseModel):
     sourceName: str | None = None
     tags: str | None = None
     relatedIds: str | None = None
+    extraCategories: list[str] | None = None
+    featuredIn: list[str] | None = None
 
 
 class NewsQueueItem(BaseModel):

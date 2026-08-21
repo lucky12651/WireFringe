@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import useSWR from 'swr';
 import Link from 'next/link';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { SOCIAL_LINKS } from '../SocialIcons/SocialIcons';
@@ -7,6 +8,7 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { getTheme, THEME_CHANGE_EVENT } from '../../lib/theme';
+import { fetcher } from '../../lib/api';
 
 const NAV = [
   { label: 'Tech', href: '/section/tech' },
@@ -55,6 +57,11 @@ export default function Header({
 }) {
   const router = useRouter();
   const { logout: authLogout } = useAuth();
+  const { data: catalog } = useSWR('/api/catalog', fetcher, { revalidateOnFocus: false });
+  const navItems =
+    Array.isArray(catalog?.header) && catalog.header.length
+      ? catalog.header.map((s) => ({ label: s.label, href: s.href }))
+      : NAV;
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -221,7 +228,7 @@ export default function Header({
 
               <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 border-b-[1.5px] border-mint pb-[7px]">
                 <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
-                  {NAV.map((item, index) => (
+                  {navItems.map((item, index) => (
                     <span key={item.label} className="inline-flex items-center">
                       {index > 0 ? (
                         <span
@@ -401,7 +408,13 @@ export default function Header({
             </div>
           )}
           <ThemeToggle className="w-full justify-center mb-7" />
-          {DRAWER_SECTIONS.map((section) => (
+          {(catalog?.header?.length
+            ? [
+                { title: 'Sections', items: catalog.header.map((s) => ({ label: s.label, href: s.href })) },
+                DRAWER_SECTIONS.find((s) => s.title === 'Features') || DRAWER_SECTIONS[1],
+              ]
+            : DRAWER_SECTIONS
+          ).map((section) => (
             <div key={section.title} className="mb-7">
               <h3 className="font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-ink-muted mb-2.5 pb-2 border-b border-line-dim">
                 {section.title}
