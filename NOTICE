@@ -1,0 +1,8 @@
+WireFringe
+Copyright (c) 2026 Vaibhav Srivastava
+
+This product is licensed under the MIT License. See LICENSE for the full text.
+
+Third-party software included or used via package managers remains under its
+own licenses (FastAPI, Next.js, Expo, PostgreSQL drivers, and others listed
+in server/requirements.txt, web/package.json, and mobile/package.json).
