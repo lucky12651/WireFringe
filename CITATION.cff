@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: WireFringe
+message: If you use this software, please cite it as below.
+type: software
+authors:
+  - family-names: Srivastava
+    given-names: Vaibhav
+    email: vkluckymgs@gmail.com
+repository-code: https://github.com/lucky12651/WireFringe
+license: MIT
+version: 0.1.0
+date-released: "2026-08-24"
+abstract: >
+  WireFringe is a full-stack blogging and digital newsroom platform
+  built with Next.js, FastAPI, PostgreSQL, and an optional Expo mobile app.
+keywords:
+  - blog
+  - cms
+  - nextjs
+  - fastapi
+  - postgresql
+  - newsroom
