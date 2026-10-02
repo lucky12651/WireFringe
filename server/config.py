@@ -1,12 +1,23 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_SERVER_ENV = Path(__file__).resolve().parent / ".env"
+_ROOT_ENV = PROJECT_ROOT / ".env"
+
+
+def load_env_files() -> None:
+    """Process environment wins, then server/.env, then the repo-root .env."""
+    load_dotenv(_SERVER_ENV)
+    load_dotenv(_ROOT_ENV)
+
+
+load_env_files()
 
 
 class Settings(BaseSettings):
@@ -24,6 +35,7 @@ class Settings(BaseSettings):
     session_cookie: str = "blog_session"
     same_site: str = "lax"
     https_only: bool = Field(False, validation_alias="HTTPS_ONLY")
+    dev_return_auth_links: bool = Field(False, validation_alias="DEV_RETURN_AUTH_LINKS")
 
     # CORS
     cors_origins: list[str] = [
@@ -56,7 +68,7 @@ class Settings(BaseSettings):
 
     # App — default 8000 matches GridWork monorepo / Docker (override via BACKEND_URL / BACKEND_PORT)
     app_title: str = "Wirefringe API"
-    ui_url: str = "http://127.0.0.1:3000"
+    ui_url: str = Field("http://127.0.0.1:3000", validation_alias="PUBLIC_SITE_URL")
     backend_url: str = Field("http://127.0.0.1:8000", validation_alias="BACKEND_URL")
     backend_port: int = Field(8000, validation_alias="BACKEND_PORT")
 
@@ -68,7 +80,7 @@ class Settings(BaseSettings):
     revalidate_secret: str = Field("dev-revalidate-secret", validation_alias="REVALIDATE_SECRET")
 
     model_config = SettingsConfigDict(
-        env_file=Path(__file__).resolve().parent / ".env",
+        env_file=(_SERVER_ENV, _ROOT_ENV),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

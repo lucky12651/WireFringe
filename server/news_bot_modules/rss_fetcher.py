@@ -1,11 +1,12 @@
 import logging
 from typing import List, Dict
-import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 
+import defusedxml.ElementTree as ET
 import httpx
 
+from ..url_safety import UnsafeUrlError, fetch_public
 from .utils import is_unusable_story
 
 logger = logging.getLogger(__name__)
@@ -93,9 +94,8 @@ async def fetch_rss_items(
 ) -> List[Dict[str, str]]:
     """Fetch RSS 2.0 and Atom feeds. Verge/similar Atom feeds have <entry>, not <item>."""
     try:
-        response = await http_client.get(url)
-        response.raise_for_status()
-        root = ET.fromstring(response.content)
+        _final, body, _ctype = await fetch_public(http_client, url, max_bytes=2_000_000)
+        root = ET.fromstring(body)
 
         entries = [el for el in root.iter() if _local_tag(el.tag) in ("item", "entry")]
         logger.info(f"🔍 Found {len(entries)} raw XML items for category: {category}")
@@ -124,6 +124,9 @@ async def fetch_rss_items(
                 "image": _entry_image(el),
             })
         return items
+    except UnsafeUrlError as e:
+        logger.error("Refusing RSS URL for %s: %s", category, e)
+        return []
     except Exception as e:
         logger.error(f"Error fetching RSS for {category}: {e}")
         return []

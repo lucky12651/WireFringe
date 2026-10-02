@@ -555,6 +555,10 @@ class TwoFactorConfirmIn(BaseModel):
     code: str
 
 
+class TwoFactorDisableIn(BaseModel):
+    password: str = Field(..., min_length=1)
+
+
 class TwoFactorLoginIn(BaseModel):
     ticket: str
     code: str

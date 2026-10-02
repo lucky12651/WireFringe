@@ -386,6 +386,14 @@ class UserService:
                     raise HTTPException(status_code=400, detail="Email too long")
                 if "@" not in cleaned or "." not in cleaned.split("@")[-1]:
                     raise HTTPException(status_code=400, detail="Enter a valid email")
+                taken = self.db.execute(
+                    select(User).where(
+                        func.lower(User.email) == cleaned.lower(),
+                        User.id != user.id,
+                    )
+                ).scalar_one_or_none()
+                if taken is not None:
+                    raise HTTPException(status_code=400, detail="Email already in use")
                 user.email = cleaned
 
         updated = self.user_repo.update(user)

@@ -27,6 +27,7 @@ from .news_bot_modules.queue_ops import (
 from .news_bot_modules.scraper import scrape_article
 from .news_bot_modules.article_generator import generate_article
 from .news_bot_modules.utils import is_unusable_story
+from .html_sanitize import sanitize_article_html
 from .services.recommendation_service import RecommendationService
 from .services.settings_service import SettingsService
 from .services.post_service import random_post_design
@@ -213,7 +214,7 @@ class NewsBot:
                 title=article_data.title,
                 link=resolved_url,
                 creator=publish_as,
-                content=article_data.content,
+                content=sanitize_article_html(article_data.content),
                 excerpt=article_data.excerpt,
                 bucket=bucket,
                 read_minutes=article_data.readMinutes,
@@ -245,7 +246,7 @@ class NewsBot:
                         title=article_data.title,
                         link=resolved_url,
                         creator=publish_as,
-                        content=article_data.content,
+                        content=sanitize_article_html(article_data.content),
                         excerpt=article_data.excerpt,
                         bucket=bucket,
                         read_minutes=article_data.readMinutes,
@@ -271,7 +272,12 @@ class NewsBot:
                 finally:
                     s.close()
 
-            logger.info("🚀 INSTANTLY PUBLISHED [%s]: %s", picked_design, article_data.title)
+            logger.info(
+                "NewsBot stored %s [%s]: %s",
+                "published" if auto_publish else "review",
+                picked_design,
+                article_data.title,
+            )
             add_to_recent_cache(db, article_data.title, resolved_url, user_id=owner_id)
             self._mark_queue(db, source_url, "published", user_id=owner_id)
             await self.trigger_revalidation()
@@ -304,8 +310,11 @@ class NewsBot:
         try:
             now_utc = datetime.now(timezone.utc)
             if now_utc.hour == 20:
-                rec_service = RecommendationService(db)
-                rec_service.update_all_recommendations()
+                settings_svc = SettingsService(db)
+                today = now_utc.date().isoformat()
+                if settings_svc._get_raw("recommendations_last_utc_day") != today:
+                    RecommendationService(db).update_all_recommendations()
+                    settings_svc._set_raw("recommendations_last_utc_day", today)
         except Exception:
             logger.exception("Recommendation update failed")
         finally:

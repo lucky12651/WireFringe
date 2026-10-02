@@ -8,12 +8,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .api import api_router
 from .config import settings
+from .limiter import limiter
 from .db import Base, SessionLocal, engine
 from . import models
 from .services import CategoryService
@@ -26,9 +27,6 @@ logger = logging.getLogger(__name__)
 
 # Setup DB logging
 setup_db_logging()
-
-# Setup Rate Limiter
-limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -71,12 +69,20 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error during schema upgrade/seed: {e}")
 
     # Check for insecure default secrets
+    insecure_secrets = []
     if settings.session_secret == "dev-secret-change-me":
-        logger.warning("SECURITY WARNING: Using default BLOG_SESSION_SECRET. Please change it in .env!")
+        insecure_secrets.append("BLOG_SESSION_SECRET")
     if settings.jwt_secret == "dev-jwt-secret-change-me":
-        logger.warning("SECURITY WARNING: Using default JWT_SECRET. Please change it in .env!")
+        insecure_secrets.append("JWT_SECRET")
     if settings.revalidate_secret == "dev-revalidate-secret":
-        logger.warning("SECURITY WARNING: Using default REVALIDATE_SECRET. Please change it in .env!")
+        insecure_secrets.append("REVALIDATE_SECRET")
+    if insecure_secrets and settings.https_only:
+        raise RuntimeError(
+            "Refusing to start with default secrets while HTTPS_ONLY is true: "
+            + ", ".join(insecure_secrets)
+        )
+    for name in insecure_secrets:
+        logger.warning("SECURITY WARNING: Using default %s. Please change it in .env!", name)
 
     # Start the news bot loop in the background. Restart it if one cycle
     # throws — FastAPI staying up with a dead bot is how publishing silently stops.
@@ -106,6 +112,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_title, lifespan=lifespan)
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
 
     # CORS middleware
     app.add_middleware(
@@ -169,9 +176,6 @@ def create_app() -> FastAPI:
         )
 
     return app
-
-
-app = create_app()
 
 
 if __name__ == "__main__":

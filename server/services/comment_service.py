@@ -200,7 +200,7 @@ class CommentService:
                     comment=c.body,
                     likes=c.likes,
                     dislikes=c.dislikes,
-                    approved=bool(getattr(c, "approved", True)),
+                    approved=bool(getattr(c, "approved", False)),
                     createdAt=c.created_at,
                 )
             )

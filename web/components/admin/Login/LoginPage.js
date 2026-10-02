@@ -41,7 +41,6 @@ export function LoginPage({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [code, setCode] = useState('');
   const [ticket, setTicket] = useState('');
   const [forgotStatus, setForgotStatus] = useState('');
@@ -59,7 +58,7 @@ export function LoginPage({
     }
 
     setIsLoading(true);
-    const result = await onLogin(email.trim(), password, rememberMe);
+    const result = await onLogin(email.trim(), password);
     setIsLoading(false);
 
     if (result?.requires2fa || result?.ticket) {
@@ -303,16 +302,6 @@ export function LoginPage({
               </div>
               {errors.password ? <span className="text-xs text-[#c0392b]">{errors.password}</span> : null}
             </div>
-
-            <label className="inline-flex items-center gap-2 text-[13px] text-ink-secondary cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-[15px] h-[15px] accent-mint"
-              />
-              <span>Remember me</span>
-            </label>
 
             {(errors.form || serverError) && (
               <div className="bg-[rgba(192,57,43,0.08)] border border-[rgba(192,57,43,0.28)] text-[#c0392b] py-2.5 px-3 rounded-sm text-[13px]">

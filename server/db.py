@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from .config import load_env_files
 
-# Load local development secrets from server/.env (does not override real env vars)
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+# Process environment wins, then server/.env, then the repo-root .env.
+load_env_files()
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:

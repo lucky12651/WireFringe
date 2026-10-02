@@ -9,6 +9,7 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 from ..config import settings
+from ..url_safety import fetch_public
 
 try:
     from PIL import Image
@@ -141,19 +142,18 @@ def save_image_bytes(data: bytes, hint: str = "img") -> str | None:
 
 async def download_image(http_client: httpx.AsyncClient, url: str) -> bytes | None:
     try:
-        res = await http_client.get(
+        final_url, body, ctype = await fetch_public(
+            http_client,
             url,
             timeout=20.0,
-            follow_redirects=True,
+            max_bytes=8 * 1024 * 1024,
             headers={"Accept": "image/avif,image/webp,image/*,*/*;q=0.8"},
         )
-        res.raise_for_status()
-        ctype = (res.headers.get("content-type") or "").lower()
-        if "image" not in ctype and not url.lower().split("?")[0].endswith(
+        if "image" not in ctype and not final_url.lower().split("?")[0].endswith(
             (".jpg", ".jpeg", ".png", ".webp")
         ):
             return None
-        return res.content
+        return body
     except Exception as exc:
         logger.info("Image download failed %s: %s", url, exc)
         return None

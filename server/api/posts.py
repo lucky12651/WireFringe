@@ -515,7 +515,7 @@ def admin_list_revisions(
 ) -> list:
     user = require_user(request, db)
     require_newsroom(user)
-    return service.list_revisions(post_id)
+    return service.list_revisions(post_id, user)
 
 
 @router.post("/admin/posts/{post_id}/revisions/{revision_id:int}/rollback", response_model=PostOut)

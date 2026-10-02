@@ -5,6 +5,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db, require_staff, require_user
+from ..limiter import limiter
 from ..schemas import (
     FollowIn,
     FollowOut,
@@ -22,6 +23,7 @@ from ..schemas import (
     TipCreate,
     TipOut,
     TwoFactorConfirmIn,
+    TwoFactorDisableIn,
     VerifyEmailIn,
 )
 from ..services.newsroom_service import SECTIONS, NewsroomService
@@ -345,12 +347,22 @@ def rss_feed(posts: PostService = Depends(get_posts)) -> Response:
 
 
 @router.post("/auth/forgot")
-def forgot_password(payload: ForgotPasswordIn, service: NewsroomService = Depends(get_newsroom)) -> dict:
+@limiter.limit("10/minute")
+def forgot_password(
+    payload: ForgotPasswordIn,
+    request: Request,
+    service: NewsroomService = Depends(get_newsroom),
+) -> dict:
     return service.forgot_password(str(payload.email))
 
 
 @router.post("/auth/reset")
-def reset_password(payload: ResetPasswordIn, service: NewsroomService = Depends(get_newsroom)) -> dict:
+@limiter.limit("10/minute")
+def reset_password(
+    payload: ResetPasswordIn,
+    request: Request,
+    service: NewsroomService = Depends(get_newsroom),
+) -> dict:
     service.reset_password(payload.token, payload.newPassword)
     return {"ok": True}
 
@@ -395,10 +407,11 @@ def twofa_confirm(
 
 @router.delete("/me/2fa")
 def twofa_off(
+    payload: TwoFactorDisableIn,
     request: Request,
     db: Session = Depends(get_db),
     service: NewsroomService = Depends(get_newsroom),
 ) -> dict:
     user = require_user(request, db)
-    service.totp_disable(user)
+    service.totp_disable(user, payload.password)
     return {"ok": True}

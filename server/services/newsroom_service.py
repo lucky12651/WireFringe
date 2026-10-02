@@ -4,18 +4,18 @@ import hashlib
 import hmac
 import json
 import logging
-import os
 import secrets
 import struct
 import time
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from fastapi import HTTPException
-from sqlalchemy import case, delete, desc, func, literal, or_, select
+from sqlalchemy import case, delete, desc, func, literal, or_, select, update
 from sqlalchemy.orm import Session
 
-from ..auth import find_user_by_login, hash_password
+from ..auth import find_user_by_login, hash_password, verify_password
+from ..config import settings
 from ..identity import normalize_login_email
 from ..models import (
     AuthToken,
@@ -55,10 +55,26 @@ def _now() -> datetime:
 
 
 def _norm_path(path: str) -> str:
-    p = (path or "").strip()
+    """Single-slash site path. Rejects protocol-relative and absolute URLs."""
+    p = unquote((path or "").strip())
     if not p.startswith("/"):
         p = "/" + p
+    if (
+        p.startswith("//")
+        or "\\" in p
+        or "://" in p
+        or any(ord(ch) < 32 for ch in p)
+    ):
+        raise HTTPException(status_code=400, detail="Redirect path must stay on this site")
     return p.rstrip() or "/"
+
+
+def public_auth_link(url: str, field: str) -> dict:
+    """Reset and verify links stay off the wire unless local dev asks for them."""
+    out = {"ok": True}
+    if settings.dev_return_auth_links:
+        out[field] = url
+    return out
 
 
 class NewsroomService:
@@ -252,7 +268,12 @@ class NewsroomService:
         row = self.db.execute(
             select(UrlRedirect).where(UrlRedirect.from_path == _norm_path(path))
         ).scalar_one_or_none()
-        return row.to_path if row else None
+        if row is None:
+            return None
+        try:
+            return _norm_path(row.to_path)
+        except HTTPException:
+            return None
 
     def analytics(self) -> dict:
         total_views = int(self.db.execute(select(func.coalesce(func.sum(Post.view_count), 0))).scalar() or 0)
@@ -340,6 +361,16 @@ class NewsroomService:
         return out
 
     def issue_token(self, user_id: int, purpose: str, hours: int = 24, minutes: int | None = None) -> str:
+        now = _now()
+        self.db.execute(
+            update(AuthToken)
+            .where(
+                AuthToken.user_id == user_id,
+                AuthToken.purpose == purpose,
+                AuthToken.used_at.is_(None),
+            )
+            .values(used_at=now)
+        )
         token = secrets.token_urlsafe(32)
         delta = timedelta(minutes=minutes) if minutes is not None else timedelta(hours=hours)
         self.db.add(
@@ -347,7 +378,7 @@ class NewsroomService:
                 user_id=user_id,
                 purpose=purpose,
                 token=token,
-                expires_at=_now() + delta,
+                expires_at=now + delta,
             )
         )
         self.db.commit()
@@ -393,13 +424,9 @@ class NewsroomService:
         if user is None:
             return {"ok": True}
         token = self.issue_token(user.id, "reset", hours=2)
-        base = os.environ.get("PUBLIC_SITE_URL") or os.environ.get("NEXT_PUBLIC_SITE_URL") or "http://127.0.0.1:3000"
-        url = f"{base.rstrip('/')}/reset-password?token={quote(token)}"
-        logger.info("Password reset link for %s: %s", email, url)
-        out = {"ok": True}
-        if not os.environ.get("SMTP_HOST"):
-            out["resetUrl"] = url
-        return out
+        url = f"{settings.ui_url.rstrip('/')}/reset-password?token={quote(token)}"
+        logger.info("Password reset issued for user %s", user.id)
+        return public_auth_link(url, "resetUrl")
 
     def reset_password(self, token: str, new_password: str) -> None:
         user = self.consume_token(token, "reset")
@@ -410,10 +437,9 @@ class NewsroomService:
 
     def request_verify(self, user: User) -> dict:
         token = self.issue_token(user.id, "verify", hours=48)
-        base = os.environ.get("PUBLIC_SITE_URL") or os.environ.get("NEXT_PUBLIC_SITE_URL") or "http://127.0.0.1:3000"
-        url = f"{base.rstrip('/')}/verify-email?token={quote(token)}"
-        logger.info("Verify email link for %s: %s", user.email or user.username, url)
-        return {"ok": True, "verifyUrl": url}
+        url = f"{settings.ui_url.rstrip('/')}/verify-email?token={quote(token)}"
+        logger.info("Email verification issued for user %s", user.id)
+        return public_auth_link(url, "verifyUrl")
 
     def verify_email(self, token: str) -> None:
         user = self.consume_token(token, "verify")
@@ -421,6 +447,11 @@ class NewsroomService:
         self.db.commit()
 
     def totp_setup(self, user: User) -> dict:
+        if bool(getattr(user, "totp_enabled", False)):
+            raise HTTPException(
+                status_code=400,
+                detail="Turn off authenticator before generating a new secret",
+            )
         secret = _b32_secret()
         user.totp_secret = secret
         user.totp_enabled = False
@@ -435,7 +466,13 @@ class NewsroomService:
         user.totp_enabled = True
         self.db.commit()
 
-    def totp_disable(self, user: User) -> None:
+    def totp_disable(self, user: User, password: str) -> None:
+        if (
+            not user.password_hash
+            or not user.password_salt
+            or not verify_password(password or "", user.password_hash, user.password_salt)
+        ):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
         user.totp_enabled = False
         user.totp_secret = None
         self.db.commit()

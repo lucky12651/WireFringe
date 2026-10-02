@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from ..auth import create_access_token
+from ..limiter import limiter
 from ..dependencies import get_db, require_admin, require_user
 from ..schemas import (
     AdminBotAccessRequest,
@@ -30,7 +29,6 @@ from ..schemas import (
 from ..services import UserService
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
 def get_user_service(db: Session = Depends(get_db)) -> UserService:

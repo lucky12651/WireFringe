@@ -261,7 +261,8 @@ export const newsroomApi = {
   setup2fa: () => api('/api/me/2fa/setup', { method: 'POST' }),
   confirm2fa: (code) =>
     api('/api/me/2fa/confirm', { method: 'POST', body: JSON.stringify({ code }) }),
-  disable2fa: () => api('/api/me/2fa', { method: 'DELETE' }),
+  disable2fa: (password) =>
+    api('/api/me/2fa', { method: 'DELETE', body: JSON.stringify({ password }) }),
 };
 
 // Categories API

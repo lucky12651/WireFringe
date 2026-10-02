@@ -16,7 +16,6 @@ import {
   useContact,
 } from '../hooks';
 import { AdminLayout } from '../components/admin/Layout';
-import { LoginPage, SignupPage } from '../components/admin/Login';
 import {
   DashboardView,
   PostsView,
@@ -117,7 +116,6 @@ async function fetchAllDashPostStats() {
 export default function AdminPage() {
   const router = useRouter();
   const [activeView, setActiveView] = useState('dashboard');
-  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   const [dashPostsSource, setDashPostsSource] = useState('all');
 
   // Initialize hooks
@@ -222,6 +220,12 @@ export default function AdminPage() {
 
   // Restrict access for normal users
   useEffect(() => {
+    if (!isAuthed && !isInitialLoading) {
+      router.replace('/login');
+    }
+  }, [isAuthed, isInitialLoading, router]);
+
+  useEffect(() => {
     if (isAuthed && me?.role === 'user' && !me?.canRunBot) {
       router.replace('/');
     }
@@ -286,39 +290,6 @@ export default function AdminPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, isAuthed, access.canProcessQueue, access.canSeeBotCache, access.canSeeReports, access.canRunBot]);
-
-  const handleLogin = async (username, password) => {
-    const result = await auth.login(username, password);
-    if (result.success) {
-      // Redirect normal readers home unless they have News Bot access
-      if (result.user?.role === 'user' && !result.user?.canRunBot) {
-        router.push('/');
-        return result;
-      }
-
-      setActiveView(result.user?.canRunBot && result.user?.role === 'user' ? 'bot' : 'dashboard');
-      // Load data after login
-      await Promise.all([
-        posts.refreshPosts(),
-        media.refreshMedia(),
-        comments.refreshTrendingComments(),
-        categories.refreshCategoriesWithCounts(),
-      ]);
-      if (result.user?.role === 'admin' || result.user?.role === 'editor') {
-        await users.refreshUsers();
-      }
-    }
-    return result;
-  };
-
-  const handleSignup = async (username, password, displayName) => {
-    const result = await auth.signup(username, password, displayName);
-    if (result.success) {
-      // Signups are always normal users, redirect to home
-      router.push('/');
-    }
-    return result;
-  };
 
   const handleLogout = async () => {
     await auth.logout();
@@ -563,11 +534,7 @@ export default function AdminPage() {
     }
   };
 
-  // When not authenticated, redirect to login
   if (!isAuthed && !isInitialLoading) {
-    if (typeof window !== 'undefined') {
-      router.replace('/login');
-    }
     return null;
   }
 

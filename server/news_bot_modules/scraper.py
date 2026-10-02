@@ -5,6 +5,7 @@ import newspaper
 from bs4 import BeautifulSoup
 import httpx
 
+from ..url_safety import UnsafeUrlError, assert_public_http_url, fetch_public
 from .utils import extract_clean_url, clean_url, is_unusable_story
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,12 @@ async def scrape_article(
 
     if is_unusable_story(None, target_url):
         logger.info("Skipping video/liveblog/gallery/coupon URL: %s", target_url)
+        return None, None, None, resolved_url, []
+
+    try:
+        assert_public_http_url(target_url)
+    except UnsafeUrlError as exc:
+        logger.info("Refusing non-public article URL %s: %s", target_url, exc)
         return None, None, None, resolved_url, []
 
     # Configure newspaper to use a real browser User-Agent to avoid 403 Forbidden errors
@@ -85,19 +92,17 @@ async def scrape_article(
         need_html = (not cleaned_text or len(cleaned_text) < 400) or not og_img
         html = ""
         if need_html:
-            if "news.google.com" in resolved_url:
-                logger.info("Resolving tracking destination head via HTTP client...")
-                head_res = await http_client.head(resolved_url)
-                if head_res.status_code in [301, 302, 307, 308] and "Location" in head_res.headers:
-                    resolved_url = head_res.headers["Location"]
-
             headers = {
                 "Referer": "https://www.google.com/",
                 "Upgrade-Insecure-Requests": "1",
             }
-            response = await http_client.get(resolved_url, headers=headers)
-            response.raise_for_status()
-            html = response.text
+            resolved_url, body, _ctype = await fetch_public(
+                http_client,
+                resolved_url,
+                headers=headers,
+                max_bytes=2_000_000,
+            )
+            html = body.decode("utf-8", errors="replace")
             from .image_ops import collect_html_images
 
             extra_images = collect_html_images(html, resolved_url)

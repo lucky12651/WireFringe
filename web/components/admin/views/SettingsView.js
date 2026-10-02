@@ -290,6 +290,7 @@ export function SettingsView({
 function TwoFactorBlock({ enabled }) {
   const [secret, setSecret] = useState('');
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [hint, setHint] = useState(enabled ? 'Authenticator is on.' : '');
   return (
     <section className="postbox">
@@ -300,9 +301,13 @@ function TwoFactorBlock({ enabled }) {
         type="button"
         className={tw.secondaryBtn}
         onClick={async () => {
-          const out = await newsroomApi.setup2fa();
-          setSecret(out.secret || '');
-          setHint(out.otpauth || 'Scan this secret in your app.');
+          try {
+            const out = await newsroomApi.setup2fa();
+            setSecret(out.secret || '');
+            setHint(out.otpauth || 'Scan this secret in your app.');
+          } catch (err) {
+            setHint(err.message || 'Could not start authenticator setup');
+          }
         }}
       >
         Generate secret
@@ -310,13 +315,37 @@ function TwoFactorBlock({ enabled }) {
       {secret ? <p className="text-xs break-all mt-2">{secret}</p> : null}
       <div className="flex gap-2 mt-3 max-w-[360px]">
         <input className={tw.formInput} value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" />
-        <button type="button" className={tw.primaryBtn} onClick={() => newsroomApi.confirm2fa(code).then(() => setHint('2FA is on.'))}>
+        <button type="button" className={tw.primaryBtn} onClick={() => newsroomApi.confirm2fa(code).then(() => setHint('2FA is on.')).catch((err) => setHint(err.message || 'Could not confirm'))}>
           Confirm
         </button>
       </div>
-      <button type="button" className={tw.secondaryBtn + ' mt-3'} onClick={() => newsroomApi.disable2fa().then(() => setHint('2FA is off.'))}>
-        Turn off 2FA
-      </button>
+      <div className="flex gap-2 mt-3 max-w-[360px]">
+        <input
+          type="password"
+          className={tw.formInput}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Current password"
+          autoComplete="current-password"
+        />
+        <button
+          type="button"
+          className={tw.secondaryBtn}
+          disabled={!password}
+          onClick={async () => {
+            try {
+              await newsroomApi.disable2fa(password);
+              setPassword('');
+              setSecret('');
+              setHint('2FA is off.');
+            } catch (err) {
+              setHint(err.message || 'Could not turn off 2FA');
+            }
+          }}
+        >
+          Turn off 2FA
+        </button>
+      </div>
       {hint ? <p className={tw.formHint}>{hint}</p> : null}
       </div>
     </section>

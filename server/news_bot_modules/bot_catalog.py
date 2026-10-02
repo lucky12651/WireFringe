@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ..url_safety import public_url_syntax_ok
+
 COUNTRIES = [
     {"id": "india", "label": "India"},
     {"id": "us", "label": "United States"},
@@ -79,7 +81,7 @@ def merge_feed_catalog(saved: list | None) -> list[dict]:
         out.append(row)
     for extra in by_id.values():
         url = str(extra.get("url") or "").strip()
-        if not url.startswith("http"):
+        if not public_url_syntax_ok(url):
             continue
         out.append(
             {

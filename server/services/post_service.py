@@ -25,6 +25,7 @@ from ..models import (
     User,
     UserInteraction,
 )
+from ..html_sanitize import sanitize_article_html
 from ..repositories import CommentRepository, PostRepository, UserRepository
 from ..schemas import (
     BotPostCountsOut,
@@ -65,6 +66,16 @@ def normalize_accent_color(value: str | None) -> str | None:
     if _ACCENT_RE.fullmatch(v):
         return v.upper()
     return None
+
+
+def clamp_author_status(requested: str, current: str | None = None) -> str:
+    """Authors submit work for review. They cannot publish or schedule it themselves."""
+    status = (requested or "").strip().lower()
+    if (current or "").strip().lower() == "published":
+        return "published"
+    if status in {"published", "scheduled"}:
+        return "review"
+    return status
 
 
 class PostService:
@@ -145,7 +156,7 @@ class PostService:
             creatorAvatarUrl=creator_avatar,
             creatorBrandByline=brand_byline,
             creatorBrandLogoUrl=brand_logo if brand_byline else None,
-            content=post.content,
+            content=sanitize_article_html(post.content),
             excerpt=post.excerpt,
             bucket=post.bucket,
             readMinutes=post.read_minutes,
@@ -393,18 +404,18 @@ class PostService:
     def create_post(self, payload: PostUpsert, user: User) -> PostOut:
         """Create a new post."""
         post_id = str(uuid.uuid4())
+        content = sanitize_article_html(payload.content)
         excerpt = payload.excerpt
         if excerpt is None:
-            excerpt = (payload.content or "").strip()[:180]
+            excerpt = content.strip()[:180]
 
         status = (payload.status or "draft").strip().lower()
         if status not in {"draft", "review", "scheduled", "published", "unpublished"}:
             status = "draft"
         if user.role == "author":
-            if status == "published":
-                status = "review"
             if status == "unpublished":
                 status = "draft"
+            status = clamp_author_status(status)
         now = datetime.now(timezone.utc)
         published_at = now if status == "published" else None
         post = Post(
@@ -412,7 +423,7 @@ class PostService:
             title=payload.title,
             link=None,
             creator=(user.username if user.role == "author" else (payload.creator or user.username)),
-            content=payload.content or "",
+            content=content,
             excerpt=excerpt or "",
             bucket=payload.bucket or "Tech",
             read_minutes=payload.readMinutes or 1,
@@ -424,7 +435,7 @@ class PostService:
             published_at=published_at,
             status=status,
             scheduled_at=payload.scheduledAt,
-            is_breaking=bool(payload.isBreaking),
+            is_breaking=bool(payload.isBreaking) if user.role != "author" else False,
             is_pinned=bool(payload.isPinned) if user.role != "author" else False,
             is_sponsored=bool(payload.isSponsored) if user.role != "author" else False,
             correction=payload.correction,
@@ -453,7 +464,8 @@ class PostService:
         old_slug = f"/post/{self._slugify_title(post.title)}"
         post.title = payload.title
         post.bucket = payload.bucket or post.bucket
-        post.content = payload.content or post.content
+        if payload.content:
+            post.content = sanitize_article_html(payload.content)
         post.excerpt = payload.excerpt or post.excerpt
         post.og_img = payload.ogImg or post.og_img
         if "accentColor" in payload.model_fields_set:
@@ -471,9 +483,9 @@ class PostService:
             self._apply_status(post, payload.status, payload.scheduledAt, user)
         if payload.scheduledAt is not None:
             post.scheduled_at = payload.scheduledAt
-        if payload.isBreaking is not None:
-            post.is_breaking = payload.isBreaking
         if user.role != "author":
+            if payload.isBreaking is not None:
+                post.is_breaking = payload.isBreaking
             if payload.isPinned is not None:
                 post.is_pinned = payload.isPinned
             if payload.isSponsored is not None:
@@ -569,9 +581,6 @@ class PostService:
             for item in items
         ]
 
-        updated = self.post_repo.update(post)
-        return self._build_post_out(updated)
-
     def publish_post(self, post_id: str, user: User) -> PostOut:
         """Publish a post (admin/editor only)."""
         if user.role == "author":
@@ -592,12 +601,9 @@ class PostService:
             raise HTTPException(status_code=400, detail="Invalid status")
         if user.role == "author":
             current = (getattr(post, "status", None) or "").strip().lower()
-            if current == "published":
-                status = "published"
-            elif status == "published":
-                status = "review"
-            elif status == "unpublished":
+            if current != "published" and status == "unpublished":
                 raise HTTPException(status_code=403, detail="Editor or admin required to unpublish")
+            status = clamp_author_status(status, current)
         now = datetime.now(timezone.utc)
         post.status = status
         if scheduled_at is not None:
@@ -635,7 +641,12 @@ class PostService:
         except Exception:
             self.db.rollback()
 
-    def list_revisions(self, post_id: str) -> list[dict]:
+    def list_revisions(self, post_id: str, user: User) -> list[dict]:
+        post = self.post_repo.get(post_id)
+        if post is None:
+            raise HTTPException(status_code=404, detail="Post not found")
+        if user.role == "author" and (post.creator or "").strip() != user.username:
+            raise HTTPException(status_code=403, detail="Not allowed")
         rows = (
             self.db.query(PostRevision)
             .filter(PostRevision.post_id == post_id)
@@ -665,7 +676,7 @@ class PostService:
         if rev is None or rev.post_id != post_id:
             raise HTTPException(status_code=404, detail="Revision not found")
         post.title = rev.title
-        post.content = rev.content
+        post.content = sanitize_article_html(rev.content)
         post.excerpt = rev.excerpt
         post.updated_at = datetime.now(timezone.utc)
         updated = self.post_repo.update(post)

@@ -9,10 +9,11 @@ pydantic-settings
 starlette
 httpx
 beautifulsoup4
-google-genai
 python-slugify
 newspaper4k
 PyJWT
 bleach
+defusedxml
+Pillow
 slowapi
 pydantic[email]
