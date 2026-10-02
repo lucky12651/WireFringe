@@ -30,7 +30,7 @@
 | `editor` | Editorial workflow, publish/review |
 | `author` | Draft and own content |
 
-Exact permission checks live in `server/auth.py` / `dependencies.py`.
+Exact permission checks live in `server/auth/`.
 
 ## Comments
 

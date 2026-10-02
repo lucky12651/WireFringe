@@ -14,9 +14,9 @@ from fastapi import HTTPException
 from sqlalchemy import case, delete, desc, func, literal, or_, select, update
 from sqlalchemy.orm import Session
 
-from ..auth import find_user_by_login, hash_password, verify_password
-from ..config import settings
-from ..identity import normalize_login_email
+from ..auth.credentials import find_user_by_login, hash_password, verify_password
+from ..auth.identity import normalize_login_email
+from ..core.config import settings
 from ..models import (
     AuthToken,
     NewsletterIssue,

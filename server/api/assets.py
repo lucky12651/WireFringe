@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from ..config import settings
-from ..dependencies import get_db
+from ..auth.dependencies import get_db
+from ..core.config import settings
 from ..models import MediaAsset, User
 
 router = APIRouter(tags=["assets"])

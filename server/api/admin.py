@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_user, require_admin, require_bot_access
+from ..auth.dependencies import get_db, require_user, require_admin, require_bot_access
 from ..schemas import BrandBylineUpdateRequest, MeOut, BotLogOut
 from ..services import MediaService, UserService
 from ..models import BotLog

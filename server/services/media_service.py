@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from ..config import settings
+from ..core.config import settings
 from ..models import MediaAsset
 from ..schemas import MediaFileOut
 

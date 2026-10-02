@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, Float
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .db import Base
+from .core.database import Base
 
 
 class Post(Base):

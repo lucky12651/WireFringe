@@ -26,7 +26,7 @@ def bot_byline(user) -> str:
 
 
 def bot_operator_users(db: Session) -> list:
-    from .models import User
+    from ..models import User
 
     return list(
         db.execute(

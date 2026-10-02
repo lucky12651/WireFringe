@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
 from .utils import clean_url, is_unusable_story
-from ..models import NewsQueue, RecentNewsCache
+from ...models import NewsQueue, RecentNewsCache
 
 logger = logging.getLogger(__name__)
 

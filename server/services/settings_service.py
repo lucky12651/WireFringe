@@ -9,9 +9,9 @@ from typing import Any
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from ..bot_scope import bot_byline, bot_settings_key
+from ..bots.scope import bot_byline, bot_settings_key
 from ..models import AppSetting, Post, User
-from ..news_bot_modules.bot_catalog import (
+from ..bots.pipeline.bot_catalog import (
     COUNTRIES,
     DEFAULT_FOCUS_NOTE,
     DEFAULT_WRITER_PROMPT,
@@ -428,7 +428,7 @@ class SettingsService:
         """Best-effort Next.js ISR revalidate so homepage drops hidden posts."""
         try:
             import httpx
-            from ..config import settings
+            from ..core.config import settings
 
             url = f"{settings.ui_url.rstrip('/')}/api/revalidate"
             httpx.post(

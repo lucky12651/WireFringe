@@ -32,7 +32,7 @@ BACKEND_URL=http://127.0.0.1:8000
 
 Use the repo `Dockerfile` as the build (not a Next.js-only app). That image starts FastAPI and Next.js together. Set `DATABASE_URL`, `BLOG_SESSION_SECRET`, `JWT_SECRET`, and `REVALIDATE_SECRET` in the RushDeploy environment, then redeploy. The container listens on port `3000` unless `PORT` is set.
 
-Update CORS origins in `server/config.py` (or via env if you extend settings) to only your real domains.
+Update CORS origins in `server/core/config.py` (or via env if you extend settings) to only your real domains.
 
 ## Backend
 
@@ -65,7 +65,7 @@ INTERNAL_API_URL=http://127.0.0.1:8000
 
 ## Database
 
-- Take regular backups (`server/backup_db.py` exists for this)
+- Take regular backups (`python -m server.scripts.backup_db`)
 - Schema is created/upgraded on API startup (`create_all` + lightweight column migrations)
 - Do **not** delete `static/uploads` without a backup; avatars/logos in DB are safer than disk-only files
 

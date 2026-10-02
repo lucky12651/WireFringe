@@ -25,7 +25,7 @@ from ..models import (
     User,
     UserInteraction,
 )
-from ..html_sanitize import sanitize_article_html
+from ..security.html import sanitize_article_html
 from ..repositories import CommentRepository, PostRepository, UserRepository
 from ..schemas import (
     BotPostCountsOut,

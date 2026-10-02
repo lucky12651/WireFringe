@@ -6,7 +6,7 @@ from email.utils import parsedate_to_datetime
 import defusedxml.ElementTree as ET
 import httpx
 
-from ..url_safety import UnsafeUrlError, fetch_public
+from ...security.urls import UnsafeUrlError, fetch_public
 from .utils import is_unusable_story
 
 logger = logging.getLogger(__name__)

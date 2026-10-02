@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, get_optional_user, require_staff, require_user
+from ..auth.dependencies import get_db, get_optional_user, require_staff, require_user
 from ..schemas import (
     AdminCommentOut,
     CommentCreateRequest,
@@ -102,7 +102,7 @@ def admin_list_comments(
 ) -> list[AdminCommentOut]:
     """List all comments for admin."""
     user = require_user(request, db)
-    from ..dependencies import require_newsroom
+    from ..auth.dependencies import require_newsroom
     require_newsroom(user)
     creator = user.username if user.role == "author" else None
     return service.list_all_comments(creator)
@@ -141,7 +141,7 @@ def admin_pending_comment_count(
 ) -> PendingCountOut:
     """Get count of pending comments."""
     user = require_user(request, db)
-    from ..dependencies import require_staff
+    from ..auth.dependencies import require_staff
 
     if user.role == "author":
         return service.get_pending_count(user.username)
@@ -187,7 +187,7 @@ def admin_trending_comments(
 ) -> list[CommentTrendOut]:
     """Get trending comments."""
     user = require_user(request, db)
-    from ..dependencies import require_newsroom
+    from ..auth.dependencies import require_newsroom
     require_newsroom(user)
     creator = user.username if user.role == "author" else None
     return service.get_trending(days, limit, creator)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_user, require_newsroom
+from ..auth.dependencies import get_db, require_user, require_newsroom
 from ..schemas import MediaFileOut
 from ..services import MediaService
 

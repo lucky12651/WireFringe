@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_staff, require_user
+from ..auth.dependencies import get_db, require_staff, require_user
 from ..schemas import ContactCreate, ContactOut, PendingCountOut
 from ..services.contact_service import ContactService
 

@@ -11,8 +11,8 @@ import jwt
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from .config import settings
-from .models import User
+from ..core.config import settings
+from ..models import User
 
 
 def create_access_token(data: dict) -> str:

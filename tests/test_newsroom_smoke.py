@@ -1,4 +1,4 @@
-from server.identity import is_email, normalize_login_email
+from server.auth.identity import is_email, normalize_login_email
 from server.services.newsroom_service import SECTIONS
 from server.services.post_service import (
     DEFAULT_POST_DESIGN,

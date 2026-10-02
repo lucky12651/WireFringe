@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..url_safety import public_url_syntax_ok
+from ...security.urls import public_url_syntax_ok
 
 COUNTRIES = [
     {"id": "india", "label": "India"},

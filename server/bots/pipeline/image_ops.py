@@ -8,8 +8,8 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import httpx
-from ..config import settings
-from ..url_safety import fetch_public
+from ...core.config import settings
+from ...security.urls import fetch_public
 
 try:
     from PIL import Image
@@ -88,7 +88,7 @@ def collect_html_images(html: str, base_url: str) -> list[str]:
 
 
 def already_used(db, url: str) -> bool:
-    from ..models import Post
+    from ...models import Post
 
     if not url:
         return False

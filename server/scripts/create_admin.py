@@ -4,9 +4,9 @@ import argparse
 
 from sqlalchemy import select
 
-from .auth import hash_password
-from .db import SessionLocal, engine
-from .models import User
+from ..auth.credentials import hash_password
+from ..core.database import Base, SessionLocal, engine
+from ..models import User
 
 
 def main() -> None:
@@ -15,9 +15,6 @@ def main() -> None:
     parser.add_argument("--password", required=True)
     parser.add_argument("--role", default="admin", choices=["admin", "editor", "author"])
     args = parser.parse_args()
-
-    # Ensure tables exist
-    from .db import Base
 
     Base.metadata.create_all(bind=engine)
 

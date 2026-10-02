@@ -35,13 +35,16 @@ WireFringe is a **three-client, one-API** system: a Next.js web app, an Expo mob
 | Layer | Path | Responsibility |
 |-------|------|----------------|
 | HTTP API | `server/api/` | Route handlers (posts, comments, admin, newsroom, …) |
-| Auth | `server/auth.py`, `dependencies.py` | Sessions, JWT, role checks |
+| Core | `server/core/` | Settings, database, logging, rate limits |
+| Auth | `server/auth/` | Passwords, JWT, request dependencies, login identity |
+| Security | `server/security/` | HTML sanitization and public-URL checks |
 | Services | `server/services/` | Business logic |
 | Repositories | `server/repositories/` | DB access helpers |
 | Models | `server/models.py` | SQLAlchemy ORM entities |
 | Schemas | `server/schemas.py` | Pydantic request/response models |
-| Config | `server/config.py` | Env-driven settings (`pydantic-settings`) |
-| News bot | `server/news_bot*.py`, `news_bot_modules/` | Background publishing pipeline |
+| Bootstrap | `server/bootstrap/` | Startup schema upgrades and seeds |
+| News bot | `server/bots/` | Background publishing pipeline |
+| Scripts | `server/scripts/` | Admin creation and database backup |
 
 Request flow:
 

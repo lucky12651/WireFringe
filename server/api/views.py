@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, get_current_user, get_optional_user
+from ..auth.dependencies import get_db, get_current_user, get_optional_user
 from ..models import UserInteraction, Post
 from ..schemas import InteractionCreate
 

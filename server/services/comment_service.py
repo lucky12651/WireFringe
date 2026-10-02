@@ -31,7 +31,7 @@ class CommentService:
     @staticmethod
     def _get_or_create_visitor_id(request: Request) -> str:
         """Get existing visitor ID or create new one."""
-        from ..dependencies import get_existing_visitor_id
+        from ..auth.dependencies import get_existing_visitor_id
 
         existing = get_existing_visitor_id(request)
         if existing:
@@ -57,7 +57,7 @@ class CommentService:
         """List approved comments for a post."""
         comments = self.comment_repo.get_by_post(post_id, approved_only=True)
 
-        from ..dependencies import get_existing_visitor_id
+        from ..auth.dependencies import get_existing_visitor_id
 
         visitor_id = get_existing_visitor_id(request)
         vote_by_comment_id: dict[int, str] = {}

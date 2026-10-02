@@ -4,7 +4,7 @@ import logging
 
 from sqlalchemy import inspect, text
 
-from .db import engine
+from ..core.database import engine
 
 logger = logging.getLogger(__name__)
 

@@ -9,28 +9,28 @@ from slugify import slugify
 
 import httpx
 
-from .bot_scope import bot_byline, bot_operator_users, bot_user_scope
-from .config import settings
-from .db import SessionLocal
-from .models import Post, NewsQueue, User
-from .news_bot_modules.bot_catalog import active_feeds
-from .news_bot_modules.rss_fetcher import fetch_rss_items
-from .news_bot_modules.queue_ops import (
-    save_to_queue, 
-    get_pending_from_queue, 
-    update_queue_status, 
-    is_duplicate, 
-    cleanup_old_queue_items,
+from ..core.config import settings
+from ..core.database import SessionLocal
+from ..models import Post, NewsQueue, User
+from ..security.html import sanitize_article_html
+from ..services.post_service import random_post_design
+from ..services.recommendation_service import RecommendationService
+from ..services.settings_service import SettingsService
+from .pipeline.article_generator import generate_article
+from .pipeline.bot_catalog import active_feeds
+from .pipeline.queue_ops import (
     add_to_recent_cache,
-    cleanup_recent_cache
+    cleanup_old_queue_items,
+    cleanup_recent_cache,
+    get_pending_from_queue,
+    is_duplicate,
+    save_to_queue,
+    update_queue_status,
 )
-from .news_bot_modules.scraper import scrape_article
-from .news_bot_modules.article_generator import generate_article
-from .news_bot_modules.utils import is_unusable_story
-from .html_sanitize import sanitize_article_html
-from .services.recommendation_service import RecommendationService
-from .services.settings_service import SettingsService
-from .services.post_service import random_post_design
+from .pipeline.rss_fetcher import fetch_rss_items
+from .pipeline.scraper import scrape_article
+from .pipeline.utils import is_unusable_story
+from .scope import bot_byline, bot_operator_users, bot_user_scope
 
 from sqlalchemy import text
 
@@ -173,7 +173,7 @@ class NewsBot:
             if db.query(Post).filter(Post.id == slug).first():
                 slug = f"{slug}-{str(uuid.uuid4())[:8]}"
 
-            from .news_bot_modules.image_ops import resolve_story_image
+            from .pipeline.image_ops import resolve_story_image
 
             rss_image = getattr(item, "image", None) or ""
             article_data.ogImg = await resolve_story_image(

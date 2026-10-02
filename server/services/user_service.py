@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
-from ..auth import authenticate, hash_password, verify_password
-from ..identity import first_login_value, normalize_login_email
+from ..auth.credentials import authenticate, hash_password, verify_password
+from ..auth.identity import first_login_value, normalize_login_email
 from ..models import (
     Comment,
     CommentReport,

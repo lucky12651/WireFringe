@@ -5,7 +5,7 @@ import newspaper
 from bs4 import BeautifulSoup
 import httpx
 
-from ..url_safety import UnsafeUrlError, assert_public_http_url, fetch_public
+from ...security.urls import UnsafeUrlError, assert_public_http_url, fetch_public
 from .utils import extract_clean_url, clean_url, is_unusable_story
 
 logger = logging.getLogger(__name__)

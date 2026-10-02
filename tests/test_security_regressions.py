@@ -3,11 +3,11 @@ import socket
 import pytest
 from fastapi import HTTPException
 
-from server.config import settings
-from server.html_sanitize import sanitize_article_html
+from server.core.config import settings
+from server.security.html import sanitize_article_html
 from server.services.newsroom_service import NewsroomService, _norm_path, public_auth_link
 from server.services.post_service import clamp_author_status
-from server.url_safety import UnsafeUrlError, assert_public_http_url, public_url_syntax_ok
+from server.security.urls import UnsafeUrlError, assert_public_http_url, public_url_syntax_ok
 
 
 def test_author_cannot_publish_or_schedule():
@@ -48,7 +48,7 @@ def test_public_urls_reject_private_targets(monkeypatch):
     def public_dns(host, port, *args, **kwargs):
         return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", port))]
 
-    monkeypatch.setattr("server.url_safety.socket.getaddrinfo", public_dns)
+    monkeypatch.setattr("server.security.urls.socket.getaddrinfo", public_dns)
     assert assert_public_http_url("https://example.com/rss.xml") == "https://example.com/rss.xml"
     assert public_url_syntax_ok("https://example.com/rss.xml")
 
@@ -69,7 +69,7 @@ def test_public_urls_reject_private_targets(monkeypatch):
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", port)),
         ]
 
-    monkeypatch.setattr("server.url_safety.socket.getaddrinfo", mixed_dns)
+    monkeypatch.setattr("server.security.urls.socket.getaddrinfo", mixed_dns)
     with pytest.raises(UnsafeUrlError):
         assert_public_http_url("https://example.com/feed")
 

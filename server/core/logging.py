@@ -1,8 +1,8 @@
 import logging
 
-from .bot_scope import current_bot_user_id
-from .db import SessionLocal
-from .models import BotLog
+from ..bots.scope import current_bot_user_id
+from ..models import BotLog
+from .database import SessionLocal
 
 
 class DBHandler(logging.Handler):

@@ -6,8 +6,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..bot_scope import bot_user_scope
-from ..dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff, require_staff_or_bot
+from ..auth.dependencies import get_current_user, get_db, require_user, get_optional_user, require_newsroom, require_staff, require_staff_or_bot
+from ..bots.scope import bot_user_scope
 from ..models import User
 from ..schemas import (
     BotPostCountsOut,
@@ -254,7 +254,7 @@ async def admin_process_queue_item(
     from ..services.settings_service import SettingsService
     SettingsService(db).set_bot_operator(user)
     
-    from ..news_bot import NewsBot
+    from ..bots.news import NewsBot
     bot = NewsBot()
     try:
         # Find the item in DB
@@ -341,7 +341,7 @@ async def admin_bulk_process_queue_items(
     from ..services.settings_service import SettingsService
     SettingsService(db).set_bot_operator(user)
     
-    from ..news_bot import NewsBot
+    from ..bots.news import NewsBot
     bot = NewsBot()
     results = []
     try:
@@ -399,9 +399,9 @@ async def admin_refresh_queue_feeds(
     from ..services.settings_service import SettingsService as _BotSettings
     _BotSettings(db).set_bot_operator(user)
     
-    from ..news_bot import NewsBot
-    from ..news_bot_modules.bot_catalog import active_feeds
-    from ..news_bot_modules.rss_fetcher import fetch_rss_items
+    from ..bots.news import NewsBot
+    from ..bots.pipeline.bot_catalog import active_feeds
+    from ..bots.pipeline.rss_fetcher import fetch_rss_items
     from ..services.settings_service import SettingsService
 
     bot = NewsBot()

@@ -5,7 +5,7 @@ from typing import Optional
 
 from .constants import CATEGORY_IMAGES
 from .ai_client import groq_client
-from ..schemas import PostUpsert
+from ...schemas import PostUpsert
 
 logger = logging.getLogger(__name__)
 

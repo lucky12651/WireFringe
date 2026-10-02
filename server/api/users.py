@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from ..auth import create_access_token
-from ..limiter import limiter
-from ..dependencies import get_db, require_admin, require_user
+from ..auth.credentials import create_access_token
+from ..auth.dependencies import get_db, require_admin, require_user
+from ..core.limiter import limiter
 from ..schemas import (
     AdminBotAccessRequest,
     AdminPasswordSetRequest,

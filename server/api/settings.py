@@ -5,8 +5,8 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
-from ..bot_scope import bot_byline, bot_user_scope
-from ..dependencies import get_db, require_admin, require_bot_access, require_user
+from ..auth.dependencies import get_db, require_admin, require_bot_access, require_user
+from ..bots.scope import bot_byline, bot_user_scope
 from ..services.settings_service import SettingsService
 
 router = APIRouter()
@@ -170,7 +170,7 @@ def admin_update_bot(
         cfg = service.set_bot_operator(user)
         stats = service.get_bot_stats(user)
     try:
-        from ..news_bot import request_bot_cycle
+        from ..bots.news import request_bot_cycle
 
         request_bot_cycle()
     except Exception:

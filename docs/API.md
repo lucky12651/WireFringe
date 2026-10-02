@@ -37,7 +37,7 @@ Most public/admin JSON routes live under `/api`. The Next.js app proxies `/api/*
 - Roles: `admin`, `editor`, `author`
 - Optional TOTP on user accounts
 
-Create an initial admin with `server/create_admin.py` (see [SETUP.md](./SETUP.md)).
+Create an initial admin with `server/scripts/create_admin.py` (see [SETUP.md](./SETUP.md)).
 
 ## Content types
 

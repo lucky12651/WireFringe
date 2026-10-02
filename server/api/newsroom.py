@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, require_staff, require_user
-from ..limiter import limiter
+from ..auth.dependencies import get_db, require_staff, require_user
+from ..core.limiter import limiter
 from ..schemas import (
     FollowIn,
     FollowOut,

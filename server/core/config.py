@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_SERVER_ENV = Path(__file__).resolve().parent / ".env"
+_SERVER_DIR = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = _SERVER_DIR.parent
+_SERVER_ENV = _SERVER_DIR / ".env"
 _ROOT_ENV = PROJECT_ROOT / ".env"
 
 

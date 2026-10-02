@@ -61,10 +61,10 @@ On first boot the app creates tables and seeds default categories.
 ### Create an admin user
 
 ```bash
-python -m server.create_admin
+python -m server.scripts.create_admin
 ```
 
-(Follow the script prompts / args as implemented in `server/create_admin.py`.)
+(Follow the script prompts / args as implemented in `server/scripts/create_admin.py`.)
 
 ## 4. Frontend (Next.js)
 
