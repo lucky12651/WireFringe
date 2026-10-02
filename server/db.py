@@ -22,8 +22,12 @@ parsed = make_url(DATABASE_URL)
 if parsed.get_backend_name() != "postgresql":
     raise RuntimeError("DATABASE_URL must be a PostgreSQL URL")
 
+# SQLAlchemy 2.1 loads the psycopg v3 driver for a plain postgresql:// URL.
+if parsed.drivername in {"postgresql", "postgres"}:
+    parsed = parsed.set(drivername="postgresql+psycopg")
+
 engine = create_engine(
-    DATABASE_URL,
+    parsed,
     pool_pre_ping=True,
     # Fail fast if the host is unreachable; otherwise uvicorn --reload can appear to
     # "hang" during startup while trying to connect.
