@@ -1,0 +1,13 @@
+.git
+.github
+**/.env
+**/.env.*
+!**/.env.example
+**/__pycache__
+**/*.pyc
+web/node_modules
+web/.next
+mobile/node_modules
+agent-transcripts
+*.md
+!README.md

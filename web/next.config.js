@@ -1,3 +1,5 @@
+const { internalApiBase } = require('./lib/internalApi');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -13,11 +15,7 @@ const nextConfig = {
   // - FastAPI on :8000 by default (GridWork Docker monorepo; override with BACKEND_URL for local)
   // Proxy API + static assets to FastAPI to keep same-origin cookies working.
   async rewrites() {
-    const backend = (
-      process.env.BACKEND_URL ||
-      process.env.INTERNAL_API_URL ||
-      'http://127.0.0.1:8000'
-    ).replace(/\/$/, '');
+    const backend = internalApiBase();
     return [
       {
         source: '/api/:path*',

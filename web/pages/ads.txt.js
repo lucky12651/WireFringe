@@ -3,13 +3,9 @@
  * Static public/ads.txt was removed so deleted credentials cannot linger.
  */
 
-function internalApiBase() {
-  return (
-    process.env.INTERNAL_API_URL ||
-    process.env.BACKEND_URL ||
-    'http://127.0.0.1:8000'
-  ).replace(/\/$/, '');
-}
+import internalApi from '../lib/internalApi';
+
+const internalApiBase = internalApi.internalApiBase;
 
 export async function getServerSideProps({ res }) {
   let body = '';

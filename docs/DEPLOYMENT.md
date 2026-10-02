@@ -21,9 +21,16 @@ BLOG_SESSION_SECRET=<random>
 JWT_SECRET=<random>
 REVALIDATE_SECRET=<random>
 HTTPS_ONLY=true
-BACKEND_URL=https://your-domain.example
+PUBLIC_SITE_URL=https://your-domain.example
+# Must be the FastAPI process, not the public website.
+# https://wirefringe.com here makes /api proxy to itself and login returns 500.
 INTERNAL_API_URL=http://127.0.0.1:8000
+BACKEND_URL=http://127.0.0.1:8000
 ```
+
+## RushDeploy
+
+Use the repo `Dockerfile` as the build (not a Next.js-only app). That image starts FastAPI and Next.js together. Set `DATABASE_URL`, `BLOG_SESSION_SECRET`, `JWT_SECRET`, and `REVALIDATE_SECRET` in the RushDeploy environment, then redeploy. The container listens on port `3000` unless `PORT` is set.
 
 Update CORS origins in `server/config.py` (or via env if you extend settings) to only your real domains.
 

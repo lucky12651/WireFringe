@@ -1,5 +1,9 @@
+import internalApi from '../lib/internalApi';
+
+const internalApiBase = internalApi.internalApiBase;
+
 export async function getServerSideProps({ res }) {
-  const base = process.env.INTERNAL_API_URL || process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+  const base = internalApiBase();
   try {
     const r = await fetch(`${base.replace(/\/$/, '')}/api/feed.xml`);
     const xml = await r.text();
