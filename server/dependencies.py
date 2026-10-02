@@ -63,8 +63,15 @@ def get_optional_user(
         
     if not user_id:
         return None
-        
-    user = db.get(User, int(user_id))
+
+    try:
+        parsed_id = int(user_id)
+    except (TypeError, ValueError):
+        if request.session:
+            request.session.clear()
+        return None
+
+    user = db.get(User, parsed_id)
     if user is None:
         if request.session:
             request.session.clear()
