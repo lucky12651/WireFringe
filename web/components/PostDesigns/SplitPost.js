@@ -52,7 +52,6 @@ export default function SplitPost({
         <div className="md:pt-4">
           {excerpt ? (
             <p className="mb-7 text-[clamp(1.15rem,2.2vw,1.65rem)] font-normal leading-[1.45] text-ink-dek [text-wrap:pretty]">
-              <span className="mr-0.5 italic text-ink-tertiary">/ </span>
               {excerpt}
             </p>
           ) : null}

@@ -39,7 +39,7 @@ export default function ForYouPage() {
 
   if (authLoading) {
     return (
-      <Layout headerProps={{ activeCategory: 'For You', user }}>
+      <Layout headerProps={{ activeCategory: 'For You', user }} shellClassName="home-verge">
         <div className="h-[70vh] flex items-center">
           <Loader />
         </div>
@@ -49,7 +49,7 @@ export default function ForYouPage() {
 
   if (!user) {
     return (
-      <Layout headerProps={{ activeCategory: 'For You', user }}>
+      <Layout headerProps={{ activeCategory: 'For You', user }} shellClassName="home-verge">
         <div className="text-center px-4 py-12 text-ink-tertiary min-h-[50vh] pt-20">
           <h1 className="mb-3 text-[32px] font-extrabold text-ink">For You</h1>
           <p className="mb-5">Sign in to see your personalized feed.</p>
@@ -64,7 +64,7 @@ export default function ForYouPage() {
   const loading = !postsData && !error;
 
   return (
-    <Layout headerProps={{ activeCategory: 'For You', user }}>
+    <Layout headerProps={{ activeCategory: 'For You', user }} shellClassName="home-verge">
       {loading ? (
         <div className="h-[70vh] flex items-center">
           <Loader />

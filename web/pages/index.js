@@ -192,6 +192,7 @@ export default function HomePage({ initialPosts }) {
         user,
       }}
       showInlineAd={false}
+      shellClassName="home-verge"
     >
       {loading ? (
         <HomeSkeleton />
@@ -201,10 +202,10 @@ export default function HomePage({ initialPosts }) {
         <div className="pb-0 bg-transparent">
           <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
             <div
-              className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l-2 border-dotted border-line-strong pointer-events-none z-[1]"
+              className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-line pointer-events-none z-[1]"
               aria-hidden="true"
             />
-            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b-2 max-[1000px]:border-dotted max-[1000px]:border-line-strong max-[1000px]:pb-7">
+            <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-line max-[1000px]:pb-7">
               <Reveal as="div" className="w-full">
                 <HeroSection posts={heroPosts} />
               </Reveal>
@@ -222,20 +223,20 @@ export default function HomePage({ initialPosts }) {
                       {sec.kind === 'most_popular' && mostRead.length ? (
                         <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
                           <PackageRule />
-                          <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">{sec.name || 'Most Popular'}</h2>
+                          <h2 className="text-[19px] font-extrabold mb-1.5 tracking-tight">{sec.name || 'Most Popular'}</h2>
                           <ol className="list-none m-3 mt-3 p-0">
                             {mostRead.map((post, idx) => (
                               <li
                                 key={post.id}
-                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-[18px] border-b-2 border-dotted border-line-strong"
+                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-4 border-b border-line"
                               >
-                                <span className="w-[38px] h-[38px] bg-bg-elevated text-ink flex items-center justify-center font-extrabold text-[15px] font-mono rounded-sm border border-line transition-all group-hover:scale-110 group-hover:bg-mint group-hover:text-black group-hover:border-transparent">
+                                <span className="[font-family:var(--font-hero)] text-[34px] leading-none text-mint">
                                   {idx + 1}
                                 </span>
                                 <div>
                                   <Link
                                     href={postUrl(post)}
-                                    className="text-lg font-extrabold leading-snug text-ink block mb-2 tracking-tight transition-colors group-hover:text-mint"
+                                    className="text-[17px] font-bold leading-snug text-ink block mb-1.5 tracking-tight transition-colors group-hover:text-mint"
                                   >
                                     {post.title}
                                   </Link>
@@ -320,8 +321,46 @@ export default function HomePage({ initialPosts }) {
 }
 
 function PackageRule() {
+  return <div className="h-0.5 bg-mint w-full mb-2.5" />;
+}
+
+function PackageHeading({ title, subtitle }) {
   return (
-    <div className="h-0.5 bg-gradient-to-r from-mint from-0% via-mint via-[12%] to-transparent to-[90%] w-full mb-3.5 origin-left" />
+    <h2 className="text-[19px] font-medium tracking-tight leading-[1.25] text-ink">
+      <span className="font-extrabold">{title}</span>
+      {subtitle ? (
+        <>
+          <span className="text-mint mx-1.5">/</span>
+          {subtitle}
+        </>
+      ) : null}
+    </h2>
+  );
+}
+
+function Thumb({ post, className }) {
+  return (
+    <div className={`overflow-hidden bg-bg-card shrink-0 ${className}`}>
+      {post.ogImg ? (
+        <img
+          src={post.ogImg}
+          alt=""
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CommentCount({ count }) {
+  return (
+    <span className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-ink-muted">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+      {Number(count) || 0}
+    </span>
   );
 }
 
@@ -331,69 +370,41 @@ function PackageBlock({ title, subtitle, posts }) {
   const rest = posts.slice(1, 4);
 
   return (
-    <Reveal as="section" className="mt-12 pt-0 animate-fade-up">
+    <Reveal as="section" className="mt-16 pt-0 animate-fade-up">
       <PackageRule />
-      <h2 className="text-[22px] font-extrabold tracking-tight mb-[22px] text-ink leading-tight">
-        {title} <span className="text-ink-tertiary font-medium tracking-tight">/ {subtitle}</span>
-      </h2>
-      <div className="grid grid-cols-1 min-[1001px]:grid-cols-[1.2fr_1fr] gap-7 items-start">
-        <Link
-          href={postUrl(feature)}
-          className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[3px]"
-        >
-          <div className="w-full aspect-[4/3] overflow-hidden bg-bg-card mb-4 rounded-md shadow-md outline outline-1 outline-line transition-all group-hover:shadow-lg group-hover:outline-mint/20">
-            {feature.ogImg ? (
-              <img
-                src={feature.ogImg}
-                alt=""
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-              />
-            ) : null}
-          </div>
-          <h3 className="text-2xl font-extrabold leading-tight tracking-tight mb-2.5 text-ink transition-colors group-hover:text-mint">
+      <PackageHeading title={title} subtitle={subtitle} />
+      <div className="grid grid-cols-1 min-[1001px]:grid-cols-[1.1fr_1fr] gap-5 items-start mt-5 min-[1001px]:ml-[76px]">
+        <Link href={postUrl(feature)} className="group block text-inherit">
+          <Thumb post={feature} className="w-full aspect-[4/5]" />
+          <h3 className="[font-family:var(--font-hero)] font-normal text-[30px] leading-[1.02] text-ink mt-3 transition-colors group-hover:text-mint">
             {feature.title}
           </h3>
-          {excerpt(feature, 120) ? (
-            <p className="text-[15px] text-ink-secondary mb-3 leading-normal tracking-tight">
-              {excerpt(feature, 120)}
-            </p>
-          ) : null}
-          <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap mt-2">
             <AuthorByline post={feature} size="sm" />
+            <CommentCount count={feature.commentCount} />
           </div>
         </Link>
 
-        <div className="flex flex-col gap-0">
+        <div className="flex flex-col">
           {rest.map((post, idx) => (
             <Link
               key={post.id}
               href={postUrl(post)}
-              className={`group grid grid-cols-[1fr_84px] gap-4 px-2 py-[18px] -mx-2 border-b-2 border-dotted border-line-strong text-inherit rounded-sm transition-colors hover:bg-bg-hover/60 ${idx === 0 ? 'pt-0' : ''}`}
+              className={`group grid grid-cols-[minmax(0,1fr)_48px] gap-3 pb-4 mb-4 border-b border-line text-inherit last:border-b-0 ${idx === 0 ? 'pt-0' : ''}`}
             >
-              <div>
-                <h4 className="text-[16.5px] font-extrabold leading-snug text-ink mb-1.5 transition-colors tracking-tight group-hover:text-mint">
+              <div className="min-w-0">
+                <h4 className="text-[15.5px] font-bold leading-[1.2] text-ink tracking-tight transition-colors group-hover:text-mint">
                   {post.title}
                 </h4>
-                {excerpt(post, 90) ? (
-                  <p className="text-[13.5px] text-ink-tertiary mb-2 leading-snug">{excerpt(post, 90)}</p>
+                {excerpt(post, 110) ? (
+                  <p className="font-serif text-[14px] text-ink-tertiary mt-2 leading-[1.4]">{excerpt(post, 110)}</p>
                 ) : null}
-                <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap mt-2">
                   <AuthorByline post={post} size="sm" />
+                  <CommentCount count={post.commentCount} />
                 </div>
               </div>
-              {post.ogImg ? (
-                <div className="w-[84px] h-[84px] overflow-hidden bg-bg-card rounded-sm shadow-sm outline outline-1 outline-line">
-                  <img
-                    src={post.ogImg}
-                    alt=""
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-                  />
-                </div>
-              ) : (
-                <div className="w-[84px] h-[84px] overflow-hidden bg-bg-card rounded-sm" />
-              )}
+              <Thumb post={post} className="w-12 h-12" />
             </Link>
           ))}
         </div>
@@ -405,42 +416,25 @@ function PackageBlock({ title, subtitle, posts }) {
 function CategoryRow({ title, posts, href }) {
   if (!posts?.length) return null;
   return (
-    <Reveal as="section" className="mt-14">
-      <div className="flex items-baseline justify-between mb-[22px] border-t-2 border-mint pt-4">
-        <h2 className="text-[22px] font-extrabold tracking-tight">{title}</h2>
+    <Reveal as="section" className="mt-16">
+      <PackageRule />
+      <div className="flex items-baseline justify-between mb-5">
+        <PackageHeading title={title} />
         <Link
           href={href}
-          className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-muted font-bold transition-all py-1 hover:text-mint hover:tracking-[0.14em]"
+          className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-muted font-bold transition-colors py-1 hover:text-mint"
         >
-          MORE
+          More
         </Link>
       </div>
-      <div className="grid grid-cols-1 max-sm:grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-4 gap-[22px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 min-[1001px]:grid-cols-4 gap-5">
         {posts.map((post) => (
-          <Link
-            key={post.id}
-            href={postUrl(post)}
-            className="group block text-inherit transition-transform duration-300 ease-out hover:-translate-y-[5px]"
-          >
-            <div className="w-full aspect-[16/10] overflow-hidden bg-bg-card mb-3 rounded-md shadow-sm outline outline-1 outline-line transition-all group-hover:shadow-lg group-hover:outline-mint/15">
-              {post.ogImg ? (
-                <img
-                  src={post.ogImg}
-                  alt=""
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                />
-              ) : null}
-            </div>
-            <h3 className="text-[15.5px] font-extrabold leading-snug text-ink mb-2.5 tracking-tight transition-colors group-hover:text-mint">
+          <Link key={post.id} href={postUrl(post)} className="group block text-inherit">
+            <Thumb post={post} className="w-full aspect-[16/10] mb-3" />
+            <h3 className="text-[15px] font-bold leading-[1.2] text-ink mb-2 tracking-tight transition-colors group-hover:text-mint">
               {post.title}
             </h3>
-            {excerpt(post, 90) ? (
-              <p className="m-0 mb-2 line-clamp-2 max-h-0 overflow-hidden text-[13px] leading-snug text-ink-secondary opacity-0 transition-all duration-300 group-hover:max-h-16 group-hover:opacity-100">
-                {excerpt(post, 90)}
-              </p>
-            ) : null}
-            <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               <AuthorByline post={post} size="sm" />
             </div>
           </Link>

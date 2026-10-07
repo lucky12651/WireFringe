@@ -2,7 +2,7 @@ export const THEME_KEY = 'cnb_theme';
 export const THEME_MODE_KEY = 'cnb_theme_mode';
 export const THEME_CHANGE_EVENT = 'wirefringe-theme';
 
-const THEME_COLOR = { dark: '#000000', light: '#f3f1eb' };
+const THEME_COLOR = { dark: '#000000', light: '#ffffff' };
 
 export const DEFAULT_LIGHT_START_HOUR = 6;
 export const DEFAULT_DARK_START_HOUR = 18;

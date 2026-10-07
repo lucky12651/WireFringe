@@ -106,8 +106,23 @@ function normalizeGutenberg(html) {
   return raw.trim();
 }
 
+/** Layout wrappers from the editor. Splitting on them leaves unclosed tags and breaks hydration. */
+function unwrapLayoutTags(html) {
+  let raw = String(html || '')
+    .replace(/<div\b[^>]*>/gi, '')
+    .replace(/<\/div>/gi, '');
+
+  // Turn a span into a paragraph only when it is a real block, not an inline run beside a link.
+  raw = raw.replace(/<span\b[^>]*>([\s\S]*?)<\/span>(?=\s*(?:<(?:h[1-6]|p|blockquote|ul|ol|figure)\b|$))/gi, (full, inner) => {
+    const t = String(inner || '').trim();
+    if (!t || /<[a-z]/i.test(t)) return full;
+    return `<p>${t}</p>`;
+  });
+  return raw;
+}
+
 export function prepareArticleHtml(html, title = '') {
-  let raw = normalizeGutenberg(html);
+  let raw = unwrapLayoutTags(normalizeGutenberg(html));
   if (!raw) return '';
 
   raw = raw.replace(/<h2\b[^>]*>[\s\S]*?<\/h2>/gi, (block) => {
@@ -134,23 +149,23 @@ export function splitHtmlBlocks(html) {
 
   if (/<\/p>/i.test(raw) || /<\/h[1-6]>/i.test(raw)) {
     const parts = raw
-      .split(/(?=<(?:p|h[1-6]|blockquote|ul|ol|figure|div|hr|pre|table)\b)/i)
+      .split(/(?=<(?:p|h[1-6]|blockquote|ul|ol|figure|hr|pre|table)\b)/i)
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter((s) => {
+        const text = s.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim();
+        return text.length > 0 || /<img\b/i.test(s);
+      });
     if (parts.length) return parts;
   }
 
-  const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  if (!plain) return [raw];
-  const sentences = plain.split(/(?<=[.!?])\s+/).filter((s) => s.length > 20);
-  if (sentences.length >= 2) {
-    const groups = [];
-    for (let i = 0; i < sentences.length; i += 2) {
-      groups.push(`<p>${sentences.slice(i, i + 2).join(' ')}</p>`);
-    }
-    return groups;
-  }
-  return [`<p>${plain}</p>`];
+  const inline = raw.replace(/<\/?span\b[^>]*>/gi, '').trim();
+  const chunks = inline
+    .split(/<br\s*\/?>\s*<br\s*\/?>/i)
+    .map((s) => s.replace(/^(?:<br\s*\/?>|\s)+|(?:<br\s*\/?>|\s)+$/gi, '').trim())
+    .filter((s) => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim());
+
+  if (!chunks.length) return inline ? [`<p>${inline}</p>`] : [];
+  return chunks.map((c) => (/^<(?:p|h[1-6]|ul|ol|blockquote|figure)\b/i.test(c) ? c : `<p>${c}</p>`));
 }
 
 export function isParagraphBlock(html) {

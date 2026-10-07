@@ -34,7 +34,7 @@ export function extractKeyPoints(html, max = 3) {
   const paras = String(html || '')
     .split(/<\/p>/i)
     .map((s) => stripHtml(s).replace(/\s+/g, ' ').trim())
-    .filter((s) => s.length > 50 && s.length < 180 && !/rewritten from/i.test(s));
+    .filter((s) => s.length > 50 && s.length < 180 && /[.!?]"?$/.test(s) && !/rewritten from/i.test(s));
   const merged = [...headings];
   for (const p of paras) {
     if (merged.length >= max) break;

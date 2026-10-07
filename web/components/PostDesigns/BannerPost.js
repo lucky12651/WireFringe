@@ -16,6 +16,7 @@ import {
   StoryShell,
   TagPills,
   authorBits,
+  readingMinutes,
 } from './shared';
 import { KeyPoints, UpdatedStamp } from './reading';
 import { heroCredit } from '../../lib/articleExtras';
@@ -52,16 +53,16 @@ export default function BannerPost({
             {name ? (
               <p className="m-0 mb-0.5 text-[13px] text-white/75">
                 By{' '}
-                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-white hover:text-[#00d4aa]">
+                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-white hover:underline">
                   {name}
                 </Link>
               </p>
             ) : null}
-            {post.date || post.readMinutes ? (
-              <p className="mb-3.5 text-[11.5px] text-white/55">
+            {post.date || readingMinutes(post) ? (
+              <p className="mb-3.5 text-[11.5px] text-white/55" suppressHydrationWarning>
                 {post.date ? new Date(post.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
-                {post.date && post.readMinutes ? ' · ' : ''}
-                {post.readMinutes ? `${post.readMinutes} min read` : ''}
+                {post.date && readingMinutes(post) ? ' · ' : ''}
+                {readingMinutes(post) ? `${readingMinutes(post)} min read` : ''}
               </p>
             ) : (
               <StoryMeta post={post} className="mb-3.5 !text-white/55" />

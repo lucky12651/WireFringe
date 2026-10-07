@@ -212,7 +212,7 @@ export default function AccountPage() {
 
           <section className="min-w-0 max-w-[520px]">
             {error ? <p className="text-[#c0392b] text-sm m-0 mb-4">{error}</p> : null}
-            {status ? <p className="text-[#0b8f72] text-sm m-0 mb-4">{status}</p> : null}
+            {status ? <p className="text-mint text-sm m-0 mb-4">{status}</p> : null}
 
             {tab === 'profile' ? (
               <ProfileTab

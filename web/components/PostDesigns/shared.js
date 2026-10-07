@@ -23,6 +23,18 @@ export function formatPubDate(date) {
   });
 }
 
+/** Stored read time is often 1 even when the story is much longer. */
+export function readingMinutes(post) {
+  const stored = Number(post?.readMinutes) || 0;
+  const words = String(post?.content || '')
+    .replace(/<[^>]+>/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const estimated = words ? Math.max(1, Math.round(words / 230)) : 0;
+  if (!stored) return estimated;
+  return Math.max(stored, estimated);
+}
+
 export function slugifyCategory(cat) {
   return String(cat || '')
     .toLowerCase()
@@ -74,12 +86,12 @@ export function ReadingProgress({ color = '#00d4aa' }) {
 
 export function Watermark({ text = SITE_NAME, stroke, className = '' }) {
   return (
-    <div className={`relative h-[110px] overflow-hidden pointer-events-none select-none ${className}`}>
+    <div className={`relative flex justify-center overflow-visible px-4 py-2 pointer-events-none select-none ${className}`} aria-hidden="true">
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-heading text-[80px] md:text-[155px] font-black italic leading-none tracking-[-0.06em]"
+        className="whitespace-nowrap text-center font-heading text-[clamp(3.25rem,8.5vw,6.75rem)] font-black leading-[1.15] tracking-[-0.04em]"
         style={{
           color: 'transparent',
-          WebkitTextStroke: `2.5px ${stroke || 'color-mix(in srgb, var(--mint) 32%, transparent)'}`,
+          WebkitTextStroke: `2px ${stroke || 'color-mix(in srgb, var(--mint) 32%, transparent)'}`,
         }}
       >
         {text}
@@ -127,6 +139,13 @@ function CopyIcon() {
   );
 }
 
+function CommentIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
 function ShareIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -199,15 +218,11 @@ export function ShareCluster({ post, onOpenComments, commentCount = 0, tone = 'l
         {showComments ? (
           <button
             type="button"
+            aria-label={`${Number(commentCount) || 0} comments`}
             onClick={onOpenComments}
-            className={`inline-flex items-center overflow-hidden rounded-full border-[1.5px] ${
-              onPurple ? 'border-white/30 hover:border-[#00d4aa]' : 'border-line hover:border-mint'
-            }`}
+            className={`relative inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] bg-transparent ${btn}`}
           >
-            <span className="bg-[#00d4aa] px-2.5 py-1 text-[11px] font-extrabold text-black">
-              {Number(commentCount) || 0}
-            </span>
-            <span className="px-3 py-1 text-[11px] font-semibold text-[#00d4aa]">Comments</span>
+            <CommentIcon />
           </button>
         ) : null}
       </div>
@@ -319,11 +334,11 @@ export function HeroImage({ src, ratio = '16/9', className = '', credit = '', cr
 }
 
 export function StoryMeta({ post, className = '' }) {
-  const mins = Number(post?.readMinutes) || 0;
+  const mins = readingMinutes(post);
   const date = post?.date ? formatPubDate(post.date) : '';
   if (!date && !mins) return null;
   return (
-    <p className={`m-0 text-[12px] text-ink-tertiary ${className}`}>
+    <p className={`m-0 text-[12px] text-ink-tertiary ${className}`} suppressHydrationWarning>
       {date}
       {date && mins ? ' · ' : ''}
       {mins ? `${mins} min read` : ''}

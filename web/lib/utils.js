@@ -118,6 +118,8 @@ export function stripHtml(html) {
   s = s.replace(/<style[\s\S]*?<\/style>/gi, ' ');
   // All remaining tags
   s = s.replace(/<\/?[^>]+>/g, ' ');
+  // Stored excerpts can be cut off mid-tag ("… rolled out a <a")
+  s = s.replace(/<[^>]*$/, ' ');
   // Decode common entities
   s = s
     .replace(/&nbsp;/gi, ' ')
@@ -148,8 +150,10 @@ export function sanitizePreview(text) {
  */
 export function postExcerpt(post, max = 160) {
   const fromExcerpt = stripHtml(post?.excerpt || '');
-  const fromContent = fromExcerpt ? '' : stripHtml(post?.content || '');
-  const text = fromExcerpt || fromContent;
+  const fromContent = stripHtml(post?.content || '');
+  // Stored excerpts are often sliced mid-word ("…the recent announce").
+  const excerptCut = fromExcerpt && !/[.!?…]["']?$/.test(fromExcerpt);
+  const text = excerptCut && fromContent ? fromContent : fromExcerpt || fromContent;
   if (!text) return '';
   return truncateText(text, max);
 }

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WireFringe — Homepage Design Sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #5200ff;
+    --accent-soft: #ece5ff;
+    --ink: #111;
+    --muted: #6b6b6b;
+    --line: #e6e6e6;
+    --bg: #fff;
+    --card: #fff;
+    --font-display: 'Anton', 'Impact', sans-serif;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'Space Mono', ui-monospace, monospace;
+  }
+  body.dark {
+    --ink: #f2f2f2;
+    --muted: #a3a3a3;
+    --line: #2a2a2a;
+    --bg: #111;
+    --card: #181818;
+    --accent-soft: #2a1a5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); transition: background .2s, color .2s; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Header ---------- */
+  .topbar { display: flex; justify-content: flex-end; gap: 14px; align-items: center; padding-top: 10px; }
+  .btn-sub {
+    background: var(--accent); color: #fff; font: 700 10px var(--font-mono);
+    letter-spacing: .08em; padding: 4px 8px; text-transform: uppercase; border: 0; cursor: pointer;
+  }
+  .signin { font: 400 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; display: flex; gap: 5px; align-items: center; cursor: pointer; }
+
+  .nav {
+    display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+    border-bottom: 1px solid var(--ink); padding: 8px 0 6px; margin-left: auto; width: fit-content;
+  }
+  .nav .logo { font: 800 20px var(--font-sans); letter-spacing: -.04em; }
+  .logo .f { color: var(--accent); }
+  .nav .links { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+  .nav .links a:hover { color: var(--accent); }
+  .nav .sep { color: var(--muted); }
+  .icon-btn { background: none; border: 0; color: var(--ink); cursor: pointer; display: grid; place-items: center; padding: 2px; }
+
+  /* ---------- Layout ---------- */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0; margin-top: 20px; }
+  .main { padding-right: 24px; border-right: 1px solid var(--line); }
+  .rail { padding-left: 24px; }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; display: grid; grid-template-columns: 70px 1fr; }
+  .vertical-mark {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font: 800 92px/1 var(--font-sans); letter-spacing: -.05em;
+    align-self: start; justify-self: end; margin-right: -8px; z-index: 2;
+    user-select: none;
+  }
+  .vertical-mark .f { color: var(--accent); }
+  .hero-media { position: relative; max-width: 600px; }
+  .hero-img { aspect-ratio: 4 / 3; overflow: hidden; background: #ddd; }
+  .hero-img img { transition: transform .6s ease; }
+  .hero:hover .hero-img img { transform: scale(1.03); }
+  .hero-card {
+    position: relative; background: var(--card); margin: -110px 50px 0 34px; padding: 14px 10px 14px 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  }
+  .hero-card h1 { font: 400 52px/0.98 var(--font-display); letter-spacing: -.01em; }
+  .hero-card h1 a:hover { color: var(--accent); }
+  .hero-card p { font: 400 21px/1.3 var(--font-serif); margin-top: 10px; }
+
+  .byline { display: flex; flex-wrap: wrap; gap: 4px 12px; white-space: nowrap; align-items: center; margin-top: 10px; font: 400 10px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .byline .author { color: var(--accent); }
+  .comments { display: inline-flex; gap: 4px; align-items: center; }
+
+  /* ---------- Small story grid ---------- */
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; margin: 28px 0 0 26px; }
+  .mini { display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 12px 14px 14px 0; border-bottom: 1px solid var(--line); }
+  .mini:nth-child(odd) { border-right: 1px solid var(--line); margin-right: 14px; }
+  .mini .thumb { width: 40px; height: 40px; overflow: hidden; border-radius: 2px; }
+  .mini h3 { font: 700 15px/1.15 var(--font-sans); }
+  .mini h3 a:hover, .feed h3 a:hover, .ai-list h3 a:hover { color: var(--accent); }
+
+  /* ---------- Section: This week in AI ---------- */
+  .section { margin-top: 64px; border-top: 2px solid var(--accent); padding-top: 10px; }
+  .section-head { font: 400 18px/1.25 var(--font-sans); }
+  .section-head b { font-weight: 800; }
+  .section-head .slash { color: var(--accent); margin: 0 4px; }
+  .ai-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; margin: 20px 0 0 26px; }
+  .ai-feature { aspect-ratio: 4 / 5; overflow: hidden; background: #f45; }
+  .ai-list > article { display: grid; grid-template-columns: 1fr 40px; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .ai-list h3 { font: 700 15px/1.2 var(--font-sans); }
+  .ai-list p { font: 400 14px/1.4 var(--font-serif); color: var(--muted); margin-top: 8px; }
+  .ai-list .thumb { width: 40px; height: 40px; overflow: hidden; }
+
+  /* ---------- Right rail ---------- */
+  .tabs-holder { position: sticky; top: 10px; z-index: 5; display: flex; justify-content: center; padding: 8px 0 14px; }
+  .tabs { position: relative; display: inline-flex; background: var(--line); border-radius: 999px; padding: 0; }
+  .tabs button {
+    position: relative; z-index: 1; border: 0; background: transparent; cursor: pointer;
+    font: 700 9px var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+    padding: 9px 14px; color: var(--muted); min-width: 64px; transition: color .25s;
+  }
+  .tabs button.active { color: #fff; }
+  .tabs .pill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px; background: var(--accent); transition: transform .3s ease, width .3s ease; }
+
+  .feed article { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .feed .who { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .feed .avatar { width: 22px; height: 22px; border-radius: 50%; overflow: hidden; background: var(--accent-soft); }
+  .feed .who .meta { font: 400 9px/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .feed .who .meta .author { color: var(--accent); display: block; }
+  .feed .quick { font: 400 14px/1.45 var(--font-serif); }
+  .feed .quick b { font-family: var(--font-sans); font-weight: 700; }
+  .feed .quick a { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
+  .feed .media { margin-top: 18px; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--line); }
+  .feed .caption { font: 400 9px var(--font-mono); color: var(--muted); margin-top: 8px; letter-spacing: .05em; }
+  .feed .actions { display: flex; gap: 14px; margin-top: 10px; font: 400 10px var(--font-mono); color: var(--muted); }
+  .feed .actions button { background: none; border: 0; color: inherit; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; font: inherit; }
+  .feed .actions button:hover { color: var(--accent); }
+  .feed .story { display: grid; grid-template-columns: 1fr 40px; gap: 12px; }
+  .feed .story > div:first-child { min-width: 0; }
+  .feed .story h3 { font: 700 14px/1.2 var(--font-sans); }
+  .feed .story p { font: 400 13px/1.4 var(--font-serif); color: var(--muted); margin-top: 6px; }
+  .feed .story .thumb { width: 40px; height: 40px; overflow: hidden; }
+  .feed .linkout { display: block; margin-top: 12px; font: 700 12px/1.3 var(--font-sans); text-decoration: underline; text-decoration-color: var(--accent); }
+  .feed .linkout small { display: block; font: 400 9px var(--font-mono); color: var(--muted); text-decoration: none; margin-top: 3px; }
+  .feed-empty { padding: 40px 0; text-align: center; font: 400 12px var(--font-mono); color: var(--muted); }
+
+  /* ---------- Drawer ---------- */
+  .drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: 320px; max-width: 90vw; background: var(--bg);
+    transform: translateX(100%); transition: transform .3s ease; z-index: 51; padding: 24px; border-left: 2px solid var(--accent);
+  }
+  .drawer.open { transform: none; }
+  .drawer-bg.open { opacity: 1; pointer-events: auto; }
+  .drawer ul { list-style: none; margin-top: 30px; }
+  .drawer li a { display: block; padding: 10px 0; font: 800 22px var(--font-sans); border-bottom: 1px solid var(--line); }
+  .drawer li a:hover { color: var(--accent); }
+  .drawer .row { display: flex; justify-content: space-between; align-items: center; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .main { border-right: 0; padding-right: 0; }
+    .rail { padding-left: 0; border-top: 1px solid var(--line); margin-top: 30px; }
+    .nav .links .hide-sm { display: none; }
+  }
+  @media (max-width: 640px) {
+    .hero { grid-template-columns: 1fr; }
+    .vertical-mark { display: none; }
+    .hero-card { margin: -60px 12px 0; }
+    .hero-card h1 { font-size: 38px; }
+    .grid4, .ai-grid { grid-template-columns: 1fr; margin-left: 0; }
+    .mini:nth-child(odd) { border-right: 0; margin-right: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="topbar">
+    <button class="btn-sub">Subscribe</button>
+    <span class="signin">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="5"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z"/></svg>
+      Sign in
+    </span>
+  </div>
+  <nav class="nav">
+    <a href="#" class="logo">Wire<span class="f">F</span>ringe</a>
+    <div class="links">
+      <span class="sep">/</span><a href="#">Tech</a>
+      <span class="sep">/</span><a href="#">Reviews</a>
+      <span class="sep hide-sm">/</span><a href="#" class="hide-sm">Science</a>
+      <span class="sep hide-sm">/</span><a href="#" class="hide-sm">Entertainment</a>
+      <span class="sep">/</span><a href="#">AI</a>
+      <span class="sep hide-sm">/</span><a href="#" class="hide-sm">Policy</a>
+      <span class="sep">/</span>
+    </div>
+    <button class="icon-btn" id="themeBtn" title="Toggle dark mode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    </button>
+    <button class="icon-btn" id="menuBtn" title="Menu">
+      <svg width="22" height="16" viewBox="0 0 22 16" fill="currentColor"><rect width="22" height="2"/><rect y="7" width="22" height="2"/><rect y="14" width="22" height="2"/></svg>
+    </button>
+  </nav>
+</header>
+
+<div class="wrap layout">
+  <!-- ========== MAIN COLUMN ========== -->
+  <main class="main">
+    <section class="hero">
+      <div class="vertical-mark" aria-hidden="true">Wire<span class="f">F</span>ringe</div>
+      <div class="hero-media">
+        <div class="hero-img"><img src="https://picsum.photos/seed/laptop/900/680" alt="" /></div>
+        <div class="hero-card">
+          <h1><a href="#">Our first five impressions of Googlebooks — exciting but underbaked</a></h1>
+          <p>Google's new laptop OS shows lots of promise for Android phone owners, but there's a long road ahead.</p>
+          <div class="byline">
+            <span class="author">Antonio G. Di Benedetto</span>
+            <span>Oct 6</span>
+            <span class="comments"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>92</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid4" id="miniGrid"></div>
+
+    <section class="section">
+      <h2 class="section-head"><b>This week in AI</b><span class="slash">/</span>The biggest new stories about today's biggest new technology.</h2>
+      <div class="ai-grid">
+        <div class="ai-feature"><img src="https://picsum.photos/seed/portrait/600/750" alt="" /></div>
+        <div class="ai-list" id="aiList"></div>
+      </div>
+    </section>
+    <div style="height:60px"></div>
+  </main>
+
+  <!-- ========== RIGHT RAIL ========== -->
+  <aside class="rail">
+    <div class="tabs-holder">
+      <div class="tabs" id="tabs">
+        <span class="pill"></span>
+        <button class="active" data-tab="latest">Latest</button>
+        <button data-tab="following">Following</button>
+      </div>
+    </div>
+    <div class="feed" id="feed"></div>
+  </aside>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="drawer" id="drawer">
+  <div class="row">
+    <span class="logo" style="font:800 22px var(--font-sans)">Wire<span class="f" style="color:var(--accent)">F</span>ringe</span>
+    <button class="icon-btn" id="closeBtn" style="font-size:24px">&times;</button>
+  </div>
+  <ul>
+    <li><a href="#">Tech</a></li><li><a href="#">Reviews</a></li><li><a href="#">Science</a></li>
+    <li><a href="#">Entertainment</a></li><li><a href="#">AI</a></li><li><a href="#">Policy</a></li>
+  </ul>
+</div>
+
+<script>
+  const commentIcon = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  const linkIcon = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
+  const img = (seed, w = 120, h = 120) => `https://picsum.photos/seed/${seed}/${w}/${h}`;
+
+  const miniStories = [
+    { title: "We can't just change the definition of 'recording'", author: 'Victoria Song', c: 33, seed: 'glasses' },
+    { title: 'Xbox has secured exclusive GTA 6 streaming rights', author: 'Tom Warren', c: 71, seed: 'gta' },
+    { title: 'Apple and LG team up on new smart home gear, starting with a lock, doorbell, and thermostat', author: 'Emma Roth', c: 27, seed: 'apple' },
+    { title: 'The best October Prime Day tech deals we found', author: 'Cameron Faulkner', c: 18, seed: 'deals' },
+  ];
+
+  const aiStories = [
+    { title: 'OpenAI is adding text watermarking in ChatGPT and Codex', dek: "It's launching textGrain watermarking in the EU, but OpenAI says it won't be the 'global default' yet.", author: 'Stevie Bonifield', c: 13, seed: 'openai' },
+    { title: 'Sen. Adam Schiff on AI regulation, free speech, and impeaching Trump one more time', dek: 'A wide-ranging conversation about Washington and the future of tech policy.', author: 'Nilay Patel', c: 48, seed: 'senate' },
+  ];
+
+  const feeds = {
+    latest: [
+      { type: 'quick', author: 'Stevie Bonifield', time: 'An hour ago', seed: 'stevie',
+        html: "<b>Google's expanding its Gemini in Chrome 'auto browse' feature to India.</b> It's now available to AI Pro and Ultra subscribers in India on desktop and Android, along with the Android version of Google's Gemini in Chrome browser assistant. Auto browse <a href='#'>launched earlier this year</a>, allowing Gemini to complete multi-step tasks in Chrome, like shopping, filling out forms, or researching hotel prices.",
+        media: 'chrome', caption: 'Image: Google', c: 0 },
+      { type: 'story', title: 'OpenAI drops another batch of mathematical breakthroughs', dek: "Solutions to 'hundreds' of open questions are said to be included in a batch of manuscripts released by OpenAI.", author: 'Robert Hart', time: '4:56 AM GMT+5:30', c: 21, seed: 'math' },
+      { type: 'quick', author: 'Jay Peters', time: '3:44 AM GMT+5:30', seed: 'jay',
+        html: "<b>Laurene Powell Jobs is joining Skydance's board of directors.</b> Following <a href='#'>today's completion</a> of the $110 billion Paramount and Warner Bros. Discovery megamerger to form Skydance, the <a href='#'>company announced</a> three new board members: Powell Jobs, former Activision CEO Bobby Kotick, and newly-appointed <a href='#'>Skydance co-CEO Ynon Kreiz</a>. Former UK Prime Minister Tony Blair is also joining as a \"board advisor.\"",
+        linkout: 'Skydance Announces Board, Adding Ynon Kreiz, Laurene Powell Jobs and Bobby Kotick as Directors and Tony Blair as Advisor', source: 'PR Newswire', c: 19 },
+      { type: 'story', title: 'Xbox has secured exclusive GTA 6 streaming rights', dek: 'The streaming rights come in November, when Microsoft is opening up access to Xbox Cloud Gaming.', author: 'Tom Warren', time: '3:42 AM GMT+5:30', c: 71, seed: 'gta' },
+      { type: 'story', title: 'Apple and LG team up on new smart home gear, starting with a lock, doorbell, and thermostat', dek: "Bloomberg reports that newly-surfaced LG smart home gear is part of a 'second-party' development arrangement with Apple.", author: 'Emma Roth', time: '3:09 AM GMT+5:30', c: 27, seed: 'apple' },
+    ],
+    following: [],
+  };
+
+  const byline = (author, c, extra = '') =>
+    `<div class="byline"><span class="author">${author}</span>${extra ? `<span>${extra}</span>` : ''}<span class="comments">${commentIcon}${c}</span></div>`;
+
+  document.getElementById('miniGrid').innerHTML = miniStories.map(s => `
+    <article class="mini">
+      <div class="thumb"><img src="${img(s.seed)}" alt=""></div>
+      <div><h3><a href="#">${s.title}</a></h3>${byline(s.author, s.c)}</div>
+    </article>`).join('');
+
+  document.getElementById('aiList').innerHTML = aiStories.map(s => `
+    <article>
+      <div><h3><a href="#">${s.title}</a></h3><p>${s.dek}</p>${byline(s.author, s.c)}</div>
+      <div class="thumb"><img src="${img(s.seed)}" alt=""></div>
+    </article>`).join('');
+
+  const actions = c => `<div class="actions"><button>${commentIcon}${c}</button><button class="copy">${linkIcon}</button></div>`;
+
+  function renderFeed(tab) {
+    const items = feeds[tab];
+    const el = document.getElementById('feed');
+    if (!items.length) {
+      el.innerHTML = '<div class="feed-empty">Follow topics and authors<br>to see their stories here.</div>';
+      return;
+    }
+    el.innerHTML = items.map(i => i.type === 'quick' ? `
+      <article>
+        <div class="who">
+          <div class="avatar"><img src="${img(i.seed, 60, 60)}" alt=""></div>
+          <div class="meta"><span class="author">${i.author}</span>${i.time}</div>
+        </div>
+        <div class="quick">${i.html}</div>
+        ${i.linkout ? `<a href="#" class="linkout">${i.linkout}<small>[${i.source}]</small></a>` : ''}
+        ${i.media ? `<div class="media"><img src="${img(i.media, 500, 320)}" alt=""></div><div class="caption">${i.caption}</div>` : ''}
+        ${actions(i.c)}
+      </article>` : `
+      <article>
+        <div class="story">
+          <div><h3><a href="#">${i.title}</a></h3><p>${i.dek}</p>${byline(i.author, i.c, i.time)}</div>
+          <div class="thumb"><img src="${img(i.seed)}" alt=""></div>
+        </div>
+      </article>`).join('');
+  }
+
+  const tabs = document.getElementById('tabs');
+  const pill = tabs.querySelector('.pill');
+  function movePill(btn) {
+    pill.style.width = btn.offsetWidth + 'px';
+    pill.style.transform = `translateX(${btn.offsetLeft}px)`;
+  }
+  tabs.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    movePill(btn);
+    renderFeed(btn.dataset.tab);
+  }));
+  window.addEventListener('load', () => movePill(tabs.querySelector('.active')));
+  window.addEventListener('resize', () => movePill(tabs.querySelector('.active')));
+
+  document.getElementById('feed').addEventListener('click', e => {
+    const btn = e.target.closest('.copy');
+    if (!btn) return;
+    navigator.clipboard?.writeText(location.href);
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => (btn.style.color = ''), 800);
+  });
+
+  const drawer = document.getElementById('drawer');
+  const drawerBg = document.getElementById('drawerBg');
+  const toggleDrawer = open => { drawer.classList.toggle('open', open); drawerBg.classList.toggle('open', open); };
+  document.getElementById('menuBtn').onclick = () => toggleDrawer(true);
+  document.getElementById('closeBtn').onclick = () => toggleDrawer(false);
+  drawerBg.onclick = () => toggleDrawer(false);
+  document.addEventListener('keydown', e => e.key === 'Escape' && toggleDrawer(false));
+
+  document.getElementById('themeBtn').onclick = () => document.body.classList.toggle('dark');
+
+  renderFeed('latest');
+</script>
+</body>
+</html>

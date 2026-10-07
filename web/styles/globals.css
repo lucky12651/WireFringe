@@ -45,7 +45,8 @@
     --font-display: 'Archivo Black', 'Inter', Helvetica, Arial, sans-serif;
     --font-body: 'Inter', Helvetica, Arial, sans-serif;
     --font-mono: 'Space Mono', 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-    --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+    --font-serif: 'Source Serif 4', Lora, Georgia, 'Times New Roman', serif;
+    --font-hero: 'Anton', 'Archivo Black', Impact, sans-serif;
     --header-accent: #def23a;
 
     --fs-hero: clamp(1.9rem, 4.4vw, 3.15rem);
@@ -69,21 +70,21 @@
   }
 
   html[data-theme='light'] {
-    --bg: #f3f1eb;
-    --bg-primary: #f3f1eb;
-    --bg-secondary: #ebe8e0;
+    --bg: #ffffff;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f4f4f4;
     --bg-elevated: #ffffff;
-    --bg-tertiary: #e4e0d6;
-    --bg-hover: #ddd8cc;
-    --bg-card: #ffffff;
-    --bg-highlight: #5b4bff;
+    --bg-tertiary: #f0f0f0;
+    --bg-hover: #f5f5f5;
+    --bg-card: #f2f2f2;
+    --bg-highlight: #0b8f72;
 
-    --text-primary: #141414;
-    --text-secondary: #4a4a4a;
-    --text-tertiary: #6a6a6a;
-    --text-muted: #8a857c;
+    --text-primary: #111111;
+    --text-secondary: #3f3f3f;
+    --text-tertiary: #6b6b6b;
+    --text-muted: #8a8a8a;
     --text-soft: #2a2a2a;
-    --text-dek: #2c2c2c;
+    --text-dek: #222222;
 
     --mint: #0b8f72;
     --mint-hover: #087a61;
@@ -91,10 +92,10 @@
     --purple: #5b4bff;
     --purple-deep: #5200ff;
 
-    --border: #d8d3c8;
-    --border-dim: #e4e0d6;
-    --border-light: #ece8df;
-    --border-strong: #c4beb2;
+    --border: #e3e3e3;
+    --border-dim: #ececec;
+    --border-light: #f0f0f0;
+    --border-strong: #d6d6d6;
 
     --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.06);
     --shadow-md: 0 8px 24px rgba(20, 20, 20, 0.08);
@@ -360,6 +361,16 @@ header.post-header-inverse .text-ink-muted {
 header.post-header-inverse .bg-ink {
   background-color: #ffffff;
 }
+/* Accent purple would disappear on the purple article header. */
+header.post-header-inverse .text-mint,
+header.post-header-inverse .admin-brand-f {
+  color: #ffffff;
+}
+header.post-header-inverse .bg-mint,
+html[data-theme='light'] header.post-header-inverse .bg-mint {
+  background-color: #3cffd0;
+  color: #111111;
+}
 
 /* Feature banner purple hero: white type in both light and dark. */
 .post-banner-hero,
@@ -397,20 +408,24 @@ html[data-theme='dark'] .post-banner-hero .banner-hero-dek {
   color: rgba(255, 255, 255, 0.82);
 }
 
-/* Same homepage --bg in both themes. 90% solid color, 10% frost. */
-.site-header-bar {
-  background-color: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+/* Front-page wordmark set on its side next to the lead story. */
+.home-wordmark {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
+/* Same homepage --bg in both themes. 90% solid color, 10% frost. */
+.site-header-bar {
+  background-color: var(--bg);
+}
+
+/* Colored article bands and photo overlays keep the site accent readable. */
 html[data-theme='dark'] header.on-accent {
   --mint: #0b8f72;
   --mint-hover: #087a61;
   --mint-dim: rgba(11, 143, 114, 0.12);
 }
 
-/* Comments drawer uses site mint: neon on dark, forest on light. */
 [data-comment-drawer] {
   --mint: #3cffd0;
   --mint-hover: #5fffe0;
@@ -423,14 +438,12 @@ html[data-theme='light'] [data-comment-drawer] {
   --mint-dim: rgba(11, 143, 114, 0.12);
 }
 
-/* Lime/mint bands stay dark green. Regular header follows the theme (light mint on black). */
 .on-accent {
   --mint: #0b8f72;
   --mint-hover: #087a61;
   --mint-dim: rgba(11, 143, 114, 0.12);
 }
 
-/* Photo overlays always use neon mint + light type, even in light theme. */
 .on-media {
   --mint: #3cffd0;
   --mint-hover: #5fffe0;
@@ -1377,21 +1390,27 @@ html[data-theme='light'] .admin-modal-overlay {
   .article-body h2 {
     scroll-margin-top: calc(var(--header-height, 96px) + 16px);
   }
-  @media (min-width: 1001px) {
-    .article-body .pull-quote {
-      float: right;
-      width: min(42%, 16rem);
-      margin: 0.35em 0 1.1em 1.35em;
-      clear: right;
-    }
-    .article-body .pull-quote blockquote,
-    .article-body .pull-quote {
-      border-left: 3px solid var(--mint);
-      padding-left: 14px;
-      font-size: 1.05em;
-      font-style: italic;
-      color: var(--text-primary);
-    }
+  .article-body .pull-quote {
+    float: none;
+    clear: both;
+    width: auto;
+    margin: 1.75rem 0;
+    padding: 0;
+    border: 0;
+    font-style: normal;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .article-body .pull-quote blockquote {
+    margin: 0;
+    border-left: 3px solid var(--mint);
+    padding: 0.15rem 0 0.15rem 1rem;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--text-primary);
   }
   @media print {
     header, footer, aside, nav, .reader-view > .sticky, [class*='AdUnit'], .progress-bar {
@@ -1405,11 +1424,11 @@ html[data-theme='light'] .admin-modal-overlay {
 
   .article-body .drop-cap p::first-letter {
     float: left;
-    font-family: var(--font-heading);
-    font-size: 3.55em;
-    font-weight: 900;
+    font-family: var(--font-serif);
+    font-size: 3.35em;
+    font-weight: 600;
     line-height: 0.8;
-    padding: 0.1em 0.12em 0 0;
+    padding: 0.08em 0.14em 0 0;
     color: var(--mint);
   }
 

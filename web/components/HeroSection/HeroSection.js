@@ -9,21 +9,12 @@ function formatDate(date) {
     .toUpperCase();
 }
 
-function excerpt(post, max = 110) {
+function excerpt(post, max = 140) {
   return postExcerpt(post, max);
 }
 
-/** Purple highlight on the full title, only on hover */
-function HighlightTitle({ title, className }) {
-  const t = String(title || '');
-  return (
-    <h1 className={className}>
-      <span className="bg-transparent [box-decoration-break:clone] px-[0.07em] transition-all duration-300 group-hover:bg-bg-highlight group-hover:shadow-[0_0_0_3px_var(--bg-highlight),0_8px_24px_rgba(91,75,255,0.35)]">
-        {t}
-      </span>
-    </h1>
-  );
-}
+const placeholder =
+  'w-full h-full bg-[radial-gradient(circle_at_30%_40%,var(--mint-dim),transparent_55%),linear-gradient(145deg,var(--bg-card)_0%,var(--bg-secondary)_100%)]';
 
 export default function HeroSection({ posts = [] }) {
   if (!posts.length) {
@@ -39,92 +30,61 @@ export default function HeroSection({ posts = [] }) {
 
   return (
     <section className="w-full animate-fade-up">
-      <Link
-        href={postUrl(featured)}
-        className="hero-feature group block text-inherit mb-1.5 rounded-md max-md:rounded overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.45)] outline outline-1 outline-white/[0.04] transition-all duration-300 hover:shadow-[0_28px_60px_rgba(0,0,0,0.55)] hover:outline-mint/20"
-      >
-        <div className="relative w-full aspect-[16/10] md:aspect-video overflow-hidden bg-bg-card">
-          {featured.ogImg ? (
-            <img
-              src={featured.ogImg}
-              alt=""
-              loading="eager"
-              className="w-full h-full object-cover object-center block transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.055] group-hover:brightness-105 group-hover:saturate-105"
-            />
-          ) : (
-            <div className="w-full h-full min-h-[120px] bg-[radial-gradient(circle_at_30%_40%,rgba(60,255,208,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
-          )}
-          {/* Overlay copy is desktop-only so the photo stays visible on phones. */}
-          <div className="hero-feature-shade absolute inset-0 pointer-events-none hidden md:block bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.62)_36%,rgba(0,0,0,0.2)_62%,transparent_100%),linear-gradient(90deg,rgba(0,0,0,0.35)_0%,transparent_45%)] transition-opacity group-hover:opacity-95" />
-          <div className="on-media absolute left-0 right-0 bottom-0 z-[3] hidden md:block p-6 md:p-8 transition-transform duration-300 ease-out group-hover:-translate-y-[3px]">
-            <HighlightTitle
-              title={featured.title}
-              className="on-media text-hero font-black leading-[1.02] tracking-[-0.038em] text-white mb-3.5 max-w-[22ch] shadow-black/50 [text-shadow:0_2px_32px_rgba(0,0,0,0.55)]"
-            />
+      <div className="grid grid-cols-1 md:grid-cols-[76px_minmax(0,1fr)] items-start">
+        <div
+          className="home-wordmark hidden md:block justify-self-end -mr-2 z-[2] select-none font-heading font-black text-[96px] leading-none tracking-[-0.065em] text-ink"
+          aria-hidden="true"
+        >
+          Wire<span className="text-mint italic inline-block">F</span>ringe
+        </div>
+
+        <Link href={postUrl(featured)} className="group block text-inherit max-w-[640px]">
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-card">
+            {featured.ogImg ? (
+              <img
+                src={featured.ogImg}
+                alt=""
+                loading="eager"
+                className="w-full h-full object-cover object-center block transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              />
+            ) : (
+              <div className={placeholder} />
+            )}
+          </div>
+
+          <div className="relative bg-bg -mt-16 md:-mt-[110px] mx-3 md:ml-9 md:mr-12 px-3 pt-3.5 pb-4 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+            <h1 className="[font-family:var(--font-hero)] font-normal text-[36px] md:text-[54px] leading-[0.98] tracking-[-0.01em] text-ink transition-colors group-hover:text-mint">
+              {featured.title}
+            </h1>
             {excerpt(featured) ? (
-              <p className="on-media text-[17.5px] font-normal text-white mb-4 max-w-[38em] leading-[1.42] tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
+              <p className="font-serif text-[18px] md:text-[21px] leading-[1.3] text-ink mt-2.5">
                 {excerpt(featured)}
               </p>
             ) : null}
-            <div className="flex items-center gap-3 flex-wrap text-xs text-white/70">
+            <div className="flex items-center gap-3 flex-wrap mt-2.5">
               <AuthorByline post={featured} size="sm" />
               {featured.date ? (
-                <span className="font-mono text-[10px] text-white/65 tracking-wide uppercase">
+                <span className="font-mono text-[10px] text-ink-muted tracking-wide uppercase">
                   {formatDate(featured.date)}
                 </span>
               ) : null}
-              <span
-                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-white/70 px-2 py-[3px] rounded-pill bg-white/10 border border-white/15"
-                title="Comments"
-              >
-                <CommentIcon /> {Number(featured.commentCount) || 0}
-              </span>
+              <CommentCount count={featured.commentCount} />
             </div>
           </div>
-        </div>
-        <div className="md:hidden px-0.5 pt-3 pb-1">
-          <h1 className="m-0 mb-2 text-[22px] font-extrabold leading-[1.18] tracking-[-0.03em] text-ink">
-            {featured.title}
-          </h1>
-          {excerpt(featured, 90) ? (
-            <p className="m-0 mb-2.5 text-[14px] leading-[1.4] text-ink-secondary line-clamp-2">
-              {excerpt(featured, 90)}
-            </p>
-          ) : null}
-          <div className="flex items-center gap-3 flex-wrap text-xs">
-            <AuthorByline post={featured} size="sm" />
-            {featured.date ? (
-              <span className="font-mono text-[10px] text-ink-muted tracking-wide uppercase">
-                {formatDate(featured.date)}
-              </span>
-            ) : null}
-            <span
-              className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-ink-muted px-2 py-[3px] rounded-pill bg-bg-hover border border-line"
-              title="Comments"
-            >
-              <CommentIcon /> {Number(featured.commentCount) || 0}
-            </span>
-          </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       {grid.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t-2 border-dotted border-line-strong mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 mt-7 md:ml-[76px]">
           {grid.map((post, i) => (
             <article
               key={post.id}
               className={cn(
-                'group grid grid-cols-[92px_1fr] md:grid-cols-[104px_1fr] gap-4 items-start py-[18px] md:py-[22px] border-b-2 border-dotted border-line-strong transition-colors hover:bg-bg-hover/40',
-                i % 2 === 0
-                  ? 'md:pr-[22px] md:border-r-2 md:border-dotted md:border-line-strong md:pl-0'
-                  : 'md:pl-[22px] md:pr-0',
-                'px-0'
+                'group grid grid-cols-[48px_1fr] gap-3 items-start py-3.5 border-b border-line',
+                i % 2 === 0 ? 'md:pr-4 md:mr-4 md:border-r' : ''
               )}
             >
-              <Link
-                href={postUrl(post)}
-                className="w-[92px] h-[70px] md:w-[104px] md:h-[78px] overflow-hidden bg-bg-card shrink-0 rounded-sm outline outline-1 outline-line"
-              >
+              <Link href={postUrl(post)} className="w-12 h-12 overflow-hidden bg-bg-card shrink-0">
                 {post.ogImg ? (
                   <img
                     src={post.ogImg}
@@ -133,24 +93,19 @@ export default function HeroSection({ posts = [] }) {
                     className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full bg-[radial-gradient(circle_at_30%_40%,rgba(60,255,208,0.08),transparent_50%),linear-gradient(145deg,#161616_0%,#050505_100%)]" />
+                  <div className={placeholder} />
                 )}
               </Link>
-              <div className="min-w-0 pt-0.5">
+              <div className="min-w-0">
                 <Link
                   href={postUrl(post)}
-                  className="block text-[17.5px] font-extrabold leading-[1.22] tracking-tight text-ink mb-2.5 transition-colors group-hover:text-mint"
+                  className="block text-[15.5px] font-bold leading-[1.18] tracking-tight text-ink mb-1.5 transition-colors group-hover:text-mint"
                 >
                   {post.title}
                 </Link>
-                <div className="flex items-center gap-3 text-[11px]">
+                <div className="flex items-center gap-3 flex-wrap">
                   <AuthorByline post={post} size="sm" />
-                  <span
-                    className="inline-flex items-center gap-1 font-mono text-[9px] tracking-wide text-ink-muted px-1.5 py-0.5 rounded-pill bg-bg-hover border border-line"
-                    title="Comments"
-                  >
-                    <CommentIcon /> {Number(post.commentCount) || 0}
-                  </span>
+                  <CommentCount count={post.commentCount} />
                 </div>
               </div>
             </article>
@@ -161,9 +116,20 @@ export default function HeroSection({ posts = [] }) {
   );
 }
 
+function CommentCount({ count }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 font-mono text-[10px] tracking-wide text-ink-muted"
+      title="Comments"
+    >
+      <CommentIcon /> {Number(count) || 0}
+    </span>
+  );
+}
+
 function CommentIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );

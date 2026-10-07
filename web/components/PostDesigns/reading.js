@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { postUrl, stripHtml, cn } from '../../lib/utils';
@@ -6,9 +6,18 @@ import { relativeUpdated, shouldShowUpdated } from '../../lib/articleExtras';
 import { prepareArticleHtml } from '../../lib/articleHtml';
 
 export function FadeImg({ src, alt = '', className = '', ...rest }) {
-  const [on, setOn] = useState(!src);
+  const ref = useRef(null);
+  const [on, setOn] = useState(false);
+
+  useEffect(() => {
+    setOn(false);
+    const img = ref.current;
+    if (img?.complete && img.naturalWidth > 0) setOn(true);
+  }, [src]);
+
   return src ? (
     <img
+      ref={ref}
       src={src}
       alt={alt}
       onLoad={() => setOn(true)}

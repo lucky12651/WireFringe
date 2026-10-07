@@ -115,8 +115,14 @@ export default function Header({
 
     let frame = 0;
     const apply = () => {
-      const next = window.scrollY > 24;
-      setScrolled((prev) => (prev === next ? prev : next));
+      const y = window.scrollY;
+      // Stay compact until the reader is back at the top. A single threshold
+      // flickers: the shorter bar changes page height and scroll crosses it again.
+      setScrolled((prev) => {
+        if (!prev && y > 80) return true;
+        if (prev && y < 8) return false;
+        return prev;
+      });
       if (articleTitle) {
         const doc = document.documentElement;
         const max = doc.scrollHeight - doc.clientHeight;
@@ -302,14 +308,12 @@ export default function Header({
             {onOpenComments ? (
               <button
                 type="button"
-                className="inline-flex items-center overflow-hidden rounded-full border-[1.5px] border-current text-ink hover:border-mint hover:text-mint"
+                className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-current bg-transparent text-ink hover:border-mint hover:text-mint"
                 onClick={onOpenComments}
-                aria-label="Comments"
+                aria-label={`${Number(articleCommentCount) || 0} comments`}
+                title="Comments"
               >
-                <span className="bg-mint px-2 py-0.5 text-[10px] font-extrabold text-black">
-                  {Number(articleCommentCount) || 0}
-                </span>
-                <span className="hidden px-2 py-0.5 text-[10px] font-semibold sm:inline">Comments</span>
+                <CommentIcon />
               </button>
             ) : null}
             {actionIcons}
@@ -548,6 +552,14 @@ export default function Header({
         </div>
       </aside>
     </>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }
 
