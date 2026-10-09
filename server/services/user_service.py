@@ -7,13 +7,18 @@ from sqlalchemy.orm import Session
 from ..auth.credentials import authenticate, hash_password, verify_password
 from ..auth.identity import first_login_value, normalize_login_email
 from ..models import (
+    AuthToken,
+    BotLog,
     Comment,
     CommentReport,
     CommentVote,
+    NewsQueue,
     PersonalizedFeed,
     Post,
     PostRevision,
+    RecentNewsCache,
     User,
+    UserFollow,
     UserInteraction,
 )
 from ..repositories import UserRepository
@@ -571,8 +576,21 @@ class UserService:
             .where(CommentReport.reporter_user_id == user_id)
             .values(reporter_user_id=None)
         )
+        self.db.execute(
+            update(Post).where(Post.bot_user_id == user_id).values(bot_user_id=None)
+        )
+        self.db.execute(
+            update(PostRevision)
+            .where(PostRevision.editor_user_id == user_id)
+            .values(editor_user_id=None)
+        )
         self.db.execute(delete(UserInteraction).where(UserInteraction.user_id == user_id))
         self.db.execute(delete(PersonalizedFeed).where(PersonalizedFeed.user_id == user_id))
+        self.db.execute(delete(BotLog).where(BotLog.user_id == user_id))
+        self.db.execute(delete(NewsQueue).where(NewsQueue.user_id == user_id))
+        self.db.execute(delete(RecentNewsCache).where(RecentNewsCache.user_id == user_id))
+        self.db.execute(delete(UserFollow).where(UserFollow.user_id == user_id))
+        self.db.execute(delete(AuthToken).where(AuthToken.user_id == user_id))
 
     def _move_posts_to_username(self, creator_keys: list[str], transfer_username: str) -> int:
         if not creator_keys or not transfer_username:
