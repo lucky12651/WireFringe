@@ -111,7 +111,7 @@ export default function ThemeToggle({ className = '', compact = false }) {
         aria-label="Light mode"
         className={cn(
           'relative z-[1] inline-flex min-w-0 appearance-none cursor-pointer items-center justify-center gap-1.5 rounded-pill border-0 bg-transparent font-mono text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-150',
-          isLight ? 'text-black' : 'text-ink-muted hover:text-ink'
+          isLight ? 'text-[#ffffff] dark:text-black' : 'text-ink-muted hover:text-ink'
         )}
       >
         <SunIcon size={iconSize} />
@@ -124,7 +124,7 @@ export default function ThemeToggle({ className = '', compact = false }) {
         aria-label="Dark mode"
         className={cn(
           'relative z-[1] inline-flex min-w-0 appearance-none cursor-pointer items-center justify-center gap-1.5 rounded-pill border-0 bg-transparent font-mono text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-150',
-          !isLight ? 'text-black' : 'text-ink-muted hover:text-ink'
+          !isLight ? 'text-[#ffffff] dark:text-black' : 'text-ink-muted hover:text-ink'
         )}
       >
         <MoonIcon size={iconSize} />

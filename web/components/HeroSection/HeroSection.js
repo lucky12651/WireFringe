@@ -31,25 +31,30 @@ export default function HeroSection({ posts = [] }) {
   return (
     <section className="w-full animate-fade-up">
       <div className="grid grid-cols-1 md:grid-cols-[76px_minmax(0,1fr)] items-start">
-        <div
-          className="home-wordmark hidden md:block justify-self-end -mr-2 z-[2] select-none font-heading font-black text-[96px] leading-none tracking-[-0.065em] text-ink"
-          aria-hidden="true"
-        >
-          Wire<span className="text-mint italic inline-block">F</span>ringe
-        </div>
+        <div className="hidden md:block" aria-hidden="true" />
 
         <Link href={postUrl(featured)} className="group block text-inherit max-w-[640px]">
-          <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-card">
-            {featured.ogImg ? (
-              <img
-                src={featured.ogImg}
-                alt=""
-                loading="eager"
-                className="w-full h-full object-cover object-center block transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              />
-            ) : (
-              <div className={placeholder} />
-            )}
+          <div className="relative w-full aspect-[4/3]">
+            <div
+              className="absolute top-1/2 left-0 z-[2] hidden -translate-x-1/2 -translate-y-1/2 md:block"
+              aria-hidden="true"
+            >
+              <div className="home-wordmark select-none font-heading font-black text-[96px] leading-none tracking-[-0.065em] text-ink">
+                W<span className="text-mint italic inline-block">F</span>
+              </div>
+            </div>
+            <div className="absolute inset-0 overflow-hidden bg-bg-card">
+              {featured.ogImg ? (
+                <img
+                  src={featured.ogImg}
+                  alt=""
+                  loading="eager"
+                  className="w-full h-full object-cover object-center block transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                />
+              ) : (
+                <div className={placeholder} />
+              )}
+            </div>
           </div>
 
           <div className="relative bg-bg -mt-16 md:-mt-[110px] mx-3 md:ml-9 md:mr-12 px-3 pt-3.5 pb-4 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
