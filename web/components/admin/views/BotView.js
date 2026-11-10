@@ -612,12 +612,16 @@ export function BotView({
           <p className="m-0 mb-3 text-ink-secondary">
             {form.feeds.filter((f) => f.enabled).length} on / {form.feeds.length} total
           </p>
+          <p className="m-0 mb-3 text-[12px] text-ink-secondary">
+            Feed categories are hints. xAI chooses each story&apos;s category from its content.
+            Only selected editorial sections can be published, and section placements must match the story&apos;s category.
+          </p>
           <table className="wp-table">
             <thead>
               <tr>
                 <th className="w-10">On</th>
                 <th>Feed / source</th>
-                <th>Dest. category</th>
+                <th>Category hint</th>
                 <th>Dest. section</th>
                 <th>Source category</th>
                 <th>Last fetch</th>
@@ -722,7 +726,7 @@ export function BotView({
                         ))}
                       </select>
                       <select className={cn(tw.formSelect, 'w-auto')} value={customFeed.destinationCategory} onChange={(e) => setCustomFeed((p) => ({ ...p, destinationCategory: e.target.value }))}>
-                        <option value="">Dest. category</option>
+                        <option value="">Category hint</option>
                         {(siteCatalog.categories || []).filter((c) => c.enabled !== false).map((c) => (
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}

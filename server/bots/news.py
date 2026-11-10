@@ -16,8 +16,10 @@ from ..security.html import sanitize_article_html
 from ..services.post_service import random_post_design
 from ..services.recommendation_service import RecommendationService
 from ..services.settings_service import SettingsService
+from ..services.catalog_service import CatalogService
 from .pipeline.article_generator import generate_article
 from .pipeline.bot_catalog import active_feeds
+from .pipeline.categories import category_is_selected, compatible_section, resolve_category
 from .pipeline.queue_ops import (
     add_to_recent_cache,
     cleanup_old_queue_items,
@@ -152,16 +154,28 @@ class NewsBot:
             ]
 
             bot_cfg = SettingsService(db).get_bot(user)
+            site_catalog = CatalogService(db).get(seed=False)
+            enabled_categories = [c["name"] for c in site_catalog["categories"] if c.get("enabled", True)]
             article_data = await generate_article(
                 raw_content, source_url, category, item.title, scraped_img, parsed_title,
                 internal_links=internal_links,
                 writer_prompt=bot_cfg.get("writerPrompt"),
                 focus_note=bot_cfg.get("focusNote"),
+                allowed_categories=enabled_categories,
             )
             ping_session(db)
             if not article_data:
                 self._mark_queue(db, source_url, "failed_gen", user_id=owner_id)
                 return False
+
+            bucket = resolve_category(article_data.bucket, enabled_categories)
+            if not bucket or not category_is_selected(bucket, bot_cfg.get("sections") or []):
+                logger.info("Skipping %s: classified category %s is not enabled for this bot.", source_url, article_data.bucket)
+                self._mark_queue(db, source_url, "skipped_category", user_id=owner_id)
+                return False
+            if bucket != category:
+                logger.info("Corrected queued category for %s: %s -> %s", source_url, category, bucket)
+            article_data.bucket = bucket
 
             keywords = article_data.keywords
             if isinstance(keywords, list):
@@ -197,13 +211,17 @@ class NewsBot:
                 source_name = (urlparse(resolved_url).netloc or "").replace("www.", "") or None
             except Exception:
                 source_name = None
-            dest_section = (getattr(item, "dest_section", None) or "").strip()
+            requested_section = (getattr(item, "dest_section", None) or "").strip()
+            dest_section = compatible_section(requested_section, bucket, site_catalog)
+            if requested_section and not dest_section:
+                logger.info("Ignoring incompatible section %s for %s (%s).", requested_section, source_url, bucket)
             featured_in = None
             if dest_section:
                 import json as _json
 
                 featured_in = _json.dumps([dest_section])
-            bucket = (item.category or article_data.bucket or "Tech").strip()
+            item.category = bucket
+            item.dest_section = dest_section
             picked_design = random_post_design()
             publish_as = bot_byline(user) if user is not None else (
                 str(bot_cfg.get("publishCreator") or article_data.creator or "Wirefringe").strip() or "Wirefringe"

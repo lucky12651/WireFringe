@@ -5,6 +5,8 @@ from typing import Optional
 
 from .constants import CATEGORY_IMAGES
 from .ai_client import xai_client
+from .bot_catalog import SECTIONS
+from .categories import resolve_category
 from ...schemas import PostUpsert
 
 logger = logging.getLogger(__name__)
@@ -154,6 +156,7 @@ async def generate_article(
     internal_links: Optional[list[dict]] = None,
     writer_prompt: Optional[str] = None,
     focus_note: Optional[str] = None,
+    allowed_categories: Optional[list[str]] = None,
     **kwargs
 ) -> Optional[PostUpsert]:
     """
@@ -161,6 +164,10 @@ async def generate_article(
     Uses xAI (Grok) with a strict system instruction to structure media blocks cleanly.
     """
     if not raw_content:
+        return None
+    categories = list(dict.fromkeys(allowed_categories if allowed_categories is not None else [*SECTIONS, "Gadgets"]))
+    if not categories:
+        logger.warning("No enabled site categories; skipping article generation.")
         return None
 
     # Guard against excessively large inputs to prevent 413 Payload Too Large errors
@@ -204,12 +211,26 @@ async def generate_article(
             "SEO REQUIREMENTS:\n"
             "8. Generate a meta description (max 160 chars) optimized for search click-through rate.\n"
             "9. Generate 5-10 SEO keywords (comma-separated) relevant to the article content.\n\n"
+            "CATEGORY REQUIREMENTS:\n"
+            f"Choose exactly one category from: {json.dumps(categories)}.\n"
+            "Classify the article's primary subject using the source text, not the publisher, feed, or desk focus.\n"
+            "AI & Future Tech: AI models, AI research, machine learning, robotics, and AI capabilities.\n"
+            "Tech: software, cybersecurity, computing, platforms, and technology products.\n"
+            "Gadgets: consumer hardware, phones, devices, and product reviews.\n"
+            "Business & Markets: companies, corporate strategy, financial markets, and the economy.\n"
+            "Personal Finance: individual saving, investing, taxes, loans, and household money.\n"
+            "Sports: actual sports, athletes, competitions, and match results.\n"
+            "India News: India's domestic politics and public affairs. World: international public affairs.\n"
+            "Use the most specific category for the main subject. A company name alone does not make a story business news.\n"
+            "Do not force an unrelated story into a technology category merely because the feed is a technology feed.\n"
+            f"The queued category {json.dumps(category)} is an unverified hint and may be wrong.\n\n"
             "OUTPUT FORMAT:\n"
             "You MUST output your response in JSON format with the following keys:\n"
             "- 'title': The paraphrased headline.\n"
             "- 'content': The paraphrased article in Gutenberg blocks.\n"
             "- 'meta_description': The SEO meta description.\n"
             "- 'keywords': The comma-separated SEO keywords.\n"
+            "- 'category': The single exact category name chosen from the allowed list.\n"
             "Output ONLY the JSON object."
         )
         
@@ -230,6 +251,10 @@ async def generate_article(
             # Clean JSON response if AI wraps it in backticks
             json_str = re.search(r'\{.*\}', response_text, re.DOTALL).group(0)
             data = json.loads(json_str)
+            classified_category = resolve_category(data.get('category'), categories)
+            if not classified_category:
+                logger.warning("xAI returned an invalid or missing category for %s; skipping article generation.", source_url)
+                return None
             
             final_title = data.get('title', final_title)
             content = data.get('content', '').strip()
@@ -272,7 +297,7 @@ async def generate_article(
             title=final_title,
             content=content,
             excerpt=excerpt,
-            bucket=category,
+            bucket=classified_category,
             creator="Wirefringe",
             ogImg=og_img,
             readMinutes=max(1, len(raw_content.split()) // 200),

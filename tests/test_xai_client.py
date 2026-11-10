@@ -116,6 +116,7 @@ def test_article_generation_uses_xai(xai, monkeypatch):
         "content": "<!-- wp:paragraph --><p>Original xAI article.</p><!-- /wp:paragraph -->",
         "meta_description": "The generated description.",
         "keywords": ["tech", "news"],
+        "category": "Tech",
     }))))
     monkeypatch.setattr(article_generator, "xai_client", client)
     article = asyncio.run(article_generator.generate_article(
