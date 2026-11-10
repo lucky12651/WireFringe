@@ -34,7 +34,7 @@ const DRAWER_SECTIONS = [
     title: 'Features',
     items: [
       { label: 'Latest', href: '/' },
-      { label: 'Most Popular', href: '/#most-popular' },
+      { label: 'The reading list', href: '/#most-popular' },
       { label: 'For You', href: '/for-you' },
     ],
   },
@@ -124,9 +124,16 @@ export default function Header({
         return prev;
       });
       if (articleTitle) {
-        const doc = document.documentElement;
-        const max = doc.scrollHeight - doc.clientHeight;
-        setReadProgress(max > 0 ? Math.min(100, (doc.scrollTop / max) * 100) : 0);
+        const body = document.querySelector('.article-body');
+        if (body) {
+          const rect = body.getBoundingClientRect();
+          const headerHeight = headerRef.current?.offsetHeight || 0;
+          const distance = rect.height - window.innerHeight + headerHeight;
+          const progress = distance > 0 ? (headerHeight - rect.top) / distance : (window.innerHeight - rect.bottom) / Math.max(1, rect.height);
+          setReadProgress(Math.max(0, Math.min(100, progress * 100)));
+        } else {
+          setReadProgress(0);
+        }
       }
       frame = 0;
     };
@@ -137,8 +144,10 @@ export default function Header({
 
     apply();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, [articleTitle, accentColor]);
@@ -191,7 +200,7 @@ export default function Header({
   };
 
   const painted =
-    headerVariant === 'solid' || headerVariant === 'solid-inverse' || headerVariant === 'overlay';
+    headerVariant === 'solid' || headerVariant === 'solid-inverse' || headerVariant === 'overlay' || headerVariant === 'banner';
 
   const headerClass = cn(
     'sticky top-0 z-[11000] w-full',
@@ -199,6 +208,7 @@ export default function Header({
     headerVariant === 'overlay' && !compact && 'post-header on-accent',
     headerVariant === 'overlay' && compact && 'post-header-solid on-accent',
     headerVariant === 'solid-inverse' && 'post-header-solid post-header-inverse',
+    headerVariant === 'banner' && 'post-header-banner',
     !painted && 'site-header-bar'
   );
 
@@ -323,7 +333,7 @@ export default function Header({
             <div className="hidden min-[1001px]:flex justify-end items-center gap-3.5 w-full mb-1">
               <a
                 href="#newsletter"
-                className="inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
+                className="header-subscribe inline-block bg-mint text-black font-mono text-[10px] font-bold tracking-[0.08em] uppercase px-[11px] pt-1.5 pb-[5px] rounded-sm leading-tight transition-all duration-150 whitespace-nowrap hover:bg-mint-hover hover:shadow-mint hover:-translate-y-px"
               >
                 SUBSCRIBE
               </a>
@@ -359,7 +369,7 @@ export default function Header({
                   <BrandLogo size="md" />
                 </Link>
 
-                <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 border-b-[1.5px] border-mint pb-[7px]">
+                <div className="inline-flex items-center justify-end flex-nowrap gap-1 ml-auto min-w-0 pb-[7px]">
                   <div className="hidden min-[1001px]:inline-flex items-center flex-nowrap gap-0">
                     {navItems.map((item, index) => (
                       <span key={item.label} className="inline-flex items-center">

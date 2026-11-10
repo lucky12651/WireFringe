@@ -14,7 +14,6 @@ import {
   StoryMeta,
   StoryShell,
   TagPills,
-  Watermark,
   authorBits,
 } from './shared';
 import { KeyPoints, UpdatedStamp } from './reading';
@@ -38,9 +37,7 @@ export default function DarkPost({
 
   return (
     <div className="post-design-dark bg-bg text-ink">
-      <Watermark />
-
-      <div className={`relative z-[2] ${PAGE} mt-[-50px]`}>
+      <div className={`relative z-[2] ${PAGE} pt-6 md:pt-8`}>
         <HeroImage src={post.ogImg} ratio="16/7" credit={heroCredit(post)} />
       </div>
 

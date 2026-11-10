@@ -17,6 +17,7 @@ export default function AdminPostPage() {
   const router = useRouter();
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
+  const featuredImageInputRef = useRef(null);
   const editorHtmlRef = useRef('');
 
   const [me, setMe] = useState(null);
@@ -31,6 +32,8 @@ export default function AdminPostPage() {
   const [siteCatalog, setSiteCatalog] = useState({ categories: [], sections: [] });
   const [readMinutes, setReadMinutes] = useState('');
   const [ogImg, setOgImg] = useState('');
+  const [featuredImageUploading, setFeaturedImageUploading] = useState(false);
+  const [featuredImageError, setFeaturedImageError] = useState('');
   const [design, setDesign] = useState(DEFAULT_POST_DESIGN);
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
   const [excerpt, setExcerpt] = useState('');
@@ -205,6 +208,10 @@ export default function AdminPostPage() {
 
   const persist = useCallback(
     async (overrides = {}) => {
+      if (featuredImageUploading) {
+        setHint('Please wait for the featured image to finish uploading.');
+        return;
+      }
       setHint('');
       const payload = collectPayload(overrides);
       if (!payload.title) {
@@ -248,6 +255,7 @@ export default function AdminPostPage() {
       excerpt,
       me,
       ogImg,
+      featuredImageUploading,
       design,
       accentColor,
       readMinutes,
@@ -349,6 +357,29 @@ export default function AdminPostPage() {
       setHint('Image inserted.');
     } catch (err) {
       setHint(String(err?.message || err));
+    }
+  }
+
+  async function onFeaturedImageFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setFeaturedImageError('');
+    if (!/\.(jpe?g|png|gif|webp)$/i.test(file.name)) {
+      setFeaturedImageError('Choose a JPG, PNG, GIF, or WebP image.');
+      return;
+    }
+    setFeaturedImageUploading(true);
+    try {
+      const out = await mediaApi.upload(file);
+      if (!out?.url) throw new Error('The upload did not return an image URL. Please try again.');
+      setOgImg(out.url);
+      setDirty(true);
+      setHint('Featured image uploaded. Save the post to keep this change.');
+    } catch (err) {
+      setFeaturedImageError(err?.message || 'Could not upload the featured image. Please try again.');
+    } finally {
+      setFeaturedImageUploading(false);
     }
   }
 
@@ -489,19 +520,43 @@ export default function AdminPostPage() {
 
       <SettingsSection title="Featured image">
         {ogImg ? (
-          <button type="button" className="block w-full border-0 bg-transparent p-0" onClick={() => { setOgImg(''); setDirty(true); }}>
+          <button type="button" disabled={featuredImageUploading} className="block w-full border-0 bg-transparent p-0 disabled:opacity-60" onClick={() => { setOgImg(''); setFeaturedImageError(''); setDirty(true); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ogImg} alt="" className="aspect-[3/2] w-full object-cover" />
             <span className="mt-1 block text-center text-[11px] text-mint">Remove featured image</span>
           </button>
-        ) : (
+        ) : null}
+        <input
+          ref={featuredImageInputRef}
+          type="file"
+          accept=".jpg,.jpeg,.png,.gif,.webp"
+          aria-label="Upload featured image"
+          className="hidden"
+          disabled={featuredImageUploading || saving}
+          onChange={onFeaturedImageFile}
+        />
+        <button
+          type="button"
+          className="w-full rounded-sm border border-line bg-bg-elevated px-3 py-2 text-[12px] font-semibold text-ink hover:border-mint disabled:cursor-wait disabled:opacity-60"
+          disabled={featuredImageUploading || saving}
+          onClick={() => featuredImageInputRef.current?.click()}
+        >
+          {featuredImageUploading ? 'Uploading image...' : ogImg ? 'Upload replacement image' : 'Upload image'}
+        </button>
+        <p className="m-0 text-[11px] text-ink-secondary" role="status">
+          {featuredImageUploading ? 'Your image is uploading. Please wait.' : 'JPG, PNG, GIF, or WebP. Or paste an image URL below.'}
+        </p>
+        <label className="block text-[12px] text-ink-secondary">
+          <span className="mb-1 block">Image URL</span>
           <input
             className={tw.formInput}
             placeholder="Image URL"
             value={ogImg}
-            onChange={touch(setOgImg)}
+            disabled={featuredImageUploading}
+            onChange={(e) => { setFeaturedImageError(''); touch(setOgImg)(e); }}
           />
-        )}
+        </label>
+        {featuredImageError ? <p role="alert" className="m-0 text-[12px] text-red-500">{featuredImageError}</p> : null}
       </SettingsSection>
 
       <SettingsSection title="Excerpt" defaultOpen={false}>

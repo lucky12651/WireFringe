@@ -14,7 +14,6 @@ import {
   StoryMeta,
   StoryShell,
   TagPills,
-  Watermark,
   authorBits,
 } from './shared';
 import { KeyPoints, UpdatedStamp } from './reading';
@@ -38,8 +37,6 @@ export default function SplitPost({
 
   return (
     <div className="post-design-split bg-bg text-ink">
-      <Watermark />
-
       <header className={`${PAGE} pt-6 md:pt-8`}>
         <TagPills post={post} />
         <h1 className="mb-6 font-heading text-[clamp(34px,5.2vw,56px)] font-black leading-[1.02] tracking-[-0.03em] text-ink [text-wrap:pretty]">

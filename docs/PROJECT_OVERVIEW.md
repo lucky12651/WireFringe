@@ -24,7 +24,7 @@ It is not a static blog generator. It is a live product stack:
 - **Two servers, not one:** Next.js can SSR and still call FastAPI; images/API stay on the backend.
 - **RBAC instead of a single “admin” user:** matches a newsroom.
 - **Avatars in the database:** disk-only uploads disappear on many PaaS redeploys.
-- **News bot is optional:** core CMS works without Google GenAI keys.
+- **News bot is optional:** core CMS works without an xAI API key.
 
 ## Start here
 

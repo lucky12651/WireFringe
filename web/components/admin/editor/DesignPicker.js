@@ -1,15 +1,22 @@
-import { POST_DESIGNS, normalizePostDesign } from '../../../lib/postDesigns';
+import { BANNER_ACCENT, POST_DESIGNS, normalizePostDesign } from '../../../lib/postDesigns';
 import { cn } from '../../../lib/utils';
 
 function MiniMagazine() {
   return (
-    <div className="flex h-full gap-1.5 bg-[#def23a] p-2">
-      <div className="w-[42%] border-[3px] border-black bg-[#1a1a1a]" />
-      <div className="flex flex-1 flex-col justify-center gap-1">
-        <div className="h-1 w-8 bg-black/40" />
-        <div className="h-2 w-full bg-black/80" />
-        <div className="h-2 w-4/5 bg-black/80" />
-        <div className="h-1 w-full bg-black/30" />
+    <div className="flex h-full flex-col bg-bg p-2" aria-hidden="true">
+      <div className="mb-1.5 flex items-center justify-between border-b border-line pb-1">
+        <div className="h-1 w-5 bg-ink" />
+        <div className="h-0.5 w-7 bg-ink-tertiary" />
+      </div>
+      <div className="flex min-h-0 flex-1 gap-2">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          <div className="h-0.5 w-5 bg-mint" />
+          <div className="h-1.5 w-full bg-ink" />
+          <div className="h-1.5 w-4/5 bg-ink" />
+          <div className="h-0.5 w-full bg-ink-tertiary" />
+          <div className="h-0.5 w-2/3 bg-ink-tertiary" />
+        </div>
+        <div className="w-[42%] bg-bg-hover border border-line" />
       </div>
     </div>
   );
@@ -33,9 +40,9 @@ function MiniSplit() {
 
 function MiniBanner() {
   return (
-    <div className="flex h-full flex-col bg-[#5b1be4]">
+    <div className="flex h-full flex-col" style={{ backgroundColor: BANNER_ACCENT }}>
       <div className="flex flex-1 items-end px-2 pb-1">
-        <div className="h-3 w-4/5 bg-black" />
+        <div className="h-3 w-4/5 bg-[var(--banner-ink)]" />
       </div>
       <div className="h-[38%] bg-[#1a1a1a]" />
     </div>

@@ -30,10 +30,9 @@ export default function MagazinePost({
         sidebarPosts={sidebarPosts}
         moreInBucket={moreInBucket}
         bandTone="plain"
-        showMark
         headings={headings}
       >
-        <article>
+        <article id="story-body" className="newsroom-story-body">
           <UpdatedStamp post={post} />
           <StoryFlags post={post} />
           <div className="mb-8 border-y border-line py-5">

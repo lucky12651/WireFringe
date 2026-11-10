@@ -4,7 +4,7 @@ import re
 from typing import Optional
 
 from .constants import CATEGORY_IMAGES
-from .ai_client import groq_client
+from .ai_client import xai_client
 from ...schemas import PostUpsert
 
 logger = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ async def generate_article(
 ) -> Optional[PostUpsert]:
     """
     Assembles article object by directly processing raw content with structural metadata.
-    Uses Groq AI with a strict system instruction to structure media blocks cleanly.
+    Uses xAI (Grok) with a strict system instruction to structure media blocks cleanly.
     """
     if not raw_content:
         return None
@@ -180,7 +180,7 @@ async def generate_article(
             links_context += f"- Title: {link['title']}, URL: {link['url']}\n"
 
     try:
-        logger.info(f"Generating article for {source_url} using Groq AI paraphrasing.")
+        logger.info(f"Generating article for {source_url} using xAI (Grok) paraphrasing.")
 
         editorial = (writer_prompt or "").strip()
         focus = (focus_note or "").strip()
@@ -213,33 +213,18 @@ async def generate_article(
             "Output ONLY the JSON object."
         )
         
-        response_text = await groq_client.generate_content(raw_content, system_prompt)
+        response_text = await xai_client.generate_content(raw_content, system_prompt)
         
-        # Default values for fallback
+        # Optional SEO metadata from the generated article
         meta_description = ""
         keywords = ""
 
         if response_text in ("ERROR_429", "", None):
             logger.warning(
-                "AI unavailable for %s; publishing cleaned source copy so the queue can drain.",
+                "xAI unavailable for %s; skipping article generation.",
                 source_url,
             )
-            content = format_to_wp_blocks(raw_content)
-            if not content:
-                return None
-            plain_text = re.sub(r"<[^>]+>", "", content).strip()
-            excerpt = plain_text[:220].rsplit(" ", 1)[0] + "..." if len(plain_text) > 220 else plain_text
-            return PostUpsert(
-                title=final_title,
-                content=content,
-                excerpt=excerpt,
-                bucket=category,
-                ogImg=og_img,
-                readMinutes=max(1, len(plain_text.split()) // 220),
-                creator="Wirefringe",
-                metaDescription=(plain_text[:157] + "...") if len(plain_text) > 160 else plain_text,
-                keywords=category,
-            )
+            return None
 
         try:
             # Clean JSON response if AI wraps it in backticks
@@ -258,20 +243,18 @@ async def generate_article(
                 content = str(content or "")
             
             if not content:
-                logger.warning(f"AI returned empty paraphrased content for {source_url}. Using source copy.")
-                content = format_to_wp_blocks(raw_content)
+                logger.warning(f"xAI returned empty content for {source_url}; skipping article generation.")
+                return None
                 
-            logger.info(f"Successfully paraphrased article for {source_url} using Groq Llama with SEO data.")
+            logger.info(f"Successfully paraphrased article for {source_url} using xAI (Grok) with SEO data.")
             
             # If AI failed to provide blocks in content, use manual formatter on the AI content
             if "<!-- wp:" not in content:
                 content = format_to_wp_blocks(content)
                 
         except Exception as e:
-            logger.warning(f"Failed to parse JSON from Groq for {source_url}: {e}. Using source copy.")
-            content = format_to_wp_blocks(raw_content)
-            if not content:
-                return None
+            logger.warning(f"Failed to parse JSON from xAI for {source_url}: {e}; skipping article generation.")
+            return None
         
         # Add source attribution footer
         

@@ -59,7 +59,7 @@ Exact permission checks live in `server/auth/`.
 
 - Workflow statuses: draft → review → scheduled → published
 - Per-user bot permission (`can_run_bot`)
-- RSS fetch, scrape, AI generation (`google-genai`)
+- RSS fetch, scrape, AI generation with xAI (Grok)
 - Supervised background loop that restarts on failure
 
 ## Mobile app

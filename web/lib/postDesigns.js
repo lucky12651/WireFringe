@@ -1,13 +1,11 @@
-import { DEFAULT_ACCENT, normalizeAccentColor } from './accents';
-
 export const DEFAULT_POST_DESIGN = 'magazine';
-export const BANNER_ACCENT = '#5B1BE4';
+export const BANNER_ACCENT = 'var(--banner-bg)';
 
 export const POST_DESIGNS = [
   {
     id: 'magazine',
     name: 'Magazine',
-    blurb: 'Lime hero, square photo, two-column story. The current Wirefringe look.',
+    blurb: 'Editorial headline, portrait photo, and a focused reading column. Follows the site theme.',
   },
   {
     id: 'split',
@@ -17,7 +15,7 @@ export const POST_DESIGNS = [
   {
     id: 'banner',
     name: 'Feature banner',
-    blurb: 'Purple header, huge title, then a wide cinematic photo.',
+    blurb: 'Theme-aware green header, huge title, then a wide cinematic photo.',
   },
   {
     id: 'dark',
@@ -37,20 +35,13 @@ export function normalizePostDesign(value) {
 
 /**
  * Header chrome for a public post:
- * - solid: post accent fill + dark type (magazine lime)
- * - solid-inverse: post accent fill + light type (banner purple)
+ * - banner: the theme's green background with contrasting type
  * - theme: follows light/dark mode
  */
-export function postHeaderConfig(design, postAccent) {
+export function postHeaderConfig(design) {
   const d = normalizePostDesign(design);
-  if (d === 'magazine') {
-    return {
-      accent: normalizeAccentColor(postAccent, DEFAULT_ACCENT),
-      variant: 'solid',
-    };
-  }
   if (d === 'banner') {
-    return { accent: BANNER_ACCENT, variant: 'solid-inverse' };
+    return { accent: null, variant: 'banner' };
   }
   return { accent: null, variant: 'theme' };
 }

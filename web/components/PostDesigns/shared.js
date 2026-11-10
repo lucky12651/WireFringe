@@ -360,7 +360,7 @@ export function MostPopularRail({ posts = [], showMark = false, headings = [] })
         ) : null}
         <TableOfContents headings={headings} />
         <h3 className="relative z-[1] font-mono text-[13px] tracking-[0.06em] uppercase text-mint font-bold mt-4 mb-1.5">
-          Most Popular
+          The reading list
         </h3>
         {list.length ? (
           <ol className="relative z-[1] list-none m-0 p-0">

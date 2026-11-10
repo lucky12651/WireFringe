@@ -93,7 +93,7 @@ export default function StreamFeed({
   const tabClass = (active) =>
     cn(
       'appearance-none border-0 font-mono text-[9.5px] font-bold tracking-[0.1em] uppercase px-4 py-2.5 min-w-[72px] rounded-pill cursor-pointer transition-colors',
-      active ? 'bg-mint text-white' : 'bg-transparent text-ink-muted hover:text-ink'
+      active ? 'bg-mint text-bg' : 'bg-transparent text-ink-muted hover:text-ink'
     );
 
   const headline =
@@ -104,7 +104,7 @@ export default function StreamFeed({
 
   return (
     <aside
-      className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pb-5 pl-6 overflow-hidden bg-bg max-md:h-auto max-md:max-h-none max-md:overflow-visible max-md:pt-7 max-md:px-0 max-md:pb-0"
+      className="min-w-0 flex-1 min-h-0 h-full max-h-full flex flex-col pt-[18px] pb-5 pl-6 overflow-hidden bg-bg max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible max-[1000px]:pt-7 max-[1000px]:px-0 max-[1000px]:pb-0"
       aria-label={feedTab === 'following' ? 'Following stream' : 'Latest stream'}
     >
       <div

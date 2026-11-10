@@ -4,7 +4,7 @@ import AdUnit from '../AdUnit/AdUnit';
 import { AD_SLOTS } from '../../lib/ads';
 import { postExcerpt, stripHtml } from '../../lib/utils';
 import { authorPath } from '../../lib/sections';
-import { SITE_NAME } from '../../lib/site';
+import { BANNER_ACCENT } from '../../lib/postDesigns';
 import {
   AuthorBioRow,
   HeroImage,
@@ -39,43 +39,34 @@ export default function BannerPost({
 
   return (
     <div className="post-design-banner bg-bg text-ink">
-      <section className="post-banner-hero relative overflow-hidden bg-[#5b1be4] text-white">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-2.5 left-1/2 -translate-x-1/2 select-none whitespace-nowrap font-heading text-[100px] font-black italic leading-none tracking-[-0.06em] md:text-[160px]"
-          style={{ color: 'transparent', WebkitTextStroke: '2.5px rgba(255,255,255,0.22)' }}
-        >
-          {SITE_NAME}
-        </div>
-
+      <section className="post-banner-hero relative overflow-hidden" style={{ backgroundColor: BANNER_ACCENT }}>
         <div className={`relative z-[2] ${PAGE} grid grid-cols-1 gap-6 pb-7 pt-10 md:grid-cols-[240px_1fr] md:gap-10`}>
           <div className="pt-1.5">
             {name ? (
-              <p className="m-0 mb-0.5 text-[13px] text-white/75">
+              <p className="m-0 mb-0.5 text-[13px] text-ink-secondary">
                 By{' '}
-                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-white hover:underline">
+                <Link href={authorPath(post)} className="inline-flex items-center font-bold text-ink hover:underline">
                   {name}
                 </Link>
               </p>
             ) : null}
             {post.date || readingMinutes(post) ? (
-              <p className="mb-3.5 text-[11.5px] text-white/55" suppressHydrationWarning>
+              <p className="mb-3.5 text-[11.5px] text-ink-secondary" suppressHydrationWarning>
                 {post.date ? new Date(post.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
                 {post.date && readingMinutes(post) ? ' · ' : ''}
                 {readingMinutes(post) ? `${readingMinutes(post)} min read` : ''}
               </p>
             ) : (
-              <StoryMeta post={post} className="mb-3.5 !text-white/55" />
+              <StoryMeta post={post} className="mb-3.5" />
             )}
             <ShareCluster
               post={post}
               onOpenComments={onOpenComments}
               commentCount={post.commentCount}
-              tone="purple"
             />
           </div>
           <div>
-            <TagPills post={post} tone="purple" />
+            <TagPills post={post} />
             <h1 className="banner-hero-title mb-4 font-heading text-[clamp(40px,6.5vw,72px)] font-black leading-[0.94] tracking-[-0.03em] [text-wrap:pretty]">
               {post.title}
             </h1>
@@ -86,10 +77,10 @@ export default function BannerPost({
         </div>
 
         <div className={`${PAGE}`}>
-          <HeroImage src={post.ogImg} ratio="16/7.5" credit={heroCredit(post)} creditClassName="text-white/50" />
+          <HeroImage src={post.ogImg} ratio="16/7.5" credit={heroCredit(post)} />
         </div>
         <div className={`${PAGE} pb-5 pt-2.5`}>
-          <p className="m-0 font-mono text-[11px] italic text-white/50">{post.bucket || 'Wirefringe'}</p>
+          <p className="m-0 font-mono text-[11px] italic text-ink-secondary">{post.bucket || 'Wirefringe'}</p>
         </div>
       </section>
 

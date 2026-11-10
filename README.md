@@ -125,7 +125,7 @@ Detailed setup: [docs/SETUP.md](./docs/SETUP.md)
 | DB | PostgreSQL |
 | Auth | Sessions + JWT, optional TOTP |
 | Mobile | Expo / React Native |
-| AI bot | Google GenAI + RSS/scraper modules |
+| AI bot | xAI (Grok) + RSS/scraper modules |
 
 ---
 

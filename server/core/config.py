@@ -74,10 +74,8 @@ class Settings(BaseSettings):
     backend_port: int = Field(8000, validation_alias="BACKEND_PORT")
 
     # AI & Automation
-    ollama_api_url: str = Field("https://api.ollama.cloud/v1", validation_alias="OLLAMA_API_URL")
-    ollama_api_key: str = Field("", validation_alias="OLLAMA_API_KEY")
-    groq_api_key: str = Field("", validation_alias="GROQ_API_KEY")
-    groq_model: str = Field("openai/gpt-oss-20b", validation_alias="GROQ_MODEL")
+    xai_api_key: str = Field("", validation_alias="XAI_API_KEY")
+    xai_model: str = Field("grok-4.7", validation_alias="XAI_MODEL")
     revalidate_secret: str = Field("dev-revalidate-secret", validation_alias="REVALIDATE_SECRET")
 
     model_config = SettingsConfigDict(

@@ -12,7 +12,6 @@ import BannerPost from '../components/PostDesigns/BannerPost';
 import DarkPost from '../components/PostDesigns/DarkPost';
 import { fetcher, api } from '../lib/api';
 import { slugifyTitle, postUrl } from '../lib/utils';
-import { DEFAULT_ACCENT, normalizeAccentColor } from '../lib/accents';
 import { normalizePostDesign, postHeaderConfig } from '../lib/postDesigns';
 import { extractHeadings, extractKeyPoints, neighborsInCategory } from '../lib/articleExtras';
 import { prepareArticleHtml } from '../lib/articleHtml';
@@ -209,10 +208,9 @@ export default function PostPage({
     return (same.length ? same : rest).slice(0, 6);
   }, [latest, id, post]);
 
-  const accent = normalizeAccentColor(post?.accentColor, DEFAULT_ACCENT);
   const design = normalizePostDesign(post?.design);
   const isMagazine = !post || design === 'magazine';
-  const headerCfg = postHeaderConfig(design, post?.accentColor);
+  const headerCfg = postHeaderConfig(design);
   const openComments = () => setCommentsOpen(true);
   const bodyHtml = useMemo(
     () => prepareArticleHtml(post?.content || '', post?.title || ''),
@@ -239,7 +237,7 @@ export default function PostPage({
       description={post?.metaDescription || post?.excerpt || undefined}
       keywords={post?.keywords || undefined}
       headerProps={{ user: me, activeCategory: post?.bucket || 'All' }}
-      accentColor={headerCfg.accent || (isMagazine ? accent : null)}
+      accentColor={headerCfg.accent}
       headerVariant={post ? headerCfg.variant : 'theme'}
       articleTitle={post && !loading && !error ? post.title : ''}
       articlePostId={post && !loading && !error ? post.id : ''}

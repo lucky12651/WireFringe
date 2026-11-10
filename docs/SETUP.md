@@ -94,6 +94,20 @@ npm run build
 npm run start
 ```
 
+## AI news bot (optional)
+
+The article writer uses xAI's Responses API. Create an API key at
+[the xAI console](https://console.x.ai/) and add these settings to `.env`:
+
+```env
+XAI_API_KEY=your-xai-api-key
+XAI_MODEL=grok-4.7
+```
+
+Restart the API after changing these settings. `XAI_MODEL` can select another
+model available to your xAI account. xAI is the only AI provider used by the bot.
+If generation fails, the bot does not create an article from the source copy.
+
 ## 5. Mobile (optional)
 
 ```bash

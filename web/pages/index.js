@@ -61,6 +61,8 @@ export async function getStaticProps() {
       commentCount: Number(p.commentCount) || 0,
       ogImg: p.ogImg ?? null,
       date: p.date ?? null,
+      featuredIn: p.featuredIn || [],
+      extraCategories: p.extraCategories || [],
     }));
     return { props: { initialPosts }, revalidate: 60 };
   } catch (err) {
@@ -130,18 +132,14 @@ export default function HomePage({ initialPosts }) {
     ...p,
     date: p.date ? new Date(p.date) : null,
   }));
-  const heroPosts = programmedHero.length ? programmedHero : filtered.slice(0, 5);
+  const heroPosts = activeCategory === 'All' && programmedHero.length ? programmedHero : filtered.slice(0, 5);
   const latestFeed = useMemo(() => filtered.slice(0, 20), [filtered]);
   const followingFeed = useMemo(
     () => filtered.filter((p) => postMatchesFollows(p, follows)).slice(0, 30),
     [filtered, follows]
   );
   const feedPosts = feedTab === 'following' ? followingFeed : latestFeed;
-  const mostRead = useMemo(() => {
-    return [...filtered]
-      .sort((a, b) => Number(b.readMinutes || 0) - Number(a.readMinutes || 0))
-      .slice(0, 5);
-  }, [filtered]);
+  const readingList = useMemo(() => filtered.slice(0, 5), [filtered]);
 
   const packageA = filtered
     .filter((p) =>
@@ -192,7 +190,7 @@ export default function HomePage({ initialPosts }) {
         user,
       }}
       showInlineAd={false}
-      shellClassName="home-verge"
+      shellClassName="home-verge newsroom-home"
     >
       {loading ? (
         <HomeSkeleton />
@@ -200,16 +198,13 @@ export default function HomePage({ initialPosts }) {
         <SearchResults results={filtered} query={searchQuery} />
       ) : (
         <div className="pb-0 bg-transparent">
-          <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
+          <HeroSection posts={heroPosts} category={activeCategory} />
+          {filtered.length > 0 ? <div className="grid grid-cols-1 min-[1001px]:grid-cols-[minmax(0,1fr)_var(--stream-width,380px)] gap-0 items-start min-h-[60vh] relative">
             <div
               className="hidden min-[1001px]:block absolute top-6 bottom-0 right-[var(--stream-width,380px)] w-0 border-l border-line pointer-events-none z-[1]"
               aria-hidden="true"
             />
             <div className="min-w-0 pt-6 pr-0 pb-16 pl-0 min-[1001px]:pr-9 min-[1001px]:border-0 max-[1000px]:border-b max-[1000px]:border-line max-[1000px]:pb-7">
-              <Reveal as="div" className="w-full">
-                <HeroSection posts={heroPosts} />
-              </Reveal>
-
               <div className="my-7 mb-8 w-full">
                 <AdUnit variant="banner" slot={AD_SLOTS.leaderboard} label="Advertisement" />
               </div>
@@ -220,36 +215,7 @@ export default function HomePage({ initialPosts }) {
                       {sec.kind === 'package' ? (
                         <PackageBlock title={sec.name} subtitle={sec.subtitle} posts={postsForSection(sec)} />
                       ) : null}
-                      {sec.kind === 'most_popular' && mostRead.length ? (
-                        <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
-                          <PackageRule />
-                          <h2 className="text-[19px] font-extrabold mb-1.5 tracking-tight">{sec.name || 'Most Popular'}</h2>
-                          <ol className="list-none m-3 mt-3 p-0">
-                            {mostRead.map((post, idx) => (
-                              <li
-                                key={post.id}
-                                className="group grid grid-cols-[44px_1fr] gap-4 items-start py-4 border-b border-line"
-                              >
-                                <span className="[font-family:var(--font-hero)] text-[34px] leading-none text-mint">
-                                  {idx + 1}
-                                </span>
-                                <div>
-                                  <Link
-                                    href={postUrl(post)}
-                                    className="text-[17px] font-bold leading-snug text-ink block mb-1.5 tracking-tight transition-colors group-hover:text-mint"
-                                  >
-                                    {post.title}
-                                  </Link>
-                                  <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
-                                    <AuthorByline post={post} size="sm" />
-                                    <span className="text-ink-muted">{formatDate(post.date)}</span>
-                                  </div>
-                                </div>
-                              </li>
-                            ))}
-                          </ol>
-                        </Reveal>
-                      ) : null}
+                      {sec.kind === 'most_popular' ? <ReadingList posts={readingList} /> : null}
                       {sec.kind === 'category_row' ? (
                         <CategoryRow title={sec.name} posts={postsForSection(sec)} href={sec.href} />
                       ) : null}
@@ -280,12 +246,7 @@ export default function HomePage({ initialPosts }) {
                         posts={packageC}
                       />
                     )}
-                    {mostRead.length > 0 && (
-                      <Reveal as="section" className="mt-[52px] scroll-mt-[90px]" id="most-popular">
-                        <PackageRule />
-                        <h2 className="text-2xl font-extrabold mb-1.5 tracking-tight">Most Popular</h2>
-                      </Reveal>
-                    )}
+                    <ReadingList posts={readingList} />
                     {packageD.length > 0 && (
                       <PackageBlock
                         title="Wallet watch"
@@ -301,7 +262,8 @@ export default function HomePage({ initialPosts }) {
                 )}
             </div>
 
-            <div className="min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-bg max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
+            <div id="latest-stories" className="newsroom-latest min-w-0 sticky top-[var(--header-height,88px)] h-[calc(100vh-var(--header-height,88px))] max-h-[calc(100vh-var(--header-height,88px))] overflow-hidden flex flex-col self-start bg-bg max-[1000px]:static max-[1000px]:h-auto max-[1000px]:max-h-none max-[1000px]:overflow-visible">
+              <h2 className="newsroom-kicker px-6 pt-6">From the news desk</h2>
               <StreamFeed
                 posts={feedPosts}
                 feedTab={feedTab}
@@ -313,7 +275,7 @@ export default function HomePage({ initialPosts }) {
                 NewsletterComponent={<NewsletterSignup />}
               />
             </div>
-          </div>
+          </div> : null}
         </div>
       )}
     </Layout>
@@ -322,6 +284,29 @@ export default function HomePage({ initialPosts }) {
 
 function PackageRule() {
   return <div className="h-0.5 bg-mint w-full mb-2.5" />;
+}
+
+function ReadingList({ posts }) {
+  if (!posts.length) return null;
+  return (
+    <Reveal as="section" className="newsroom-reading-list mt-12" id="most-popular">
+      <PackageRule />
+      <PackageHeading title="The reading list" subtitle="Make time for a fresh perspective." />
+      <ol>
+        {posts.map((post, index) => (
+          <li key={post.id}>
+            <span className="newsroom-list-number">{String(index + 1).padStart(2, '0')}</span>
+            <div>
+              <p className="newsroom-kicker">{post.bucket || 'News'}</p>
+              <h3><Link href={postUrl(post)}>{post.title}</Link></h3>
+              <div className="newsroom-meta"><AuthorByline post={post} size="sm" /><span>{formatDate(post.date)}</span></div>
+            </div>
+            <Link href={postUrl(post)} className="newsroom-list-arrow" aria-label={`Read: ${post.title}`}>↗</Link>
+          </li>
+        ))}
+      </ol>
+    </Reveal>
+  );
 }
 
 function PackageHeading({ title, subtitle }) {
@@ -373,10 +358,10 @@ function PackageBlock({ title, subtitle, posts }) {
     <Reveal as="section" className="mt-16 pt-0 animate-fade-up">
       <PackageRule />
       <PackageHeading title={title} subtitle={subtitle} />
-      <div className="grid grid-cols-1 min-[1001px]:grid-cols-[1.1fr_1fr] gap-5 items-start mt-5 min-[1001px]:ml-[76px]">
+      <div className="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr] gap-6 items-start mt-5">
         <Link href={postUrl(feature)} className="group block text-inherit">
-          <Thumb post={feature} className="w-full aspect-[4/5]" />
-          <h3 className="[font-family:var(--font-hero)] font-normal text-[30px] leading-[1.02] text-ink mt-3 transition-colors group-hover:text-mint">
+          <Thumb post={feature} className="w-full aspect-[4/3]" />
+          <h3 className="font-heading font-extrabold text-[28px] leading-[1.12] text-ink mt-3 transition-colors group-hover:text-mint">
             {feature.title}
           </h3>
           <div className="flex items-center gap-3 flex-wrap mt-2">
